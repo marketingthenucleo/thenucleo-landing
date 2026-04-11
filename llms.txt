@@ -1,0 +1,22 @@
+# TheNucleo
+
+TheNucleo es un portal de gestión SaaS para agencias de marketing digital hispanohablantes.
+Centraliza tareas, clientes, equipo y finanzas en un solo panel.
+
+## Producto
+- Dashboard KPIs en tiempo real
+- Kanban de tareas con 8 estados
+- Módulo de clientes con ficha y chat IA (Cerebro)
+- Control de tiempo (integración Clockify)
+- Facturación (integración Holded)
+- Automatizaciones (n8n)
+- IA para newsletters y análisis
+
+## Precios
+- Mensual: €79/mes
+- Trimestral: €205 (~€68/mes)
+- Anual: €700 (~€58/mes)
+
+## Contacto
+hola@thenucleo.com
+https://work.thenucleo.com/
