@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TheNucleo — Recupera el control de tu agencia</title>
+  <meta name="description" content="El portal de gesti&oacute;n que centraliza tareas, clientes, equipo y finanzas de tu agencia de marketing. IA integrada, automatizaciones reales, un solo panel." />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://app.thenucleo.com/" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png" />
+  <link rel="apple-touch-icon" href="/Media/Logo_the_nucleo_circulo.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="TheNucleo — Recupera el control de tu agencia" />
+  <meta property="og:description" content="El portal de gesti&oacute;n que centraliza tareas, clientes, equipo y finanzas de tu agencia de marketing. IA integrada, automatizaciones reales, un solo panel." />
+  <meta property="og:image" content="https://app.thenucleo.com/Media/Logo_the_nucleo_circulo.png" />
+  <meta property="og:url" content="https://app.thenucleo.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_ES" />
+  <meta property="og:site_name" content="TheNucleo" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TheNucleo — Recupera el control de tu agencia" />
+  <meta name="twitter:description" content="Portal de gesti&oacute;n que centraliza tareas, clientes, equipo y finanzas de tu agencia de marketing." />
+  <meta name="twitter:image" content="https://app.thenucleo.com/Media/Logo_the_nucleo_circulo.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- NewBlack Typeface -->
+  <style>
+    @font-face { font-family:'NewBlack'; src:url('fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-style:normal; font-display:swap; }
+    @font-face { font-family:'NewBlack'; src:url('fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+    @font-face { font-family:'NewBlack'; src:url('fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-style:normal; font-display:swap; }
+  </style>
+
+  <!-- Three.js importmap -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── NEW PALETTE ─────────────────────────── */
+      --bg:           #171717;
+      --bg-card:      rgba(30,30,30,.85);
+      --card-solid:   #1e1e1e;
+      --border:       #2a2a2a;
+      --border-hover: #3a3a3a;
+      --text:         #E8EAE9;
+      --text-bright:  #ffffff;
+      --muted:        #8a8a8a;
+      --subtle:       #c8c8c8;
+      --accent:       #C7B299;
+      --accent-dim:   rgba(199,178,153,.12);
+      --accent-glow:  rgba(199,178,153,.25);
+      --yellow:       #F3F959;
+      --yellow-dim:   rgba(243,249,89,.10);
+      --yellow-glow:  rgba(243,249,89,.25);
+      --yellow-mid:   rgba(243,249,89,.50);
+      --green:        #22c55e;
+      --green-dim:    rgba(34,197,94,.12);
+      --red:          #ef4444;
+      --orange:       #f59e0b;
+      --mono:         'JetBrains Mono', monospace;
+      --sans:         'NewBlack', 'Space Grotesk', sans-serif;
+      --display:      'NewBlack', 'Space Grotesk', sans-serif;
+    }
+
+    html { scroll-behavior: auto; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (hover: hover) {
+      body { cursor: none; }
+      .cursor-dot, .cursor-ring { display: block; }
+    }
+    @media (hover: none) {
+      .cursor-dot, .cursor-ring { display: none !important; }
+    }
+
+    /* ── CUSTOM CURSOR ─────────────────────────────── */
+    .cursor-dot {
+      position: fixed; top: 0; left: 0; z-index: 9999;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--yellow); transform: translate(-50%,-50%);
+      pointer-events: none; mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      position: fixed; top: 0; left: 0; z-index: 9998;
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1.5px solid rgba(243,249,89,.4);
+      transform: translate(-50%,-50%);
+      pointer-events: none;
+      transition: width .22s cubic-bezier(.16,1,.3,1), height .22s cubic-bezier(.16,1,.3,1), border-color .22s;
+    }
+    body.hovering .cursor-ring { width: 56px; height: 56px; border-color: var(--yellow); }
+
+    /* ── PROGRESS BAR ──────────────────────────────── */
+    #progress {
+      position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+      background: linear-gradient(90deg, var(--yellow), var(--accent));
+      z-index: 999;
+      box-shadow: 0 0 14px var(--yellow-glow);
+    }
+
+    /* ── NAV ────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 100;
+      width: calc(100% - 48px); max-width: 1120px;
+      padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-radius: 16px;
+      background: rgba(23,23,23,.28);
+      backdrop-filter: blur(28px) saturate(1.4);
+      -webkit-backdrop-filter: blur(28px) saturate(1.4);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 4px 24px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.04) inset;
+      transition: background .4s, border-color .4s, box-shadow .4s, top .4s cubic-bezier(.16,1,.3,1), padding .3s;
+    }
+    nav.scrolled {
+      top: 12px;
+      background: rgba(23,23,23,.50);
+      border-color: rgba(255,255,255,.10);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.05) inset;
+      padding: 12px 28px;
+    }
+    .nav-left { display: flex; align-items: center; gap: 14px; }
+    .nav-isotipo { height: 34px; width: 34px; }
+    .nav-logotipo { height: 22px; width: auto; }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a {
+      font-size: 14px; color: var(--subtle); text-decoration: none;
+      font-weight: 500; transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text-bright); }
+    .nav-links a.active {
+      color: var(--yellow);
+      position: relative;
+    }
+    .nav-links a.active::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 1px;
+      background: var(--yellow);
+      opacity: .5;
+      border-radius: 1px;
+    }
+    .btn-sm {
+      background: var(--yellow); color: var(--bg);
+      font-family: var(--sans); font-size: 13px; font-weight: 600;
+      padding: 9px 20px; border-radius: 8px; border: none;
+      cursor: pointer; transition: transform .2s, box-shadow .2s;
+    }
+    .btn-sm:hover { transform: translateY(-2px); box-shadow: 0 6px 24px var(--yellow-glow); }
+
+    /* ── 3D SCENE ──────────────────────────────────── */
+    #scene3d {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── SCENE OVERLAY ─────────────────────────────── */
+    .scene-overlay {
+      position: fixed; inset: 0; z-index: 1;
+      /* Centro transparente para no velar el texto, bordes oscuros para atenuar el 3D */
+      background:
+        radial-gradient(ellipse 55% 55% at 50% 50%, transparent 0%, rgba(23,23,23,.65) 100%);
+      pointer-events: none;
+      transition: background .6s ease;
+    }
+    .scene-overlay.dimmed {
+      background:
+        radial-gradient(ellipse 55% 55% at 50% 50%, transparent 0%, rgba(23,23,23,.75) 100%);
+    }
+
+    /* ── PARTICLES ──────────────────────────────────── */
+    #particles { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+
+    /* ── EXPERIENCE ────────────────────────────────── */
+    #experience {
+      position: relative;
+      height: 950vh;
+    }
+    .exp-sticky {
+      position: sticky; top: 0;
+      height: 100vh; width: 100%;
+      overflow: hidden;
+    }
+
+    /* ── PHASE LAYERS ──────────────────────────────── */
+    .phase {
+      position: absolute; inset: 0; z-index: 3;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 48px;
+      opacity: 0;
+      transform: translateY(30px) scale(.97);
+      transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+      pointer-events: none;
+    }
+    .phase.active {
+      will-change: opacity, transform;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .phase.exiting {
+      opacity: 0;
+      transform: translateY(-25px) scale(.98);
+    }
+
+    /* Phase 1 & 2: crossfade in-place — no vertical shift */
+    .phase[data-p="1"], .phase[data-p="1"].active, .phase[data-p="1"].exiting,
+    .phase[data-p="2"], .phase[data-p="2"].active, .phase[data-p="2"].exiting {
+      transform: none;
+    }
+
+    .phase[data-p="1"]::before,
+    .phase[data-p="2"]::before,
+    .phase[data-p="4"]::before,
+    .phase[data-p="5"]::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(23,23,23,.30);
+      z-index: -1;
+    }
+
+    /* ── HERO (Phase 0) ────────────────────────────── */
+    .hero-inner { text-align: center; max-width: 900px; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--yellow-dim);
+      border: 1px solid rgba(243,249,89,.20);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 12px; font-weight: 500;
+      color: var(--yellow);
+      letter-spacing: .04em;
+      margin-bottom: 32px;
+      opacity: 0; animation: fadeUp .7s .3s ease forwards;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); animation: pulse 2s infinite; }
+
+    .hero-title {
+      font-family: var(--display);
+      font-size: clamp(46px, 8vw, 96px);
+      font-weight: 700; line-height: 1.02;
+      letter-spacing: -.04em;
+      margin-bottom: 28px;
+      color: var(--text-bright);
+      text-shadow: 0 2px 24px rgba(0,0,0,.6);
+      opacity: 0; animation: fadeUp .8s .5s ease forwards;
+    }
+    .hero-title em { font-style: normal; color: var(--yellow); text-shadow: 0 0 40px rgba(23,23,23,1), 0 2px 16px rgba(23,23,23,.95); }
+    .glow-yellow { text-shadow: 0 0 40px rgba(23,23,23,1), 0 2px 16px rgba(23,23,23,.95), 0 0 60px rgba(243,249,89,.08); }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 20px); font-weight: 400;
+      color: var(--subtle); max-width: 560px; line-height: 1.6;
+      margin: 0 auto 48px;
+      opacity: 0; animation: fadeUp .8s .7s ease forwards;
+    }
+
+    .hero-btns {
+      display: flex; gap: 16px; justify-content: center;
+      opacity: 0; animation: fadeUp .8s .9s ease forwards;
+    }
+    .btn-primary {
+      background: var(--yellow); color: var(--bg);
+      font-family: var(--sans); font-size: 15px; font-weight: 600;
+      padding: 14px 32px; border-radius: 10px; border: none;
+      cursor: pointer; transition: transform .2s, box-shadow .2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 36px var(--yellow-glow); }
+    .btn-ghost {
+      background: transparent; color: var(--text);
+      font-family: var(--sans); font-size: 15px; font-weight: 500;
+      padding: 14px 32px; border-radius: 10px;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: border-color .2s, background .2s, transform .2s;
+    }
+    .btn-ghost:hover { border-color: var(--subtle); background: rgba(255,255,255,.04); transform: translateY(-2px); }
+
+    .scroll-hint {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      opacity: 0; animation: fadeUp .7s 1.4s ease forwards;
+    }
+    .scroll-hint span { font-size: 11px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-weight: 500; }
+    .scroll-line { width: 1px; height: 48px; background: linear-gradient(to bottom, var(--muted), transparent); animation: scrollPulse 2s infinite; }
+
+    /* ── SHARED SECTION STYLES ─────────────────────── */
+    .phase-header { text-align: center; max-width: 620px; margin: 0 auto; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--yellow);
+      margin-bottom: 16px;
+      text-shadow: 0 0 20px rgba(23,23,23,1), 0 1px 8px rgba(23,23,23,.9);
+    }
+    .section-label::before { content: ''; width: 20px; height: 1px; background: var(--yellow); }
+    .section-title {
+      font-family: var(--display);
+      font-size: clamp(28px, 4.5vw, 52px); font-weight: 700;
+      line-height: 1.08; letter-spacing: -.03em; margin-bottom: 14px;
+      color: var(--text-bright);
+      text-shadow: 0 2px 20px rgba(0,0,0,.5);
+    }
+    .section-title em { font-style: normal; color: var(--yellow); text-shadow: 0 0 32px rgba(23,23,23,1), 0 2px 12px rgba(23,23,23,.95); }
+    .section-desc { font-size: 16px; color: var(--subtle); line-height: 1.6; }
+
+    /* ── GLASS CARD (base) ─────────────────────────── */
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px) saturate(1.3);
+      -webkit-backdrop-filter: blur(24px) saturate(1.3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative; overflow: hidden;
+      transition: transform .5s cubic-bezier(.16,1,.3,1),
+                  border-color .4s ease,
+                  box-shadow .5s cubic-bezier(.16,1,.3,1),
+                  backdrop-filter .4s ease;
+      will-change: transform, box-shadow;
+    }
+    .glass-card:hover {
+      transform: translateY(-6px) scale(1.012);
+      border-color: rgba(243,249,89,.35);
+      box-shadow: 0 20px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(243,249,89,.08) inset;
+      backdrop-filter: blur(28px) saturate(1.6);
+      -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    }
+    /* Línea superior — shimmer sweep */
+    .glass-card::before {
+      content: ''; position: absolute; top: 0; left: -100%; right: auto;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+      transition: left .55s cubic-bezier(.16,1,.3,1), opacity .3s;
+      opacity: 0;
+    }
+    .glass-card:hover::before { left: 0; opacity: 1; }
+    /* Glow corner — esquina superior derecha */
+    .glass-card::after {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(243,249,89,.08) 0%, transparent 70%);
+      opacity: 0; transition: opacity .5s ease, transform .5s cubic-bezier(.16,1,.3,1);
+      transform: scale(0.6);
+      pointer-events: none;
+    }
+    .glass-card:hover::after { opacity: 1; transform: scale(1.4); }
+
+    /* ── PHASE 1 — CAPABILITIES ────────────────────── */
+    .phase-capabilities { flex-direction: column; gap: 48px; justify-content: flex-start; padding-top: 14vh; }
+    .cap-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+      max-width: 1060px; width: 100%;
+    }
+    .cap-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--yellow-dim); border: 1px solid rgba(243,249,89,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 18px;
+    }
+    .cap-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text-bright); }
+    .cap-desc { font-size: 13px; color: var(--subtle); line-height: 1.55; }
+    .cap-tag {
+      display: inline-block; margin-top: 12px;
+      font-size: 10px; font-weight: 500; color: var(--yellow);
+      background: var(--yellow-dim); padding: 3px 10px; border-radius: 100px;
+    }
+
+    /* ── PHASE 2 — METRICS (same style as capabilities) ── */
+    .phase-metrics { flex-direction: column; gap: 48px; justify-content: flex-start; padding-top: 14vh; }
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
+      max-width: 700px; width: 100%;
+    }
+    .metric-num {
+      font-family: var(--mono); font-size: 48px; font-weight: 500;
+      letter-spacing: -.04em; line-height: 1; margin-bottom: 10px;
+      color: var(--text-bright);
+    }
+    .metric-num em { font-style: normal; color: var(--yellow); }
+    .metric-label { font-size: 13px; color: var(--subtle); line-height: 1.55; font-weight: 500; }
+
+    /* ── PHASE 3 — SHOWCASE (SPLIT LAYOUT) ──────────── */
+    .phase-showcase {
+      flex-direction: row; gap: 0;
+      max-width: 1200px; margin: 0 auto;
+      align-items: center;
+      padding: 0 40px;
+      overflow: visible;
+    }
+
+    /* Modules deck — LEFT */
+    .showcase-modules {
+      width: 42%;
+      padding-right: 48px;
+      order: -1;
+      position: relative;
+      height: 340px;
+      perspective: 800px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Laptop side — RIGHT */
+    .laptop-wrapper {
+      width: 58%; flex-shrink: 0;
+      position: relative;
+      pointer-events: auto;
+      overflow: visible;
+    }
+    #laptop3d {
+      width: 100%; display: block;
+      aspect-ratio: 16 / 10;
+      overflow: visible;
+    }
+
+    /* Card deck items */
+    .showcase-module {
+      position: absolute;
+      left: 0; right: 0;
+      background: var(--bg-card);
+      backdrop-filter: blur(24px) saturate(1.3);
+      -webkit-backdrop-filter: blur(24px) saturate(1.3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 26px 28px 22px;
+      opacity: 0;
+      transform: translateY(250px) rotateX(0deg);
+      transform-origin: center center;
+      transition: opacity .45s cubic-bezier(.16,1,.3,1),
+                  transform .45s cubic-bezier(.16,1,.3,1),
+                  border-color .35s ease,
+                  box-shadow .4s ease;
+      pointer-events: none;
+    }
+    .showcase-module.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .showcase-module.top {
+      border-color: rgba(243,249,89,.22);
+      box-shadow: 0 8px 32px rgba(0,0,0,.45), 0 0 0 1px rgba(243,249,89,.06) inset;
+    }
+    .showcase-module-name {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--yellow);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .showcase-module-name::before {
+      content: '';
+      width: 16px; height: 1px;
+      background: var(--yellow);
+    }
+    .showcase-module-desc {
+      font-size: 14px;
+      color: var(--subtle);
+      line-height: 1.55;
+      font-weight: 400;
+    }
+
+    /* Dashboard inside laptop */
+    .dash-mock {
+      width: 100%; height: 100%;
+      padding: 10px;
+      display: flex; gap: 8px;
+      font-family: var(--sans);
+      font-size: 9px;
+      color: #8b8fa8;
+    }
+    .dash-sidebar {
+      width: 48px; flex-shrink: 0;
+      background: #12141b;
+      border-radius: 6px;
+      padding: 8px 4px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .dash-sidebar-logo {
+      width: 20px; height: 20px;
+      background: radial-gradient(circle, rgba(243,249,89,.3) 0%, transparent 70%);
+      border-radius: 50%;
+      margin-bottom: 6px;
+    }
+    .dash-sidebar-item {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: #1a1d27;
+      transition: background .2s;
+    }
+    .dash-sidebar-item.active {
+      background: var(--yellow-dim);
+      box-shadow: inset 0 0 0 1px rgba(243,249,89,.2);
+    }
+    .dash-main {
+      flex: 1; display: flex; flex-direction: column; gap: 8px;
+      overflow: hidden;
+    }
+    .dash-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px;
+      background: #12141b;
+      border-radius: 6px;
+    }
+    .dash-topbar-title { font-weight: 600; color: #E8EAE9; font-size: 10px; }
+    .dash-topbar-right { display: flex; gap: 6px; align-items: center; }
+    .dash-topbar-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--yellow); opacity: .6;
+    }
+    .dash-topbar-avatar {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--yellow));
+    }
+
+    /* KPI row */
+    .dash-kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    }
+    .dash-kpi {
+      background: #12141b;
+      border-radius: 6px;
+      padding: 8px 8px 6px;
+      border: 1px solid #1e2130;
+    }
+    .dash-kpi-label { font-size: 7px; color: #5c6078; margin-bottom: 3px; }
+    .dash-kpi-value { font-family: var(--mono); font-size: 16px; font-weight: 600; color: #E8EAE9; line-height: 1; }
+    .dash-kpi-trend { font-size: 7px; margin-top: 2px; }
+    .dash-kpi-trend.up { color: #22c55e; }
+    .dash-kpi-trend.down { color: #ef4444; }
+    .dash-kpi-trend.neutral { color: #5c6078; }
+
+    /* Bottom panels */
+    .dash-panels {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+      flex: 1; min-height: 0;
+    }
+    .dash-panel {
+      background: #12141b;
+      border-radius: 6px;
+      padding: 8px;
+      border: 1px solid #1e2130;
+      overflow: hidden;
+    }
+    .dash-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .dash-panel-title { font-size: 8px; font-weight: 600; color: #E8EAE9; }
+    .dash-panel-count {
+      font-family: var(--mono); font-size: 7px;
+      background: rgba(243,249,89,.1); color: var(--yellow);
+      padding: 1px 6px; border-radius: 100px;
+    }
+    .dash-client-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 4px; border-radius: 4px;
+      transition: background .15s;
+    }
+    .dash-client-row:hover { background: #1a1d27; }
+    .dash-client-avatar {
+      width: 16px; height: 16px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 6px; font-weight: 600; color: #fff; flex-shrink: 0;
+    }
+    .dash-client-name { flex: 1; font-size: 7px; color: #a0a0a0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dash-client-days { font-family: var(--mono); font-size: 7px; }
+    .dash-client-days.warn { color: var(--orange); }
+    .dash-client-days.danger { color: var(--red); }
+    .dash-task-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 4px; border-radius: 4px;
+    }
+    .dash-task-row:hover { background: #1a1d27; }
+    .dash-task-status {
+      width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dash-task-name { flex: 1; font-size: 7px; color: #a0a0a0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dash-task-badge {
+      font-size: 6px; padding: 1px 5px; border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    /* ── PHASE 4 — PRICING ─────────────────────────── */
+    .phase-pricing { flex-direction: column; gap: 48px; }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+      max-width: 1060px; width: 100%;
+      align-items: center;
+    }
+    .pricing-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px) saturate(1.3);
+      -webkit-backdrop-filter: blur(24px) saturate(1.3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      position: relative; overflow: hidden;
+      transition: transform .3s cubic-bezier(.16,1,.3,1), border-color .3s;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center;
+    }
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-hover);
+    }
+    .pricing-card.popular {
+      border-color: var(--yellow);
+      transform: scale(1.04);
+      box-shadow: 0 0 40px rgba(243,249,89,.08), 0 0 80px rgba(243,249,89,.04);
+    }
+    .pricing-card.popular:hover {
+      transform: scale(1.04) translateY(-4px);
+      border-color: var(--yellow);
+    }
+    .pricing-card.popular::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+    }
+    .pricing-card.popular::after {
+      content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(243,249,89,.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .pricing-badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 5px 14px; border-radius: 100px;
+      margin-bottom: 20px;
+    }
+    .pricing-badge.popular-badge {
+      background: var(--yellow); color: var(--bg);
+    }
+    .pricing-badge.best-badge {
+      background: var(--yellow-dim); color: var(--yellow);
+      border: 1px solid rgba(243,249,89,.20);
+    }
+    .pricing-badge.spacer-badge {
+      visibility: hidden;
+    }
+    .pricing-plan-name {
+      font-size: 18px; font-weight: 600; margin-bottom: 8px;
+      letter-spacing: -.01em; color: var(--text-bright);
+    }
+    .pricing-amount {
+      font-family: var(--mono); font-size: 52px; font-weight: 600;
+      letter-spacing: -.04em; line-height: 1; margin-bottom: 4px;
+      color: var(--text-bright);
+    }
+    .pricing-amount em { font-style: normal; color: var(--yellow); }
+    .pricing-amount .currency { font-size: 28px; vertical-align: super; margin-right: 2px; }
+    .pricing-period {
+      font-size: 13px; color: var(--muted); margin-bottom: 6px;
+    }
+    .pricing-equivalent {
+      font-size: 12px; color: var(--accent); font-weight: 500;
+      margin-bottom: 24px; min-height: 18px;
+    }
+    .pricing-divider {
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin-bottom: 24px;
+    }
+    .pricing-features {
+      list-style: none; padding: 0; margin: 0 0 28px;
+      display: flex; flex-direction: column; gap: 12px;
+      width: 100%; text-align: left;
+    }
+    .pricing-features li {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--subtle); font-weight: 400;
+    }
+    .pricing-features li .check {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--yellow-dim);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pricing-features li .check svg { width: 10px; height: 10px; }
+    .pricing-cta {
+      width: 100%; padding: 13px 0; border-radius: 10px;
+      font-family: var(--sans); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: transform .2s, box-shadow .2s, background .2s;
+      border: none;
+    }
+    .pricing-cta.primary {
+      background: var(--yellow); color: var(--bg);
+    }
+    .pricing-cta.primary:hover {
+      transform: translateY(-2px); box-shadow: 0 8px 28px var(--yellow-glow);
+    }
+    .pricing-cta.secondary {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .pricing-cta.secondary:hover {
+      border-color: var(--subtle); background: rgba(255,255,255,.04);
+      transform: translateY(-2px);
+    }
+    .pricing-save {
+      display: inline-block;
+      font-size: 11px; font-weight: 500; color: var(--yellow);
+      background: var(--yellow-dim); padding: 3px 10px; border-radius: 100px;
+    }
+
+    /* ── PHASE 5 — CTA ─────────────────────────────── */
+    .phase-cta { flex-direction: column; }
+    .cta-box {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 72px 64px;
+      text-align: center;
+      max-width: 800px; width: 100%;
+      position: relative; overflow: hidden;
+    }
+    .cta-box::before {
+      content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+      width: 500px; height: 500px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(243,249,89,.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .cta-box::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--yellow) 50%, transparent 100%);
+      opacity: .5;
+    }
+    .cta-title {
+      font-family: var(--display);
+      font-size: clamp(28px, 4vw, 52px); font-weight: 700;
+      letter-spacing: -.03em; margin-bottom: 16px;
+      color: var(--text-bright);
+    }
+    .cta-title em { font-style: normal; color: var(--yellow); }
+    .cta-desc {
+      font-size: 16px; color: var(--subtle); margin-bottom: 36px;
+      max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.6;
+    }
+    .cta-btns { display: flex; gap: 16px; justify-content: center; }
+
+    /* ── PHASE DOTS ─────────────────────────────────── */
+    .phase-dots {
+      position: fixed; right: 28px; top: 50%; transform: translateY(-50%);
+      z-index: 101;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .pdot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border);
+      transition: background .3s, transform .3s, box-shadow .3s;
+      cursor: pointer;
+    }
+    .pdot.active {
+      background: var(--yellow);
+      transform: scale(1.3);
+      box-shadow: 0 0 12px var(--yellow-glow);
+    }
+
+    /* ── FOOTER ─────────────────────────────────────── */
+    footer {
+      position: relative; z-index: 10;
+      border-top: 1px solid var(--border);
+      padding: 32px 48px;
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg);
+    }
+    .f-logotipo { height: 18px; width: auto; opacity: .7; }
+    .f-copy { font-size: 13px; color: var(--muted); }
+    .f-mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+    /* ── CARD ENTER ANIMATIONS — scroll-driven via JS ── */
+    .card-anim {
+      opacity: 0;
+      transform: translateY(120vh);
+      will-change: opacity, transform;
+    }
+
+    /* ── KEYFRAMES ──────────────────────────────────── */
+    @keyframes fadeUp   { to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse    { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+    @keyframes scrollPulse {
+      0%   { transform: scaleY(0); transform-origin: top; }
+      50%  { transform: scaleY(1); transform-origin: top; }
+      50.1%{ transform: scaleY(1); transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────── */
+    @media (max-width: 900px) {
+      nav { width: calc(100% - 24px); padding: 12px 18px; top: 10px; border-radius: 14px; }
+      nav.scrolled { padding: 10px 18px; top: 8px; }
+      .nav-links { display: none; }
+      .phase { padding: 0 24px; }
+      .cap-grid { grid-template-columns: 1fr 1fr; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .cta-box { padding: 48px 28px; }
+      .phase-dots { right: 12px; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+      .pricing-card.popular { transform: scale(1); }
+      .pricing-card.popular:hover { transform: translateY(-4px); }
+      .phase-showcase { flex-direction: column; gap: 32px; padding: 0 24px; }
+      .laptop-wrapper { width: 100%; max-width: 100%; }
+      .showcase-modules { width: 100%; padding-right: 0; height: auto; order: 1; perspective: none; }
+      .dash-kpis { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .cap-grid { grid-template-columns: 1fr; }
+      .metrics-grid { grid-template-columns: 1fr; }
+      .hero-btns { flex-direction: column; align-items: stretch; }
+      .cta-btns { flex-direction: column; align-items: stretch; }
+      .dash-panels { grid-template-columns: 1fr; }
+    }
+    /* ── MOBILE: disable sticky phase system (≤768px) ── */
+    @media (max-width: 768px) {
+      #experience { height: auto; }
+      .exp-sticky { position: relative; height: auto; overflow: visible; }
+
+      /* All phases flow as normal blocks */
+      .phase, .phase.active, .phase.exiting {
+        position: relative !important;
+        inset: auto !important;
+        opacity: 1 !important;
+        transform: none !important;
+        pointer-events: auto !important;
+        min-height: auto;
+        padding: 40px 20px 24px;
+        display: flex;
+      }
+      .phase[data-p="0"] {
+        min-height: 100svh;
+        align-items: center;
+        padding: 0 20px;
+      }
+      /* Tighter gap in mobile sections */
+      .phase-capabilities, .phase-metrics { gap: 28px; }
+
+      /* card-anim: start hidden, IntersectionObserver adds .mob-in */
+      .card-anim {
+        opacity: 0 !important;
+        transform: translateY(44px) scale(.96) !important;
+        transition: opacity .65s cubic-bezier(.16,1,.3,1),
+                    transform .65s cubic-bezier(.16,1,.3,1) !important;
+      }
+      .card-anim.mob-in {
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+      }
+      /* Stagger by card position */
+      .card-anim:nth-child(1) { transition-delay: 0s; }
+      .card-anim:nth-child(2) { transition-delay: .08s; }
+      .card-anim:nth-child(3) { transition-delay: .16s; }
+      .card-anim:nth-child(4) { transition-delay: .24s; }
+
+      /* Phase 3 header: position relative on mobile */
+      .phase-showcase .phase-header {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        margin-bottom: 24px;
+      }
+
+      /* Showcase modules: natural block flow */
+      .showcase-modules { height: auto; min-height: 0; }
+      .showcase-module {
+        position: relative !important;
+        opacity: 1 !important;
+        transform: none !important;
+        pointer-events: auto !important;
+        margin-bottom: 12px;
+      }
+
+      /* Hide dot nav */
+      .phase-dots { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      .cursor-dot, .cursor-ring { display: none !important; }
+      body { cursor: auto !important; }
+      #particles { display: none; }
+      .glass-card:hover, .metric-card:hover, .pricing-card:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cursor -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- Progress -->
+  <div id="progress"></div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <div class="nav-left">
+      <!-- Isotipo -->
+      <svg class="nav-isotipo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="iso-g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-160.001,160.001,0,159.389,157.823)">
+            <stop offset=".676" stop-color="#000000" stop-opacity="0"/>
+            <stop offset=".982" stop-color="#f3f959" stop-opacity="1"/>
+          </radialGradient>
+        </defs>
+        <path style="mix-blend-mode:screen;fill:url(#iso-g1)" d="m160 0c-88.37 0-160 71.63-160 160 0 88.37 71.63 160 160 160 88.37 0 160-71.63 160-160 0-88.37-71.63-160-160-160z"/>
+      </svg>
+      <!-- Logotipo dark theme -->
+      <svg class="nav-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
+        <style>.lt0{fill:#e6e6e6}</style>
+        <g>
+          <path class="lt0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+          <path class="lt0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+          <path class="lt0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+          <path class="lt0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+          <path class="lt0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+          <path class="lt0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
+          <path class="lt0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+        </g>
+      </svg>
+    </div>
+    <div class="nav-links">
+      <a href="#" data-phase="1">Funcionalidades</a>
+      <a href="#" data-phase="2">Resultados</a>
+      <a href="#" data-phase="3">Plataforma</a>
+      <a href="#" data-phase="4">Precios</a>
+    </div>
+    <a href="https://portal.thenucleo.com/" target="_blank" class="btn-sm" style="text-decoration:none;">Acceder &rarr;</a>
+  </nav>
+
+  <!-- Scene overlay -->
+  <div class="scene-overlay" id="overlay"></div>
+
+  <!-- Particles -->
+  <canvas id="particles"></canvas>
+
+  <!-- Phase dots -->
+  <div class="phase-dots" id="phaseDots">
+    <div class="pdot active" data-phase="0"></div>
+    <div class="pdot" data-phase="1"></div>
+    <div class="pdot" data-phase="2"></div>
+    <div class="pdot" data-phase="3"></div>
+    <div class="pdot" data-phase="4"></div>
+    <div class="pdot" data-phase="5"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- EXPERIENCE                                      -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="experience">
+    <div class="exp-sticky">
+
+      <!-- PHASE 0 — HERO -->
+      <div class="phase active" data-p="0">
+        <div class="hero-inner">
+          <div class="badge"><span class="badge-dot"></span> Portal de Gesti&oacute;n para Agencias &middot; v3.0</div>
+          <h1 class="hero-title glow-yellow">Recupera el<br/><em>control.</em></h1>
+          <p class="hero-sub">Tareas que se pierden, clientes que se enfadan, equipos que no sabes si est&aacute;n al l&iacute;mite. Ya basta. Un solo panel, toda tu agencia bajo control.</p>
+          <div class="hero-btns">
+            <button class="btn-primary">Empezar ahora</button>
+            <button class="btn-ghost">Ver c&oacute;mo funciona &rarr;</button>
+          </div>
+        </div>
+        <div class="scroll-hint"><span>scroll</span><div class="scroll-line"></div></div>
+      </div>
+
+      <!-- PHASE 1 — CAPABILITIES -->
+      <div class="phase phase-capabilities" data-p="1">
+        <div class="phase-header">
+          <div class="section-label">Qu&eacute; incluye</div>
+          <h2 class="section-title">Todo lo que necesitas.<br/><em>Nada que sobre.</em></h2>
+          <p class="section-desc">Sabemos lo que es gestionar una agencia desde dentro. Cada m&oacute;dulo resuelve un problema real que vives cada d&iacute;a.</p>
+        </div>
+        <div class="cap-grid">
+          <div class="glass-card card-anim">
+            <div class="cap-icon">
+              <!-- Dashboard: grid 2x2 con cuadrante activo -->
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="10" height="10" rx="2" fill="#F3F959"/>
+                <rect x="15" y="3" width="10" height="10" rx="2" fill="#F3F959" opacity=".3"/>
+                <rect x="3" y="15" width="10" height="10" rx="2" fill="#F3F959" opacity=".3"/>
+                <rect x="15" y="15" width="10" height="10" rx="2" fill="#F3F959" opacity=".3"/>
+                <circle cx="8" cy="8" r="2.5" fill="#171717"/>
+              </svg>
+            </div>
+            <div class="cap-title">Dashboard centralizado</div>
+            <div class="cap-desc">Lev&aacute;ntate, abre el portal y de un vistazo sabes c&oacute;mo est&aacute; todo: tareas, clientes, equipo y n&uacute;meros. Sin preguntar a nadie.</div>
+            <span class="cap-tag">Visibilidad total</span>
+          </div>
+          <div class="glass-card card-anim">
+            <div class="cap-icon">
+              <!-- Automatizaciones: flujo 3 nodos en cadena -->
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4.5" cy="14" r="3" fill="#F3F959" opacity=".35"/>
+                <circle cx="14" cy="14" r="3.5" fill="#F3F959"/>
+                <circle cx="23.5" cy="14" r="3" fill="#F3F959" opacity=".35"/>
+                <line x1="7.5" y1="14" x2="10.5" y2="14" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="17.5" y1="14" x2="20.5" y2="14" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M5 7 Q14 3 23 7" stroke="#F3F959" stroke-width="1" stroke-linecap="round" fill="none" opacity=".25"/>
+                <path d="M5 21 Q14 25 23 21" stroke="#F3F959" stroke-width="1" stroke-linecap="round" fill="none" opacity=".25"/>
+              </svg>
+            </div>
+            <div class="cap-title">Automatizaciones reales</div>
+            <div class="cap-desc">Newsletters, sincronizaciones, alertas. Las tareas repetitivas se ejecutan solas, sin que t&uacute; las empujes.</div>
+            <span class="cap-tag">n8n + Supabase</span>
+          </div>
+          <div class="glass-card card-anim">
+            <div class="cap-icon">
+              <!-- IA: nodo central con red radial -->
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="14" y1="14" x2="14" y2="3" stroke="#F3F959" stroke-width="1" opacity=".4"/>
+                <line x1="14" y1="14" x2="14" y2="25" stroke="#F3F959" stroke-width="1" opacity=".4"/>
+                <line x1="14" y1="14" x2="3" y2="14" stroke="#F3F959" stroke-width="1" opacity=".4"/>
+                <line x1="14" y1="14" x2="25" y2="14" stroke="#F3F959" stroke-width="1" opacity=".4"/>
+                <line x1="14" y1="14" x2="5.5" y2="5.5" stroke="#F3F959" stroke-width="1" opacity=".25"/>
+                <line x1="14" y1="14" x2="22.5" y2="22.5" stroke="#F3F959" stroke-width="1" opacity=".25"/>
+                <circle cx="14" cy="3" r="2" fill="#F3F959" opacity=".5"/>
+                <circle cx="14" cy="25" r="2" fill="#F3F959" opacity=".5"/>
+                <circle cx="3" cy="14" r="2" fill="#F3F959" opacity=".5"/>
+                <circle cx="25" cy="14" r="2" fill="#F3F959" opacity=".5"/>
+                <circle cx="14" cy="14" r="4.5" fill="#F3F959"/>
+                <circle cx="14" cy="14" r="2" fill="#171717"/>
+              </svg>
+            </div>
+            <div class="cap-title">IA con tu contexto</div>
+            <div class="cap-desc">Asistentes entrenados con tus datos reales. Preg&uacute;ntales por un cliente, pide un borrador, crea tareas por chat.</div>
+            <span class="cap-tag">Claude + RAG</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 2 — METRICS -->
+      <div class="phase phase-metrics" data-p="2">
+        <div class="phase-header">
+          <div class="section-label">Resultados reales</div>
+          <h2 class="section-title">No es un mockup.<br/><em>Est&aacute; en producci&oacute;n.</em></h2>
+          <p class="section-desc">Datos reales del sistema que ya gestiona agencias. Cada n&uacute;mero es verificable.</p>
+        </div>
+        <div class="metrics-grid">
+          <div class="glass-card card-anim"><div class="metric-num"><em>85</em><span style="font-size:24px;color:var(--yellow)">%</span></div><div class="metric-label">Menos tiempo en tareas manuales</div></div>
+          <div class="glass-card card-anim"><div class="metric-num"><em>3</em><span style="font-size:24px;color:var(--subtle)">min</span></div><div class="metric-label">Para saber c&oacute;mo est&aacute; tu agencia</div></div>
+          <div class="glass-card card-anim"><div class="metric-num"><em>0</em></div><div class="metric-label">Tareas perdidas entre canales</div></div>
+          <div class="glass-card card-anim"><div class="metric-num">20<em>+</em></div><div class="metric-label">Automatizaciones trabajando por ti</div></div>
+        </div>
+      </div>
+
+      <!-- PHASE 3 — SHOWCASE: SPLIT LAYOUT -->
+      <div class="phase phase-showcase" data-p="3">
+        <div class="phase-header" style="position:absolute;top:10vh;left:0;right:0;">
+          <div class="section-label">Tu ma&ntilde;ana perfecta</div>
+          <h2 class="section-title">Abres el portal.<br/><em>Todo controlado.</em></h2>
+        </div>
+        <div class="laptop-wrapper">
+          <canvas id="laptop3d"></canvas>
+          <video id="dashVideo" src="videonuevo_dashboard.mp4"
+                 muted loop playsinline autoplay preload="metadata" crossorigin="anonymous"
+                 style="display:none"></video>
+        </div>
+        <div class="showcase-modules">
+          <div class="showcase-module" data-mod="0">
+            <div class="showcase-module-name">Dashboard</div>
+            <div class="showcase-module-desc">Un vistazo y sabes c&oacute;mo est&aacute; todo. Tareas, clientes, equipo y n&uacute;meros sin preguntar a nadie.</div>
+          </div>
+          <div class="showcase-module" data-mod="1">
+            <div class="showcase-module-name">Clientes</div>
+            <div class="showcase-module-desc">Ficha completa, historial de tareas, estado de salud. Tu equipo deja de preguntar &laquo;&iquest;c&oacute;mo va este cliente?&raquo;</div>
+          </div>
+          <div class="showcase-module" data-mod="2">
+            <div class="showcase-module-name">Operaciones</div>
+            <div class="showcase-module-desc">Kanban con 8 estados, drag-and-drop, plantillas. Las tareas fluyen sin que las empujes.</div>
+          </div>
+          <div class="showcase-module" data-mod="3">
+            <div class="showcase-module-name">Finanzas</div>
+            <div class="showcase-module-desc">Facturas, MRR, coste por cliente. Conectado a Holded en tiempo real.</div>
+          </div>
+          <div class="showcase-module" data-mod="4">
+            <div class="showcase-module-name">IA Cerebro</div>
+            <div class="showcase-module-desc">Preg&uacute;ntale por un cliente, pide un borrador, crea tareas por chat. Entrenado con tus datos reales.</div>
+          </div>
+          <div class="showcase-module" data-mod="5">
+            <div class="showcase-module-name">RRHH</div>
+            <div class="showcase-module-desc">Perfiles de equipo, NPS interno y carga de trabajo. Todo tu capital humano en un panel.</div>
+          </div>
+          <div class="showcase-module" data-mod="6">
+            <div class="showcase-module-name">Incidencias</div>
+            <div class="showcase-module-desc">Detecta, prioriza y resuelve. Las tareas cr&iacute;ticas saltan a primera l&iacute;nea autom&aacute;ticamente.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 4 — PRICING -->
+      <div class="phase phase-pricing" data-p="4">
+        <div class="phase-header">
+          <div class="section-label">Precios</div>
+          <h2 class="section-title">Un plan simple.<br/><em>Sin sorpresas.</em></h2>
+          <p class="section-desc">Todas las funciones desde el d&iacute;a uno. M&aacute;s compromiso, m&aacute;s ventajas.</p>
+        </div>
+        <div class="pricing-grid">
+          <!-- Mensual -->
+          <div class="pricing-card">
+            <div class="pricing-badge spacer-badge">&nbsp;</div>
+            <div class="pricing-plan-name">Mensual</div>
+            <div class="pricing-amount"><span class="currency">&euro;</span><em>79</em></div>
+            <div class="pricing-period">al mes</div>
+            <div class="pricing-equivalent">Sin permanencia</div>
+            <div class="pricing-divider"></div>
+            <ul class="pricing-features">
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Dashboard + KPIs</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Automatizaciones ilimitadas</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> IA integrada (Cerebro)</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Integraciones b&aacute;sicas</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte por email</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Actualizaciones incluidas</li>
+            </ul>
+            <button class="pricing-cta secondary">Empezar</button>
+          </div>
+          <!-- Trimestral — Popular -->
+          <div class="pricing-card popular">
+            <div class="pricing-badge popular-badge">Popular</div>
+            <div class="pricing-plan-name">Trimestral</div>
+            <div class="pricing-amount"><span class="currency">&euro;</span><em>205</em></div>
+            <div class="pricing-period">cada 3 meses</div>
+            <div class="pricing-equivalent">~68 &euro;/mes &middot; <span class="pricing-save">Ahorras 13%</span></div>
+            <div class="pricing-divider"></div>
+            <ul class="pricing-features">
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Todo lo del plan Mensual</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> IA Newsletter + Cerebro</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Integraciones avanzadas (Holded, Clockify)</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte prioritario</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Ops Monitor (salud operativa)</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Onboarding asistido</li>
+            </ul>
+            <button class="pricing-cta primary">Empezar</button>
+          </div>
+          <!-- Anual -->
+          <div class="pricing-card">
+            <div class="pricing-badge best-badge">Mejor precio</div>
+            <div class="pricing-plan-name">Anual</div>
+            <div class="pricing-amount"><span class="currency">&euro;</span><em>700</em></div>
+            <div class="pricing-period">al a&ntilde;o</div>
+            <div class="pricing-equivalent">~58 &euro;/mes &middot; <span class="pricing-save">Ahorras 26%</span></div>
+            <div class="pricing-divider"></div>
+            <ul class="pricing-features">
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Todo lo del plan Trimestral</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Workflows personalizados</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte directo por WhatsApp</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Sesi&oacute;n estrat&eacute;gica trimestral</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Acceso anticipado a nuevos m&oacute;dulos</li>
+              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Precio garantizado 12 meses</li>
+            </ul>
+            <button class="pricing-cta secondary">Empezar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 5 — CTA -->
+      <div class="phase phase-cta" data-p="5">
+        <div class="cta-box">
+          <div class="section-label" style="justify-content:center;margin-bottom:20px;">Deja de apagar fuegos</div>
+          <h2 class="cta-title">Tu agencia merece funcionar<br/>sin que t&uacute; la <em>empujes cada d&iacute;a.</em></h2>
+          <p class="cta-desc">La capa de inteligencia que se integra con lo que ya usas. Sin cambiar herramientas, sin reinventar procesos. Solo control.</p>
+          <div class="cta-btns">
+            <button class="btn-primary">Empezar ahora &rarr;</button>
+            <button class="btn-ghost">Contactar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div>
+      <svg class="f-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
+        <style>.ft0{fill:#e6e6e6}</style>
+        <g>
+          <path class="ft0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+          <path class="ft0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+          <path class="ft0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+          <path class="ft0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+          <path class="ft0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+          <path class="ft0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
+          <path class="ft0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+        </g>
+      </svg>
+    </div>
+    <div class="f-copy">portal.thenucleo.com &middot; El sistema operativo de tu agencia</div>
+    <div class="f-mono">v3.0 &middot; 2026</div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- JAVASCRIPT                                      -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+    /* ── HELPERS ──────────────────────────────────────── */
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+    function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+
+    /* ── RENDERER ────────────────────────────────────── */
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.z = 28;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    renderer.domElement.id = 'scene3d';
+    document.body.prepend(renderer.domElement);
+
+    /* Post-processing: bloom */
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.8, 0.35, 0.22
+    );
+    composer.addPass(bloomPass);
+
+    /* ── A. ISOTIPO — canvas texture matching logo gradient ── */
+    const isotipoCanvas = document.createElement('canvas');
+    isotipoCanvas.width = 512; isotipoCanvas.height = 512;
+    const isotipoCtx = isotipoCanvas.getContext('2d');
+    // Replicar el gradiente del SVG: transparente en centro → amarillo en borde exterior
+    // stop 0.676 → transparent, stop 0.982 → #f3f959
+    const isotipoGrad = isotipoCtx.createRadialGradient(256, 256, 256 * 0.676, 256, 256, 256 * 0.982);
+    isotipoGrad.addColorStop(0, 'rgba(243,249,89,0)');
+    isotipoGrad.addColorStop(1, 'rgba(243,249,89,1)');
+    isotipoCtx.beginPath();
+    isotipoCtx.arc(256, 256, 256, 0, Math.PI * 2);
+    isotipoCtx.fillStyle = isotipoGrad;
+    isotipoCtx.fill();
+    const isotipoTex = new THREE.CanvasTexture(isotipoCanvas);
+
+    const nucleoGeo = new THREE.PlaneGeometry(18, 18);
+    const nucleoMat = new THREE.MeshBasicMaterial({
+      map: isotipoTex,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      opacity: 0
+    });
+    const nucleo = new THREE.Mesh(nucleoGeo, nucleoMat);
+    // Off-center: desplazado a la derecha y ligeramente arriba
+    // Isotipo off-center, fijo
+    nucleo.position.set(22, 1, -6);
+    nucleo.rotation.set(0.3, -0.2, 0.1);
+    scene.add(nucleo);
+
+    /* ── LOGOS DISPERSOS — sprites con texturas PNG ──── */
+    const LOGO_SRCS = [
+      'icons/GHL.png','icons/clickup.png','icons/clientify.png',
+      'icons/googleads.png','icons/holded.png','icons/hostinger.png',
+      'icons/hubspot.png','icons/metaads.png','icons/n8n.png',
+      'icons/notion.png','icons/obsidian.png','icons/wordpres.png'
+    ];
+    const logoTextures = LOGO_SRCS.map(src => {
+      const tex = new THREE.TextureLoader().load(src);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    });
+
+    const TOTAL = 18;
+    const assemblage = [];
+
+    const GRAVITY_CENTER = new THREE.Vector3(22, 1, -6);
+
+    function getAssembledPos(i) {
+      const layers = 4;
+      const perLayer = Math.ceil(TOTAL / layers);
+      const layer = Math.floor(i / perLayer);
+      const indexInLayer = i % perLayer;
+      const angle = (indexInLayer / perLayer) * Math.PI * 2 + layer * 0.7;
+      const radius = 3 + layer * 2;
+      const y = (layer - (layers - 1) / 2) * 2.5;
+      return new THREE.Vector3(
+        GRAVITY_CENTER.x + Math.cos(angle) * radius,
+        GRAVITY_CENTER.y + y + Math.sin(angle * 2) * 0.5,
+        GRAVITY_CENTER.z + Math.sin(angle) * radius
+      );
+    }
+
+    const planeGeo = new THREE.PlaneGeometry(1, 1);
+
+    for (let i = 0; i < TOTAL; i++) {
+      const tex = logoTextures[i % logoTextures.length];
+      const mat = new THREE.MeshBasicMaterial({
+        map: tex,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        opacity: 0
+      });
+      const mesh = new THREE.Mesh(planeGeo, mat);
+
+      /* Velocidad de spin propia por eje — cada logo gira distinto */
+      const spinSpeed = {
+        x: (Math.random() - 0.5) * 0.012,
+        y: 0.006 + Math.random() * 0.010,
+        z: (Math.random() - 0.5) * 0.004,
+      };
+
+      const scattered = {
+        pos: new THREE.Vector3(
+          (Math.random() - 0.5) * 70,
+          (Math.random() - 0.5) * 45,
+          (Math.random() - 0.5) * 35
+        ),
+        rot: new THREE.Euler(
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2
+        ),
+        scale: 0.8 + Math.random() * 0.6,
+        opacity: 0.06
+      };
+
+      const aPos = getAssembledPos(i);
+      const assembled = {
+        pos: aPos,
+        rot: new THREE.Euler(
+          Math.PI * 0.25 * Math.floor(i / 7),
+          (i / TOTAL) * Math.PI * 2,
+          0
+        ),
+        scale: 1.2 + Math.random() * 0.6,
+        opacity: 0.55
+      };
+
+      mesh.position.copy(scattered.pos);
+      mesh.rotation.copy(scattered.rot);
+      mesh.scale.setScalar(scattered.scale);
+      assemblage.push({ mesh, scattered, assembled, isYellow: true, spinSpeed });
+      scene.add(mesh);
+    }
+
+    /* Líneas de conexión entre objetos ensamblados cercanos */
+    const lineGroup = new THREE.Group();
+    scene.add(lineGroup);
+    for (let i = 0; i < TOTAL; i++) {
+      for (let j = i + 1; j < TOTAL; j++) {
+        const dist = assemblage[i].assembled.pos.distanceTo(assemblage[j].assembled.pos);
+        if (dist < 5.5) {
+          const lg = new THREE.BufferGeometry();
+          const lp = new Float32Array(6);
+          lg.setAttribute('position', new THREE.BufferAttribute(lp, 3));
+          const lm = new THREE.LineBasicMaterial({ color: 0xf3f959, transparent: true, opacity: 0 });
+          const line = new THREE.Line(lg, lm);
+          line.userData = { i, j };
+          lineGroup.add(line);
+        }
+      }
+    }
+
+    /* Mouse parallax — desplaza la escena levemente con el ratón */
+    let mouseX = 0, mouseY = 0;
+    document.addEventListener('mousemove', e => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    /* ── SCROLL STATE ────────────────────────────────── */
+    let scrollProgress = 0;
+    const experience = document.getElementById('experience');
+
+    /* ── RENDER LOOP ─────────────────────────────────── */
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+
+      // Assembly progress: scroll 0–60% → eased 0–1
+      const assemblyT = Math.min(1, scrollProgress / 0.80);
+      const eased = easeOutCubic(assemblyT);
+
+      /* Isotipo — fade-in gradual desde el inicio, rotación lenta */
+      nucleoMat.opacity = Math.min(0.48, elapsed * 0.12);
+      nucleo.rotation.z += 0.0015;
+
+      /* Logos — scattered → assembled con stagger + spin 3D */
+      assemblage.forEach(({ mesh, scattered, assembled, spinSpeed }, i) => {
+        const stagger = (i / TOTAL) * 0.35;
+        const rawT = Math.max(0, Math.min(1, (eased - stagger) / (1 - stagger + 0.001)));
+        const smooth = easeInOutCubic(rawT);
+
+        mesh.position.lerpVectors(scattered.pos, assembled.pos, smooth);
+        mesh.scale.setScalar(lerp(scattered.scale, assembled.scale, smooth));
+
+        const breathe = assembled.opacity + Math.sin(elapsed * 1.1 + i * 0.65) * 0.07;
+        const op = smooth < 0.01
+          ? scattered.opacity
+          : lerp(scattered.opacity, breathe, smooth);
+        mesh.material.opacity = Math.max(0, op);
+
+        /* Rotación 3D — giro continuo sobre sus ejes, más rápido al disperso */
+        const speedMul = lerp(1.5, 1, smooth);
+        mesh.rotation.x += spinSpeed.x * speedMul;
+        mesh.rotation.y += spinSpeed.y * speedMul;
+        mesh.rotation.z += spinSpeed.z * speedMul;
+      });
+
+      /* Líneas de conexión — aparecen conforme se ensambla */
+      lineGroup.children.forEach(line => {
+        const { i, j } = line.userData;
+        const pa = assemblage[i].mesh.position;
+        const pb = assemblage[j].mesh.position;
+        const pos = line.geometry.attributes.position.array;
+        pos[0] = pa.x; pos[1] = pa.y; pos[2] = pa.z;
+        pos[3] = pb.x; pos[4] = pb.y; pos[5] = pb.z;
+        line.geometry.attributes.position.needsUpdate = true;
+        line.material.opacity = eased * 0.055;
+      });
+
+      /* Cámara — parallax scroll + mouse suave */
+      const targetCamX = mouseX * 2.0;
+      const targetCamY = -scrollProgress * 4 + mouseY * -1.5;
+      camera.position.x += (targetCamX - camera.position.x) * 0.04;
+      camera.position.y += (targetCamY - camera.position.y) * 0.04;
+      camera.lookAt(GRAVITY_CENTER.x * 0.2, 0, 0);
+
+      composer.render();
+    }
+    animate();
+
+    /* ── RESIZE ───────────────────────────────────────── */
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    /* ── PHASE SYSTEM ────────────────────────────────── */
+    const phases = document.querySelectorAll('.phase');
+    const dots   = document.querySelectorAll('.pdot');
+    const totalPhases = phases.length;
+    window.totalPhases = totalPhases;
+
+    // Weighted scroll distribution — expose globally for Three.js module — phase 3 (Plataforma) gets more, phase 4 (Precios) gets less
+    // Phases: 0=hero, 1=capabilities, 2=metrics, 3=showcase, 4=pricing, 5=cta
+    const phaseWeights = [1, 1, 1, 2.2, 0.5, 1];
+    const weightSum = phaseWeights.reduce((a, b) => a + b, 0);
+    // Build cumulative boundaries: phaseEdges[i] = start of phase i in t(0-1)
+    const phaseEdges = [0];
+    for (let i = 0; i < phaseWeights.length; i++) {
+      phaseEdges.push(phaseEdges[i] + phaseWeights[i] / weightSum);
+    }
+    function getWeightedPhase(t) {
+      for (let i = 0; i < phaseEdges.length - 1; i++) {
+        if (t < phaseEdges[i + 1]) return i;
+      }
+      return phaseEdges.length - 2;
+    }
+    function getPhaseLocalT(phaseIdx, t) {
+      const start = phaseEdges[phaseIdx];
+      const end = phaseEdges[phaseIdx + 1];
+      return Math.max(0, Math.min(1, (t - start) / (end - start)));
+    }
+
+    window.phaseEdges = phaseEdges;
+    const nav = document.getElementById('nav');
+    const progressBar = document.getElementById('progress');
+    const overlay = document.getElementById('overlay');
+    let currentPhase = -1;
+
+    function setPhase(idx) {
+      if (idx === currentPhase) return;
+      currentPhase = idx;
+      phases.forEach((ph, i) => {
+        ph.classList.remove('active', 'exiting');
+        if (i === idx)    ph.classList.add('active');
+        else if (i < idx) ph.classList.add('exiting');
+      });
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      overlay.classList.toggle('dimmed', idx > 0);
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.toggle('active', +a.dataset.phase === idx);
+      });
+    }
+
+    /* ── CARD SCROLL ANIMATION ───────────────────────── */
+    // Cada phase ocupa 1/totalPhases del rango t (0-1)
+    // phaseLocalT = progreso dentro de esa phase (0-1)
+    // threshold[i]: fracción del scroll local a la que aparece la card i
+    const cardPhaseEls = [
+      { phaseIdx: 1, cards: [...document.querySelectorAll('.phase[data-p="1"] .card-anim')], thresholds: [0.10, 0.40, 0.70] },
+      { phaseIdx: 2, cards: [...document.querySelectorAll('.phase[data-p="2"] .card-anim')], thresholds: [0.05, 0.28, 0.50, 0.72] },
+    ];
+
+    const showcaseModules = [...document.querySelectorAll('.showcase-module')];
+    const showcaseThresholds = [0.01, 0.14, 0.28, 0.42, 0.56, 0.70, 0.84];
+    const STACK_GAP   = 14;   // px between each stacked card — visible pile growth
+    const FLAT_ANGLE  = 45;   // rotateX degrees — card laid flat on "the table"
+    const CARD_ARC    = 0.15; // scroll fraction each card uses for its full arc
+
+    function easeOutCubicJS(x) { return 1 - Math.pow(1 - x, 3); }
+
+    function updateCardAnimations(t) {
+      cardPhaseEls.forEach(cp => {
+        const localT = getPhaseLocalT(cp.phaseIdx, t);
+
+        cp.cards.forEach((card, i) => {
+          const enterStart = cp.thresholds[i] ?? 0.05;
+          const enterEnd = enterStart + 0.22;
+          const cardT = Math.max(0, Math.min(1, (localT - enterStart) / (enterEnd - enterStart)));
+          const eased = easeOutCubicJS(cardT);
+          const yOffset = (1 - eased) * 100;
+          card.style.opacity = eased;
+          card.style.transform = 'translateY(' + yOffset + 'vh) scale(' + (0.92 + eased * 0.08) + ')';
+        });
+      });
+
+      // Showcase modules — deck/baraja effect in Phase 3
+      const p3T = getPhaseLocalT(3, t);
+
+      // Count how many cards have entered
+      let visibleCount = 0;
+      showcaseModules.forEach((mod, i) => {
+        if (p3T >= (showcaseThresholds[i] ?? 0.05)) visibleCount = i + 1;
+      });
+
+      showcaseModules.forEach((mod, i) => {
+        const threshold = showcaseThresholds[i] ?? 0.05;
+        const isVisible = i < visibleCount;
+        const isTop = isVisible && i === visibleCount - 1;
+        mod.classList.toggle('visible', isVisible);
+        mod.classList.toggle('top', isTop);
+
+        if (!isVisible) {
+          mod.style.transform = '';
+          mod.style.opacity = '';
+          mod.style.zIndex = '';
+          return;
+        }
+
+        // How far through THIS card's arc are we (0→1)
+        const arcT = Math.max(0, Math.min(1, (p3T - threshold) / CARD_ARC));
+
+        // Each card stacks on the pile — z-index by arrival order
+        mod.style.zIndex = i + 1;
+
+        const pileY = i * STACK_GAP;  // where this card rests in the pile
+        const startY = -250;          // start point: below (positive = down)
+        const peakY  = pileY + 120;   // peak: above the pile
+
+        if (arcT < 1) {
+          // Card is in motion — smooth arc tied to scroll
+          // 0→0.45: rise from below to peak
+          // 0.45→1: descend from peak to pile position
+          var yPos, rotX;
+          if (arcT < 0.55) {
+            var riseT = arcT / 0.55;
+            var riseEased = 1 - Math.pow(1 - riseT, 2); // ease-out
+            yPos = startY + (startY + peakY) * -riseEased;
+            // Actually: from startY(neg, below) to -peakY(above)
+            yPos = startY * (1 - riseEased) + (-peakY) * riseEased;
+            rotX = 0;
+          } else {
+            var descT = (arcT - 0.55) / 0.45;
+            var descEased = descT * descT; // ease-in: gentle start, accelerate
+            yPos = -peakY * (1 - descEased) + (-pileY) * descEased;
+            rotX = descEased * FLAT_ANGLE * 0.3; // starts tilting slightly
+          }
+          mod.style.transform = 'translateY(' + yPos + 'px) rotateX(' + rotX + 'deg)';
+          mod.style.opacity = Math.min(1, arcT * 4);
+        } else {
+          // Card has landed — flat on the pile
+          mod.style.transform = 'translateY(-' + pileY + 'px) rotateX(' + FLAT_ANGLE + 'deg)';
+          mod.style.opacity = Math.max(0.5, 1 - (visibleCount - 1 - i) * 0.10);
+        }
+      });
+    }
+
+    /* ── MOBILE HELPERS ─────────────────────────────── */
+    const isMobile = () => window.innerWidth <= 768;
+
+    // Mobile IntersectionObserver for card-anim
+    if (isMobile()) {
+      const mobObs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('mob-in');
+            mobObs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -20px 0px' });
+      document.querySelectorAll('.card-anim').forEach(c => mobObs.observe(c));
+    }
+
+    function onScroll() {
+      const scrollTop = window.scrollY;
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      progressBar.style.width = ((scrollTop / docH) * 100) + '%';
+      nav.classList.toggle('scrolled', scrollTop > 40);
+
+      if (isMobile()) return;
+
+      const sectionTop = experience.offsetTop;
+      const sectionH   = experience.offsetHeight - window.innerHeight;
+      const t = Math.max(0, Math.min(1, (scrollTop - sectionTop) / sectionH));
+      scrollProgress = t;
+      window.scrollProgress = t;
+
+      const phaseIdx = Math.min(totalPhases - 1, getWeightedPhase(t));
+      setPhase(phaseIdx);
+      updateCardAnimations(t);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    requestAnimationFrame(onScroll);
+
+    /* ── DOT CLICK ───────────────────────────────────── */
+    dots.forEach(d => {
+      d.addEventListener('click', () => {
+        const idx = parseInt(d.dataset.phase);
+        const sectionH = experience.offsetHeight - window.innerHeight;
+        const target = experience.offsetTop + phaseEdges[idx] * sectionH;
+        window.scrollTo({ top: target, behavior: 'smooth' });
+      });
+    });
+
+    /* ── NAV LINKS ───────────────────────────────────── */
+    document.querySelectorAll('[data-phase]').forEach(el => {
+      if (el.tagName === 'A') {
+        el.addEventListener('click', e => {
+          e.preventDefault();
+          const idx = parseInt(el.dataset.phase);
+          const sectionH = experience.offsetHeight - window.innerHeight;
+          const target = experience.offsetTop + phaseEdges[idx] * sectionH;
+          window.scrollTo({ top: target, behavior: 'smooth' });
+        });
+      }
+    });
+
+    /* ── CURSOR ──────────────────────────────────────── */
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+    });
+    (function cursorLoop() {
+      rx += (mx - rx) * .12; ry += (my - ry) * .12;
+      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+      requestAnimationFrame(cursorLoop);
+    })();
+
+    function bindHover(sel) {
+      document.querySelectorAll(sel).forEach(el => {
+        el.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+        el.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+      });
+    }
+    bindHover('button, a, .glass-card, .metric-card, .pricing-card, .pdot');
+
+    /* ── MAGNETIC BUTTONS ────────────────────────────── */
+    document.querySelectorAll('.btn-primary, .btn-ghost, .btn-sm, .pricing-cta').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        const dx = (e.clientX - r.left - r.width / 2) * .2;
+        const dy = (e.clientY - r.top - r.height / 2) * .2;
+        btn.style.transform = 'translate(' + dx + 'px,' + (dy - 2) + 'px)';
+      });
+      btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+    });
+
+    /* ── CARD GLOW ───────────────────────────────────── */
+    document.querySelectorAll('.glass-card, .pricing-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const x = ((e.clientX - r.left) / r.width) * 100;
+        const y = ((e.clientY - r.top) / r.height) * 100;
+        card.style.background = 'radial-gradient(circle at ' + x + '% ' + y + '%, rgba(243,249,89,.05) 0%, rgba(30,30,30,.70) 60%)';
+      });
+      card.addEventListener('mouseleave', () => { card.style.background = ''; });
+    });
+
+    /* ── PARTICLES (scroll-driven logo rain) ────────── */
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let particlesPaused = false;
+
+    document.addEventListener('visibilitychange', () => {
+      particlesPaused = document.hidden;
+      if (!particlesPaused) requestAnimationFrame(drawParts);
+    });
+
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    const LOGO_FILES = [
+      'icons/GHL.png','icons/clickup.png','icons/clientify.png',
+      'icons/googleads.png','icons/holded.png','icons/hostinger.png',
+      'icons/hubspot.png','icons/metaads.png','icons/n8n.png',
+      'icons/notion.png','icons/obsidian.png','icons/wordpres.png'
+    ];
+    const logoImgs = LOGO_FILES.map(function(src) {
+      var img = new Image(); img.src = src; return img;
+    });
+    var logosReady = false;
+    Promise.all(logoImgs.map(function(img) {
+      return img.complete ? Promise.resolve() : new Promise(function(r) { img.onload = r; img.onerror = r; });
+    })).then(function() { logosReady = true; });
+
+    /* Scroll suavizado — velocidad constante sin aceleración */
+    var rawScroll = 0, smoothScroll = 0, lastSmooth = 0;
+    window.addEventListener('scroll', function() { rawScroll = window.pageYOffset; }, { passive: true });
+
+    var parts = [];
+    var PART_COUNT = 14;
+    for (var i = 0; i < PART_COUNT; i++) {
+      parts.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 12 + 20,
+        xDrift: (Math.random() - .5) * .15,
+        rot: Math.random() * Math.PI * 2,
+        rotV: (Math.random() - .5) * .003,
+        logo: Math.floor(Math.random() * logoImgs.length),
+        speed: 0.6 + Math.random() * 0.4,
+      });
+    }
+
+    function drawParts() {
+      if (particlesPaused) return;
+      /* Lerp hacia scroll real — limita velocidad max */
+      smoothScroll += Math.max(-1.5, Math.min(1.5, (rawScroll - smoothScroll) * 0.04));
+      var delta = smoothScroll - lastSmooth;
+      lastSmooth = smoothScroll;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (logosReady) {
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i];
+          p.y -= delta * p.speed;
+          p.x += p.xDrift;
+          p.rot += p.rotV;
+
+          /* Wrap: sale por abajo → entra por arriba, y viceversa */
+          if (p.y > canvas.height + p.size) { p.y = -p.size; p.x = Math.random() * canvas.width; }
+          if (p.y < -p.size) { p.y = canvas.height + p.size; p.x = Math.random() * canvas.width; }
+          if (p.x > canvas.width + p.size) p.x = -p.size;
+          if (p.x < -p.size) p.x = canvas.width + p.size;
+
+          var img = logoImgs[p.logo];
+          if (img.naturalWidth > 0) {
+            ctx.save();
+            ctx.globalAlpha = .25;
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.drawImage(img, -p.size / 2, -p.size / 2, p.size, p.size);
+            ctx.restore();
+          }
+        }
+      }
+      requestAnimationFrame(drawParts);
+    }
+    drawParts();
+  </script>
+
+  <!-- ── THREE.JS LAPTOP 3D ──────────────────────────── -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ── SETUP ────────────────────────────────────────────
+    const canvas3d = document.getElementById('laptop3d');
+    const wrapper  = canvas3d.closest('.laptop-wrapper');
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(40, 16 / 10, 0.1, 100);
+    camera.position.set(0, 0.6, 3.5);
+    camera.lookAt(0, 0, 0);
+
+    // ── LIGHTS ───────────────────────────────────────────
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    dirLight.position.set(3, 5, 4);
+    scene.add(dirLight);
+    const rimLight = new THREE.DirectionalLight(0xC7B299, 0.5);
+    rimLight.position.set(-3, 2, -3);
+    scene.add(rimLight);
+
+    // ── VIDEO TEXTURE ────────────────────────────────────
+    const dashVideo = document.getElementById('dashVideo');
+    const videoTexture = new THREE.VideoTexture(dashVideo);
+    videoTexture.colorSpace = THREE.SRGBColorSpace;
+    // UVs del modelo: (0.2693,0.2296) → (0.7128,0.8107)
+    // Remap para que el video completo llene esa región
+    videoTexture.repeat.set(1 / 0.4435, 1 / 0.5811);   // 2.2548, 1.7209
+    videoTexture.offset.set(-0.2693 * videoTexture.repeat.x, -0.2296 * videoTexture.repeat.y);
+    const screenMat = new THREE.MeshBasicMaterial({ map: videoTexture });
+
+    // ── MODEL ────────────────────────────────────────────
+    let laptopGroup = null;
+
+    const loader = new GLTFLoader();
+    loader.load('macbook_laptop.glb', gltf => {
+      laptopGroup = gltf.scene;
+      scene.add(laptopGroup);
+
+      // Scale and center the whole model
+      const bbox = new THREE.Box3().setFromObject(laptopGroup);
+      const center = bbox.getCenter(new THREE.Vector3());
+      const size   = bbox.getSize(new THREE.Vector3());
+      const scale  = 2.6 / Math.max(size.x, size.y, size.z);
+      laptopGroup.scale.setScalar(scale);
+      laptopGroup.position.sub(center.multiplyScalar(scale));
+
+      // Slight downward offset so model sits centered in canvas
+      laptopGroup.position.y -= 0.2;
+
+      // Ensure world matrices are fresh after transform
+      scene.updateMatrixWorld(true);
+
+      // Apply VideoTexture to screen mesh (4-vert quad = pantalla)
+      const screenMesh = laptopGroup.getObjectByName('Cube_Material003_0');
+      if (screenMesh) screenMesh.material = screenMat;
+
+      // Start video playback
+      dashVideo.play().catch(() => {});
+    });
+
+    // ── RESIZE ───────────────────────────────────────────
+    function resize() {
+      const w = wrapper.clientWidth;
+      const h = Math.round(w * (10 / 16));
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ── ORBIT CONTROLS (click+drag to rotate 360) ─────────
+    const controls = new OrbitControls(camera, canvas3d);
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.rotateSpeed = 0.6;
+    controls.minPolarAngle = Math.PI * 0.2;
+    controls.maxPolarAngle = Math.PI * 0.8;
+
+    // ── HELPERS ──────────────────────────────────────────
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    function getPhase3LocalT() {
+      const sp = window.scrollProgress || 0;
+      const edges = window.phaseEdges;
+      if (edges) {
+        return Math.max(0, Math.min(1, (sp - edges[3]) / (edges[4] - edges[3])));
+      }
+      const tp = window.totalPhases || 6;
+      return Math.max(0, Math.min(1, (sp - 3 / tp) / (1 / tp)));
+    }
+
+    // ── INTERSECTION OBSERVER (pause render when off-screen) ─
+    let isVisible = false;
+    const phaseEl = document.querySelector('.phase-showcase');
+    if (phaseEl) {
+      new IntersectionObserver(entries => {
+        isVisible = entries[0].isIntersecting;
+        if (isVisible && dashVideo.paused) dashVideo.play().catch(() => {});
+      }, { threshold: 0.01 }).observe(phaseEl);
+    }
+
+    // ── RENDER LOOP ──────────────────────────────────────
+    function animate() {
+      requestAnimationFrame(animate);
+      if (!laptopGroup) return;
+
+      controls.update();
+
+      if (!isVisible) return;
+      videoTexture.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
