@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TheNucleo — Recupera el control de tu agencia</title>
+  <title>TheNucleo — Portal de gestión para agencias de marketing</title>
   <meta name="description" content="El portal de gesti&oacute;n que centraliza tareas, clientes, equipo y finanzas de tu agencia de marketing. IA integrada, automatizaciones reales, un solo panel." />
 
   <!-- Canonical -->
@@ -14,9 +14,11 @@
   <link rel="apple-touch-icon" href="/Media/Logo_the_nucleo_circulo.png" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="TheNucleo — Recupera el control de tu agencia" />
+  <meta property="og:title" content="TheNucleo — Portal de gestión para agencias de marketing" />
   <meta property="og:description" content="El portal de gesti&oacute;n que centraliza tareas, clientes, equipo y finanzas de tu agencia de marketing. IA integrada, automatizaciones reales, un solo panel." />
-  <meta property="og:image" content="https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png" />
+  <meta property="og:image" content="https://work.thenucleo.com/Media/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:url" content="https://work.thenucleo.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="es_ES" />
@@ -24,9 +26,9 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="TheNucleo — Recupera el control de tu agencia" />
+  <meta name="twitter:title" content="TheNucleo — Portal de gestión para agencias de marketing" />
   <meta name="twitter:description" content="Portal de gesti&oacute;n que centraliza tareas, clientes, equipo y finanzas de tu agencia de marketing." />
-  <meta name="twitter:image" content="https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png" />
+  <meta name="twitter:image" content="https://work.thenucleo.com/Media/og-image.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -273,10 +275,16 @@
     .hero-title em { font-style: normal; color: var(--yellow); text-shadow: 0 0 40px rgba(23,23,23,1), 0 2px 16px rgba(23,23,23,.95); }
     .glow-yellow { text-shadow: 0 0 40px rgba(23,23,23,1), 0 2px 16px rgba(23,23,23,.95), 0 0 60px rgba(243,249,89,.08); }
 
+    .hero-kicker {
+      font-size: clamp(15px, 1.8vw, 18px); font-weight: 500;
+      color: var(--accent); letter-spacing: .02em;
+      margin: 12px auto 0; max-width: 560px;
+      opacity: 0; animation: fadeUp .8s .6s ease forwards;
+    }
     .hero-sub {
       font-size: clamp(16px, 2vw, 20px); font-weight: 400;
       color: var(--subtle); max-width: 560px; line-height: 1.6;
-      margin: 0 auto 48px;
+      margin: 16px auto 48px;
       opacity: 0; animation: fadeUp .8s .7s ease forwards;
     }
 
@@ -802,6 +810,9 @@
     .f-logotipo { height: 18px; width: auto; opacity: .7; }
     .f-copy { font-size: 13px; color: var(--muted); }
     .f-mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .f-links { display: flex; gap: 24px; justify-content: center; margin-top: 12px; }
+    .f-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color .2s; }
+    .f-links a:hover { color: var(--text); }
 
     /* ── CARD ENTER ANIMATIONS — scroll-driven via JS ── */
     .card-anim {
@@ -858,16 +869,21 @@
         transform: none !important;
         pointer-events: auto !important;
         min-height: auto;
-        padding: 40px 20px 24px;
+        /* 96px top clears fixed nav (~70px) + breathing room */
+        padding: 96px 20px 60px;
         display: flex;
       }
+      /* Hero: vertically centered, offset for fixed nav */
       .phase[data-p="0"] {
         min-height: 100svh;
         align-items: center;
-        padding: 0 20px;
+        padding: 80px 20px 40px;
       }
       /* Tighter gap in mobile sections */
       .phase-capabilities, .phase-metrics { gap: 28px; }
+
+      /* Hero & CTA buttons: stack vertically on 601–768px range */
+      .hero-btns, .cta-btns { flex-direction: column; align-items: stretch; }
 
       /* card-anim: start hidden, IntersectionObserver adds .mob-in */
       .card-anim {
@@ -905,6 +921,21 @@
         margin-bottom: 12px;
       }
 
+      /* CTA box: tighter horizontal padding on mobile */
+      .cta-box { padding: 48px 20px; }
+
+      /* Scroll hint: raise slightly for safe-area */
+      .scroll-hint { bottom: 24px; }
+
+      /* Footer: stack vertically */
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 24px 20px;
+        max-width: 100%;
+      }
+
       /* Hide dot nav */
       .phase-dots { display: none; }
     }
@@ -917,6 +948,70 @@
       .glass-card:hover, .metric-card:hover, .pricing-card:hover { transform: none; }
     }
   </style>
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "TheNucleo",
+        "description": "Portal de gestión que centraliza tareas, clientes, equipo y finanzas de agencias de marketing.",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://work.thenucleo.com/",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Plan Mensual",
+            "price": "79",
+            "priceCurrency": "EUR",
+            "description": "Facturación mensual"
+          },
+          {
+            "@type": "Offer",
+            "name": "Plan Trimestral",
+            "price": "205",
+            "priceCurrency": "EUR",
+            "description": "Facturación trimestral"
+          },
+          {
+            "@type": "Offer",
+            "name": "Plan Anual",
+            "price": "700",
+            "priceCurrency": "EUR",
+            "description": "Facturación anual"
+          }
+        ],
+        "featureList": [
+          "Dashboard KPIs",
+          "Automatizaciones ilimitadas",
+          "IA integrada (Cerebro)",
+          "Integraciones con Holded, Clockify, Notion",
+          "Ops Monitor",
+          "WhatsApp Register"
+        ]
+      },
+      {
+        "@type": "Organization",
+        "name": "TheNucleo",
+        "url": "https://work.thenucleo.com/",
+        "logo": "https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "hola@thenucleo.com",
+          "contactType": "customer service"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "url": "https://work.thenucleo.com/",
+        "name": "TheNucleo",
+        "inLanguage": "es-ES"
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -960,7 +1055,7 @@
       <a href="#" data-phase="3">Plataforma</a>
       <a href="#" data-phase="4">Precios</a>
     </div>
-    <a href="https://portal.thenucleo.com/" target="_blank" class="btn-sm" style="text-decoration:none;">Acceder &rarr;</a>
+    <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm" style="text-decoration:none;">Acceder &rarr;</a>
   </nav>
 
   <!-- Scene overlay -->
@@ -990,6 +1085,7 @@
         <div class="hero-inner">
           <div class="badge"><span class="badge-dot"></span> Portal de Gesti&oacute;n para Agencias &middot; v3.0</div>
           <h1 class="hero-title glow-yellow">Recupera el<br/><em>control.</em></h1>
+          <p class="hero-kicker">El portal de gesti&oacute;n que centraliza tu agencia de marketing</p>
           <p class="hero-sub">Tareas que se pierden, clientes que se enfadan, equipos que no sabes si est&aacute;n al l&iacute;mite. Ya basta. Un solo panel, toda tu agencia bajo control.</p>
           <div class="hero-btns">
             <button class="btn-primary">Empezar ahora</button>
@@ -1222,6 +1318,11 @@
     </div>
     <div class="f-copy">portal.thenucleo.com &middot; El sistema operativo de tu agencia</div>
     <div class="f-mono">v3.0 &middot; 2026</div>
+    <div class="f-links">
+      <a href="mailto:hola@thenucleo.com">hola@thenucleo.com</a>
+      <a href="/privacidad">Privacidad</a>
+      <a href="/aviso-legal">Aviso legal</a>
+    </div>
   </footer>
 
   <!-- ═══════════════════════════════════════════════ -->
