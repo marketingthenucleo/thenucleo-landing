@@ -185,13 +185,13 @@
       position: fixed; inset: 0; z-index: 1;
       /* Centro transparente para no velar el texto, bordes oscuros para atenuar el 3D */
       background:
-        radial-gradient(ellipse 55% 55% at 50% 50%, transparent 0%, rgba(23,23,23,.65) 100%);
+        radial-gradient(ellipse 60% 60% at 50% 50%, transparent 0%, rgba(23,23,23,.50) 100%);
       pointer-events: none;
       transition: background .6s ease;
     }
     .scene-overlay.dimmed {
       background:
-        radial-gradient(ellipse 55% 55% at 50% 50%, transparent 0%, rgba(23,23,23,.75) 100%);
+        radial-gradient(ellipse 60% 60% at 50% 50%, transparent 0%, rgba(23,23,23,.60) 100%);
     }
 
     /* ── PARTICLES ──────────────────────────────────── */
@@ -241,7 +241,7 @@
     .phase[data-p="5"]::before {
       content: '';
       position: absolute; inset: 0;
-      background: rgba(23,23,23,.30);
+      background: rgba(23,23,23,.18);
       z-index: -1;
     }
 
@@ -269,11 +269,11 @@
       letter-spacing: -.04em;
       margin-bottom: 28px;
       color: var(--text-bright);
-      text-shadow: 0 2px 24px rgba(0,0,0,.6);
+      text-shadow: 0 2px 32px rgba(0,0,0,.35);
       opacity: 0; animation: fadeUp .8s .5s ease forwards;
     }
-    .hero-title em { font-style: normal; color: var(--yellow); text-shadow: 0 0 40px rgba(23,23,23,1), 0 2px 16px rgba(23,23,23,.95); }
-    .glow-yellow { text-shadow: 0 0 40px rgba(23,23,23,1), 0 2px 16px rgba(23,23,23,.95), 0 0 60px rgba(243,249,89,.08); }
+    .hero-title em { font-style: normal; color: var(--yellow); text-shadow: 0 0 48px rgba(243,249,89,.15), 0 2px 16px rgba(0,0,0,.3); }
+    .glow-yellow { text-shadow: 0 0 48px rgba(243,249,89,.15), 0 2px 16px rgba(0,0,0,.3), 0 0 80px rgba(243,249,89,.06); }
 
     .hero-kicker {
       font-size: clamp(15px, 1.8vw, 18px); font-weight: 500;
@@ -323,7 +323,7 @@
       font-size: 11px; font-weight: 600; letter-spacing: .12em;
       text-transform: uppercase; color: var(--yellow);
       margin-bottom: 16px;
-      text-shadow: 0 0 20px rgba(23,23,23,1), 0 1px 8px rgba(23,23,23,.9);
+      text-shadow: 0 0 24px rgba(0,0,0,.25);
     }
     .section-label::before { content: ''; width: 20px; height: 1px; background: var(--yellow); }
     .section-title {
@@ -331,9 +331,9 @@
       font-size: clamp(28px, 4.5vw, 52px); font-weight: 700;
       line-height: 1.08; letter-spacing: -.03em; margin-bottom: 14px;
       color: var(--text-bright);
-      text-shadow: 0 2px 20px rgba(0,0,0,.5);
+      text-shadow: 0 2px 24px rgba(0,0,0,.3);
     }
-    .section-title em { font-style: normal; color: var(--yellow); text-shadow: 0 0 32px rgba(23,23,23,1), 0 2px 12px rgba(23,23,23,.95); }
+    .section-title em { font-style: normal; color: var(--yellow); text-shadow: 0 0 40px rgba(243,249,89,.12), 0 2px 12px rgba(0,0,0,.25); }
     .section-desc { font-size: 16px; color: var(--subtle); line-height: 1.6; }
 
     /* ── GLASS CARD (base) ─────────────────────────── */
@@ -922,15 +922,22 @@
         width: 100%;
       }
 
-      /* Showcase modules: 2-column compact grid */
+      /* Showcase modules: horizontal swipe carousel */
       .showcase-modules {
         height: auto;
         min-height: 0;
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        padding: 0 20px;
+        display: flex !important;
+        gap: 14px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 20px 16px;
+        scrollbar-width: none;
+        /* Peek: show partial next card */
+        scroll-padding: 0 20px;
       }
+      .showcase-modules::-webkit-scrollbar { display: none; }
 
       .showcase-module {
         position: relative !important;
@@ -938,26 +945,20 @@
         transform: none !important;
         pointer-events: auto !important;
         margin-bottom: 0;
-        padding: 14px 16px 12px;
-        border-radius: 12px;
+        /* Each card = viewport width minus peek space */
+        flex: 0 0 calc(100vw - 80px);
+        max-width: 320px;
+        scroll-snap-align: center;
+        padding: 24px 24px 20px;
+        border-radius: 14px;
       }
       .showcase-module-name {
-        font-size: 9px;
-        margin-bottom: 4px;
-        letter-spacing: .08em;
+        font-size: 11px;
+        margin-bottom: 8px;
       }
-      .showcase-module-name::before { width: 10px; }
       .showcase-module-desc {
-        font-size: 11.5px;
-        line-height: 1.45;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-      /* Last item spans full width if odd count */
-      .showcase-module:last-child:nth-child(odd) {
-        grid-column: 1 / -1;
+        font-size: 14px;
+        line-height: 1.5;
       }
 
       /* CTA box: tighter horizontal padding on mobile */
