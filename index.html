@@ -206,6 +206,7 @@
       position: sticky; top: 0;
       height: 100vh; width: 100%;
       overflow: hidden;
+      z-index: 2;
     }
 
     /* ── PHASE LAYERS ──────────────────────────────── */
@@ -798,21 +799,172 @@
       box-shadow: 0 0 12px var(--yellow-glow);
     }
 
+    /* ── HERO LOGO MARQUEE ─────────────────────────── */
+    .hero-marquee {
+      position: absolute; bottom: 110px; left: 0;
+      width: 100vw; overflow: hidden;
+      opacity: 0; animation: fadeUp .8s 1.1s ease forwards;
+    }
+    .hero-marquee-label {
+      text-align: center; margin-bottom: 16px;
+      font-size: 11px; font-weight: 500; color: var(--muted);
+      letter-spacing: .1em; text-transform: uppercase;
+    }
+    .marquee-track-wrap {
+      position: relative; overflow: hidden;
+    }
+    .marquee-track {
+      display: flex; gap: 40px;
+      width: max-content;
+      animation: marqueeScroll 20s linear infinite;
+    }
+    @keyframes marqueeScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-33.333%); }
+    }
+    .marquee-item {
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; width: 48px; height: 32px;
+      filter: grayscale(100%); opacity: .35;
+      transition: filter .4s cubic-bezier(.4,0,.2,1), opacity .4s, transform .4s;
+    }
+    .marquee-item:hover {
+      filter: grayscale(0%); opacity: .9; transform: scale(1.1);
+    }
+    .marquee-item img, .marquee-item svg {
+      max-height: 28px; max-width: 40px; width: auto; height: auto;
+      object-fit: contain;
+    }
+    .marquee-fade-l, .marquee-fade-r {
+      position: absolute; top: 0; bottom: 0; width: 120px;
+      pointer-events: none; z-index: 2;
+    }
+    .marquee-fade-l { left: 0; background: linear-gradient(to right, rgba(23,23,23,.95), transparent); }
+    .marquee-fade-r { right: 0; background: linear-gradient(to left, rgba(23,23,23,.95), transparent); }
+
+    /* ── FAQ ────────────────────────────────────────── */
+    .faq-section {
+      position: relative; z-index: 10;
+      padding: 80px 48px;
+    }
+    .faq-heading {
+      text-align: center; margin-bottom: 48px;
+    }
+    .faq-heading .section-label { justify-content: center; }
+    .faq-heading h2 {
+      font-family: var(--display);
+      font-size: clamp(24px, 3.5vw, 40px); font-weight: 700;
+      line-height: 1.1; letter-spacing: -.03em;
+      color: var(--text-bright); margin-bottom: 12px;
+    }
+    .faq-heading h2 em { font-style: normal; color: var(--yellow); }
+    .faq-heading p { font-size: 16px; color: var(--subtle); line-height: 1.6; }
+    .faq-list {
+      max-width: 720px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .faq-item {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: border-color .3s;
+    }
+    .faq-item.open { border-color: rgba(243,249,89,.25); }
+    .faq-q {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; cursor: pointer;
+      font-size: 15px; font-weight: 600; color: var(--text-bright);
+      user-select: none;
+    }
+    .faq-q:hover { color: var(--yellow); }
+    .faq-icon {
+      width: 24px; height: 24px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; background: var(--yellow-dim);
+      transition: transform .3s cubic-bezier(.16,1,.3,1), background .3s;
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); background: rgba(243,249,89,.20); }
+    .faq-icon svg { width: 14px; height: 14px; }
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height .4s cubic-bezier(.16,1,.3,1), padding .3s;
+    }
+    .faq-item.open .faq-a { max-height: 300px; }
+    .faq-a-inner {
+      padding: 0 24px 20px;
+      font-size: 14px; color: var(--subtle); line-height: 1.7;
+    }
+
     /* ── FOOTER ─────────────────────────────────────── */
     footer {
       position: relative; z-index: 10;
-      border-top: 1px solid var(--border);
-      padding: 32px 48px;
-      max-width: 1200px; margin: 0 auto;
-      display: flex; align-items: center; justify-content: space-between;
       background: var(--bg);
+      width: 100%;
+      border-top: 1px solid var(--border);
     }
-    .f-logotipo { height: 18px; width: auto; opacity: .7; }
-    .f-copy { font-size: 13px; color: var(--muted); }
-    .f-mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-    .f-links { display: flex; gap: 24px; justify-content: center; margin-top: 12px; }
-    .f-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color .2s; }
-    .f-links a:hover { color: var(--text); }
+    .f-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 56px 48px 40px;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .f-brand { display: flex; flex-direction: column; gap: 16px; max-width: 320px; }
+    .f-logotipo { height: 22px; width: auto; opacity: .85; }
+    .f-tagline {
+      font-size: 14px; color: var(--subtle); line-height: 1.6;
+    }
+    .f-social {
+      display: flex; gap: 12px; margin-top: 4px;
+    }
+    .f-social a {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .3s, background .3s, transform .3s;
+    }
+    .f-social a:hover {
+      border-color: rgba(243,249,89,.3);
+      background: var(--yellow-dim);
+      transform: translateY(-2px);
+    }
+    .f-social a svg { width: 16px; height: 16px; fill: var(--muted); transition: fill .3s; }
+    .f-social a:hover svg { fill: var(--yellow); }
+    .f-cols { display: flex; gap: 64px; }
+    .f-col h4 {
+      font-size: 11px; font-weight: 600; color: var(--yellow);
+      letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .f-col a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 4px 0;
+      transition: color .2s, padding-left .2s;
+    }
+    .f-col a:hover { color: var(--text-bright); padding-left: 4px; }
+    .f-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+      max-width: 1200px; margin: 0 auto;
+      border-top: 1px solid rgba(255,255,255,.04);
+    }
+    .f-copy { font-size: 12px; color: var(--muted); }
+    .f-mono {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--muted); opacity: .6;
+      letter-spacing: .04em;
+    }
+    .f-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--green);
+      font-family: var(--mono);
+    }
+    .f-status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
 
     /* ── CARD ENTER ANIMATIONS — scroll-driven via JS ── */
     .card-anim {
@@ -848,6 +1000,11 @@
       .laptop-wrapper { width: 100%; max-width: 340px; margin: 0 auto; }
       .showcase-modules { width: 100%; padding-right: 0; height: auto; order: 1; perspective: none; }
       .dash-kpis { grid-template-columns: repeat(2, 1fr); }
+      .faq-section { padding: 60px 20px; }
+      .hero-marquee { bottom: 90px; }
+      .marquee-track { gap: 32px; }
+      .marquee-item { width: 36px; height: 24px; }
+      .marquee-item img, .marquee-item svg { max-height: 22px; max-width: 32px; }
     }
     @media (max-width: 600px) {
       .cap-grid { grid-template-columns: 1fr; }
@@ -855,6 +1012,7 @@
       .hero-btns { flex-direction: column; align-items: stretch; }
       .cta-btns { flex-direction: column; align-items: stretch; }
       .dash-panels { grid-template-columns: 1fr; }
+      .f-cols { flex-direction: column; gap: 28px; }
     }
     /* ── MOBILE: disable sticky phase system (≤768px) ── */
     @media (max-width: 768px) {
@@ -967,14 +1125,25 @@
       /* Scroll hint: raise slightly for safe-area */
       .scroll-hint { bottom: 24px; }
 
-      /* Footer: stack vertically */
-      footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 24px 20px;
-        max-width: 100%;
+      /* Hero marquee: relative flow on mobile */
+      .hero-marquee {
+        position: relative !important;
+        bottom: auto !important;
+        margin-top: 32px;
+        opacity: 1 !important;
+        animation: none !important;
       }
+
+      /* FAQ: tighter padding */
+      .faq-section { padding: 60px 20px !important; }
+      .faq-q { padding: 16px 18px; font-size: 14px; }
+      .faq-a-inner { padding: 0 18px 16px; font-size: 13px; }
+
+      /* Footer: stack vertically */
+      .f-top { flex-direction: column; gap: 32px; padding: 40px 20px 32px; }
+      .f-brand { max-width: 100%; }
+      .f-cols { gap: 40px; }
+      .f-bottom { flex-direction: column; gap: 12px; align-items: flex-start; padding: 16px 20px; }
 
       /* Hide dot nav */
       .phase-dots { display: none; }
@@ -1130,6 +1299,53 @@
           <div class="hero-btns">
             <button class="btn-primary">Empezar ahora</button>
             <button class="btn-ghost">Ver c&oacute;mo funciona &rarr;</button>
+          </div>
+        </div>
+        <div class="hero-marquee">
+          <div class="hero-marquee-label">Se integra con lo que ya usas</div>
+          <div class="marquee-track-wrap">
+            <div class="marquee-fade-l"></div>
+            <div class="marquee-fade-r"></div>
+            <div class="marquee-track">
+              <div class="marquee-item" title="Notion"><img src="icons/notion.png" alt="Notion"/></div>
+              <div class="marquee-item" title="Clockify"><img src="icons/clockify.png" alt="Clockify"/></div>
+              <div class="marquee-item" title="Holded"><img src="icons/holded.png" alt="Holded"/></div>
+              <div class="marquee-item" title="Meta Ads"><img src="icons/metaads.png" alt="Meta Ads"/></div>
+              <div class="marquee-item" title="Google Ads"><img src="icons/googleads.png" alt="Google Ads"/></div>
+              <div class="marquee-item" title="WhatsApp">
+                <svg width="28" height="28" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M20 4C11.16 4 4 11.16 4 20c0 2.82.74 5.48 2.04 7.78L4 36l8.42-2.02A15.89 15.89 0 0020 36c8.84 0 16-7.16 16-16S28.84 4 20 4z" fill="#25D366"/><path d="M28.3 24.13c-.38-.19-2.25-1.11-2.6-1.24-.35-.12-.6-.19-.86.19-.25.38-.98 1.24-1.2 1.49-.22.25-.44.28-.82.1-.38-.2-1.6-.59-3.05-1.89-1.13-1.01-1.89-2.25-2.11-2.63-.22-.38-.02-.59.17-.78.17-.17.38-.44.57-.66.19-.22.25-.38.38-.63.13-.25.06-.47-.03-.66-.1-.19-.86-2.07-1.17-2.83-.31-.74-.63-.64-.86-.65h-.74c-.25 0-.66.1-1.01.47-.35.38-1.33 1.3-1.33 3.17 0 1.87 1.36 3.68 1.55 3.93.19.25 2.68 4.1 6.5 5.74.91.39 1.62.63 2.17.8.91.29 1.74.25 2.4.15.73-.11 2.25-.92 2.57-1.81.32-.88.32-1.64.22-1.8-.1-.16-.35-.25-.73-.44z" fill="white"/></svg>
+              </div>
+              <div class="marquee-item" title="Google Drive">
+                <svg width="28" height="28" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="M6.6 66.85L29.1 27.8l20.5 35.5H6.6z" fill="#0066DA"/><path d="M29.1 27.8L56.7 78H13.5L6.6 66.85z" fill="#00AC47"/><path d="M49.6 63.3l20.5-35.5 13.7 23.7H49.6z" fill="#EA4335"/><path d="M57.7 0L29.1 27.8l20.5 35.5L80.8 27.8z" fill="#00832D"/><path d="M29.1 27.8L57.7 0l22.6 27.8z" fill="#2684FC"/><path d="M49.6 63.3L80.8 27.8 83.8 56z" fill="#FFBA00"/></svg>
+              </div>
+              <div class="marquee-item" title="n8n"><img src="icons/n8n.png" alt="n8n"/></div>
+              <!-- Duplicate for seamless loop -->
+              <div class="marquee-item" title="Notion"><img src="icons/notion.png" alt="Notion"/></div>
+              <div class="marquee-item" title="Clockify"><img src="icons/clockify.png" alt="Clockify"/></div>
+              <div class="marquee-item" title="Holded"><img src="icons/holded.png" alt="Holded"/></div>
+              <div class="marquee-item" title="Meta Ads"><img src="icons/metaads.png" alt="Meta Ads"/></div>
+              <div class="marquee-item" title="Google Ads"><img src="icons/googleads.png" alt="Google Ads"/></div>
+              <div class="marquee-item" title="WhatsApp">
+                <svg width="28" height="28" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M20 4C11.16 4 4 11.16 4 20c0 2.82.74 5.48 2.04 7.78L4 36l8.42-2.02A15.89 15.89 0 0020 36c8.84 0 16-7.16 16-16S28.84 4 20 4z" fill="#25D366"/><path d="M28.3 24.13c-.38-.19-2.25-1.11-2.6-1.24-.35-.12-.6-.19-.86.19-.25.38-.98 1.24-1.2 1.49-.22.25-.44.28-.82.1-.38-.2-1.6-.59-3.05-1.89-1.13-1.01-1.89-2.25-2.11-2.63-.22-.38-.02-.59.17-.78.17-.17.38-.44.57-.66.19-.22.25-.38.38-.63.13-.25.06-.47-.03-.66-.1-.19-.86-2.07-1.17-2.83-.31-.74-.63-.64-.86-.65h-.74c-.25 0-.66.1-1.01.47-.35.38-1.33 1.3-1.33 3.17 0 1.87 1.36 3.68 1.55 3.93.19.25 2.68 4.1 6.5 5.74.91.39 1.62.63 2.17.8.91.29 1.74.25 2.4.15.73-.11 2.25-.92 2.57-1.81.32-.88.32-1.64.22-1.8-.1-.16-.35-.25-.73-.44z" fill="white"/></svg>
+              </div>
+              <div class="marquee-item" title="Google Drive">
+                <svg width="28" height="28" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="M6.6 66.85L29.1 27.8l20.5 35.5H6.6z" fill="#0066DA"/><path d="M29.1 27.8L56.7 78H13.5L6.6 66.85z" fill="#00AC47"/><path d="M49.6 63.3l20.5-35.5 13.7 23.7H49.6z" fill="#EA4335"/><path d="M57.7 0L29.1 27.8l20.5 35.5L80.8 27.8z" fill="#00832D"/><path d="M29.1 27.8L57.7 0l22.6 27.8z" fill="#2684FC"/><path d="M49.6 63.3L80.8 27.8 83.8 56z" fill="#FFBA00"/></svg>
+              </div>
+              <div class="marquee-item" title="n8n"><img src="icons/n8n.png" alt="n8n"/></div>
+              <!-- Third set -->
+              <div class="marquee-item" title="Notion"><img src="icons/notion.png" alt="Notion"/></div>
+              <div class="marquee-item" title="Clockify"><img src="icons/clockify.png" alt="Clockify"/></div>
+              <div class="marquee-item" title="Holded"><img src="icons/holded.png" alt="Holded"/></div>
+              <div class="marquee-item" title="Meta Ads"><img src="icons/metaads.png" alt="Meta Ads"/></div>
+              <div class="marquee-item" title="Google Ads"><img src="icons/googleads.png" alt="Google Ads"/></div>
+              <div class="marquee-item" title="WhatsApp">
+                <svg width="28" height="28" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M20 4C11.16 4 4 11.16 4 20c0 2.82.74 5.48 2.04 7.78L4 36l8.42-2.02A15.89 15.89 0 0020 36c8.84 0 16-7.16 16-16S28.84 4 20 4z" fill="#25D366"/><path d="M28.3 24.13c-.38-.19-2.25-1.11-2.6-1.24-.35-.12-.6-.19-.86.19-.25.38-.98 1.24-1.2 1.49-.22.25-.44.28-.82.1-.38-.2-1.6-.59-3.05-1.89-1.13-1.01-1.89-2.25-2.11-2.63-.22-.38-.02-.59.17-.78.17-.17.38-.44.57-.66.19-.22.25-.38.38-.63.13-.25.06-.47-.03-.66-.1-.19-.86-2.07-1.17-2.83-.31-.74-.63-.64-.86-.65h-.74c-.25 0-.66.1-1.01.47-.35.38-1.33 1.3-1.33 3.17 0 1.87 1.36 3.68 1.55 3.93.19.25 2.68 4.1 6.5 5.74.91.39 1.62.63 2.17.8.91.29 1.74.25 2.4.15.73-.11 2.25-.92 2.57-1.81.32-.88.32-1.64.22-1.8-.1-.16-.35-.25-.73-.44z" fill="white"/></svg>
+              </div>
+              <div class="marquee-item" title="Google Drive">
+                <svg width="28" height="28" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="M6.6 66.85L29.1 27.8l20.5 35.5H6.6z" fill="#0066DA"/><path d="M29.1 27.8L56.7 78H13.5L6.6 66.85z" fill="#00AC47"/><path d="M49.6 63.3l20.5-35.5 13.7 23.7H49.6z" fill="#EA4335"/><path d="M57.7 0L29.1 27.8l20.5 35.5L80.8 27.8z" fill="#00832D"/><path d="M29.1 27.8L57.7 0l22.6 27.8z" fill="#2684FC"/><path d="M49.6 63.3L80.8 27.8 83.8 56z" fill="#FFBA00"/></svg>
+              </div>
+              <div class="marquee-item" title="n8n"><img src="icons/n8n.png" alt="n8n"/></div>
+            </div>
           </div>
         </div>
         <div class="scroll-hint"><span>scroll</span><div class="scroll-line"></div></div>
@@ -1340,28 +1556,111 @@
     </div>
   </div>
 
+  <!-- FAQ -->
+  <section class="faq-section">
+    <div class="faq-heading">
+      <div class="section-label">Preguntas frecuentes</div>
+      <h2>Todo lo que necesitas <em>saber.</em></h2>
+      <p>Antes de empezar, esto es lo que m&aacute;s nos preguntan.</p>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">
+          <span>&iquest;Cu&aacute;nto tardo en estar operativo?</span>
+          <div class="faq-icon"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="faq-a"><div class="faq-a-inner">El onboarding b&aacute;sico toma menos de 48 horas. Conectamos tus herramientas existentes (Notion, Clockify, Holded...) y configuramos los flujos. Tu equipo no necesita aprender nada nuevo &mdash; el portal se adapta a vuestro proceso.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span>&iquest;Mis datos est&aacute;n seguros?</span>
+          <div class="faq-icon"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="faq-a"><div class="faq-a-inner">S&iacute;. Usamos Supabase (infraestructura en la UE) con cifrado en tr&aacute;nsito y en reposo. Los datos de cada agencia est&aacute;n aislados. No compartimos ni vendemos informaci&oacute;n a terceros. Cumplimos con RGPD.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span>&iquest;Puedo cancelar cuando quiera?</span>
+          <div class="faq-icon"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="faq-a"><div class="faq-a-inner">Sin permanencia en el plan mensual. Cancelas desde tu cuenta y mantienes acceso hasta fin del periodo facturado. Tus datos se exportan en formato est&aacute;ndar si lo necesitas.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span>&iquest;Qu&eacute; integraciones incluye?</span>
+          <div class="faq-icon"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="faq-a"><div class="faq-a-inner">Notion (master de tareas), Clockify (control de tiempo), Holded (facturaci&oacute;n), Meta Ads, Google Ads, Google Drive, WhatsApp y m&aacute;s. Todas incluidas desde el d&iacute;a uno, sin costes extra. Nuevas integraciones se a&ntilde;aden constantemente.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span>&iquest;C&oacute;mo funciona la IA?</span>
+          <div class="faq-icon"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="faq-a"><div class="faq-a-inner">Usamos Claude (Anthropic) con RAG sobre tus datos reales. El asistente conoce tus clientes, tareas, equipo y m&eacute;tricas. Puedes preguntarle por el estado de un cliente, pedirle borradores de newsletter o crear tareas por chat. No es un chatbot gen&eacute;rico &mdash; es tu cerebro de agencia.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span>&iquest;C&oacute;mo contacto con soporte?</span>
+          <div class="faq-icon"><svg viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="faq-a"><div class="faq-a-inner">Email para todos los planes. Los planes Trimestral y Anual tienen soporte prioritario y WhatsApp directo. El plan Anual incluye adem&aacute;s una sesi&oacute;n estrat&eacute;gica cada trimestre.</div></div>
+      </div>
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer>
-    <div>
-      <svg class="f-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
-        <style>.ft0{fill:#e6e6e6}</style>
-        <g>
-          <path class="ft0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
-          <path class="ft0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
-          <path class="ft0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
-          <path class="ft0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
-          <path class="ft0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
-          <path class="ft0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
-          <path class="ft0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
-        </g>
-      </svg>
+    <div class="f-top">
+      <!-- Brand column -->
+      <div class="f-brand">
+        <svg class="f-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
+          <style>.ft0{fill:#e6e6e6}</style>
+          <g>
+            <path class="ft0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+            <path class="ft0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+            <path class="ft0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+            <path class="ft0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+            <path class="ft0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+            <path class="ft0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
+            <path class="ft0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+          </g>
+        </svg>
+        <div class="f-tagline">El sistema operativo de tu agencia. Tareas, clientes, equipo y finanzas en un solo panel con IA integrada.</div>
+        <div class="f-social">
+          <a href="mailto:hola@thenucleo.com" title="Email">
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 4l8 5 8-5v10a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0a2 2 0 012-2h12a2 2 0 012 2l-8 5-8-5z"/></svg>
+          </a>
+          <a href="https://www.linkedin.com/company/thenucleo" target="_blank" rel="noopener" title="LinkedIn">
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 3A1.5 1.5 0 113 4.5 1.5 1.5 0 014.5 3zM3 7h3v10H3V7zm5 0h2.9v1.4h.04A3.18 3.18 0 0113.8 6.8c3.04 0 3.6 2 3.6 4.6V17h-3v-5c0-1.2-.02-2.7-1.65-2.7S11 10.8 11 12v5H8V7z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/thenucleo.agency" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14.5" cy="5.5" r="1" fill="currentColor"/></svg>
+          </a>
+        </div>
+      </div>
+      <!-- Link columns -->
+      <div class="f-cols">
+        <div class="f-col">
+          <h4>Producto</h4>
+          <a href="#" data-phase="1">Funcionalidades</a>
+          <a href="#" data-phase="2">Resultados</a>
+          <a href="#" data-phase="4">Precios</a>
+          <a href="#" data-phase="3">Plataforma</a>
+        </div>
+        <div class="f-col">
+          <h4>Legal</h4>
+          <a href="/privacidad">Privacidad</a>
+          <a href="/aviso-legal">Aviso legal</a>
+          <a href="mailto:hola@thenucleo.com">Contacto</a>
+        </div>
+      </div>
     </div>
-    <div class="f-copy">portal.thenucleo.com &middot; El sistema operativo de tu agencia</div>
-    <div class="f-mono">v3.0 &middot; 2026</div>
-    <div class="f-links">
-      <a href="mailto:hola@thenucleo.com">hola@thenucleo.com</a>
-      <a href="/privacidad">Privacidad</a>
-      <a href="/aviso-legal">Aviso legal</a>
+    <!-- Bottom bar -->
+    <div class="f-bottom">
+      <div class="f-copy">&copy; 2026 TheNucleo. Todos los derechos reservados.</div>
+      <div class="f-status"><span class="f-status-dot"></span> Operativo</div>
+      <div class="f-mono">v3.0</div>
     </div>
   </footer>
 
@@ -1400,36 +1699,27 @@
     );
     composer.addPass(bloomPass);
 
-    /* ── A. ISOTIPO — canvas texture matching logo gradient ── */
-    const isotipoCanvas = document.createElement('canvas');
-    isotipoCanvas.width = 512; isotipoCanvas.height = 512;
-    const isotipoCtx = isotipoCanvas.getContext('2d');
-    // Replicar el gradiente del SVG: transparente en centro → amarillo en borde exterior
-    // stop 0.676 → transparent, stop 0.982 → #f3f959
-    const isotipoGrad = isotipoCtx.createRadialGradient(256, 256, 256 * 0.676, 256, 256, 256 * 0.982);
-    isotipoGrad.addColorStop(0, 'rgba(243,249,89,0)');
-    isotipoGrad.addColorStop(1, 'rgba(243,249,89,1)');
-    isotipoCtx.beginPath();
-    isotipoCtx.arc(256, 256, 256, 0, Math.PI * 2);
-    isotipoCtx.fillStyle = isotipoGrad;
-    isotipoCtx.fill();
-    const isotipoTex = new THREE.CanvasTexture(isotipoCanvas);
-
-    const nucleoGeo = new THREE.PlaneGeometry(18, 18);
-    const nucleoMat = new THREE.MeshBasicMaterial({
-      map: isotipoTex,
+    /* ── A. ISOTIPO — torus 3D matching logo ring ── */
+    const nucleoGeo = new THREE.TorusGeometry(7, 1.1, 64, 128);
+    const nucleoMat = new THREE.MeshStandardMaterial({
+      color: 0xf3f959,
+      emissive: 0xf3f959,
+      emissiveIntensity: 0.3,
+      metalness: 0.5,
+      roughness: 0.35,
       transparent: true,
-      blending: THREE.AdditiveBlending,
       depthWrite: false,
-      side: THREE.DoubleSide,
       opacity: 0
     });
     const nucleo = new THREE.Mesh(nucleoGeo, nucleoMat);
-    // Off-center: desplazado a la derecha y ligeramente arriba
-    // Isotipo off-center, fijo
     nucleo.position.set(22, 1, -6);
     nucleo.rotation.set(0.3, -0.2, 0.1);
     scene.add(nucleo);
+
+    /* Luz puntual sutil para dar volumen al torus */
+    const torusLight = new THREE.PointLight(0xf3f959, 0.4, 30);
+    torusLight.position.set(22, 3, -2);
+    scene.add(torusLight);
 
     /* ── LOGOS DISPERSOS — sprites con texturas PNG ──── */
     const LOGO_SRCS = [
@@ -1559,9 +1849,9 @@
       const assemblyT = Math.min(1, scrollProgress / 0.80);
       const eased = easeOutCubic(assemblyT);
 
-      /* Isotipo — fade-in gradual desde el inicio, rotación lenta */
+      /* Isotipo torus — fade-in gradual, rotación lenta en Y (giro 3D) */
       nucleoMat.opacity = Math.min(0.48, elapsed * 0.12);
-      nucleo.rotation.z += 0.0015;
+      nucleo.rotation.y += 0.004;
 
       /* Logos — scattered → assembled con stagger + spin 3D */
       assemblage.forEach(({ mesh, scattered, assembled, spinSpeed }, i) => {
@@ -2070,6 +2360,20 @@
       renderer.render(scene, camera);
     }
     animate();
+  </script>
+
+  <!-- ── FAQ ACCORDION ───────────────────────────────── -->
+  <script>
+    document.querySelectorAll('.faq-q').forEach(q => {
+      q.addEventListener('click', () => {
+        const item = q.parentElement;
+        const wasOpen = item.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+        // Toggle clicked
+        if (!wasOpen) item.classList.add('open');
+      });
+    });
   </script>
 </body>
 </html>
