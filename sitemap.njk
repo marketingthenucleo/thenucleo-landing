@@ -1,18 +1,30 @@
+---
+permalink: /sitemap.xml
+eleventyExcludeFromCollections: true
+---
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://work.thenucleo.com/</loc>
-    <lastmod>2026-04-11</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://work.thenucleo.com/conocimiento-zenyx/</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://work.thenucleo.com/privacidad</loc>
-    <lastmod>2026-04-11</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://work.thenucleo.com/aviso-legal</loc>
-    <lastmod>2026-04-11</lastmod>
     <priority>0.3</priority>
   </url>
+  {%- for post in collections.blog -%}
+  <url>
+    <loc>https://work.thenucleo.com{{ post.url }}</loc>
+    <lastmod>{{ post.data.date | isoDate }}</lastmod>
+    <priority>0.7</priority>
+  </url>
+  {%- endfor %}
 </urlset>

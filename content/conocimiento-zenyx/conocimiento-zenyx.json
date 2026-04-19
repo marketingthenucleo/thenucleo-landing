@@ -1,0 +1,5 @@
+{
+  "layout": "blog.njk",
+  "tags": ["blog"],
+  "permalink": "/conocimiento-zenyx/{{ slug }}/index.html"
+}

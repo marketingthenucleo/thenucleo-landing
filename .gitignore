@@ -1,3 +1,6 @@
 .DS_Store
 Thumbs.db
 *.backup.html
+_site/
+node_modules/
+.cache/
