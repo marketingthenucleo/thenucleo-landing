@@ -12,7 +12,7 @@
   <meta property="og:url" content="https://work.thenucleo.com/conocimiento-zenyx/{{ slug }}/" />
   <meta property="og:image" content="https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png" />
   <meta property="article:published_time" content="{{ date | isoDate }}" />
-  <meta property="article:author" content="Miguel Villamil" />
+  <meta property="article:author" content="TheNucleo" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="{{ title }}" />
   <meta name="twitter:description" content="{{ excerpt }}" />
@@ -23,7 +23,7 @@
     "headline": {{ title | dump | safe }},
     "description": {{ excerpt | dump | safe }},
     "datePublished": "{{ date | isoDate }}",
-    "author": { "@type": "Person", "name": "Miguel Villamil", "url": "https://www.youtube.com/@soymiguelvillamil" },
+    "author": { "@type": "Organization", "name": "TheNucleo", "url": "https://work.thenucleo.com/" },
     "publisher": { "@type": "Organization", "name": "TheNucleo", "url": "https://work.thenucleo.com/", "logo": { "@type": "ImageObject", "url": "https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png" } },
     "mainEntityOfPage": "https://work.thenucleo.com/conocimiento-zenyx/{{ slug }}/"
   }
@@ -142,15 +142,10 @@
 <body>
   <a class="back" href="/conocimiento-zenyx/">← Todos los artículos</a>
   <h1>{{ title }}</h1>
-  <p class="meta">{{ date | dateES }} · <a href="{{ video_url }}" target="_blank" rel="noopener">Vídeo original en YouTube</a></p>
-  {% if video_id %}
-  <div class="video">
-    <iframe src="https://www.youtube.com/embed/{{ video_id }}" allowfullscreen loading="lazy" title="{{ title }}"></iframe>
-  </div>
-  {% endif %}
+  <p class="meta">{{ date | dateES }}</p>
   {{ content | safe }}
   <div class="footer-cta">
-    <p style="margin:0;color:var(--muted);font-size:0.9rem">¿Quieres el portal de gestión que usa Miguel?</p>
+    <p style="margin:0;color:var(--muted);font-size:0.9rem">¿Quieres el portal de gestión disponible para más de 150 agencias?</p>
     <a href="/">Conoce TheNucleo</a>
   </div>
 </body>
