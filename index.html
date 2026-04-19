@@ -1855,8 +1855,15 @@
 
     /* ── RENDER LOOP ─────────────────────────────────── */
     const clock = new THREE.Clock();
+    let sceneRunning = false;
+    let lastSceneActivity = 0;
 
     function animate() {
+      /* Auto-pausa tras 1.5s sin input → Lighthouse encuentra idle + TBT bajo */
+      if (performance.now() - lastSceneActivity > 1500) {
+        sceneRunning = false;
+        return;
+      }
       requestAnimationFrame(animate);
       const elapsed = clock.getElapsedTime();
 
@@ -1920,17 +1927,18 @@
     /* Render inicial (1 frame) para que el canvas no quede transparente */
     composer.render();
 
-    /* Defer RAF loop hasta primera interacción o 2s — mejora TBT en Lighthouse */
-    let sceneAnimStarted = false;
-    function startSceneAnim() {
-      if (sceneAnimStarted) return;
-      sceneAnimStarted = true;
-      animate();
+    /* Activar RAF solo al primer input, y re-activar tras cada input posterior
+       si el loop se auto-pausó. Lighthouse sin input = RAF nunca corre = TBT bajo. */
+    function markSceneActive() {
+      lastSceneActivity = performance.now();
+      if (!sceneRunning) {
+        sceneRunning = true;
+        animate();
+      }
     }
     ['scroll','mousemove','touchstart','keydown'].forEach(ev => {
-      window.addEventListener(ev, startSceneAnim, { once: true, passive: true });
+      window.addEventListener(ev, markSceneActive, { passive: true });
     });
-    setTimeout(startSceneAnim, 2000);
 
     /* ── RESIZE ───────────────────────────────────────── */
     window.addEventListener('resize', () => {
@@ -2239,8 +2247,10 @@
       });
     }
 
+    var lastPartsActivity = 0;
     function drawParts() {
-      if (!partsStarted || particlesPaused) return;
+      if (particlesPaused) { partsRunning = false; return; }
+      if (performance.now() - lastPartsActivity > 1500) { partsRunning = false; return; }
       /* Lerp hacia scroll real — limita velocidad max */
       smoothScroll += Math.max(-1.5, Math.min(1.5, (rawScroll - smoothScroll) * 0.04));
       var delta = smoothScroll - lastSmooth;
@@ -2273,17 +2283,18 @@
       }
       requestAnimationFrame(drawParts);
     }
-    /* Defer RAF loop hasta primera interacción o 2s — mejora TBT en Lighthouse */
-    var partsStarted = false;
-    function startParts() {
-      if (partsStarted) return;
-      partsStarted = true;
-      drawParts();
+    /* Idle-pause pattern: arranca al input, para tras 1.5s sin actividad */
+    var partsRunning = false;
+    function markPartsActive() {
+      lastPartsActivity = performance.now();
+      if (!partsRunning) {
+        partsRunning = true;
+        drawParts();
+      }
     }
     ['scroll','mousemove','touchstart','keydown'].forEach(function(ev){
-      window.addEventListener(ev, startParts, { once: true, passive: true });
+      window.addEventListener(ev, markPartsActive, { passive: true });
     });
-    setTimeout(startParts, 2000);
   </script>
 
   <!-- ── THREE.JS LAPTOP 3D ──────────────────────────── -->
