@@ -298,6 +298,7 @@
       font-family: var(--sans); font-size: 15px; font-weight: 600;
       padding: 14px 32px; border-radius: 10px; border: none;
       cursor: pointer; transition: transform .2s, box-shadow .2s;
+      display: inline-block; text-decoration: none; text-align: center;
     }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 36px var(--yellow-glow); }
     .btn-ghost {
@@ -306,6 +307,7 @@
       padding: 14px 32px; border-radius: 10px;
       border: 1px solid var(--border); cursor: pointer;
       transition: border-color .2s, background .2s, transform .2s;
+      display: inline-block; text-decoration: none; text-align: center;
     }
     .btn-ghost:hover { border-color: var(--subtle); background: rgba(255,255,255,.04); transform: translateY(-2px); }
 
@@ -1299,8 +1301,8 @@
           <p class="hero-kicker">El portal de gesti&oacute;n que centraliza tu agencia de marketing</p>
           <p class="hero-sub">Tareas que se pierden, clientes que se enfadan, equipos que no sabes si est&aacute;n al l&iacute;mite. Ya basta. Un solo panel, toda tu agencia bajo control.</p>
           <div class="hero-btns">
-            <button class="btn-primary">Empezar ahora</button>
-            <button class="btn-ghost">Ver c&oacute;mo funciona &rarr;</button>
+            <a href="#" data-phase="4" class="btn-primary">Empezar ahora</a>
+            <a href="#" data-phase="3" class="btn-ghost">Ver c&oacute;mo funciona &rarr;</a>
           </div>
         </div>
         <div class="hero-marquee">
@@ -1549,8 +1551,8 @@
           <h2 class="cta-title">Tu agencia merece funcionar<br/>sin que t&uacute; la <em>empujes cada d&iacute;a.</em></h2>
           <p class="cta-desc">La capa de inteligencia que se integra con lo que ya usas. Sin cambiar herramientas, sin reinventar procesos. Solo control.</p>
           <div class="cta-btns">
-            <button class="btn-primary">Empezar ahora &rarr;</button>
-            <button class="btn-ghost">Contactar</button>
+            <a href="#" data-phase="4" class="btn-primary">Empezar ahora &rarr;</a>
+            <a href="mailto:benjamin.sanchis@thenucleo.com" class="btn-ghost">Contactar</a>
           </div>
         </div>
       </div>
@@ -1819,24 +1821,6 @@
       logoGroup.add(mesh);
     }
 
-    /* Líneas de conexión entre objetos ensamblados cercanos */
-    const lineGroup = new THREE.Group();
-    logoGroup.add(lineGroup);
-    for (let i = 0; i < TOTAL; i++) {
-      for (let j = i + 1; j < TOTAL; j++) {
-        const dist = assemblage[i].assembled.pos.distanceTo(assemblage[j].assembled.pos);
-        if (dist < 5.5) {
-          const lg = new THREE.BufferGeometry();
-          const lp = new Float32Array(6);
-          lg.setAttribute('position', new THREE.BufferAttribute(lp, 3));
-          const lm = new THREE.LineBasicMaterial({ color: 0xf3f959, transparent: true, opacity: 0 });
-          const line = new THREE.Line(lg, lm);
-          line.userData = { i, j };
-          lineGroup.add(line);
-        }
-      }
-    }
-
     /* Mouse parallax — desplaza la escena levemente con el ratón */
     let mouseX = 0, mouseY = 0;
     document.addEventListener('mousemove', e => {
@@ -1897,18 +1881,6 @@
         mesh.rotation.x += spinSpeed.x * speedMul;
         mesh.rotation.y += spinSpeed.y * speedMul;
         mesh.rotation.z += spinSpeed.z * speedMul;
-      });
-
-      /* Líneas de conexión — aparecen conforme se ensambla */
-      lineGroup.children.forEach(line => {
-        const { i, j } = line.userData;
-        const pa = assemblage[i].mesh.position;
-        const pb = assemblage[j].mesh.position;
-        const pos = line.geometry.attributes.position.array;
-        pos[0] = pa.x; pos[1] = pa.y; pos[2] = pa.z;
-        pos[3] = pb.x; pos[4] = pb.y; pos[5] = pb.z;
-        line.geometry.attributes.position.needsUpdate = true;
-        line.material.opacity = eased * 0.055;
       });
 
       /* Cámara — parallax scroll + mouse suave */
