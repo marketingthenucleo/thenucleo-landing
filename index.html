@@ -33,9 +33,6 @@
   <meta name="twitter:description" content="Portal de gesti&oacute;n que centraliza tareas, clientes, equipo y finanzas de tu agencia de marketing." />
   <meta name="twitter:image" content="https://work.thenucleo.com/Media/og-image.png" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <!-- NewBlack Typeface -->
   <style>
@@ -79,9 +76,9 @@
       --green-dim:    rgba(34,197,94,.12);
       --red:          #ef4444;
       --orange:       #f59e0b;
-      --mono:         'JetBrains Mono', monospace;
-      --sans:         'NewBlack', 'Space Grotesk', sans-serif;
-      --display:      'NewBlack', 'Space Grotesk', sans-serif;
+      --mono:         'NewBlack', monospace;
+      --sans:         'NewBlack', sans-serif;
+      --display:      'NewBlack', sans-serif;
     }
 
     html { scroll-behavior: auto; }
@@ -2338,33 +2335,31 @@
 
     // ── MODEL ────────────────────────────────────────────
     let laptopGroup = null;
+    let glbLoaded   = false;
 
-    const loader = new GLTFLoader();
-    loader.load('macbook_laptop.glb', gltf => {
-      laptopGroup = gltf.scene;
-      scene.add(laptopGroup);
+    function loadGLB() {
+      if (glbLoaded) return;
+      glbLoaded = true;
+      const loader = new GLTFLoader();
+      loader.load('macbook_laptop.glb', gltf => {
+        laptopGroup = gltf.scene;
+        scene.add(laptopGroup);
 
-      // Scale and center the whole model
-      const bbox = new THREE.Box3().setFromObject(laptopGroup);
-      const center = bbox.getCenter(new THREE.Vector3());
-      const size   = bbox.getSize(new THREE.Vector3());
-      const scale  = 2.6 / Math.max(size.x, size.y, size.z);
-      laptopGroup.scale.setScalar(scale);
-      laptopGroup.position.sub(center.multiplyScalar(scale));
+        const bbox = new THREE.Box3().setFromObject(laptopGroup);
+        const center = bbox.getCenter(new THREE.Vector3());
+        const size   = bbox.getSize(new THREE.Vector3());
+        const scale  = 2.6 / Math.max(size.x, size.y, size.z);
+        laptopGroup.scale.setScalar(scale);
+        laptopGroup.position.sub(center.multiplyScalar(scale));
+        laptopGroup.position.y -= 0.2;
+        scene.updateMatrixWorld(true);
 
-      // Slight downward offset so model sits centered in canvas
-      laptopGroup.position.y -= 0.2;
+        const screenMesh = laptopGroup.getObjectByName('Cube_Material003_0');
+        if (screenMesh) screenMesh.material = screenMat;
 
-      // Ensure world matrices are fresh after transform
-      scene.updateMatrixWorld(true);
-
-      // Apply VideoTexture to screen mesh (4-vert quad = pantalla)
-      const screenMesh = laptopGroup.getObjectByName('Cube_Material003_0');
-      if (screenMesh) screenMesh.material = screenMat;
-
-      // Start video playback
-      dashVideo.play().catch(() => {});
-    });
+        dashVideo.play().catch(() => {});
+      });
+    }
 
     // ── RESIZE ───────────────────────────────────────────
     function resize() {
@@ -2400,13 +2395,16 @@
       return Math.max(0, Math.min(1, (sp - 3 / tp) / (1 / tp)));
     }
 
-    // ── INTERSECTION OBSERVER (pause render when off-screen) ─
+    // ── INTERSECTION OBSERVER (lazy-load GLB + pause render when off-screen) ─
     let isVisible = false;
     const phaseEl = document.querySelector('.phase-showcase');
     if (phaseEl) {
       new IntersectionObserver(entries => {
         isVisible = entries[0].isIntersecting;
-        if (isVisible && dashVideo.paused) dashVideo.play().catch(() => {});
+        if (isVisible) {
+          loadGLB();
+          if (dashVideo.paused) dashVideo.play().catch(() => {});
+        }
       }, { threshold: 0.01 }).observe(phaseEl);
     }
 
