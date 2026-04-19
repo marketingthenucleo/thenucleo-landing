@@ -48,7 +48,7 @@
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
     }
   }
@@ -1916,7 +1916,21 @@
 
       composer.render();
     }
-    animate();
+
+    /* Render inicial (1 frame) para que el canvas no quede transparente */
+    composer.render();
+
+    /* Defer RAF loop hasta primera interacción o 2s — mejora TBT en Lighthouse */
+    let sceneAnimStarted = false;
+    function startSceneAnim() {
+      if (sceneAnimStarted) return;
+      sceneAnimStarted = true;
+      animate();
+    }
+    ['scroll','mousemove','touchstart','keydown'].forEach(ev => {
+      window.addEventListener(ev, startSceneAnim, { once: true, passive: true });
+    });
+    setTimeout(startSceneAnim, 2000);
 
     /* ── RESIZE ───────────────────────────────────────── */
     window.addEventListener('resize', () => {
@@ -2226,7 +2240,7 @@
     }
 
     function drawParts() {
-      if (particlesPaused) return;
+      if (!partsStarted || particlesPaused) return;
       /* Lerp hacia scroll real — limita velocidad max */
       smoothScroll += Math.max(-1.5, Math.min(1.5, (rawScroll - smoothScroll) * 0.04));
       var delta = smoothScroll - lastSmooth;
@@ -2259,7 +2273,17 @@
       }
       requestAnimationFrame(drawParts);
     }
-    drawParts();
+    /* Defer RAF loop hasta primera interacción o 2s — mejora TBT en Lighthouse */
+    var partsStarted = false;
+    function startParts() {
+      if (partsStarted) return;
+      partsStarted = true;
+      drawParts();
+    }
+    ['scroll','mousemove','touchstart','keydown'].forEach(function(ev){
+      window.addEventListener(ev, startParts, { once: true, passive: true });
+    });
+    setTimeout(startParts, 2000);
   </script>
 
   <!-- ── THREE.JS LAPTOP 3D ──────────────────────────── -->
