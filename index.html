@@ -415,38 +415,125 @@
     .metric-num em { font-style: normal; color: var(--yellow); }
     .metric-label { font-size: 13px; color: var(--subtle); line-height: 1.55; font-weight: 500; }
 
-    /* ── PHASE 3 — SHOWCASE (SPLIT LAYOUT) ──────────── */
+    /* ── PHASE 3 — SHOWCASE (SPLIT LAYOUT, RIGHT-BLEED) ── */
     .phase-showcase {
-      flex-direction: row; gap: 0;
-      max-width: 1200px; margin: 0 auto;
+      flex-direction: row;
+      gap: clamp(48px, 6vw, 96px);
+      max-width: none;
+      width: 100%;
+      margin: 0;
       align-items: center;
-      padding: 0 40px;
+      justify-content: flex-start;
+      /* Asymmetric padding: anchors content at ~1480px from left, but lets right side bleed near viewport edge */
+      padding-left: max(40px, calc((100vw - 1480px) / 2 + 40px));
+      padding-right: 40px;
       overflow: visible;
     }
 
-    /* Modules deck — LEFT */
+    /* Left column wrapper — header + cards deck */
+    .showcase-left {
+      flex: 0 0 auto;
+      width: clamp(320px, 28vw, 400px);
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .phase-showcase .phase-header {
+      text-align: left;
+      max-width: none;
+      margin: 0;
+    }
+    .phase-showcase .section-title {
+      font-size: clamp(28px, 3.6vw, 44px);
+    }
+    /* Modules deck — inside left column */
     .showcase-modules {
-      width: 42%;
-      padding-right: 48px;
-      order: -1;
       position: relative;
-      height: 340px;
+      width: 100%;
+      height: 320px;
       perspective: 800px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    /* Laptop side — RIGHT */
+    /* App window side — RIGHT (dominant, bleeds right) */
     .laptop-wrapper {
-      width: 58%; flex-shrink: 0;
+      flex: 1 1 auto;
+      max-width: 800px;
       position: relative;
       pointer-events: auto;
       overflow: visible;
+      perspective: 1600px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
     }
-    #laptop3d {
-      width: 100%; display: block;
+    .app-window {
+      position: relative;
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #1a1c23;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow:
+        0 40px 100px -25px rgba(0,0,0,.6),
+        0 0 0 1px rgba(255,255,255,.04),
+        0 0 120px -40px rgba(243,249,89,.28);
+      transform: rotateX(1.5deg) rotateY(-1deg);
+      transform-origin: center center;
+      transition: transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .6s ease;
+      will-change: transform;
+    }
+    .app-window:hover {
+      transform: rotateX(0deg) rotateY(0deg) scale(1.005);
+      box-shadow:
+        0 50px 120px -25px rgba(0,0,0,.65),
+        0 0 0 1px rgba(255,255,255,.06),
+        0 0 160px -40px rgba(243,249,89,.4);
+    }
+    .app-window-chrome {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 14px;
+      background: #14151a;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      z-index: 1;
+    }
+    .app-window-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .app-window-dots span {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: #3a3d46;
+    }
+    .app-window-dots span:nth-child(1) { background: #ff5f57; }
+    .app-window-dots span:nth-child(2) { background: #febc2e; }
+    .app-window-dots span:nth-child(3) { background: #28c840; }
+    .app-window-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #6c6f7a;
+      letter-spacing: .04em;
+      white-space: nowrap;
+      pointer-events: none;
+      max-width: 70%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .app-window-video {
+      display: block;
+      width: 100%;
       aspect-ratio: 16 / 10;
+      object-fit: cover;
+      background: #000;
     }
 
     /* Card deck items */
@@ -464,8 +551,8 @@
       transform-origin: center center;
       transition: opacity .45s cubic-bezier(.16,1,.3,1),
                   transform .45s cubic-bezier(.16,1,.3,1),
-                  border-color .35s ease,
-                  box-shadow .4s ease;
+                  border-color 1.1s ease,
+                  box-shadow 1.1s ease;
       pointer-events: none;
     }
     .showcase-module.visible {
@@ -475,6 +562,18 @@
     .showcase-module.top {
       border-color: rgba(243,249,89,.22);
       box-shadow: 0 8px 32px rgba(0,0,0,.45), 0 0 0 1px rgba(243,249,89,.06) inset;
+    }
+    .showcase-module.entering,
+    .showcase-module.top.entering {
+      border-color: rgba(243,249,89,.6);
+      box-shadow:
+        0 0 56px rgba(243,249,89,.55),
+        0 0 0 1px rgba(243,249,89,.4),
+        0 8px 32px rgba(0,0,0,.4);
+      transition: opacity .45s cubic-bezier(.16,1,.3,1),
+                  transform .45s cubic-bezier(.16,1,.3,1),
+                  border-color .05s linear,
+                  box-shadow .05s linear;
     }
     .showcase-module-name {
       font-family: var(--mono);
@@ -743,6 +842,46 @@
       font-size: 11px; font-weight: 500; color: var(--yellow);
       background: var(--yellow-dim); padding: 3px 10px; border-radius: 100px;
     }
+    .pricing-included {
+      max-width: 720px; width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 32px;
+      backdrop-filter: blur(24px) saturate(1.3);
+      -webkit-backdrop-filter: blur(24px) saturate(1.3);
+      margin: 0 auto;
+    }
+    .pricing-included-title {
+      font-size: 11px; font-weight: 600; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 18px; text-align: center;
+    }
+    .pricing-included-list {
+      list-style: none; padding: 0; margin: 0;
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px 24px;
+    }
+    .pricing-included-list li {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--subtle); font-weight: 400;
+    }
+    .pricing-included-list li .check {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--yellow-dim);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pricing-included-list li .check svg { width: 10px; height: 10px; }
+    .pricing-highlight {
+      font-size: 13px; color: var(--text); font-weight: 500;
+      margin-bottom: 28px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 100%; text-align: center;
+    }
 
     /* ── PHASE 5 — CTA ─────────────────────────────── */
     .phase-cta { flex-direction: column; }
@@ -898,6 +1037,18 @@
       font-size: 14px; color: var(--subtle); line-height: 1.7;
     }
 
+    /* Reveal post-#experience (FAQ + footer) — fade-in al entrar en viewport */
+    .reveal-on-scroll {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+      will-change: opacity, transform;
+    }
+    .reveal-on-scroll.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     /* ── FOOTER ─────────────────────────────────────── */
     footer {
       position: relative; z-index: 10;
@@ -997,8 +1148,11 @@
       .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
       .pricing-card.popular { transform: scale(1); }
       .pricing-card.popular:hover { transform: translateY(-4px); }
-      .phase-showcase { flex-direction: column; gap: 24px; padding: 0; align-items: center; }
-      .laptop-wrapper { width: 100%; max-width: 340px; margin: 0 auto; }
+      .pricing-included { padding: 20px 20px; max-width: 400px; }
+      .pricing-included-list { grid-template-columns: 1fr; gap: 10px; }
+      .phase-showcase { flex-direction: column; gap: 24px; padding: 0 24px; align-items: center; }
+      .showcase-left { width: 100%; gap: 24px; }
+      .laptop-wrapper { width: 100%; max-width: 340px; margin: 0 auto; flex: 0 0 auto; }
       .showcase-modules { width: 100%; padding-right: 0; height: auto; order: 1; perspective: none; }
       .dash-kpis { grid-template-columns: repeat(2, 1fr); }
       .faq-section { padding: 60px 20px; }
@@ -1015,8 +1169,8 @@
       .dash-panels { grid-template-columns: 1fr; }
       .f-cols { flex-direction: column; gap: 28px; }
     }
-    /* ── MOBILE: disable sticky phase system (≤768px) ── */
-    @media (max-width: 768px) {
+    /* ── MOBILE/TABLET: disable sticky phase system (≤1024px) ── */
+    @media (max-width: 1024px) {
       #experience { height: auto; }
       .exp-sticky { position: relative; height: auto; overflow: visible; }
 
@@ -1063,24 +1217,35 @@
       .card-anim:nth-child(3) { transition-delay: .16s; }
       .card-anim:nth-child(4) { transition-delay: .24s; }
 
-      /* Phase 3 header: position relative on mobile */
+      /* Phase 3: stack vertically below 1024px (header → cards → window) */
+      .phase-showcase {
+        flex-direction: column !important;
+        gap: 32px;
+        padding: 96px 24px 60px !important;
+        align-items: center;
+      }
+      .showcase-left {
+        width: 100% !important;
+        max-width: 600px;
+        gap: 24px !important;
+      }
       .phase-showcase .phase-header {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        right: auto !important;
-        margin-bottom: 24px;
+        text-align: center !important;
+        margin-bottom: 4px;
       }
 
-      /* Laptop wrapper: constrained + centered on mobile */
+      /* App window: constrained + centered on mobile, flat */
       .laptop-wrapper {
         width: 100%;
-        max-width: 340px;
+        max-width: 380px;
         margin: 0 auto 8px;
+        perspective: none;
       }
-      #laptop3d {
-        aspect-ratio: 16 / 10;
-        width: 100%;
+      .app-window {
+        transform: none;
+      }
+      .app-window:hover {
+        transform: none;
       }
 
       /* Showcase modules: horizontal swipe carousel */
@@ -1392,8 +1557,8 @@
               </svg>
             </div>
             <div class="cap-title">Automatizaciones reales</div>
-            <div class="cap-desc">Newsletters, sincronizaciones, alertas. Las tareas repetitivas se ejecutan solas, sin que t&uacute; las empujes.</div>
-            <span class="cap-tag">n8n + Supabase</span>
+            <div class="cap-desc">El reporte semanal sale solo. La factura, sola. El recordatorio al cliente, tambi&eacute;n. T&uacute; dedicas la semana a lo que mueve la aguja.</div>
+            <span class="cap-tag">Horas que recuperas</span>
           </div>
           <div class="glass-card card-anim">
             <div class="cap-icon">
@@ -1414,8 +1579,8 @@
               </svg>
             </div>
             <div class="cap-title">IA con tu contexto</div>
-            <div class="cap-desc">Asistentes entrenados con tus datos reales. Preg&uacute;ntales por un cliente, pide un borrador, crea tareas por chat.</div>
-            <span class="cap-tag">Claude + RAG</span>
+            <div class="cap-desc">No te responde con Wikipedia. Conoce a tus clientes, tus tareas y tu equipo. P&iacute;dele un brief, un borrador, o que cree una tarea por ti.</div>
+            <span class="cap-tag">Habla tu negocio</span>
           </div>
         </div>
       </div>
@@ -1437,17 +1602,12 @@
 
       <!-- PHASE 3 — SHOWCASE: SPLIT LAYOUT -->
       <div class="phase phase-showcase" data-p="3">
-        <div class="phase-header" style="position:absolute;top:10vh;left:0;right:0;">
-          <div class="section-label">Tu ma&ntilde;ana perfecta</div>
-          <h2 class="section-title">Abres el portal.<br/><em>Todo controlado.</em></h2>
-        </div>
-        <div class="laptop-wrapper">
-          <canvas id="laptop3d"></canvas>
-          <video id="dashVideo" src="videonuevo_dashboard.mp4" poster="Media/dashboard-poster.jpg"
-                 muted loop playsinline autoplay preload="metadata" crossorigin="anonymous"
-                 style="display:none"></video>
-        </div>
-        <div class="showcase-modules">
+        <div class="showcase-left">
+          <div class="phase-header">
+            <div class="section-label">Tu ma&ntilde;ana perfecta</div>
+            <h2 class="section-title">Abres el portal.<br/><em>Todo controlado.</em></h2>
+          </div>
+          <div class="showcase-modules">
           <div class="showcase-module" data-mod="0">
             <div class="showcase-module-name">Dashboard</div>
             <div class="showcase-module-desc">Un vistazo y sabes c&oacute;mo est&aacute; todo. Tareas, clientes, equipo y n&uacute;meros sin preguntar a nadie.</div>
@@ -1458,11 +1618,11 @@
           </div>
           <div class="showcase-module" data-mod="2">
             <div class="showcase-module-name">Operaciones</div>
-            <div class="showcase-module-desc">Kanban con 8 estados, drag-and-drop, plantillas. Las tareas fluyen sin que las empujes.</div>
+            <div class="showcase-module-desc">Toda la operativa de la agencia en un panel. Nada se pierde entre Slack, Notion y el correo del lunes.</div>
           </div>
           <div class="showcase-module" data-mod="3">
             <div class="showcase-module-name">Finanzas</div>
-            <div class="showcase-module-desc">Facturas, MRR, coste por cliente. Conectado a Holded en tiempo real.</div>
+            <div class="showcase-module-desc">Sabes qu&eacute; clientes te dan dinero y cu&aacute;les te lo quitan. Facturaci&oacute;n, MRR y coste real, conectados a tu ERP en tiempo real.</div>
           </div>
           <div class="showcase-module" data-mod="4">
             <div class="showcase-module-name">IA Cerebro</div>
@@ -1476,6 +1636,20 @@
             <div class="showcase-module-name">Incidencias</div>
             <div class="showcase-module-desc">Detecta, prioriza y resuelve. Las tareas cr&iacute;ticas saltan a primera l&iacute;nea autom&aacute;ticamente.</div>
           </div>
+          </div>
+        </div>
+        <div class="laptop-wrapper">
+          <div class="app-window" id="appWindow">
+            <div class="app-window-chrome">
+              <span class="app-window-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </span>
+              <span class="app-window-title">portal.thenucleo.com &mdash; Dashboard</span>
+            </div>
+            <video id="dashVideo" class="app-window-video"
+                   src="videonuevo_dashboard.mp4" poster="Media/dashboard-poster.jpg"
+                   muted loop playsinline autoplay preload="metadata"></video>
+          </div>
         </div>
       </div>
 
@@ -1484,7 +1658,20 @@
         <div class="phase-header">
           <div class="section-label">Precios</div>
           <h2 class="section-title">Un plan simple.<br/><em>Sin sorpresas.</em></h2>
-          <p class="section-desc">Todas las funciones desde el d&iacute;a uno. M&aacute;s compromiso, m&aacute;s ventajas.</p>
+          <p class="section-desc">Todas las funciones desde el d&iacute;a uno. M&aacute;s compromiso, mejor precio.</p>
+        </div>
+        <div class="pricing-included">
+          <div class="pricing-included-title">Todo incluido en cualquier plan</div>
+          <ul class="pricing-included-list">
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Integraci&oacute;n con Notion o ClickUp</li>
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Automatizaciones ilimitadas</li>
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Onboarding 1-a-1 con el equipo</li>
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Q&amp;A en directo cada mes</li>
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> IA cocreativa: Newsletter + An&aacute;lisis estrat&eacute;gico de clientes</li>
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Alertas de Meta Ads y Google Ads en tiempo real</li>
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Tus datos siempre exportables</li>
+            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte y actualizaciones incluidas</li>
+          </ul>
         </div>
         <div class="pricing-grid">
           <!-- Mensual -->
@@ -1493,16 +1680,9 @@
             <div class="pricing-plan-name">Mensual</div>
             <div class="pricing-amount"><span class="currency">&euro;</span><em>79</em></div>
             <div class="pricing-period">al mes</div>
-            <div class="pricing-equivalent">Sin permanencia</div>
+            <div class="pricing-equivalent">&nbsp;</div>
             <div class="pricing-divider"></div>
-            <ul class="pricing-features">
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Dashboard + KPIs</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Automatizaciones ilimitadas</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> IA integrada (Cerebro)</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Integraciones b&aacute;sicas</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte por email</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Actualizaciones incluidas</li>
-            </ul>
+            <div class="pricing-highlight">Sin permanencia</div>
             <a href="https://buy.stripe.com/test_6oU14obLd5vQeaPg4B9sk00" class="pricing-cta secondary">Empezar</a>
           </div>
           <!-- Trimestral — Popular -->
@@ -1513,14 +1693,7 @@
             <div class="pricing-period">cada 3 meses</div>
             <div class="pricing-equivalent">~68 &euro;/mes &middot; <span class="pricing-save">Ahorras 13%</span></div>
             <div class="pricing-divider"></div>
-            <ul class="pricing-features">
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Todo lo del plan Mensual</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> IA Newsletter + Cerebro</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Integraciones avanzadas (Holded, Clockify)</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte prioritario</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Ops Monitor (salud operativa)</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Onboarding asistido</li>
-            </ul>
+            <div class="pricing-highlight">Compromiso 3 meses</div>
             <a href="https://buy.stripe.com/test_9B68wQ6qT1fA4Af3hP9sk01" class="pricing-cta primary">Empezar</a>
           </div>
           <!-- Anual -->
@@ -1531,14 +1704,7 @@
             <div class="pricing-period">al a&ntilde;o</div>
             <div class="pricing-equivalent">~58 &euro;/mes &middot; <span class="pricing-save">Ahorras 26%</span></div>
             <div class="pricing-divider"></div>
-            <ul class="pricing-features">
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Todo lo del plan Trimestral</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Workflows personalizados</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte directo por WhatsApp</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Sesi&oacute;n estrat&eacute;gica trimestral</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Acceso anticipado a nuevos m&oacute;dulos</li>
-              <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Precio garantizado 12 meses</li>
-            </ul>
+            <div class="pricing-highlight">Precio bloqueado 12 meses</div>
             <a href="https://buy.stripe.com/test_9B6cN62aDbUegiX5pX9sk02" class="pricing-cta secondary">Empezar</a>
           </div>
         </div>
@@ -1561,7 +1727,7 @@
   </div>
 
   <!-- FAQ -->
-  <section class="faq-section">
+  <section class="faq-section reveal-on-scroll">
     <div class="faq-heading">
       <div class="section-label">Preguntas frecuentes</div>
       <h2>Todo lo que necesitas <em>saber.</em></h2>
@@ -1614,7 +1780,7 @@
   </section>
 
   <!-- Footer -->
-  <footer>
+  <footer class="reveal-on-scroll">
     <div class="f-top">
       <!-- Brand column -->
       <div class="f-brand">
@@ -2014,6 +2180,7 @@
         mod.classList.toggle('top', isTop);
 
         if (!isVisible) {
+          mod.classList.remove('entering');
           mod.style.transform = '';
           mod.style.opacity = '';
           mod.style.zIndex = '';
@@ -2022,6 +2189,7 @@
 
         // How far through THIS card's arc are we (0→1)
         const arcT = Math.max(0, Math.min(1, (p3T - threshold) / CARD_ARC));
+        mod.classList.toggle('entering', arcT < 1);
 
         // Each card stacks on the pile — z-index by arrival order
         mod.style.zIndex = i + 1;
@@ -2049,7 +2217,7 @@
             rotX = descEased * FLAT_ANGLE * 0.3; // starts tilting slightly
           }
           mod.style.transform = 'translateY(' + yPos + 'px) rotateX(' + rotX + 'deg)';
-          mod.style.opacity = Math.min(1, arcT * 4);
+          mod.style.opacity = '1';
         } else {
           // Card has landed — flat on the pile
           mod.style.transform = 'translateY(-' + pileY + 'px) rotateX(' + FLAT_ANGLE + 'deg)';
@@ -2266,132 +2434,39 @@
     });
   </script>
 
-  <!-- ── THREE.JS LAPTOP 3D ──────────────────────────── -->
-  <script type="module">
-    import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  <!-- ── APP WINDOW VIDEO + REVEAL OBSERVERS ─────────── -->
+  <script>
+    (function() {
+      const dashVideo = document.getElementById('dashVideo');
+      const phaseEl = document.querySelector('.phase-showcase');
 
-    // ── SETUP ────────────────────────────────────────────
-    const canvas3d = document.getElementById('laptop3d');
-    const wrapper  = canvas3d.closest('.laptop-wrapper');
-
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(40, 16 / 10, 0.1, 100);
-    camera.position.set(0, 0.6, 3.5);
-    camera.lookAt(0, 0, 0);
-
-    // ── LIGHTS ───────────────────────────────────────────
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    dirLight.position.set(3, 5, 4);
-    scene.add(dirLight);
-    const rimLight = new THREE.DirectionalLight(0xC7B299, 0.5);
-    rimLight.position.set(-3, 2, -3);
-    scene.add(rimLight);
-
-    // ── VIDEO TEXTURE ────────────────────────────────────
-    const dashVideo = document.getElementById('dashVideo');
-    const videoTexture = new THREE.VideoTexture(dashVideo);
-    videoTexture.colorSpace = THREE.SRGBColorSpace;
-    // UVs del modelo: (0.2693,0.2296) → (0.7128,0.8107)
-    // Remap para que el video completo llene esa región
-    videoTexture.repeat.set(1 / 0.4435, 1 / 0.5811);   // 2.2548, 1.7209
-    videoTexture.offset.set(-0.2693 * videoTexture.repeat.x, -0.2296 * videoTexture.repeat.y);
-    const screenMat = new THREE.MeshBasicMaterial({ map: videoTexture });
-
-    // ── MODEL ────────────────────────────────────────────
-    let laptopGroup = null;
-    let glbLoaded   = false;
-
-    function loadGLB() {
-      if (glbLoaded) return;
-      glbLoaded = true;
-      const loader = new GLTFLoader();
-      loader.load('macbook_laptop.glb', gltf => {
-        laptopGroup = gltf.scene;
-        scene.add(laptopGroup);
-
-        const bbox = new THREE.Box3().setFromObject(laptopGroup);
-        const center = bbox.getCenter(new THREE.Vector3());
-        const size   = bbox.getSize(new THREE.Vector3());
-        const scale  = 2.6 / Math.max(size.x, size.y, size.z);
-        laptopGroup.scale.setScalar(scale);
-        laptopGroup.position.sub(center.multiplyScalar(scale));
-        laptopGroup.position.y -= 0.2;
-        scene.updateMatrixWorld(true);
-
-        const screenMesh = laptopGroup.getObjectByName('Cube_Material003_0');
-        if (screenMesh) screenMesh.material = screenMat;
-
-        dashVideo.play().catch(() => {});
-      });
-    }
-
-    // ── RESIZE ───────────────────────────────────────────
-    function resize() {
-      const w = wrapper.clientWidth;
-      const h = Math.round(w * (10 / 16));
-      renderer.setSize(w, h);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // ── ORBIT CONTROLS (click+drag to rotate 360) ─────────
-    const controls = new OrbitControls(camera, canvas3d);
-    controls.enableZoom = false;
-    controls.enablePan = false;
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.07;
-    controls.rotateSpeed = 0.6;
-    controls.minPolarAngle = Math.PI * 0.2;
-    controls.maxPolarAngle = Math.PI * 0.8;
-
-    // ── HELPERS ──────────────────────────────────────────
-    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
-
-    function getPhase3LocalT() {
-      const sp = window.scrollProgress || 0;
-      const edges = window.phaseEdges;
-      if (edges) {
-        return Math.max(0, Math.min(1, (sp - edges[3]) / (edges[4] - edges[3])));
+      if (phaseEl && dashVideo) {
+        new IntersectionObserver(entries => {
+          const isVisible = entries[0].isIntersecting;
+          if (isVisible) {
+            if (dashVideo.paused) dashVideo.play().catch(() => {});
+          } else {
+            dashVideo.pause();
+          }
+        }, { threshold: 0.15 }).observe(phaseEl);
       }
-      const tp = window.totalPhases || 6;
-      return Math.max(0, Math.min(1, (sp - 3 / tp) / (1 / tp)));
-    }
 
-    // ── INTERSECTION OBSERVER (lazy-load GLB + pause render when off-screen) ─
-    let isVisible = false;
-    const phaseEl = document.querySelector('.phase-showcase');
-    if (phaseEl) {
-      new IntersectionObserver(entries => {
-        isVisible = entries[0].isIntersecting;
-        if (isVisible) {
-          loadGLB();
-          if (dashVideo.paused) dashVideo.play().catch(() => {});
-        }
-      }, { threshold: 0.01 }).observe(phaseEl);
-    }
-
-    // ── RENDER LOOP ──────────────────────────────────────
-    function animate() {
-      requestAnimationFrame(animate);
-      if (!laptopGroup) return;
-
-      controls.update();
-
-      if (!isVisible) return;
-      videoTexture.needsUpdate = true;
-      renderer.render(scene, camera);
-    }
-    animate();
+      // Reveal post-#experience (FAQ + footer) — fade-in al entrar en viewport
+      const revealTargets = document.querySelectorAll('.reveal-on-scroll');
+      if ('IntersectionObserver' in window) {
+        const revealObs = new IntersectionObserver((entries) => {
+          entries.forEach(e => {
+            if (e.isIntersecting) {
+              e.target.classList.add('is-visible');
+              revealObs.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        revealTargets.forEach(el => revealObs.observe(el));
+      } else {
+        revealTargets.forEach(el => el.classList.add('is-visible'));
+      }
+    })();
   </script>
 
   <!-- ── FAQ ACCORDION ───────────────────────────────── -->
