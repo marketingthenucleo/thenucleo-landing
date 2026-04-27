@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Incidencias n8n · TheNucleo</title>
+<link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png">
+<style>
+  @font-face {
+    font-family: "NewBlack";
+    src: url("/fonts/NewBlackTypeface-Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "NewBlack";
+    src: url("/fonts/NewBlackTypeface-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "NewBlack";
+    src: url("/fonts/NewBlackTypeface-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #0c0d12;
+    --card: #13151c;
+    --card-hover: #181b24;
+    --border: #1e2130;
+    --text: #edeef3;
+    --text-dim: #8a8fa3;
+    --accent: #22c55e;
+    --accent-dim: #166534;
+    --warn: #f59e0b;
+    --error: #ef4444;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "NewBlack", system-ui, -apple-system, sans-serif;
+    font-weight: 500;
+    min-height: 100vh;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Login screen */
+  #login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+  }
+  .login-card h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .login-card .sub {
+    margin: 0 0 24px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font: inherit;
+    padding: 10px 12px;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--accent); }
+
+  button {
+    background: var(--accent);
+    color: #0a0a0a;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #16a34a; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  button.ghost:hover { background: var(--card-hover); color: var(--text); }
+  button.danger {
+    background: transparent;
+    color: var(--warn);
+    border: 1px solid var(--border);
+  }
+  button.danger:hover { background: rgba(245, 158, 11, 0.1); }
+
+  .login-card button[type=submit] { width: 100%; padding: 12px; }
+
+  .error {
+    color: var(--error);
+    font-size: 13px;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+
+  /* App screen */
+  #app { display: none; }
+  #app.active { display: block; }
+
+  header.bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header.bar h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  header.bar .actions { display: flex; gap: 8px; align-items: center; }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding: 16px 24px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-dim);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .chip.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(34, 197, 94, 0.08);
+  }
+
+  main { padding: 0 24px 80px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  thead th {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    background: var(--bg);
+  }
+  tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--card-hover); }
+
+  .status-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .status-open { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
+  .status-resolved { background: rgba(34, 197, 94, 0.15); color: var(--accent); }
+
+  .col-time { white-space: nowrap; color: var(--text-dim); font-size: 12px; }
+  .col-wf { font-weight: 600; }
+  .col-msg { color: var(--text-dim); max-width: 480px; overflow: hidden; text-overflow: ellipsis; }
+  .col-msg .title { color: var(--text); font-weight: 600; margin-bottom: 2px; }
+  .col-actions { white-space: nowrap; text-align: right; }
+  .col-actions button { padding: 6px 10px; font-size: 12px; }
+
+  .empty {
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--text-dim);
+  }
+
+  .load-more-wrap {
+    text-align: center;
+    margin-top: 24px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { border-color: var(--error); color: var(--error); }
+  .toast.ok { border-color: var(--accent); color: var(--accent); }
+
+  /* Detail modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 20;
+  }
+  .modal.active { display: flex; }
+  .modal-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .modal-card h2 { margin: 0 0 4px; font-size: 18px; font-weight: 700; }
+  .modal-card .meta {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .modal-card dt {
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 12px;
+  }
+  .modal-card dd {
+    margin: 4px 0 0;
+    font-size: 13px;
+    word-break: break-word;
+  }
+  .modal-card pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 11px;
+    overflow-x: auto;
+    max-height: 240px;
+    color: var(--text-dim);
+    margin: 4px 0 0;
+  }
+  .modal-card .modal-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  @media (max-width: 720px) {
+    .col-msg { max-width: 220px; }
+    thead { display: none; }
+    tbody td {
+      display: block;
+      padding: 6px 12px;
+      border: 0;
+    }
+    tbody td:first-child { padding-top: 12px; }
+    tbody td:last-child { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    tbody tr { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<section id="login">
+  <form class="login-card" id="loginForm">
+    <h1>Incidencias n8n</h1>
+    <p class="sub">Acceso restringido · TheNucleo</p>
+    <div class="field">
+      <label for="user">Usuario</label>
+      <input id="user" name="user" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="pass">Contraseña</label>
+      <input id="pass" name="pass" type="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit" id="loginBtn">Entrar</button>
+    <div class="error" id="loginError"></div>
+  </form>
+</section>
+
+<section id="app">
+  <header class="bar">
+    <h1>Incidencias n8n</h1>
+    <div class="actions">
+      <button class="ghost" id="refreshBtn">Refrescar</button>
+      <button class="ghost" id="logoutBtn">Salir</button>
+    </div>
+  </header>
+  <div class="filters">
+    <button class="chip active" data-filter="open">Abiertas</button>
+    <button class="chip" data-filter="resolved">Resueltas</button>
+    <button class="chip" data-filter="all">Todas</button>
+  </div>
+  <main>
+    <div id="tableWrap">
+      <table id="table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Workflow</th>
+            <th>Nodo</th>
+            <th>Error</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none;">No hay incidencias con este filtro.</div>
+      <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+        <button class="ghost" id="loadMoreBtn">Cargar más</button>
+      </div>
+    </div>
+  </main>
+</section>
+
+<div class="modal" id="modal">
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const API_BASE = "https://cbixhqjsnpuhcrcjppah.supabase.co/functions/v1/incidencias_api";
+  const TOKEN_KEY = "incidencias_jwt";
+  const PAGE_SIZE = 50;
+
+  const $ = (id) => document.getElementById(id);
+  const tbody = $("tbody");
+
+  let currentFilter = "open";
+  let lastBefore = null;
+  let token = localStorage.getItem(TOKEN_KEY);
+
+  function showToast(msg, type = "ok") {
+    const t = $("toast");
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+    setTimeout(() => t.classList.remove("show"), 2500);
+  }
+
+  async function api(action, body = {}, withAuth = true) {
+    const headers = { "Content-Type": "application/json" };
+    if (withAuth && token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/${action}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401 && withAuth) logout();
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    return data;
+  }
+
+  function logout() {
+    token = null;
+    localStorage.removeItem(TOKEN_KEY);
+    $("app").classList.remove("active");
+    $("login").style.display = "flex";
+    tbody.innerHTML = "";
+  }
+
+  function showApp() {
+    $("login").style.display = "none";
+    $("app").classList.add("active");
+    loadList(true);
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleString("es-ES", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  function rowHtml(row) {
+    const status = row.status === "resolved"
+      ? `<span class="status-pill status-resolved">Resuelta</span>`
+      : `<span class="status-pill status-open">Abierta</span>`;
+    const action = row.status === "resolved"
+      ? `<button class="ghost" data-act="reopen" data-id="${row.id}">Reabrir</button>`
+      : `<button data-act="resolve" data-id="${row.id}">Resolver</button>`;
+    return `
+      <tr data-id="${row.id}">
+        <td class="col-time">${fmtDate(row.created_at)}</td>
+        <td class="col-wf">${escapeHtml(row.workflow_name || "—")}</td>
+        <td>${escapeHtml(row.node_name || "—")}</td>
+        <td class="col-msg">
+          <div class="title">${escapeHtml(row.error_title || "Error")}</div>
+          ${escapeHtml(row.error_summary || row.error_message || "")}
+        </td>
+        <td>${status}</td>
+        <td class="col-actions">
+          <button class="ghost" data-act="detail" data-id="${row.id}">Ver</button>
+          ${action}
+        </td>
+      </tr>`;
+  }
+
+  async function loadList(reset = false) {
+    if (reset) { tbody.innerHTML = ""; lastBefore = null; }
+    try {
+      const { rows } = await api("list", {
+        status: currentFilter,
+        limit: PAGE_SIZE,
+        before: lastBefore,
+      });
+      if (rows.length) {
+        tbody.insertAdjacentHTML("beforeend", rows.map(rowHtml).join(""));
+        lastBefore = rows[rows.length - 1].created_at;
+      }
+      $("empty").style.display = (reset && rows.length === 0) ? "block" : "none";
+      $("loadMoreWrap").style.display = (rows.length === PAGE_SIZE) ? "block" : "none";
+    } catch (e) {
+      showToast(e.message, "error");
+    }
+  }
+
+  async function showDetail(id) {
+    try {
+      const { row } = await api("detail", { id });
+      const fields = [
+        ["Fecha", fmtDate(row.created_at)],
+        ["Workflow", `${row.workflow_name || "—"} (${row.workflow_id || "?"})`],
+        ["Execution", row.execution_url
+          ? `<a href="${escapeHtml(row.execution_url)}" target="_blank" rel="noopener">${escapeHtml(row.execution_id || "")}</a>`
+          : escapeHtml(row.execution_id || "—")],
+        ["Nodo", `${row.node_name || "—"}<br><span style="color:var(--text-dim);font-size:11px;">${escapeHtml(row.node_type || "")} · ${escapeHtml(row.node_function || "")}</span>`],
+        ["Resumen", escapeHtml(row.error_summary || "")],
+        ["Descripción", escapeHtml(row.error_description || "")],
+        ["Mensaje", `<pre>${escapeHtml(row.error_message || "")}</pre>`],
+        ["Stack", row.error_stack ? `<pre>${escapeHtml(row.error_stack)}</pre>` : "—"],
+      ];
+      const dl = fields.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+      const action = row.status === "resolved"
+        ? `<button class="ghost" data-act="reopen" data-id="${row.id}">Reabrir</button>`
+        : `<button data-act="resolve" data-id="${row.id}">Marcar resuelta</button>`;
+      $("modalCard").innerHTML = `
+        <h2>${escapeHtml(row.error_title || "Incidencia")}</h2>
+        <div class="meta">${row.status === "resolved"
+          ? `Resuelta el ${fmtDate(row.resolved_at)}`
+          : "Abierta"}</div>
+        <dl>${dl}</dl>
+        <div class="modal-actions">
+          <button class="ghost" data-act="close-modal">Cerrar</button>
+          ${action}
+        </div>`;
+      $("modal").classList.add("active");
+    } catch (e) {
+      showToast(e.message, "error");
+    }
+  }
+
+  async function setStatus(id, action) {
+    try {
+      await api(action, { id });
+      showToast(action === "resolve" ? "Resuelta" : "Reabierta", "ok");
+      $("modal").classList.remove("active");
+      loadList(true);
+    } catch (e) {
+      showToast(e.message, "error");
+    }
+  }
+
+  // Event listeners
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("loginError").textContent = "";
+    $("loginBtn").disabled = true;
+    try {
+      const { token: t } = await api("login", {
+        user: $("user").value.trim(),
+        pass: $("pass").value,
+      }, false);
+      token = t;
+      localStorage.setItem(TOKEN_KEY, t);
+      $("pass").value = "";
+      showApp();
+    } catch (e) {
+      $("loginError").textContent = e.message;
+    } finally {
+      $("loginBtn").disabled = false;
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", logout);
+  $("refreshBtn").addEventListener("click", () => loadList(true));
+  $("loadMoreBtn").addEventListener("click", () => loadList(false));
+
+  document.querySelectorAll(".chip").forEach((c) => {
+    c.addEventListener("click", () => {
+      document.querySelectorAll(".chip").forEach((x) => x.classList.remove("active"));
+      c.classList.add("active");
+      currentFilter = c.dataset.filter;
+      loadList(true);
+    });
+  });
+
+  document.body.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    const { act, id } = btn.dataset;
+    if (act === "detail") showDetail(id);
+    else if (act === "resolve") setStatus(id, "resolve");
+    else if (act === "reopen") setStatus(id, "reopen");
+    else if (act === "close-modal") $("modal").classList.remove("active");
+  });
+
+  $("modal").addEventListener("click", (e) => {
+    if (e.target === $("modal")) $("modal").classList.remove("active");
+  });
+
+  // Auto-login if token present
+  if (token) showApp();
+})();
+</script>
+</body>
+</html>

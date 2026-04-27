@@ -2,6 +2,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("index.html");
   eleventyConfig.addPassthroughCopy("aviso-legal.html");
   eleventyConfig.addPassthroughCopy("privacidad.html");
+  eleventyConfig.addPassthroughCopy("incidencias.html");
   eleventyConfig.addPassthroughCopy("robots.txt");
   eleventyConfig.addPassthroughCopy("llms.txt");
   eleventyConfig.addPassthroughCopy("d75eac395db864420f8f0401b9277586.txt");
