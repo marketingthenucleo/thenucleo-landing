@@ -8,6 +8,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("fonts");
   eleventyConfig.addPassthroughCopy("icons");
   eleventyConfig.addPassthroughCopy("Media");
+  eleventyConfig.addPassthroughCopy("assets");
   eleventyConfig.addPassthroughCopy("macbook_laptop.glb");
   eleventyConfig.addPassthroughCopy("videonuevo_dashboard.mp4");
 
