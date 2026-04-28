@@ -27,4 +27,21 @@ eleventyExcludeFromCollections: true
     <priority>0.7</priority>
   </url>
   {%- endfor %}
+  <url>
+    <loc>https://work.thenucleo.com/comunidad/</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://work.thenucleo.com/comunidad/nueva/</loc>
+    <priority>0.5</priority>
+  </url>
+  {%- for p in comunidad.propuestas -%}
+  <url>
+    <loc>https://work.thenucleo.com/comunidad/{{ p.slug }}/</loc>
+    {%- if p.fecha_publicacion %}
+    <lastmod>{{ p.fecha_publicacion | isoDate }}</lastmod>
+    {%- endif %}
+    <priority>0.6</priority>
+  </url>
+  {%- endfor %}
 </urlset>

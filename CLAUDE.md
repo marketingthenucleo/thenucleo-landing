@@ -22,15 +22,31 @@ vercel.json                 ← buildCommand + outputDirectory + headers
 package.json                ← Eleventy v3 como devDep
 .eleventy.js                ← config Eleventy
 .eleventyignore             ← excluye index.html/legales del templating
-sitemap.njk                 ← sitemap dinámico con todos los posts
+sitemap.njk                 ← sitemap dinámico con todos los posts + comunidad
+_data/
+  site.js                   ← globals (SUPABASE_URL/ANON_KEY/edge action URL)
+  comunidad.js              ← build-time fetch a v_comunidad_propuestas_publicas
 _includes/
   blog.njk                  ← layout de cada post del blog
+  comunidad-base.njk        ← layout común de /comunidad/* (nav + estilos + auth)
 conocimiento-zenyx/
   index.njk                 ← listado /conocimiento-zenyx/
+comunidad/
+  index.njk                 ← /comunidad/ (listado SSG con propuestas aprobadas)
+  propuesta.njk             ← paginate por slug → /comunidad/{slug}/
+  nueva.njk                 ← /comunidad/nueva/ (form, requiere auth Google)
+  admin.njk                 ← /comunidad/admin/ (panel moderación, noindex)
 content/
   conocimiento-zenyx/
     conocimiento-zenyx.json ← data file (layout=blog, tags=blog, permalink)
     {slug}.md               ← posts (los commitea n8n)
+assets/js/
+  consent.js                ← cookies RGPD
+  comunidad-supabase.js     ← cliente supabase + login/logout UI
+  comunidad-listado.js      ← votos en listado + filtros por tipo
+  comunidad-ficha.js        ← votos + comentarios en ficha individual
+  comunidad-nueva.js        ← submit nueva propuesta
+  comunidad-admin.js        ← gate admin + aprobar/rechazar via Edge Function
 fonts/                      ← NewBlack Typeface (woff2)
 icons/                      ← logos integraciones
 Media/                      ← logo circular PNG (favicon + OG)
@@ -74,6 +90,34 @@ Indexa en Bing + Yandex (no Google). El archivo de la key **NO se borra** — si
 Backlog inicial: 75 vídeos del canal de Miguel Villamil (@soymiguelvillamil), orden cronológico (EP01 primero).
 
 **Documentación completa del blog:** [`../docs/blog-zenyx-workflow.md`](../docs/blog-zenyx-workflow.md)
+
+## Comunidad pública — `/comunidad/`
+Comunidad pública de propuestas (ideas, servicios, herramientas) con votación, comentarios y crowdfunding. Migrada del portal Bubble el 2026-04-28.
+
+**Stack:**
+- **Datos:** tablas nativas en Supabase cbi (`comunidad_propuestas`, `comunidad_comentarios`, `comunidad_votos_*`, `comunidad_admins`). Detalle en `../docs/supabase-schema.md` sección "Comunidad pública".
+- **Auth:** Supabase Auth Google OAuth.
+- **SSG:** Eleventy lee `v_comunidad_propuestas_publicas` en build-time (`_data/comunidad.js`) y pre-renderiza listado y fichas. Webhook Supabase → Vercel Deploy Hook al aprobar propuesta (regenera SSG).
+- **Cliente:** `@supabase/supabase-js` vía CDN jsdelivr (sin bundler). Globals inyectados en `<head>` por `_includes/comunidad-base.njk` desde `_data/site.js`.
+- **Moderación:** Edge Function `comunidad_admin_action` (Supabase, verify_jwt). Allowlist en tabla `comunidad_admins`.
+- **Crowdfunding Fase 1:** botón "Aportar al pool" presente como **stub** (`disabled` con nota "próximamente"). Activación con Stripe Checkout cuando Stripe PROD esté operativo (Fase 2, fuera de alcance actual).
+
+**Env vars necesarias en Vercel:**
+- `SUPABASE_ANON_KEY` (build-time, también inyectada al cliente — es pública por diseño).
+- (`SUPABASE_URL` opcional; default hardcoded a `https://cbixhqjsnpuhcrcjppah.supabase.co`.)
+
+**Secrets en Edge Function (Supabase Dashboard):**
+- `VERCEL_DEPLOY_HOOK_URL` — URL del Deploy Hook del proyecto `app-landing-thenucleo` (rama `main`).
+
+**Robots/SEO:**
+- `/comunidad/admin/` → `Disallow` en robots.txt + `<meta name="robots" content="noindex,nofollow">` inyectado por JS + `eleventyExcludeFromCollections: true`.
+- Sitemap incluye `/comunidad/`, `/comunidad/nueva/` y cada `/comunidad/{slug}/` aprobada.
+
+**Bootstrap admin:**
+Tras el primer login Google de Ben en `/comunidad/admin/`, ejecutar en Supabase:
+```sql
+INSERT INTO comunidad_admins (user_id) VALUES ('<uid de auth.users>');
+```
 
 ## SEO — Estado actual landing
 **Score:** 42/100 (auditado 2026-04-11)

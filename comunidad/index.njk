@@ -1,0 +1,60 @@
+---
+layout: comunidad-base.njk
+title: Comunidad — TheNucleo
+description: "Propuestas de la comunidad TheNucleo: ideas, servicios y herramientas votadas por agencias de marketing."
+permalink: /comunidad/
+---
+<header>
+  <h1>Comunidad</h1>
+  <p class="muted">Propuestas votadas por agencias. Ideas, servicios y herramientas que la comunidad quiere ver construidos.</p>
+</header>
+
+<div class="filters" id="filters">
+  <button class="active" data-tipo="all">Todas</button>
+  <button data-tipo="idea">Ideas</button>
+  <button data-tipo="servicio">Servicios</button>
+  <button data-tipo="herramienta">Herramientas</button>
+</div>
+
+{% if comunidad.propuestas.length == 0 %}
+  <div class="empty">
+    <p>Aún no hay propuestas aprobadas.</p>
+    <p><a href="/comunidad/nueva/" class="btn" style="margin-top:0.5rem">Sé el primero en proponer</a></p>
+  </div>
+{% else %}
+  <div class="grid" id="lista-propuestas">
+    {% for p in comunidad.propuestas %}
+      <article class="card propuesta" data-tipo="{{ p.tipo_propuesta }}" data-id="{{ p.id }}" data-slug="{{ p.slug }}">
+        <div class="row" style="justify-content:space-between">
+          <div class="row">
+            <span class="tag yellow">{{ p.tipo_propuesta }}</span>
+            {% if p.estado == 'financiada' %}<span class="tag accent">financiada</span>{% endif %}
+          </div>
+          <span class="meta">{{ p.fecha_publicacion | dateES }}</span>
+        </div>
+        <h3 style="margin-top:0.75rem"><a href="/comunidad/{{ p.slug }}/">{{ p.titulo }}</a></h3>
+        <p class="muted" style="margin:0.5rem 0">{{ p.descripcion | truncate(180) }}</p>
+
+        {% if p.umbral_financiacion_pool %}
+          <div class="row" style="justify-content:space-between;margin-top:0.5rem">
+            <span class="muted">Pool: {{ p.recaudado_pool or 0 }} € / {{ p.umbral_financiacion_pool }} €</span>
+            <span class="muted">{{ p.comentarios_count }} comentarios</span>
+          </div>
+          <div class="progress"><div class="progress-bar" style="width:{{ ((p.recaudado_pool or 0) / p.umbral_financiacion_pool * 100) | round }}%"></div></div>
+        {% endif %}
+
+        <div class="row" style="justify-content:space-between;margin-top:0.75rem">
+          <button class="vote-btn" data-vote-propuesta="{{ p.id }}">
+            <span data-vote-icon>▲</span>
+            <span data-vote-count>{{ p.votos }}</span>
+          </button>
+          <a class="link muted" href="/comunidad/{{ p.slug }}/">ver detalle →</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% block scripts %}
+<script type="module" src="/assets/js/comunidad-listado.js"></script>
+{% endblock %}
