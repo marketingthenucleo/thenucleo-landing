@@ -1,5 +1,6 @@
 ---
 layout: comunidad-base.njk
+narrow: true
 pagination:
   data: comunidad.propuestas
   size: 1
@@ -9,70 +10,70 @@ eleventyComputed:
   title: "{{ propuesta.titulo }} — Comunidad TheNucleo"
   description: "{{ propuesta.descripcion | truncate(155) }}"
 ---
-<a class="link muted" href="/comunidad/" style="font-family:'JetBrains Mono',monospace;font-size:0.85rem">← Comunidad</a>
+<a class="crumb" href="/comunidad/">&larr; Volver a comunidad</a>
 
-<header style="margin-top:1rem">
-  <div class="row">
-    <span class="tag yellow">{{ propuesta.tipo_propuesta }}</span>
-    {% if propuesta.estado == 'financiada' %}<span class="tag accent">financiada</span>{% endif %}
-    <span class="meta">{{ propuesta.fecha_publicacion | dateES }}</span>
+<header>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <span class="tag tag-yellow">{{ propuesta.tipo_propuesta }}</span>
+    {% if propuesta.estado == 'financiada' %}<span class="tag tag-accent">financiada</span>{% endif %}
+    <span class="tag tag-mute">{{ propuesta.fecha_publicacion | dateES }}</span>
   </div>
-  <h1 style="margin-top:0.75rem">{{ propuesta.titulo }}</h1>
+  <h1 class="page-title">{{ propuesta.titulo }}</h1>
 </header>
 
-<section class="card" data-id="{{ propuesta.id }}" data-slug="{{ propuesta.slug }}">
-  <p>{{ propuesta.descripcion }}</p>
+<section class="card" data-id="{{ propuesta.id }}" data-slug="{{ propuesta.slug }}" style="margin-top:24px">
+  <p style="font-size:16px">{{ propuesta.descripcion }}</p>
 
   {% if propuesta.problema %}
-    <h3>Problema que resuelve</h3>
+    <h3 class="section-h3">Problema que resuelve</h3>
     <p>{{ propuesta.problema }}</p>
   {% endif %}
 
   {% if propuesta.beneficio %}
-    <h3>Beneficio para la comunidad</h3>
+    <h3 class="section-h3">Beneficio para la comunidad</h3>
     <p>{{ propuesta.beneficio }}</p>
   {% endif %}
 
   {% if propuesta.umbral_financiacion_pool %}
-    <h3>Financiación del pool</h3>
-    <div class="row" style="justify-content:space-between">
-      <span class="muted">{{ propuesta.recaudado_pool or 0 }} € recaudados de {{ propuesta.umbral_financiacion_pool }} €</span>
-      {% if propuesta.cotizacion_precio %}<span class="muted">Cotización: {{ propuesta.cotizacion_precio }} €</span>{% endif %}
+    <h3 class="section-h3">Financiación del pool</h3>
+    <div class="pool-summary">
+      <span><strong>{{ propuesta.recaudado_pool or 0 }} €</strong> recaudados de <strong>{{ propuesta.umbral_financiacion_pool }} €</strong></span>
+      {% if propuesta.cotizacion_precio %}<span>Cotización: {{ propuesta.cotizacion_precio }} €</span>{% endif %}
     </div>
     <div class="progress"><div class="progress-bar" style="width:{{ ((propuesta.recaudado_pool or 0) / propuesta.umbral_financiacion_pool * 100) | round }}%"></div></div>
-    <button id="aportar-btn" class="btn" disabled>Aportar al pool — próximamente</button>
-    <p class="stripe-note">Los pagos al pool se activarán cuando la cuenta Stripe de producción esté operativa.</p>
+    <button id="aportar-btn" class="btn" disabled style="margin-top:18px">Aportar al pool — próximamente</button>
+    <p class="muted" style="margin-top:8px;font-style:italic">Los pagos al pool se activarán cuando la cuenta Stripe de producción esté operativa.</p>
   {% elif propuesta.precio_adhoc %}
-    <h3>Precio individual</h3>
+    <h3 class="section-h3">Precio individual</h3>
     <p class="muted">{{ propuesta.precio_adhoc }} € — disponible cuando la propuesta sea financiada.</p>
   {% endif %}
 
-  <div class="row" style="justify-content:space-between;margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1rem">
+  <div class="card-row" style="border-top:1px solid var(--border);padding-top:18px;margin-top:24px">
     <button class="vote-btn" data-vote-propuesta="{{ propuesta.id }}">
-      <span data-vote-icon>▲</span>
+      <span class="arrow">▲</span>
       <span data-vote-count>{{ propuesta.votos }}</span>
-      <span class="muted">votos</span>
+      <span class="muted" style="font-weight:500">votos</span>
     </button>
-    <span class="muted" data-comentarios-count>{{ propuesta.comentarios_count }} comentarios</span>
+    <span class="muted" data-comentarios-count style="font-family:var(--mono);font-size:11px;letter-spacing:.04em">{{ propuesta.comentarios_count }} comentarios</span>
   </div>
 </section>
 
-<section style="margin-top:2rem">
-  <h2>Comentarios</h2>
+<section style="margin-top:48px">
+  <h2 class="section-h2">Comentarios</h2>
   <div id="comentario-form-wrap" style="display:none">
     <form id="comentario-form">
       <label for="comentario-texto">Tu comentario</label>
       <textarea id="comentario-texto" required minlength="3" maxlength="2000" placeholder="Tu aportación a esta propuesta…"></textarea>
-      <p class="muted" style="margin-top:0.4rem">Tu comentario pasará por moderación antes de publicarse.</p>
-      <button class="btn" type="submit" style="margin-top:0.5rem">Enviar</button>
+      <p class="muted" style="margin-top:8px">Tu comentario pasará por moderación antes de publicarse.</p>
+      <button class="btn" type="submit" style="margin-top:14px">Enviar</button>
     </form>
     <div id="comentario-feedback"></div>
   </div>
   <div id="comentario-login-cta" style="display:none">
-    <div class="alert info">Inicia sesión con Google para comentar.</div>
+    <div class="alert alert-info">Inicia sesión con Google (botón "Entrar" arriba) para comentar.</div>
   </div>
 
-  <div id="comentarios-lista" style="margin-top:1.25rem">
+  <div id="comentarios-lista" style="margin-top:24px">
     <p class="muted">Cargando comentarios…</p>
   </div>
 </section>

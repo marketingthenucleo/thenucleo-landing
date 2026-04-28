@@ -1,20 +1,22 @@
 ---
 layout: comunidad-base.njk
+narrow: true
 title: Nueva propuesta — Comunidad TheNucleo
 description: "Propón una idea, servicio o herramienta a la comunidad TheNucleo. Tu propuesta pasará por moderación antes de publicarse."
 permalink: /comunidad/nueva/
 ---
-<a class="link muted" href="/comunidad/" style="font-family:'JetBrains Mono',monospace;font-size:0.85rem">← Comunidad</a>
+<a class="crumb" href="/comunidad/">&larr; Volver a comunidad</a>
 
-<header style="margin-top:1rem">
-  <h1>Nueva propuesta</h1>
-  <p class="muted">Cuéntanos qué quieres que la comunidad construya. Pasará por moderación antes de publicarse.</p>
+<header>
+  <span class="section-label">Proponer</span>
+  <h1 class="page-title">Tu propuesta a <em>la comunidad</em>.</h1>
+  <p class="page-sub">Cuéntanos qué quieres que la comunidad construya. Pasará por moderación antes de publicarse.</p>
 </header>
 
 <div id="login-cta" style="display:none">
   <div class="card">
     <p>Para enviar una propuesta necesitas iniciar sesión con Google.</p>
-    <button id="login-google" class="btn">Iniciar sesión con Google</button>
+    <button id="login-google" class="btn" style="margin-top:14px">Iniciar sesión con Google</button>
   </div>
 </div>
 
@@ -49,7 +51,7 @@ permalink: /comunidad/nueva/
     <input id="precio_adhoc" name="precio_adhoc" type="number" min="0" step="1" placeholder="Opcional" />
   </div>
 
-  <button class="btn" type="submit" style="margin-top:1rem">Enviar propuesta</button>
+  <button class="btn" type="submit" style="margin-top:24px">Enviar propuesta</button>
   <div id="form-feedback"></div>
 </form>
 

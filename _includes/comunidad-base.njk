@@ -12,209 +12,123 @@
   <meta property="og:url" content="https://work.thenucleo.com{{ permalink }}" />
   <meta property="og:image" content="https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png" />
+  <link rel="stylesheet" href="/assets/css/comunidad.css" />
   <script>
     window.__SUPABASE_URL__ = {{ site.supabaseUrl | dump | safe }};
     window.__SUPABASE_ANON_KEY__ = {{ site.supabaseAnonKey | dump | safe }};
     window.__EDGE_ADMIN_ACTION__ = {{ site.edgeFunctionAdminAction | dump | safe }};
   </script>
-  <style>
-    :root {
-      --bg: #171717;
-      --bg-elev: #1e1e1e;
-      --yellow: #F3F959;
-      --accent: #C7B299;
-      --text: #E8EAE9;
-      --text-bright: #ffffff;
-      --muted: #8a8a8a;
-      --border: #2a2a2a;
-      --danger: #ef4444;
-      --success: #22c55e;
-    }
-    * { box-sizing: border-box; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1.5rem 1.5rem 5rem;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: var(--yellow); text-decoration: none; }
-    a:hover { opacity: 0.85; }
-    h1, h2, h3 { color: var(--text-bright); line-height: 1.2; }
-    h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0 0 0.5rem; }
-    h2 { color: var(--yellow); font-size: 1.5rem; margin-top: 2.5rem; }
-    h3 { font-size: 1.2rem; margin-top: 1.5rem; }
-    .meta {
-      color: var(--muted);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-    }
-    nav.cnav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.5rem 0 1.5rem;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-    nav.cnav .left { display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; }
-    nav.cnav a.brand {
-      font-weight: 700;
-      color: var(--text-bright);
-      letter-spacing: -0.01em;
-    }
-    nav.cnav a.brand span { color: var(--yellow); }
-    nav.cnav a.link {
-      color: var(--muted);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-    }
-    nav.cnav a.link:hover { color: var(--yellow); }
-    nav.cnav a.link.active { color: var(--text-bright); }
-    nav.cnav .right { display: flex; gap: 0.5rem; align-items: center; }
-    button.btn, a.btn {
-      display: inline-block;
-      background: var(--yellow);
-      color: var(--bg);
-      padding: 0.55rem 1rem;
-      border: 0;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.9rem;
-    }
-    button.btn-ghost, a.btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    button.btn-ghost:hover, a.btn-ghost:hover { border-color: var(--yellow); color: var(--yellow); }
-    button.btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .card {
-      background: var(--bg-elev);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem;
-      margin: 0.75rem 0;
-    }
-    .row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-    .tag {
-      display: inline-block;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-    }
-    .tag.yellow { color: var(--yellow); border-color: var(--yellow); }
-    .tag.accent { color: var(--accent); border-color: var(--accent); }
-    .vote-btn {
-      display: inline-flex;
-      gap: 0.4rem;
-      align-items: center;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.4rem 0.7rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.85rem;
-    }
-    .vote-btn.voted { border-color: var(--yellow); color: var(--yellow); }
-    .vote-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .progress {
-      height: 6px;
-      width: 100%;
-      background: var(--border);
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 0.5rem 0;
-    }
-    .progress-bar {
-      height: 100%;
-      background: var(--yellow);
-      transition: width 0.3s;
-    }
-    label { display: block; font-size: 0.85rem; color: var(--muted); margin: 0.75rem 0 0.25rem; }
-    input, textarea, select {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.6rem 0.75rem;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 0.95rem;
-    }
-    textarea { resize: vertical; min-height: 6rem; }
-    .alert {
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
-      margin: 0.75rem 0;
-      font-size: 0.9rem;
-    }
-    .alert.info { background: rgba(243,249,89,0.08); border: 1px solid rgba(243,249,89,0.3); color: var(--yellow); }
-    .alert.error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
-    .alert.success { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
-    .muted { color: var(--muted); font-size: 0.85rem; }
-    .empty {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--muted);
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-    }
-    .grid { display: grid; gap: 0.75rem; }
-    .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
-    .filters button {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
-    .filters button.active { background: var(--yellow); color: var(--bg); border-color: var(--yellow); }
-    .comment {
-      border-left: 2px solid var(--border);
-      padding: 0.5rem 0 0.5rem 1rem;
-      margin: 0.75rem 0;
-    }
-    .comment .author { font-size: 0.8rem; color: var(--muted); }
-    .stripe-note { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; font-style: italic; }
-  </style>
 </head>
 <body>
-  <nav class="cnav">
-    <div class="left">
-      <a class="brand" href="/">The<span>Nucleo</span></a>
-      <a class="link {% if page.url == '/comunidad/' %}active{% endif %}" href="/comunidad/">Comunidad</a>
-      <a class="link {% if page.url == '/comunidad/nueva/' %}active{% endif %}" href="/comunidad/nueva/">Nueva propuesta</a>
-      <a class="link" href="/conocimiento-zenyx/">Conocimiento</a>
+
+  <nav id="nav">
+    <a class="nav-left" href="/" aria-label="TheNucleo">
+      <svg class="nav-isotipo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="iso-g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-160.001,160.001,0,159.389,157.823)">
+            <stop offset=".676" stop-color="#000000" stop-opacity="0"/>
+            <stop offset=".982" stop-color="#f3f959" stop-opacity="1"/>
+          </radialGradient>
+        </defs>
+        <path style="mix-blend-mode:screen;fill:url(#iso-g1)" d="m160 0c-88.37 0-160 71.63-160 160 0 88.37 71.63 160 160 160 88.37 0 160-71.63 160-160 0-88.37-71.63-160-160-160z"/>
+      </svg>
+      <svg class="nav-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
+        <style>.lt0{fill:#e6e6e6}</style>
+        <g>
+          <path class="lt0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+          <path class="lt0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+          <path class="lt0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+          <path class="lt0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+          <path class="lt0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+          <path class="lt0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
+          <path class="lt0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+        </g>
+      </svg>
+    </a>
+    <div class="nav-links">
+      <a href="/">Funcionalidades</a>
+      <a href="/">Resultados</a>
+      <a href="/">Plataforma</a>
+      <a href="/">Precios</a>
+      <a href="/comunidad/" class="active">Comunidad</a>
+      <a href="/conocimiento-zenyx/">Conocimiento</a>
     </div>
-    <div class="right">
-      <span id="auth-status" class="muted" style="display:none">cargando…</span>
-      <button id="auth-login" class="btn btn-ghost" style="display:none">Entrar con Google</button>
-      <button id="auth-logout" class="btn btn-ghost" style="display:none">Salir</button>
+    <div class="nav-right">
+      <span id="auth-status" class="nav-user"></span>
+      <button id="auth-login" class="btn-sm-ghost" style="display:none">Entrar</button>
+      <button id="auth-logout" class="btn-sm-ghost" style="display:none">Salir</button>
+      <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm">Acceder &rarr;</a>
     </div>
   </nav>
 
-  {{ content | safe }}
+  <main class="page {% if narrow %}page-narrow{% endif %}">
+    {{ content | safe }}
+  </main>
 
+  <footer>
+    <div class="f-top">
+      <div class="f-brand">
+        <svg class="f-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
+          <style>.ft0{fill:#e6e6e6}</style>
+          <g>
+            <path class="ft0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+            <path class="ft0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+            <path class="ft0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+            <path class="ft0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+            <path class="ft0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+            <path class="ft0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
+            <path class="ft0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+          </g>
+        </svg>
+        <div class="f-tagline">El sistema operativo de tu agencia. Tareas, clientes, equipo y finanzas en un solo panel con IA integrada.</div>
+        <div class="f-social">
+          <a href="mailto:hola@thenucleo.com" title="Email">
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 4l8 5 8-5v10a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm0 0a2 2 0 012-2h12a2 2 0 012 2l-8 5-8-5z"/></svg>
+          </a>
+          <a href="https://www.linkedin.com/company/thenucleo" target="_blank" rel="noopener" title="LinkedIn">
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 3A1.5 1.5 0 113 4.5 1.5 1.5 0 014.5 3zM3 7h3v10H3V7zm5 0h2.9v1.4h.04A3.18 3.18 0 0113.8 6.8c3.04 0 3.6 2 3.6 4.6V17h-3v-5c0-1.2-.02-2.7-1.65-2.7S11 10.8 11 12v5H8V7z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/thenucleo.agency" target="_blank" rel="noopener" title="Instagram">
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14.5" cy="5.5" r="1" fill="currentColor"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="f-cols">
+        <div class="f-col">
+          <h3>Producto</h3>
+          <a href="/">Funcionalidades</a>
+          <a href="/">Resultados</a>
+          <a href="/">Precios</a>
+          <a href="/">Plataforma</a>
+          <a href="/comunidad/">Comunidad</a>
+          <a href="/conocimiento-zenyx/">Conocimiento</a>
+        </div>
+        <div class="f-col">
+          <h3>Legal</h3>
+          <a href="/privacidad">Privacidad</a>
+          <a href="/aviso-legal">Aviso legal</a>
+          <a href="mailto:hola@thenucleo.com">Contacto</a>
+        </div>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <div class="f-copy">&copy; 2026 TheNucleo. Todos los derechos reservados.</div>
+      <div class="f-status"><span class="f-status-dot"></span> Operativo</div>
+      <div class="f-mono">v3.0</div>
+    </div>
+  </footer>
+
+  <script>
+    // Nav scrolled state (idéntico a la landing)
+    (function () {
+      var nav = document.getElementById('nav');
+      if (!nav) return;
+      var update = function () { nav.classList.toggle('scrolled', (window.scrollY || 0) > 40); };
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    })();
+  </script>
   <script type="module" src="/assets/js/comunidad-supabase.js"></script>
   {% block scripts %}{% endblock %}
   <script defer src="/assets/js/consent.js"></script>
