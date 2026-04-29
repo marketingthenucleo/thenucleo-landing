@@ -1512,7 +1512,7 @@
           <p class="hero-kicker">El portal de gesti&oacute;n que centraliza tu agencia de marketing</p>
           <p class="hero-sub">Tareas que se pierden, clientes que se enfadan, equipos que no sabes si est&aacute;n al l&iacute;mite. Ya basta. Un solo panel, toda tu agencia bajo control.</p>
           <div class="hero-btns">
-            <a href="#" data-phase="4" class="btn-primary">Empezar ahora</a>
+            <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-primary">Empezar ahora</a>
             <a href="#" data-phase="3" class="btn-ghost">Ver c&oacute;mo funciona &rarr;</a>
           </div>
         </div>
@@ -1763,7 +1763,7 @@
           <h2 class="cta-title">Tu agencia merece funcionar<br/>sin que t&uacute; la <em>empujes cada d&iacute;a.</em></h2>
           <p class="cta-desc">La capa de inteligencia que se integra con lo que ya usas. Sin cambiar herramientas, sin reinventar procesos. Solo control.</p>
           <div class="cta-btns">
-            <a href="#" data-phase="4" class="btn-primary">Empezar ahora &rarr;</a>
+            <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-primary">Empezar ahora &rarr;</a>
             <a href="mailto:benjamin.sanchis@thenucleo.com" class="btn-ghost">Contactar</a>
           </div>
         </div>
@@ -2329,13 +2329,18 @@
     });
 
     /* ── NAV LINKS ───────────────────────────────────── */
+    // Aterrizar en el medio de la fase para que el smooth-scroll recorra las
+    // animaciones de cards y la fase muestre contenido visible al detenerse.
     document.querySelectorAll('[data-phase]').forEach(el => {
       if (el.tagName === 'A') {
         el.addEventListener('click', e => {
           e.preventDefault();
           const idx = parseInt(el.dataset.phase);
           const sectionH = experience.offsetHeight - window.innerHeight;
-          const target = experience.offsetTop + phaseEdges[idx] * sectionH;
+          const start = phaseEdges[idx];
+          const end = phaseEdges[idx + 1] ?? 1;
+          const targetT = start + 0.55 * (end - start);
+          const target = experience.offsetTop + targetT * sectionH;
           window.scrollTo({ top: target, behavior: 'smooth' });
         });
       }
