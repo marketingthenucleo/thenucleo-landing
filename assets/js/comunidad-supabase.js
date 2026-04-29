@@ -17,15 +17,26 @@ export const supabase = createClient(url, key, {
   },
 });
 
+const STORAGE_KEY = "thenucleo-comunidad-auth";
+
+function readStoredSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s?.expires_at && s.expires_at * 1000 < Date.now()) return null;
+    return s ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getCurrentUser() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) return null;
-  return data.session?.user ?? null;
+  return readStoredSession()?.user ?? null;
 }
 
 export async function getAccessToken() {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
+  return readStoredSession()?.access_token ?? null;
 }
 
 export function goToLogin(next) {
