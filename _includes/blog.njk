@@ -73,6 +73,11 @@
     h3 { font-size: 1.2rem; }
     a { color: var(--yellow); text-decoration: underline; text-underline-offset: 3px; }
     a:hover { opacity: 0.85; }
+    /* Reset enlaces dentro del nav (el rule global de arriba les pone underline + yellow) */
+    #nav a, #nav a:hover { text-decoration: none; opacity: 1; color: inherit; }
+    #nav .nav-links a { color: var(--text-secondary); }
+    #nav .nav-links a:hover { color: var(--text-primary); }
+    #nav .nav-links a.active { color: var(--accent-primary); }
     p { margin: 1rem 0; }
     ul, ol { padding-left: 1.5rem; }
     li { margin: 0.4rem 0; }

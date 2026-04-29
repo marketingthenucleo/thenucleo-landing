@@ -65,11 +65,23 @@ export async function logout(redirectTo = "/comunidad/") {
 let adminCache = null;
 export async function checkIsAdmin() {
   if (adminCache !== null) return adminCache;
-  const user = await getCurrentUser();
-  if (!user) { adminCache = false; return false; }
+  const token = await getAccessToken();
+  if (!token) { adminCache = false; return false; }
+  // Bypass del cliente Supabase: fetch directo al endpoint RPC con JWT del LS.
+  // El cliente puede colgarse por el bug conocido de GoTrueClient locks huérfanos.
   try {
-    const { data, error } = await supabase.rpc("is_comunidad_admin");
-    adminCache = !error && !!data;
+    const res = await fetch(url + "/rest/v1/rpc/is_comunidad_admin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: key,
+        Authorization: "Bearer " + token,
+      },
+      body: "{}",
+    });
+    if (!res.ok) { adminCache = false; return false; }
+    const data = await res.json();
+    adminCache = !!data;
   } catch {
     adminCache = false;
   }
