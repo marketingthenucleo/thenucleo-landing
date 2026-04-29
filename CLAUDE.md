@@ -28,25 +28,29 @@ _data/
   comunidad.js              ← build-time fetch a v_comunidad_propuestas_publicas
 _includes/
   blog.njk                  ← layout de cada post del blog
-  comunidad-base.njk        ← layout común de /comunidad/* (nav + estilos + auth)
+  comunidad-base.njk        ← layout común de /comunidad/* (nav + footer + modal global "Crear propuesta")
 conocimiento-zenyx/
   index.njk                 ← listado /conocimiento-zenyx/
 comunidad/
-  index.njk                 ← /comunidad/ (listado SSG con propuestas aprobadas)
+  index.njk                 ← /comunidad/ (landing 2 cards SVG: Pool red de nodos verde + Referidos diamante violeta)
+  pool/index.njk            ← /comunidad/pool/ (listado pool con tab-bar + filtros + progress bar)
+  referidos/index.njk       ← /comunidad/referidos/ (listado referidos)
   propuesta.njk             ← paginate por slug → /comunidad/{slug}/
-  nueva.njk                 ← /comunidad/nueva/ (form, requiere auth Google)
   entrar.njk                ← /comunidad/entrar/ (login Google + "No soy un robot", noindex)
   admin.njk                 ← /comunidad/admin/ (panel moderación, noindex)
 content/
   conocimiento-zenyx/
     conocimiento-zenyx.json ← data file (layout=blog, tags=blog, permalink)
     {slug}.md               ← posts (los commitea n8n)
+assets/css/
+  comunidad.css             ← tokens del mockup (#090a0f, verde, azul, violet) + componentes (community-card, proposal-card, modal, auth-menu)
 assets/js/
   consent.js                ← cookies RGPD
   comunidad-supabase.js     ← cliente supabase + nav user menu (avatar/logout) + goToLogin()
-  comunidad-listado.js      ← votos en listado + filtros por tipo
+  comunidad-landing.js      ← tilt 3D cards + burst SVG en /comunidad/
+  comunidad-listado.js      ← votos + search + pills (compartido por /pool/ y /referidos/)
   comunidad-ficha.js        ← votos + comentarios en ficha individual
-  comunidad-nueva.js        ← submit nueva propuesta
+  comunidad-modal.js        ← modal global "Crear propuesta" (sustituye a comunidad-nueva.js)
   comunidad-entrar.js       ← /comunidad/entrar/ → "No soy un robot" + signInWithOAuth Google
   comunidad-admin.js        ← gate admin + aprobar/rechazar via Edge Function
 fonts/                      ← NewBlack Typeface (woff2)
@@ -113,7 +117,12 @@ Comunidad pública de propuestas (ideas, servicios, herramientas) con votación,
 
 **Robots/SEO:**
 - `/comunidad/admin/` → `Disallow` en robots.txt + `<meta name="robots" content="noindex,nofollow">` inyectado por JS + `eleventyExcludeFromCollections: true`.
-- Sitemap incluye `/comunidad/`, `/comunidad/nueva/` y cada `/comunidad/{slug}/` aprobada.
+- Sitemap incluye `/comunidad/`, `/comunidad/pool/`, `/comunidad/referidos/` y cada `/comunidad/{slug}/` aprobada. `/comunidad/admin/` y `/comunidad/entrar/` excluidas (noindex + Disallow).
+- **Modos** (campo `modo` en BD, antes `tipo_propuesta`): `pool` (financiación colectiva) y `referidos` (desarrollo individual con comisiones). El form de propuesta es un modal global accesible desde el botón "Proponer" de cualquier página `/comunidad/*`.
+- **Reparto de campos usuario vs admin** (2026-04-29):
+  - Usuario en el modal solo envía: `titulo`, `descripcion`, `problema`, `beneficio`, `modo`. La nota en el modal lo aclara.
+  - Admin en `/comunidad/admin/` fija los numéricos: `cotizacion_precio` + `umbral_financiacion_pool` (pool) o `precio_adhoc` (referidos). También puede corregir los textos del usuario (ortografía, reformular) antes de aprobar.
+  - Panel admin con dos secciones: **Pendientes** (Aprobar/Rechazar) y **Aprobadas** (Guardar cambios). Aprobar guarda ediciones + dispara Edge Function + rebuild Vercel. Guardar en aprobadas hace UPDATE directo vía RLS admin (NO rebuild — ver troubleshooting en `docs/comunidad-publica.md`).
 
 **Bootstrap admin:**
 Tras el primer login Google de Ben en `/comunidad/admin/`, ejecutar en Supabase:

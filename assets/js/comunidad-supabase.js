@@ -57,6 +57,20 @@ export async function logout() {
   window.location.assign("/comunidad/");
 }
 
+let adminCache = null;
+export async function checkIsAdmin() {
+  if (adminCache !== null) return adminCache;
+  const user = await getCurrentUser();
+  if (!user) { adminCache = false; return false; }
+  try {
+    const { data, error } = await supabase.rpc("is_comunidad_admin");
+    adminCache = !error && !!data;
+  } catch {
+    adminCache = false;
+  }
+  return adminCache;
+}
+
 export function authorDisplay(user) {
   if (!user) return "Anónimo";
   const meta = user.user_metadata || {};
@@ -132,9 +146,16 @@ function bindNav() {
           initialsEl.style.display = "";
         }
       }
+
+      const adminItems = document.querySelectorAll("[data-admin-only]");
+      if (adminItems.length) {
+        const isAdmin = await checkIsAdmin();
+        adminItems.forEach((el) => { el.style.display = isAdmin ? "" : "none"; });
+      }
     } else {
       if (loginBtn) loginBtn.style.display = "";
       if (menu) menu.style.display = "none";
+      document.querySelectorAll("[data-admin-only]").forEach((el) => { el.style.display = "none"; });
       closeMenu();
     }
   }

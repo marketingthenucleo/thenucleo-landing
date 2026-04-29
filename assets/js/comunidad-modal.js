@@ -9,19 +9,12 @@ if (overlay) {
   const fb        = document.getElementById("modal-feedback");
   const submit    = document.getElementById("modal-submit");
   const modoSel   = document.getElementById("modal-modo");
-  const poolBlock = document.getElementById("modal-pool-fields");
 
   function escape(s) {
     return String(s ?? "").replace(/[&<>"']/g, (m) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
     }[m]));
   }
-
-  function togglePool() {
-    poolBlock.style.display = (modoSel.value === "pool") ? "" : "none";
-  }
-  modoSel.addEventListener("change", togglePool);
-  togglePool();
 
   loginBtn?.addEventListener("click", () => goToLogin());
 
@@ -70,13 +63,6 @@ if (overlay) {
       estado: "pendiente",
     };
 
-    if (modo === "pool") {
-      const cot = parseFloat(document.getElementById("modal-cotizacion").value);
-      const umb = parseFloat(document.getElementById("modal-umbral").value);
-      if (!Number.isNaN(cot)) payload.cotizacion_precio = cot;
-      if (!Number.isNaN(umb)) payload.umbral_financiacion_pool = umb;
-    }
-
     submit.disabled = true;
     submit.textContent = "Enviando…";
     const { error } = await supabase.from("comunidad_propuestas").insert(payload);
@@ -88,7 +74,6 @@ if (overlay) {
       return;
     }
     form.reset();
-    togglePool();
     fb.innerHTML = `<div class="alert alert--success">Propuesta enviada. Pasará por moderación antes de publicarse.</div>`;
     setTimeout(() => {
       overlay.classList.remove("visible");

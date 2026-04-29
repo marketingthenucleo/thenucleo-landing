@@ -69,6 +69,14 @@
             <div class="auth-menu-fullname" id="auth-menu-fullname">—</div>
             <div class="auth-menu-email" id="auth-menu-email">—</div>
           </div>
+          <a href="/comunidad/admin/" class="auth-menu-item" role="menuitem" data-admin-only style="display:none">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            Panel admin
+          </a>
+          <a href="/incidencias" class="auth-menu-item" role="menuitem" data-admin-only style="display:none">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3l8 14H2L10 3zM10 8v4M10 15h.01" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Incidencias n8n
+          </a>
           <button id="auth-menu-logout" class="auth-menu-item" role="menuitem" type="button">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H5a1 1 0 00-1 1v10a1 1 0 001 1h3M13 7l3 3-3 3M16 10H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Cerrar sesión
@@ -176,16 +184,7 @@
               <label class="input-label" for="modal-beneficio">Beneficio esperado</label>
               <textarea class="input-field" id="modal-beneficio" placeholder="¿Qué mejoraría concretamente en tu operación?" maxlength="1000" style="min-height:80px"></textarea>
             </div>
-            <div id="modal-pool-fields">
-              <div class="input-group">
-                <label class="input-label" for="modal-cotizacion">Cotización estimada (€)</label>
-                <input type="number" class="input-field" id="modal-cotizacion" min="0" step="1">
-              </div>
-              <div class="input-group">
-                <label class="input-label" for="modal-umbral">Umbral del pool (€)</label>
-                <input type="number" class="input-field" id="modal-umbral" min="0" step="1" placeholder="Cuánto hay que recaudar para liberarlo">
-              </div>
-            </div>
+            <div class="input-help" style="margin-top:-4px">La cotización y el umbral del pool los fija el equipo de TheNucleo durante la moderación.</div>
             <div id="modal-feedback"></div>
           </div>
         </div>

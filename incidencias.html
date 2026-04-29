@@ -1,3 +1,7 @@
+---
+permalink: /incidencias.html
+eleventyExcludeFromCollections: true
+---
 <!doctype html>
 <html lang="es">
 <head>
@@ -6,6 +10,10 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Incidencias n8n · TheNucleo</title>
 <link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png">
+<script>
+  window.__SUPABASE_URL__ = {{ site.supabaseUrl | dump | safe }};
+  window.__SUPABASE_ANON_KEY__ = {{ site.supabaseAnonKey | dump | safe }};
+</script>
 <style>
   @font-face {
     font-family: "NewBlack";
@@ -68,6 +76,7 @@
     padding: 32px;
     width: 100%;
     max-width: 380px;
+    text-align: center;
   }
   .login-card h1 {
     margin: 0 0 4px;
@@ -79,26 +88,6 @@
     color: var(--text-dim);
     font-size: 13px;
   }
-  .field { margin-bottom: 14px; }
-  .field label {
-    display: block;
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .field input {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font: inherit;
-    padding: 10px 12px;
-    outline: none;
-  }
-  .field input:focus { border-color: var(--accent); }
 
   button {
     background: var(--accent);
@@ -126,7 +115,8 @@
   }
   button.danger:hover { background: rgba(245, 158, 11, 0.1); }
 
-  .login-card button[type=submit] { width: 100%; padding: 12px; }
+  .login-card button { width: 100%; padding: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+  .login-card button svg { width: 18px; height: 18px; }
 
   .error {
     color: var(--error);
@@ -156,6 +146,7 @@
     font-weight: 700;
   }
   header.bar .actions { display: flex; gap: 8px; align-items: center; }
+  header.bar .user { color: var(--text-dim); font-size: 12px; margin-right: 8px; }
 
   .filters {
     display: flex;
@@ -332,26 +323,28 @@
 <body>
 
 <section id="login">
-  <form class="login-card" id="loginForm">
+  <div class="login-card">
     <h1>Incidencias n8n</h1>
     <p class="sub">Acceso restringido · TheNucleo</p>
-    <div class="field">
-      <label for="user">Usuario</label>
-      <input id="user" name="user" autocomplete="username" required>
-    </div>
-    <div class="field">
-      <label for="pass">Contraseña</label>
-      <input id="pass" name="pass" type="password" autocomplete="current-password" required>
-    </div>
-    <button type="submit" id="loginBtn">Entrar</button>
+    <button type="button" id="loginBtn">
+      <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.17-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.79 2.72v2.26h2.9c1.7-1.56 2.69-3.87 2.69-6.62z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.06-3.72H.96v2.33A9 9 0 009 18z"/>
+        <path fill="#FBBC05" d="M3.94 10.7A5.41 5.41 0 013.66 9c0-.59.1-1.16.28-1.7V4.97H.96A9 9 0 000 9c0 1.45.35 2.83.96 4.03l2.98-2.33z"/>
+        <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 00.96 4.97L3.94 7.3C4.66 5.17 6.65 3.58 9 3.58z"/>
+      </svg>
+      Entrar con Google
+    </button>
+    <p class="sub" style="margin-top:14px;font-size:12px">Tu cuenta debe estar en <code style="font-family:monospace">comunidad_admins</code>.</p>
     <div class="error" id="loginError"></div>
-  </form>
+  </div>
 </section>
 
 <section id="app">
   <header class="bar">
     <h1>Incidencias n8n</h1>
     <div class="actions">
+      <span class="user" id="userLabel"></span>
       <button class="ghost" id="refreshBtn">Refrescar</button>
       <button class="ghost" id="logoutBtn">Salir</button>
     </div>
@@ -390,209 +383,205 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
-(() => {
-  const API_BASE = "https://cbixhqjsnpuhcrcjppah.supabase.co/functions/v1/incidencias_api";
-  const TOKEN_KEY = "incidencias_jwt";
-  const PAGE_SIZE = 50;
+<script type="module">
+import { supabase, getCurrentUser, getAccessToken, checkIsAdmin, logout as supaLogout } from "/assets/js/comunidad-supabase.js";
 
-  const $ = (id) => document.getElementById(id);
-  const tbody = $("tbody");
+const API_BASE = window.__SUPABASE_URL__ + "/functions/v1/incidencias_api";
+const PAGE_SIZE = 50;
 
-  let currentFilter = "open";
-  let lastBefore = null;
-  let token = localStorage.getItem(TOKEN_KEY);
+const $ = (id) => document.getElementById(id);
+const tbody = $("tbody");
 
-  function showToast(msg, type = "ok") {
-    const t = $("toast");
-    t.textContent = msg;
-    t.className = `toast show ${type}`;
-    setTimeout(() => t.classList.remove("show"), 2500);
+let currentFilter = "open";
+let lastBefore = null;
+
+function showToast(msg, type = "ok") {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+async function api(action, body = {}) {
+  const token = await getAccessToken();
+  if (!token) { logout(); throw new Error("No hay sesión"); }
+  const res = await fetch(`${API_BASE}/${action}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      apikey: window.__SUPABASE_ANON_KEY__,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 401) { logout(); }
+    throw new Error(data.error || `HTTP ${res.status}`);
   }
+  return data;
+}
 
-  async function api(action, body = {}, withAuth = true) {
-    const headers = { "Content-Type": "application/json" };
-    if (withAuth && token) headers["Authorization"] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/${action}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
+async function logout() {
+  await supaLogout().catch(() => {});
+  $("app").classList.remove("active");
+  $("login").style.display = "flex";
+  tbody.innerHTML = "";
+  window.location.assign("/incidencias");
+}
+
+function showApp(user) {
+  $("login").style.display = "none";
+  $("app").classList.add("active");
+  $("userLabel").textContent = user?.email || "";
+  loadList(true);
+}
+
+function fmtDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleString("es-ES", {
+    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function rowHtml(row) {
+  const status = row.status === "resolved"
+    ? `<span class="status-pill status-resolved">Resuelta</span>`
+    : `<span class="status-pill status-open">Abierta</span>`;
+  const action = row.status === "resolved"
+    ? `<button class="ghost" data-act="reopen" data-id="${row.id}">Reabrir</button>`
+    : `<button data-act="resolve" data-id="${row.id}">Resolver</button>`;
+  return `
+    <tr data-id="${row.id}">
+      <td class="col-time">${fmtDate(row.created_at)}</td>
+      <td class="col-wf">${escapeHtml(row.workflow_name || "—")}</td>
+      <td>${escapeHtml(row.node_name || "—")}</td>
+      <td class="col-msg">
+        <div class="title">${escapeHtml(row.error_title || "Error")}</div>
+        ${escapeHtml(row.error_summary || row.error_message || "")}
+      </td>
+      <td>${status}</td>
+      <td class="col-actions">
+        <button class="ghost" data-act="detail" data-id="${row.id}">Ver</button>
+        ${action}
+      </td>
+    </tr>`;
+}
+
+async function loadList(reset = false) {
+  if (reset) { tbody.innerHTML = ""; lastBefore = null; }
+  try {
+    const { rows } = await api("list", {
+      status: currentFilter,
+      limit: PAGE_SIZE,
+      before: lastBefore,
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      if (res.status === 401 && withAuth) logout();
-      throw new Error(data.error || `HTTP ${res.status}`);
+    if (rows.length) {
+      tbody.insertAdjacentHTML("beforeend", rows.map(rowHtml).join(""));
+      lastBefore = rows[rows.length - 1].created_at;
     }
-    return data;
+    $("empty").style.display = (reset && rows.length === 0) ? "block" : "none";
+    $("loadMoreWrap").style.display = (rows.length === PAGE_SIZE) ? "block" : "none";
+  } catch (e) {
+    showToast(e.message, "error");
   }
+}
 
-  function logout() {
-    token = null;
-    localStorage.removeItem(TOKEN_KEY);
-    $("app").classList.remove("active");
-    $("login").style.display = "flex";
-    tbody.innerHTML = "";
-  }
-
-  function showApp() {
-    $("login").style.display = "none";
-    $("app").classList.add("active");
-    loadList(true);
-  }
-
-  function fmtDate(iso) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    return d.toLocaleString("es-ES", {
-      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-    });
-  }
-
-  function escapeHtml(s) {
-    return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
-    }[c]));
-  }
-
-  function rowHtml(row) {
-    const status = row.status === "resolved"
-      ? `<span class="status-pill status-resolved">Resuelta</span>`
-      : `<span class="status-pill status-open">Abierta</span>`;
+async function showDetail(id) {
+  try {
+    const { row } = await api("detail", { id });
+    const fields = [
+      ["Fecha", fmtDate(row.created_at)],
+      ["Workflow", `${row.workflow_name || "—"} (${row.workflow_id || "?"})`],
+      ["Execution", row.execution_url
+        ? `<a href="${escapeHtml(row.execution_url)}" target="_blank" rel="noopener">${escapeHtml(row.execution_id || "")}</a>`
+        : escapeHtml(row.execution_id || "—")],
+      ["Nodo", `${row.node_name || "—"}<br><span style="color:var(--text-dim);font-size:11px;">${escapeHtml(row.node_type || "")} · ${escapeHtml(row.node_function || "")}</span>`],
+      ["Resumen", escapeHtml(row.error_summary || "")],
+      ["Descripción", escapeHtml(row.error_description || "")],
+      ["Mensaje", `<pre>${escapeHtml(row.error_message || "")}</pre>`],
+      ["Stack", row.error_stack ? `<pre>${escapeHtml(row.error_stack)}</pre>` : "—"],
+    ];
+    const dl = fields.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
     const action = row.status === "resolved"
       ? `<button class="ghost" data-act="reopen" data-id="${row.id}">Reabrir</button>`
-      : `<button data-act="resolve" data-id="${row.id}">Resolver</button>`;
-    return `
-      <tr data-id="${row.id}">
-        <td class="col-time">${fmtDate(row.created_at)}</td>
-        <td class="col-wf">${escapeHtml(row.workflow_name || "—")}</td>
-        <td>${escapeHtml(row.node_name || "—")}</td>
-        <td class="col-msg">
-          <div class="title">${escapeHtml(row.error_title || "Error")}</div>
-          ${escapeHtml(row.error_summary || row.error_message || "")}
-        </td>
-        <td>${status}</td>
-        <td class="col-actions">
-          <button class="ghost" data-act="detail" data-id="${row.id}">Ver</button>
-          ${action}
-        </td>
-      </tr>`;
+      : `<button data-act="resolve" data-id="${row.id}">Marcar resuelta</button>`;
+    $("modalCard").innerHTML = `
+      <h2>${escapeHtml(row.error_title || "Incidencia")}</h2>
+      <div class="meta">${row.status === "resolved"
+        ? `Resuelta el ${fmtDate(row.resolved_at)}`
+        : "Abierta"}</div>
+      <dl>${dl}</dl>
+      <div class="modal-actions">
+        <button class="ghost" data-act="close-modal">Cerrar</button>
+        ${action}
+      </div>`;
+    $("modal").classList.add("active");
+  } catch (e) {
+    showToast(e.message, "error");
   }
+}
 
-  async function loadList(reset = false) {
-    if (reset) { tbody.innerHTML = ""; lastBefore = null; }
-    try {
-      const { rows } = await api("list", {
-        status: currentFilter,
-        limit: PAGE_SIZE,
-        before: lastBefore,
-      });
-      if (rows.length) {
-        tbody.insertAdjacentHTML("beforeend", rows.map(rowHtml).join(""));
-        lastBefore = rows[rows.length - 1].created_at;
-      }
-      $("empty").style.display = (reset && rows.length === 0) ? "block" : "none";
-      $("loadMoreWrap").style.display = (rows.length === PAGE_SIZE) ? "block" : "none";
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+async function setStatus(id, action) {
+  try {
+    await api(action, { id });
+    showToast(action === "resolve" ? "Resuelta" : "Reabierta", "ok");
+    $("modal").classList.remove("active");
+    loadList(true);
+  } catch (e) {
+    showToast(e.message, "error");
   }
+}
 
-  async function showDetail(id) {
-    try {
-      const { row } = await api("detail", { id });
-      const fields = [
-        ["Fecha", fmtDate(row.created_at)],
-        ["Workflow", `${row.workflow_name || "—"} (${row.workflow_id || "?"})`],
-        ["Execution", row.execution_url
-          ? `<a href="${escapeHtml(row.execution_url)}" target="_blank" rel="noopener">${escapeHtml(row.execution_id || "")}</a>`
-          : escapeHtml(row.execution_id || "—")],
-        ["Nodo", `${row.node_name || "—"}<br><span style="color:var(--text-dim);font-size:11px;">${escapeHtml(row.node_type || "")} · ${escapeHtml(row.node_function || "")}</span>`],
-        ["Resumen", escapeHtml(row.error_summary || "")],
-        ["Descripción", escapeHtml(row.error_description || "")],
-        ["Mensaje", `<pre>${escapeHtml(row.error_message || "")}</pre>`],
-        ["Stack", row.error_stack ? `<pre>${escapeHtml(row.error_stack)}</pre>` : "—"],
-      ];
-      const dl = fields.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
-      const action = row.status === "resolved"
-        ? `<button class="ghost" data-act="reopen" data-id="${row.id}">Reabrir</button>`
-        : `<button data-act="resolve" data-id="${row.id}">Marcar resuelta</button>`;
-      $("modalCard").innerHTML = `
-        <h2>${escapeHtml(row.error_title || "Incidencia")}</h2>
-        <div class="meta">${row.status === "resolved"
-          ? `Resuelta el ${fmtDate(row.resolved_at)}`
-          : "Abierta"}</div>
-        <dl>${dl}</dl>
-        <div class="modal-actions">
-          <button class="ghost" data-act="close-modal">Cerrar</button>
-          ${action}
-        </div>`;
-      $("modal").classList.add("active");
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+// Event listeners
+$("loginBtn").addEventListener("click", () => {
+  window.location.assign("/comunidad/entrar/?next=" + encodeURIComponent("/incidencias"));
+});
+
+$("logoutBtn").addEventListener("click", logout);
+$("refreshBtn").addEventListener("click", () => loadList(true));
+$("loadMoreBtn").addEventListener("click", () => loadList(false));
+
+document.querySelectorAll(".chip").forEach((c) => {
+  c.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach((x) => x.classList.remove("active"));
+    c.classList.add("active");
+    currentFilter = c.dataset.filter;
+    loadList(true);
+  });
+});
+
+document.body.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const { act, id } = btn.dataset;
+  if (act === "detail") showDetail(id);
+  else if (act === "resolve") setStatus(id, "resolve");
+  else if (act === "reopen") setStatus(id, "reopen");
+  else if (act === "close-modal") $("modal").classList.remove("active");
+});
+
+$("modal").addEventListener("click", (e) => {
+  if (e.target === $("modal")) $("modal").classList.remove("active");
+});
+
+// Bootstrap: si hay sesión y es admin, abrir panel
+(async () => {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const isAdmin = await checkIsAdmin();
+  if (!isAdmin) {
+    $("loginError").textContent = "Tu cuenta (" + (user.email || "") + ") no es admin. Contacta a Ben para añadirla a comunidad_admins.";
+    return;
   }
-
-  async function setStatus(id, action) {
-    try {
-      await api(action, { id });
-      showToast(action === "resolve" ? "Resuelta" : "Reabierta", "ok");
-      $("modal").classList.remove("active");
-      loadList(true);
-    } catch (e) {
-      showToast(e.message, "error");
-    }
-  }
-
-  // Event listeners
-  $("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    $("loginError").textContent = "";
-    $("loginBtn").disabled = true;
-    try {
-      const { token: t } = await api("login", {
-        user: $("user").value.trim(),
-        pass: $("pass").value,
-      }, false);
-      token = t;
-      localStorage.setItem(TOKEN_KEY, t);
-      $("pass").value = "";
-      showApp();
-    } catch (e) {
-      $("loginError").textContent = e.message;
-    } finally {
-      $("loginBtn").disabled = false;
-    }
-  });
-
-  $("logoutBtn").addEventListener("click", logout);
-  $("refreshBtn").addEventListener("click", () => loadList(true));
-  $("loadMoreBtn").addEventListener("click", () => loadList(false));
-
-  document.querySelectorAll(".chip").forEach((c) => {
-    c.addEventListener("click", () => {
-      document.querySelectorAll(".chip").forEach((x) => x.classList.remove("active"));
-      c.classList.add("active");
-      currentFilter = c.dataset.filter;
-      loadList(true);
-    });
-  });
-
-  document.body.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-act]");
-    if (!btn) return;
-    const { act, id } = btn.dataset;
-    if (act === "detail") showDetail(id);
-    else if (act === "resolve") setStatus(id, "resolve");
-    else if (act === "reopen") setStatus(id, "reopen");
-    else if (act === "close-modal") $("modal").classList.remove("active");
-  });
-
-  $("modal").addEventListener("click", (e) => {
-    if (e.target === $("modal")) $("modal").classList.remove("active");
-  });
-
-  // Auto-login if token present
-  if (token) showApp();
+  showApp(user);
 })();
 </script>
 </body>
