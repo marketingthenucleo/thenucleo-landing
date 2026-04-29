@@ -10,6 +10,7 @@ eleventyExcludeFromCollections: true
 <meta name="robots" content="noindex,nofollow">
 <title>Incidencias n8n · TheNucleo</title>
 <link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png">
+<link rel="stylesheet" href="/assets/css/comunidad.css">
 <script>
   window.__SUPABASE_URL__ = {{ site.supabaseUrl | dump | safe }};
   window.__SUPABASE_ANON_KEY__ = {{ site.supabaseAnonKey | dump | safe }};
@@ -56,14 +57,17 @@ eleventyExcludeFromCollections: true
     font-family: "NewBlack", system-ui, -apple-system, sans-serif;
     font-weight: 500;
     min-height: 100vh;
+    overflow-x: hidden;
   }
+  /* Compensar nav#nav fixed (top:16px + ~60px alto + margen) */
+  body { padding-top: 96px; }
 
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
 
   /* Login screen */
   #login {
-    min-height: 100vh;
+    min-height: calc(100vh - 96px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -137,7 +141,7 @@ eleventyExcludeFromCollections: true
     border-bottom: 1px solid var(--border);
     background: var(--card);
     position: sticky;
-    top: 0;
+    top: 80px;
     z-index: 10;
   }
   header.bar h1 {
@@ -322,6 +326,72 @@ eleventyExcludeFromCollections: true
 </head>
 <body>
 
+<nav id="nav">
+  <a class="nav-left" href="/" aria-label="TheNucleo">
+    <svg class="nav-isotipo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="iso-g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-160.001,160.001,0,159.389,157.823)">
+          <stop offset=".676" stop-color="#000000" stop-opacity="0"/>
+          <stop offset=".982" stop-color="#f3f959" stop-opacity="1"/>
+        </radialGradient>
+      </defs>
+      <path style="mix-blend-mode:screen;fill:url(#iso-g1)" d="m160 0c-88.37 0-160 71.63-160 160 0 88.37 71.63 160 160 160 88.37 0 160-71.63 160-160 0-88.37-71.63-160-160-160z"/>
+    </svg>
+    <svg class="nav-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
+      <style>.lt0{fill:#e6e6e6}</style>
+      <g>
+        <path class="lt0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+        <path class="lt0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+        <path class="lt0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+        <path class="lt0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+        <path class="lt0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+        <path class="lt0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
+        <path class="lt0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+      </g>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="/">Funcionalidades</a>
+    <a href="/">Resultados</a>
+    <a href="/">Plataforma</a>
+    <a href="/">Precios</a>
+    <a href="/comunidad/">Comunidad</a>
+    <a href="/conocimiento-zenyx/">Conocimiento</a>
+  </div>
+  <div class="nav-right">
+    <div id="auth-menu" class="auth-menu" style="display:none">
+      <button id="auth-menu-trigger" class="auth-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="auth-menu-dropdown">
+        <span class="auth-menu-avatar-wrap">
+          <img id="auth-menu-avatar" class="auth-menu-avatar" alt="" referrerpolicy="no-referrer" />
+          <span id="auth-menu-initials" class="auth-menu-initials" aria-hidden="true">?</span>
+        </span>
+        <span id="auth-menu-name" class="auth-menu-name">Cuenta</span>
+        <svg class="auth-menu-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div id="auth-menu-dropdown" class="auth-menu-dropdown" role="menu">
+        <div class="auth-menu-header">
+          <div class="auth-menu-fullname" id="auth-menu-fullname">—</div>
+          <div class="auth-menu-email" id="auth-menu-email">—</div>
+        </div>
+        <a href="/comunidad/admin/" class="auth-menu-item" role="menuitem" data-admin-only style="display:none">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          Panel admin
+        </a>
+        <a href="/incidencias" class="auth-menu-item" role="menuitem" data-admin-only style="display:none">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3l8 14H2L10 3zM10 8v4M10 15h.01" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Incidencias n8n
+        </a>
+        <button id="auth-menu-logout" class="auth-menu-item" role="menuitem" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H5a1 1 0 00-1 1v10a1 1 0 001 1h3M13 7l3 3-3 3M16 10H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+
+    <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm">Acceder &rarr;</a>
+  </div>
+</nav>
+
 <section id="login">
   <div class="login-card">
     <h1>Incidencias n8n</h1>
@@ -383,6 +453,17 @@ eleventyExcludeFromCollections: true
 
 <div class="toast" id="toast"></div>
 
+<script>
+  // Nav scrolled state (idéntico a comunidad-base.njk)
+  (function () {
+    var nav = document.getElementById('nav');
+    if (!nav) return;
+    var update = function () { nav.classList.toggle('scrolled', (window.scrollY || 0) > 40); };
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+</script>
+
 <script type="module">
 import { supabase, getCurrentUser, getAccessToken, checkIsAdmin, logout as supaLogout } from "/assets/js/comunidad-supabase.js";
 
@@ -422,12 +503,8 @@ async function api(action, body = {}) {
   return data;
 }
 
-async function logout() {
-  await supaLogout().catch(() => {});
-  $("app").classList.remove("active");
-  $("login").style.display = "flex";
-  tbody.innerHTML = "";
-  window.location.assign("/incidencias");
+function logout() {
+  supaLogout("/incidencias");
 }
 
 function showApp(user) {

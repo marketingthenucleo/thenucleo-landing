@@ -52,9 +52,14 @@ export async function loginWithGoogle() {
   goToLogin();
 }
 
-export async function logout() {
-  await supabase.auth.signOut();
-  window.location.assign("/comunidad/");
+export async function logout(redirectTo = "/comunidad/") {
+  // Limpiar localStorage manualmente — supabase.auth.signOut() puede colgarse
+  // por el bug conocido de GoTrueClient locks huérfanos.
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  // Fire-and-forget: revoca el refresh token en servidor pero no bloquea redirect.
+  supabase.auth.signOut().catch(() => {});
+  adminCache = null;
+  window.location.assign(redirectTo);
 }
 
 let adminCache = null;
