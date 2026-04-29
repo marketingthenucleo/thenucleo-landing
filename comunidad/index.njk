@@ -1,63 +1,120 @@
 ---
 layout: comunidad-base.njk
 title: Comunidad — TheNucleo
-description: "Propuestas de la comunidad TheNucleo: ideas, servicios y herramientas votadas por agencias de marketing."
+description: "Pool de proyectos y desarrollos a medida. Las agencias proponen, votan y financian las herramientas que la comunidad TheNucleo necesita."
 permalink: /comunidad/
 ---
-<header>
-  <span class="section-label">Comunidad pública</span>
-  <h1 class="page-title">Lo que la comunidad <em>quiere construir</em>.</h1>
-  <p class="page-sub">Propuestas votadas por agencias. Ideas, servicios y herramientas que la comunidad valida y financia colectivamente. Cualquiera puede entrar, votar, comentar y proponer.</p>
-  <a href="/comunidad/nueva/" class="btn">Nueva propuesta</a>
-</header>
-
-<div class="filters" id="filters" style="margin-top:48px">
-  <button class="active" data-tipo="all">Todas</button>
-  <button data-tipo="idea">Ideas</button>
-  <button data-tipo="servicio">Servicios</button>
-  <button data-tipo="herramienta">Herramientas</button>
+<div class="page-header animate-in">
+  <div>
+    <h1>Comunidad</h1>
+    <div class="page-header-sub">Dos formas de construir lo que falta: financiación colectiva o desarrollo individual.</div>
+  </div>
 </div>
 
-{% if comunidad.propuestas.length == 0 %}
-  <div class="empty">
-    <p>Aún no hay propuestas aprobadas.</p>
-    <p><a href="/comunidad/nueva/" class="btn">Sé el primero en proponer</a></p>
-  </div>
-{% else %}
-  <div class="grid" id="lista-propuestas">
-    {% for p in comunidad.propuestas %}
-      <article class="card propuesta" data-tipo="{{ p.tipo_propuesta }}" data-id="{{ p.id }}" data-slug="{{ p.slug }}">
-        <div class="card-meta">
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <span class="tag tag-yellow">{{ p.tipo_propuesta }}</span>
-            {% if p.estado == 'financiada' %}<span class="tag tag-accent">financiada</span>{% endif %}
-          </div>
-          <span class="meta-time">{{ p.fecha_publicacion | dateES }}</span>
-        </div>
+<div class="community-grid">
 
-        <h3 class="card-title"><a href="/comunidad/{{ p.slug }}/">{{ p.titulo }}</a></h3>
-        <p class="card-body">{{ p.descripcion | truncate(180) }}</p>
+  <!-- ===== POOL DE PROYECTOS ===== -->
+  <article class="community-card animate-in" id="card-pool">
+    <div class="community-card-visual" id="visual-pool" data-open-modal="pool">
+      <span class="community-card-badge community-card-badge--pool">Desarrollo Colectivo</span>
+      <svg id="svgPool" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;position:absolute;top:0;left:0;">
+        <defs>
+          <radialGradient id="gp" cx="50%" cy="45%"><stop offset="0%" stop-color="#22c55e" stop-opacity=".18"/><stop offset="100%" stop-color="#22c55e" stop-opacity="0"/></radialGradient>
+          <filter id="f1"><feGaussianBlur stdDeviation="20"/></filter>
+          <filter id="f2"><feGaussianBlur stdDeviation="5"/></filter>
+        </defs>
+        <style>
+          @keyframes nodePulse { 0%,100% { opacity:.9 } 50% { opacity:.3 } }
+          @keyframes lineFlow  { 0% { stroke-dashoffset:160 } 100% { stroke-dashoffset:0 } }
+        </style>
+        <ellipse id="poolGlow" cx="300" cy="260" rx="220" ry="170" fill="url(#gp)" filter="url(#f1)"/>
+        <circle id="burstRing1" cx="300" cy="260" r="10" fill="none" stroke="#22c55e" stroke-width="2" stroke-opacity="0"/>
+        <circle id="burstRing2" cx="300" cy="260" r="10" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-opacity="0"/>
+        <g id="poolLines" stroke="#22c55e" fill="none" stroke-width="1" stroke-dasharray="160">
+          <line x1="300" y1="260" x2="100" y2="120" stroke-opacity=".2" style="animation:lineFlow 2s linear infinite;"/>
+          <line x1="300" y1="260" x2="500" y2="100" stroke-opacity=".2" style="animation:lineFlow 2s linear infinite .4s;"/>
+          <line x1="300" y1="260" x2="540" y2="340" stroke-opacity=".2" style="animation:lineFlow 2s linear infinite .8s;"/>
+          <line x1="300" y1="260" x2="300" y2="440" stroke-opacity=".2" style="animation:lineFlow 2s linear infinite 1.2s;"/>
+          <line x1="300" y1="260" x2="60"  y2="360" stroke-opacity=".2" style="animation:lineFlow 2s linear infinite 1.6s;"/>
+          <line x1="100" y1="120" x2="500" y2="100" stroke-opacity=".07"/>
+          <line x1="500" y1="100" x2="540" y2="340" stroke-opacity=".07"/>
+          <line x1="60"  y1="360" x2="300" y2="440" stroke-opacity=".07"/>
+        </g>
+        <circle cx="300" cy="260" r="28" fill="#22c55e" fill-opacity=".07"/>
+        <circle cx="300" cy="260" r="12" fill="#22c55e" fill-opacity=".9" filter="url(#f2)"/>
+        <g id="poolNodes" fill="#22c55e">
+          <g class="sat"><circle cx="100" cy="120" r="7" fill-opacity=".75" style="animation:nodePulse 2.5s ease-in-out infinite;"/><circle cx="100" cy="120" r="16" fill="none" stroke="#22c55e" stroke-opacity=".15" stroke-width="1"/></g>
+          <g class="sat"><circle cx="500" cy="100" r="7" fill-opacity=".75" style="animation:nodePulse 2.5s ease-in-out infinite .5s;"/><circle cx="500" cy="100" r="16" fill="none" stroke="#22c55e" stroke-opacity=".15" stroke-width="1"/></g>
+          <g class="sat"><circle cx="540" cy="340" r="7" fill-opacity=".75" style="animation:nodePulse 2.5s ease-in-out infinite 1s;"/><circle cx="540" cy="340" r="16" fill="none" stroke="#22c55e" stroke-opacity=".15" stroke-width="1"/></g>
+          <g class="sat"><circle cx="300" cy="440" r="7" fill-opacity=".75" style="animation:nodePulse 2.5s ease-in-out infinite 1.5s;"/><circle cx="300" cy="440" r="16" fill="none" stroke="#22c55e" stroke-opacity=".15" stroke-width="1"/></g>
+          <g class="sat"><circle cx="60"  cy="360" r="7" fill-opacity=".75" style="animation:nodePulse 2.5s ease-in-out infinite 2s;"/><circle cx="60"  cy="360" r="16" fill="none" stroke="#22c55e" stroke-opacity=".15" stroke-width="1"/></g>
+        </g>
+        <g id="extraNodes" opacity="0" fill="#22c55e">
+          <circle cx="200" cy="180" r="5" fill-opacity=".6"/>
+          <circle cx="420" cy="200" r="4" fill-opacity=".5"/>
+          <circle cx="160" cy="350" r="5" fill-opacity=".6"/>
+          <circle cx="450" cy="380" r="4" fill-opacity=".5"/>
+          <circle cx="350" cy="80"  r="4" fill-opacity=".5"/>
+        </g>
+      </svg>
+    </div>
+    <div class="community-card-content">
+      <div class="community-card-title">Pool de Proyectos</div>
+      <div class="community-card-desc">Varias agencias financian un desarrollo conjunto. Todos pagan menos, todos ganan acceso ilimitado.</div>
+      <div class="community-card-actions">
+        <a href="/comunidad/pool/" class="btn btn--secondary">Explorar</a>
+        <button class="btn btn--primary" type="button" onclick="window.openComunidadModal('pool')">Proponer</button>
+      </div>
+    </div>
+  </article>
 
-        {% if p.umbral_financiacion_pool %}
-          <div class="pool-summary" style="margin-top:14px">
-            <span><strong>{{ p.recaudado_pool or 0 }} €</strong> / {{ p.umbral_financiacion_pool }} €</span>
-            <span>{{ p.comentarios_count }} comentarios</span>
-          </div>
-          <div class="progress"><div class="progress-bar" style="width:{{ ((p.recaudado_pool or 0) / p.umbral_financiacion_pool * 100) | round }}%"></div></div>
-        {% endif %}
+  <!-- ===== DESARROLLO CON REFERIDOS ===== -->
+  <article class="community-card animate-in" id="card-referidos">
+    <div class="community-card-visual" id="visual-referidos" data-open-modal="referidos">
+      <span class="community-card-badge community-card-badge--referidos">Desarrollo Individual</span>
+      <svg id="svgRef" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;position:absolute;top:0;left:0;">
+        <defs>
+          <radialGradient id="gr" cx="50%" cy="45%"><stop offset="0%" stop-color="#8b5cf6" stop-opacity=".2"/><stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
+          <filter id="fr1"><feGaussianBlur stdDeviation="20"/></filter>
+          <filter id="fr2"><feGaussianBlur stdDeviation="4"/></filter>
+          <linearGradient id="dg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6d28d9"/></linearGradient>
+        </defs>
+        <style>
+          @keyframes diamondFloat { 0%,100% { transform:translateY(0) rotate(45deg) } 50% { transform:translateY(-15px) rotate(45deg) } }
+          @keyframes orbitSpin    { 0% { transform:rotate(0deg) } 100% { transform:rotate(360deg) } }
+          @keyframes refPulse     { 0%,100% { opacity:.7 } 50% { opacity:.2 } }
+        </style>
+        <ellipse cx="300" cy="270" rx="200" ry="160" fill="url(#gr)" filter="url(#fr1)"/>
+        <g style="transform-origin:300px 260px;animation:orbitSpin 20s linear infinite;">
+          <ellipse cx="300" cy="260" rx="140" ry="100" fill="none" stroke="#8b5cf6" stroke-opacity=".08" stroke-width="1"/>
+          <circle cx="440" cy="260" r="4" fill="#8b5cf6" fill-opacity=".5" style="animation:refPulse 3s ease-in-out infinite;"/>
+        </g>
+        <g style="transform-origin:300px 260px;animation:orbitSpin 30s linear infinite reverse;">
+          <ellipse cx="300" cy="260" rx="200" ry="140" fill="none" stroke="#8b5cf6" stroke-opacity=".05" stroke-width="1"/>
+          <circle cx="100" cy="260" r="3" fill="#8b5cf6" fill-opacity=".4" style="animation:refPulse 3s ease-in-out infinite 1s;"/>
+        </g>
+        <g style="transform-origin:300px 260px;animation:diamondFloat 5s ease-in-out infinite;">
+          <rect x="270" y="230" width="60" height="60" rx="10" fill="url(#dg)" filter="url(#fr2)" opacity=".9"/>
+          <rect x="270" y="230" width="60" height="60" rx="10" fill="none" stroke="#a78bfa" stroke-opacity=".3" stroke-width="1"/>
+        </g>
+        <circle cx="180" cy="180" r="3" fill="#8b5cf6" fill-opacity=".3" style="animation:refPulse 4s ease-in-out infinite;"/>
+        <circle cx="430" cy="150" r="2" fill="#8b5cf6" fill-opacity=".25" style="animation:refPulse 4s ease-in-out infinite .7s;"/>
+        <circle cx="420" cy="380" r="3" fill="#8b5cf6" fill-opacity=".3" style="animation:refPulse 4s ease-in-out infinite 1.4s;"/>
+        <circle cx="170" cy="350" r="2" fill="#8b5cf6" fill-opacity=".25" style="animation:refPulse 4s ease-in-out infinite 2.1s;"/>
+      </svg>
+    </div>
+    <div class="community-card-content">
+      <div class="community-card-title">Desarrollo con Referidos</div>
+      <div class="community-card-desc">Tú desarrollas, tú gestionas, cobras cada uso por parte de otras agencias que lo compren.</div>
+      <div class="community-card-actions">
+        <a href="/comunidad/referidos/" class="btn btn--secondary">Explorar</a>
+        <button class="btn btn--primary" type="button" onclick="window.openComunidadModal('referidos')">Proponer</button>
+      </div>
+    </div>
+  </article>
 
-        <div class="card-row">
-          <button class="vote-btn" data-vote-propuesta="{{ p.id }}">
-            <span class="arrow">▲</span>
-            <span data-vote-count>{{ p.votos }}</span>
-          </button>
-          <a class="muted" href="/comunidad/{{ p.slug }}/" style="font-family:var(--mono);font-size:11px;letter-spacing:.04em">Ver detalle &rarr;</a>
-        </div>
-      </article>
-    {% endfor %}
-  </div>
-{% endif %}
+</div>
 
 {% block scripts %}
-<script type="module" src="/assets/js/comunidad-listado.js"></script>
+<script type="module" src="/assets/js/comunidad-landing.js"></script>
 {% endblock %}

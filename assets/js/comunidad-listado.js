@@ -1,26 +1,39 @@
-import { supabase, getCurrentUser, loginWithGoogle } from "./comunidad-supabase.js";
+import { supabase, getCurrentUser, goToLogin } from "./comunidad-supabase.js";
 
-const cards = Array.from(document.querySelectorAll(".propuesta"));
+// Filtros (search + pills) + voto toggle
+const cards = Array.from(document.querySelectorAll(".proposal-card"));
+const searchInput = document.getElementById("search");
+const pills = document.querySelectorAll("#pills .pill");
+const tabCount = document.getElementById("tab-count");
 
-// Filtros por tipo
-const filterButtons = document.querySelectorAll("#filters button");
-filterButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    filterButtons.forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    const tipo = btn.dataset.tipo;
-    cards.forEach((card) => {
-      card.style.display = tipo === "all" || card.dataset.tipo === tipo ? "" : "none";
-    });
+function applyFilters() {
+  const q = (searchInput?.value || "").toLowerCase().trim();
+  const activeEstado = document.querySelector("#pills .pill.active")?.dataset.estado || "all";
+  let visibles = 0;
+  cards.forEach((c) => {
+    const titulo = c.dataset.titulo || "";
+    const estado = c.dataset.estado || "";
+    const matchQ = !q || titulo.includes(q);
+    const matchEstado = activeEstado === "all" || estado === activeEstado;
+    const show = matchQ && matchEstado;
+    c.style.display = show ? "" : "none";
+    if (show) visibles++;
   });
-});
+  if (tabCount) tabCount.textContent = visibles;
+}
 
-// Marcar votos propios y bind toggle
+searchInput?.addEventListener("input", applyFilters);
+pills.forEach((p) => p.addEventListener("click", () => {
+  pills.forEach((x) => x.classList.remove("active"));
+  p.classList.add("active");
+  applyFilters();
+}));
+
+// Voto: marcar votos propios + bind toggle
 async function syncVotes() {
-  const user = await getCurrentUser();
   const buttons = Array.from(document.querySelectorAll("[data-vote-propuesta]"));
   if (buttons.length === 0) return;
-
+  const user = await getCurrentUser();
   if (user) {
     const ids = buttons.map((b) => b.dataset.votePropuesta);
     const { data } = await supabase
@@ -29,22 +42,17 @@ async function syncVotes() {
       .in("propuesta_id", ids)
       .eq("usuario_id", user.id);
     const voted = new Set((data || []).map((r) => r.propuesta_id));
-    buttons.forEach((b) => {
-      if (voted.has(b.dataset.votePropuesta)) b.classList.add("voted");
-    });
+    buttons.forEach((b) => { if (voted.has(b.dataset.votePropuesta)) b.classList.add("voted"); });
   }
-
   buttons.forEach((b) => b.addEventListener("click", onVoteClick));
 }
 
 async function onVoteClick(e) {
+  e.preventDefault();
   const btn = e.currentTarget;
   const id = btn.dataset.votePropuesta;
   const user = await getCurrentUser();
-  if (!user) {
-    await loginWithGoogle();
-    return;
-  }
+  if (!user) { goToLogin(); return; }
   const isVoted = btn.classList.contains("voted");
   btn.disabled = true;
   const countEl = btn.querySelector("[data-vote-count]");

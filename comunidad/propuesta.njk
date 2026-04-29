@@ -10,19 +10,31 @@ eleventyComputed:
   title: "{{ propuesta.titulo }} — Comunidad TheNucleo"
   description: "{{ propuesta.descripcion | truncate(155) }}"
 ---
-<a class="crumb" href="/comunidad/">&larr; Volver a comunidad</a>
+{% set umbral = propuesta.umbral_financiacion_pool or 0 %}
+{% set recaudado = propuesta.recaudado_pool or 0 %}
+{% set pct = 0 %}
+{% if umbral > 0 %}{% set pct = (recaudado / umbral * 100) | round %}{% endif %}
+{% set seccionUrl = "/comunidad/pool/" if propuesta.modo == "pool" else "/comunidad/referidos/" %}
+{% set seccionLabel = "Pool de proyectos" if propuesta.modo == "pool" else "Desarrollo con Referidos" %}
 
-<header>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-    <span class="tag tag-yellow">{{ propuesta.tipo_propuesta }}</span>
-    {% if propuesta.estado == 'financiada' %}<span class="tag tag-accent">financiada</span>{% endif %}
-    <span class="tag tag-mute">{{ propuesta.fecha_publicacion | dateES }}</span>
+<div class="page-header animate-in">
+  <div>
+    <a class="crumb" href="{{ seccionUrl }}">&larr; {{ seccionLabel }}</a>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px">
+      {% if propuesta.modo == "pool" %}
+        <span class="badge badge--pending" style="background:var(--accent-primary-muted);color:var(--accent-primary)">Pool</span>
+      {% else %}
+        <span class="badge badge--violet">Referidos</span>
+      {% endif %}
+      {% if propuesta.estado == "financiada" %}<span class="badge badge--done">{{ "Financiada" if propuesta.modo == "pool" else "Completado" }}</span>{% endif %}
+    </div>
+    <h1>{{ propuesta.titulo }}</h1>
+    <div class="page-header-sub">{{ propuesta.fecha_publicacion | dateES }}</div>
   </div>
-  <h1 class="page-title">{{ propuesta.titulo }}</h1>
-</header>
+</div>
 
-<section class="card" data-id="{{ propuesta.id }}" data-slug="{{ propuesta.slug }}" style="margin-top:24px">
-  <p style="font-size:16px">{{ propuesta.descripcion }}</p>
+<section class="proposal-card animate-in" data-id="{{ propuesta.id }}" data-slug="{{ propuesta.slug }}">
+  <p>{{ propuesta.descripcion }}</p>
 
   {% if propuesta.problema %}
     <h3 class="section-h3">Problema que resuelve</h3>
@@ -34,27 +46,32 @@ eleventyComputed:
     <p>{{ propuesta.beneficio }}</p>
   {% endif %}
 
-  {% if propuesta.umbral_financiacion_pool %}
+  {% if umbral > 0 %}
     <h3 class="section-h3">Financiación del pool</h3>
-    <div class="pool-summary">
-      <span><strong>{{ propuesta.recaudado_pool or 0 }} €</strong> recaudados de <strong>{{ propuesta.umbral_financiacion_pool }} €</strong></span>
-      {% if propuesta.cotizacion_precio %}<span>Cotización: {{ propuesta.cotizacion_precio }} €</span>{% endif %}
+    <div class="proposal-progress">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:{{ pct }}%"></div></div>
+      <div class="progress-info">
+        <span class="progress-amount">{{ recaudado }} € / {{ umbral }} €</span>
+        <span class="progress-pct">{{ pct }}%</span>
+      </div>
     </div>
-    <div class="progress"><div class="progress-bar" style="width:{{ ((propuesta.recaudado_pool or 0) / propuesta.umbral_financiacion_pool * 100) | round }}%"></div></div>
-    <button id="aportar-btn" class="btn" disabled style="margin-top:18px">Aportar al pool — próximamente</button>
+    {% if propuesta.cotizacion_precio %}<p class="muted">Cotización estimada: {{ propuesta.cotizacion_precio }} €</p>{% endif %}
+    <button id="aportar-btn" class="btn btn--primary" disabled style="margin-top:18px">Aportar al pool — próximamente</button>
     <p class="muted" style="margin-top:8px;font-style:italic">Los pagos al pool se activarán cuando la cuenta Stripe de producción esté operativa.</p>
   {% elif propuesta.precio_adhoc %}
     <h3 class="section-h3">Precio individual</h3>
     <p class="muted">{{ propuesta.precio_adhoc }} € — disponible cuando la propuesta sea financiada.</p>
   {% endif %}
 
-  <div class="card-row" style="border-top:1px solid var(--border);padding-top:18px;margin-top:24px">
-    <button class="vote-btn" data-vote-propuesta="{{ propuesta.id }}">
-      <span class="arrow">▲</span>
-      <span data-vote-count>{{ propuesta.votos }}</span>
-      <span class="muted" style="font-weight:500">votos</span>
-    </button>
-    <span class="muted" data-comentarios-count style="font-family:var(--mono);font-size:11px;letter-spacing:.04em">{{ propuesta.comentarios_count }} comentarios</span>
+  <div class="proposal-footer" style="margin-top:18px">
+    <div class="proposal-meta">
+      <button type="button" class="vote-btn" data-vote-propuesta="{{ propuesta.id }}" aria-label="Votar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span data-vote-count>{{ propuesta.votos }}</span>
+        <span class="muted" style="font-weight:500">votos</span>
+      </button>
+    </div>
+    <span class="proposal-time" data-comentarios-count>{{ propuesta.comentarios_count }} comentarios</span>
   </div>
 </section>
 
@@ -62,15 +79,20 @@ eleventyComputed:
   <h2 class="section-h2">Comentarios</h2>
   <div id="comentario-form-wrap" style="display:none">
     <form id="comentario-form">
-      <label for="comentario-texto">Tu comentario</label>
-      <textarea id="comentario-texto" required minlength="3" maxlength="2000" placeholder="Tu aportación a esta propuesta…"></textarea>
-      <p class="muted" style="margin-top:8px">Tu comentario pasará por moderación antes de publicarse.</p>
-      <button class="btn" type="submit" style="margin-top:14px">Enviar</button>
+      <div class="input-group">
+        <label class="input-label" for="comentario-texto">Tu comentario</label>
+        <textarea class="input-field" id="comentario-texto" required minlength="3" maxlength="2000" placeholder="Tu aportación a esta propuesta…"></textarea>
+        <div class="input-help">Tu comentario pasará por moderación antes de publicarse.</div>
+      </div>
+      <button class="btn btn--primary" type="submit">Enviar</button>
     </form>
     <div id="comentario-feedback"></div>
   </div>
   <div id="comentario-login-cta" style="display:none">
-    <div class="alert alert-info">Inicia sesión con Google (botón "Entrar" arriba) para comentar.</div>
+    <div class="alert alert--info">
+      Inicia sesión con Google para comentar.
+      <button type="button" class="btn btn--primary btn--sm" id="login-cta-btn" style="margin-left:8px">Entrar</button>
+    </div>
   </div>
 
   <div id="comentarios-lista" style="margin-top:24px">

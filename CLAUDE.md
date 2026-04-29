@@ -35,6 +35,7 @@ comunidad/
   index.njk                 ← /comunidad/ (listado SSG con propuestas aprobadas)
   propuesta.njk             ← paginate por slug → /comunidad/{slug}/
   nueva.njk                 ← /comunidad/nueva/ (form, requiere auth Google)
+  entrar.njk                ← /comunidad/entrar/ (login Google + "No soy un robot", noindex)
   admin.njk                 ← /comunidad/admin/ (panel moderación, noindex)
 content/
   conocimiento-zenyx/
@@ -42,10 +43,11 @@ content/
     {slug}.md               ← posts (los commitea n8n)
 assets/js/
   consent.js                ← cookies RGPD
-  comunidad-supabase.js     ← cliente supabase + login/logout UI
+  comunidad-supabase.js     ← cliente supabase + nav user menu (avatar/logout) + goToLogin()
   comunidad-listado.js      ← votos en listado + filtros por tipo
   comunidad-ficha.js        ← votos + comentarios en ficha individual
   comunidad-nueva.js        ← submit nueva propuesta
+  comunidad-entrar.js       ← /comunidad/entrar/ → "No soy un robot" + signInWithOAuth Google
   comunidad-admin.js        ← gate admin + aprobar/rechazar via Edge Function
 fonts/                      ← NewBlack Typeface (woff2)
 icons/                      ← logos integraciones
@@ -96,7 +98,7 @@ Comunidad pública de propuestas (ideas, servicios, herramientas) con votación,
 
 **Stack:**
 - **Datos:** tablas nativas en Supabase cbi (`comunidad_propuestas`, `comunidad_comentarios`, `comunidad_votos_*`, `comunidad_admins`). Detalle en `../docs/supabase-schema.md` sección "Comunidad pública".
-- **Auth:** Supabase Auth Google OAuth.
+- **Auth:** Supabase Auth Google OAuth. Login centralizado en `/comunidad/entrar/` (pantalla estilo Google + widget "No soy un robot" — local, gesto humano antes de OAuth). `goToLogin()` redirige cualquier flujo a `/entrar/?next=<retorno>`. Logout desde menú avatar en nav (dropdown con nombre/email + "Cerrar sesión").
 - **SSG:** Eleventy lee `v_comunidad_propuestas_publicas` en build-time (`_data/comunidad.js`) y pre-renderiza listado y fichas. Webhook Supabase → Vercel Deploy Hook al aprobar propuesta (regenera SSG).
 - **Cliente:** `@supabase/supabase-js` vía CDN jsdelivr (sin bundler). Globals inyectados en `<head>` por `_includes/comunidad-base.njk` desde `_data/site.js`.
 - **Moderación:** Edge Function `comunidad_admin_action` (Supabase, verify_jwt). Allowlist en tabla `comunidad_admins`.

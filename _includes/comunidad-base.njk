@@ -55,9 +55,29 @@
       <a href="/conocimiento-zenyx/">Conocimiento</a>
     </div>
     <div class="nav-right">
-      <span id="auth-status" class="nav-user"></span>
-      <button id="auth-login" class="btn-sm-ghost" style="display:none">Entrar</button>
-      <button id="auth-logout" class="btn-sm-ghost" style="display:none">Salir</button>
+      <button id="auth-login" class="btn-sm-ghost">Entrar</button>
+
+      <div id="auth-menu" class="auth-menu" style="display:none">
+        <button id="auth-menu-trigger" class="auth-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="auth-menu-dropdown">
+          <span class="auth-menu-avatar-wrap">
+            <img id="auth-menu-avatar" class="auth-menu-avatar" alt="" referrerpolicy="no-referrer" />
+            <span id="auth-menu-initials" class="auth-menu-initials" aria-hidden="true">?</span>
+          </span>
+          <span id="auth-menu-name" class="auth-menu-name">Cuenta</span>
+          <svg class="auth-menu-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div id="auth-menu-dropdown" class="auth-menu-dropdown" role="menu">
+          <div class="auth-menu-header">
+            <div class="auth-menu-fullname" id="auth-menu-fullname">—</div>
+            <div class="auth-menu-email" id="auth-menu-email">—</div>
+          </div>
+          <button id="auth-menu-logout" class="auth-menu-item" role="menuitem" type="button">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H5a1 1 0 00-1 1v10a1 1 0 001 1h3M13 7l3 3-3 3M16 10H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+
       <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm">Acceder &rarr;</a>
     </div>
   </nav>
@@ -119,6 +139,67 @@
     </div>
   </footer>
 
+  {% if not hideModal %}
+  <!-- Modal global: Crear propuesta. Disponible en /comunidad/* salvo si la página define hideModal=true. -->
+  <div class="modal-overlay" id="modalPropuesta" onclick="if(event.target===this){this.classList.remove('visible')}">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Crear tu propuesta</h3>
+        <button class="modal-close" type="button" onclick="document.getElementById('modalPropuesta').classList.remove('visible')" aria-label="Cerrar">&times;</button>
+      </div>
+      <form id="modal-propuesta-form" novalidate>
+        <div class="modal-body">
+          <div id="modal-login-cta" class="alert alert--info" style="display:none">
+            Para enviar una propuesta necesitas iniciar sesión con Google.
+            <button type="button" class="btn btn--primary btn--sm" id="modal-login-btn" style="margin-left:8px">Iniciar sesión</button>
+          </div>
+          <div id="modal-form-fields">
+            <div class="input-group">
+              <label class="input-label" for="modal-modo">Modo <span class="required">*</span></label>
+              <select class="input-field" id="modal-modo" required>
+                <option value="pool">Pool de Proyectos (financiación colectiva)</option>
+                <option value="referidos">Desarrollo con Referidos (individual)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="modal-titulo">Título <span class="required">*</span></label>
+              <input type="text" class="input-field" id="modal-titulo" placeholder="Nombre de tu propuesta" required minlength="6" maxlength="120">
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="modal-descripcion">Descripción <span class="required">*</span></label>
+              <textarea class="input-field" id="modal-descripcion" placeholder="Describe brevemente tu idea…" required minlength="20" maxlength="2000"></textarea>
+              <div class="input-help">Cuantos más detalles mejor podremos costear la propuesta.</div>
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="modal-problema">Problema que resuelve <span class="required">*</span></label>
+              <textarea class="input-field" id="modal-problema" placeholder="¿Qué dolor o limitación tienes actualmente?" required minlength="10" maxlength="1000" style="min-height:80px"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="modal-beneficio">Beneficio esperado</label>
+              <textarea class="input-field" id="modal-beneficio" placeholder="¿Qué mejoraría concretamente en tu operación?" maxlength="1000" style="min-height:80px"></textarea>
+            </div>
+            <div id="modal-pool-fields">
+              <div class="input-group">
+                <label class="input-label" for="modal-cotizacion">Cotización estimada (€)</label>
+                <input type="number" class="input-field" id="modal-cotizacion" min="0" step="1">
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="modal-umbral">Umbral del pool (€)</label>
+                <input type="number" class="input-field" id="modal-umbral" min="0" step="1" placeholder="Cuánto hay que recaudar para liberarlo">
+              </div>
+            </div>
+            <div id="modal-feedback"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn--secondary" onclick="document.getElementById('modalPropuesta').classList.remove('visible')">Cancelar</button>
+          <button type="submit" class="btn btn--primary" id="modal-submit">Publicar propuesta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
   <script>
     // Nav scrolled state (idéntico a la landing)
     (function () {
@@ -128,8 +209,22 @@
       window.addEventListener('scroll', update, { passive: true });
       update();
     })();
+    // Helpers para abrir/cerrar modal desde botones inline
+    window.openComunidadModal = function (modo) {
+      var ov = document.getElementById('modalPropuesta');
+      if (!ov) return;
+      if (modo) {
+        var sel = document.getElementById('modal-modo');
+        if (sel) sel.value = modo;
+        var ev = new Event('change', { bubbles: true });
+        sel?.dispatchEvent(ev);
+      }
+      ov.classList.add('visible');
+    };
+    window.closeComunidadModal = function () { document.getElementById('modalPropuesta')?.classList.remove('visible'); };
   </script>
   <script type="module" src="/assets/js/comunidad-supabase.js"></script>
+  {% if not hideModal %}<script type="module" src="/assets/js/comunidad-modal.js"></script>{% endif %}
   {% block scripts %}{% endblock %}
   <script defer src="/assets/js/consent.js"></script>
 </body>

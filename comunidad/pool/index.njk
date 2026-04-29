@@ -1,0 +1,84 @@
+---
+layout: comunidad-base.njk
+title: Pool de Proyectos — Comunidad TheNucleo
+description: "Propuestas de desarrollo colectivo financiadas entre agencias. Todos pagan menos, todos ganan acceso ilimitado."
+permalink: /comunidad/pool/
+modo: pool
+---
+{% set propuestas = comunidad.propuestas | selectattr("modo","equalto","pool") | list %}
+
+<div class="page-header animate-in">
+  <div>
+    <a class="crumb" href="/comunidad/">&larr; Comunidad</a>
+    <h1>Pool de proyectos</h1>
+    <div class="page-header-sub">Propuestas de desarrollo colectivo financiadas entre agencias.</div>
+  </div>
+</div>
+
+<div class="tab-bar animate-in">
+  <div class="tab-item active">Propuestas <span class="tab-badge" id="tab-count">{{ propuestas.length }}</span></div>
+  <div class="tab-item" type="button" onclick="window.openComunidadModal('pool')" style="cursor:pointer">Crear tu propuesta</div>
+</div>
+
+<div class="filter-bar animate-in">
+  <div class="filter-bar-left">
+    <div class="search-input">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search" placeholder="Buscar propuestas…">
+    </div>
+    <div class="pill-group" id="pills">
+      <div class="pill active" data-estado="all">Todos</div>
+      <div class="pill" data-estado="aprobada">Difundidas</div>
+      <div class="pill" data-estado="financiada">Financiadas</div>
+    </div>
+  </div>
+</div>
+
+<div class="proposals-list" id="proposals-list">
+  {% if propuestas.length == 0 %}
+    <div class="empty">
+      <p>Aún no hay propuestas de pool aprobadas.</p>
+      <p><button class="btn btn--primary" type="button" onclick="window.openComunidadModal('pool')">Sé el primero en proponer</button></p>
+    </div>
+  {% else %}
+    {% for p in propuestas %}
+      {% set umbral = p.umbral_financiacion_pool or 0 %}
+      {% set recaudado = p.recaudado_pool or 0 %}
+      {% set pct = 0 %}
+      {% if umbral > 0 %}{% set pct = (recaudado / umbral * 100) | round %}{% endif %}
+      <article class="proposal-card animate-in" data-id="{{ p.id }}" data-slug="{{ p.slug }}" data-estado="{{ p.estado }}" data-titulo="{{ p.titulo | lower }}">
+        <div class="proposal-title-row">
+          <a href="/comunidad/{{ p.slug }}/" class="proposal-title">{{ p.titulo }}</a>
+          {% if p.estado == 'financiada' %}<span class="badge badge--done">Financiada</span>{% endif %}
+        </div>
+        <div class="proposal-desc">{{ p.descripcion }}</div>
+        <div class="proposal-progress">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: {{ pct }}%"></div>
+          </div>
+          <div class="progress-info">
+            <span class="progress-amount">{{ recaudado }} € / {{ umbral }} €</span>
+            <span class="progress-pct">{{ pct }}%</span>
+          </div>
+        </div>
+        <div class="proposal-footer">
+          <div class="proposal-meta">
+            <button type="button" class="vote-btn" data-vote-propuesta="{{ p.id }}" aria-label="Votar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span data-vote-count>{{ p.votos }}</span>
+            </button>
+          </div>
+          <div class="proposal-meta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {{ p.comentarios_count }}
+          </div>
+          <span class="proposal-time">{{ p.fecha_publicacion | dateES }}</span>
+        </div>
+      </article>
+    {% endfor %}
+  {% endif %}
+</div>
+
+{% block scripts %}
+<script type="module" src="/assets/js/comunidad-listado.js"></script>
+{% endblock %}

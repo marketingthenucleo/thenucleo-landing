@@ -1,0 +1,86 @@
+---
+layout: comunidad-base.njk
+narrow: true
+title: Entrar — Comunidad TheNucleo
+description: "Inicia sesión con Google para participar en la comunidad TheNucleo."
+permalink: /comunidad/entrar/
+eleventyExcludeFromCollections: true
+---
+<div class="login-shell">
+
+  <div class="login-card" role="main" aria-labelledby="login-title">
+
+    <div class="login-brand">
+      <svg class="login-isotipo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="login-iso" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-160,160,0,159.4,157.8)">
+            <stop offset=".676" stop-color="#000000" stop-opacity="0"/>
+            <stop offset=".982" stop-color="#f3f959" stop-opacity="1"/>
+          </radialGradient>
+        </defs>
+        <path style="mix-blend-mode:screen;fill:url(#login-iso)" d="m160 0c-88.37 0-160 71.63-160 160 0 88.37 71.63 160 160 160 88.37 0 160-71.63 160-160 0-88.37-71.63-160-160-160z"/>
+      </svg>
+    </div>
+
+    <h1 id="login-title" class="login-title">Iniciar sesión</h1>
+    <p class="login-sub">para continuar en <strong>Comunidad TheNucleo</strong></p>
+
+    <button id="google-signin" class="google-btn" type="button" disabled aria-describedby="login-help">
+      <span class="google-btn-icon" aria-hidden="true">
+        <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.583-5.036-3.71H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+        </svg>
+      </span>
+      <span class="google-btn-label">Continuar con Google</span>
+    </button>
+
+    <div class="captcha-wrap" id="captcha-wrap">
+      <div class="captcha" id="captcha" role="checkbox" tabindex="0" aria-checked="false" aria-labelledby="captcha-label">
+        <span class="captcha-box" aria-hidden="true">
+          <span class="captcha-spinner"></span>
+          <svg class="captcha-check" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="captcha-label" id="captcha-label">No soy un robot</span>
+        <span class="captcha-brand" aria-hidden="true">
+          <span class="captcha-brand-mark">
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 6 v4 M22 10 l-3 3 M26 16 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="captcha-brand-text">Verificación<br><small>Anti-spam · Privacidad</small></span>
+        </span>
+      </div>
+      <p id="login-help" class="login-help">Marca la casilla para continuar.</p>
+    </div>
+
+    <p id="login-error" class="login-error" style="display:none"></p>
+
+    <div class="login-divider"><span>o</span></div>
+
+    <a href="/comunidad/" class="login-back">&larr; Volver a la comunidad</a>
+
+  </div>
+
+  <p class="login-foot">
+    Al continuar aceptas la <a href="/privacidad">política de privacidad</a> y el <a href="/aviso-legal">aviso legal</a>.
+  </p>
+
+</div>
+
+{% block scripts %}
+<script type="module" src="/assets/js/comunidad-entrar.js"></script>
+{% endblock %}
+
+<noscript><meta name="robots" content="noindex"></noscript>
+<script>
+  var m = document.createElement('meta');
+  m.name = 'robots';
+  m.content = 'noindex,nofollow';
+  document.head.appendChild(m);
+</script>

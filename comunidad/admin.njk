@@ -1,37 +1,38 @@
 ---
 layout: comunidad-base.njk
 narrow: true
+hideModal: true
 title: Moderación Comunidad — TheNucleo
 description: "Panel de moderación interno"
 permalink: /comunidad/admin/
 eleventyExcludeFromCollections: true
 ---
-<a class="crumb" href="/comunidad/">&larr; Volver a comunidad</a>
-
-<header>
-  <span class="section-label">Moderación</span>
-  <h1 class="page-title">Panel <em>admin</em>.</h1>
-  <p class="page-sub">Solo accesible si tu cuenta está en <code style="font-family:var(--mono);font-size:12px;color:var(--yellow)">comunidad_admins</code>.</p>
-</header>
-
-<div id="admin-gate-loading" class="alert alert-info">Verificando permisos…</div>
-<div id="admin-gate-login" class="alert alert-info" style="display:none">
-  Inicia sesión con Google (botón "Entrar" arriba) para acceder.
-  <button id="admin-login-btn" class="btn" style="margin-left:14px">Entrar</button>
+<div class="page-header animate-in">
+  <div>
+    <a class="crumb" href="/comunidad/">&larr; Comunidad</a>
+    <h1>Moderación</h1>
+    <div class="page-header-sub">Solo accesible si tu cuenta está en <code style="font-family:var(--font-mono);font-size:12px;color:var(--accent-primary)">comunidad_admins</code>.</div>
+  </div>
 </div>
-<div id="admin-gate-forbidden" class="alert alert-error" style="display:none">
+
+<div id="admin-gate-loading" class="alert alert--info">Verificando permisos…</div>
+<div id="admin-gate-login" class="alert alert--info" style="display:none">
+  Inicia sesión con Google para acceder.
+  <button id="admin-login-btn" class="btn btn--primary btn--sm" type="button" style="margin-left:8px">Entrar</button>
+</div>
+<div id="admin-gate-forbidden" class="alert alert--error" style="display:none">
   Tu cuenta no es admin. Si crees que debería serlo, ejecuta en Supabase:
-  <code style="display:block;margin-top:10px;font-family:var(--mono);font-size:12px;background:rgba(0,0,0,.3);padding:10px;border-radius:6px;color:var(--yellow)">INSERT INTO comunidad_admins (user_id) VALUES ('&lt;tu_uid&gt;');</code>
+  <code style="display:block;margin-top:10px;font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,.3);padding:10px;border-radius:6px;color:var(--accent-primary)">INSERT INTO comunidad_admins (user_id) VALUES ('&lt;tu_uid&gt;');</code>
 </div>
 
 <section id="admin-panel" style="display:none">
   <h2 class="section-h2">Propuestas pendientes</h2>
-  <div id="propuestas-pendientes" class="grid">
+  <div id="propuestas-pendientes" class="proposals-list">
     <p class="muted">Cargando…</p>
   </div>
 
   <h2 class="section-h2">Comentarios pendientes</h2>
-  <div id="comentarios-pendientes" class="grid">
+  <div id="comentarios-pendientes" class="proposals-list">
     <p class="muted">Cargando…</p>
   </div>
 </section>
