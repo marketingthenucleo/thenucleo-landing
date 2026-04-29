@@ -161,10 +161,21 @@ Métricas: FCP 0.7s ✅ · LCP 0.8s ✅ · CLS 0.003 ✅ · TBT **980ms** ⚠️
 **⚠️ Trade-off UX del idle-pause:** al cargar la página sin mover el mouse, el hero queda estático (torus no rota, logos no respiran, partículas congeladas). Primer gesto del usuario arranca todo. Si en el futuro se percibe como mala primera impresión, alternativa: arrancar los RAF al load y auto-pausar tras 3-5 s sin input (compromiso entre UX inicial y Lighthouse).
 
 ## Problemas críticos pendientes (no tocar sin leer ACTION-PLAN.md)
-1. Links de Stripe en **modo TEST** (`buy.stripe.com/test_...`) → se mantiene TEST hasta que Ben finalice la cuenta Stripe PROD (decisión 2026-04-19)
+1. Links de Stripe en **modo TEST** (`buy.stripe.com/test_...`) → se mantiene TEST hasta que Ben finalice la cuenta Stripe PROD (decisión 2026-04-19). Mitigación visual mínima sugerida: banner "Modo prueba" sobre `.pricing-grid`.
+2. **Nav móvil sin hamburguesa** (≤1024px). `.nav-links { display: none }` deja desktop-only los enlaces Funcionalidades/Resultados/Plataforma/Precios/Comunidad/Conocimiento. En móvil solo se ve logo + "Acceder". Bug de discoverability + WCAG. Pendiente añadir toggle responsive en `index.html` y `_includes/comunidad-base.njk`.
+3. **`prefers-reduced-motion` no aplica a Three.js / partículas / cursorLoop**. La media query CSS solo neutraliza animaciones CSS, los `requestAnimationFrame` (Scene1, Scene2, particles, cursorLoop) corren igual. Riesgo vestibular para ~15-20% del tráfico móvil con la opción activa. Fix: gate global `if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;` en cada loop de render.
 
 ## Mejoras no críticas
 - OG image (`Media/og-image.png`, 1200×630): usa el logo con fondo blanco. Funciona pero choca con la identidad dark del site y no lleva tagline. Cuando haya tiempo, rehacer con fondo `#171717` + logotipo dark theme + hook textual.
+- Magnetic buttons activos en touch (`mousemove` en `.btn-primary/.btn-ghost/.btn-sm/.pricing-cta`). Gate con `(hover: hover) and (pointer: fine)` igual que el cursor custom.
+- Touch targets `< 44 px` en `.btn--sm` (32 px) y `.pdot` (8 px). WCAG 2.5.5 AA.
+- CSP sin `report-to` / `report-uri` → violaciones inline pasan silenciosas. Añadir endpoint de reporte en `vercel.json` para telemetría.
+- RLS de tablas `comunidad_*` no auditada en pase 2026-04-29 (solo lectura cliente). Verificar en Dashboard que UPDATE/DELETE estén restringidos a `comunidad_admins` o filas propias en `pendiente`.
+
+## Auditoría 2026-04-29 — fixes aplicados
+- **Nav header click handler**: enlaces `data-phase="N"` aterrizaban en `phaseEdges[idx]` (boundary inicial) y las cards de Funcionalidades/Resultados animaban a partir de localT 0.10+ → la fase aparecía vacía. Ahora aterrizan a `phaseEdges[idx] + 0.55 * span` para que el smooth-scroll recorra la animación durante el viaje. (`index.html:2331-2346`)
+- **Botones "Empezar ahora"**: hero (línea 1515) + CTA final (línea 1766) pasan de `data-phase="4"` (scroll a Precios) a `https://portal.thenucleo.com/` con `target="_blank" rel="noopener noreferrer"`, mismo patrón que "Acceder" del nav.
+- Auditoría triple completa (UX / seguridad / responsive) consolidada en `C:\Users\Benjamin\.claude\plans\pusea-y-hazme-una-noble-ullman.md` — 3 críticas, 5 altas, 8 medias, 7 bajas. Reusable como referencia para próximas iteraciones.
 
 ## Reglas de trabajo
 - **NO tocar la arquitectura Three.js / scroll-jacking** sin confirmación explícita
