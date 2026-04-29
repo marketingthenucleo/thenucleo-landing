@@ -21,111 +21,313 @@ title: "Conocimiento Zenyx"
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png" />
+  <link rel="stylesheet" href="/assets/css/comunidad.css" />
+  <script>
+    window.__SUPABASE_URL__ = {{ site.supabaseUrl | dump | safe }};
+    window.__SUPABASE_ANON_KEY__ = {{ site.supabaseAnonKey | dump | safe }};
+  </script>
   <style>
     :root {
-      --bg: #171717;
-      --yellow: #F3F959;
-      --accent: #C7B299;
-      --text: #E8EAE9;
-      --text-bright: #ffffff;
-      --muted: #8a8a8a;
-      --border: #2a2a2a;
+      --kb-bg: #171717;
+      --kb-card: #1e1e1e;
+      --kb-card-hover: #232323;
+      --kb-yellow: #F3F959;
+      --kb-accent: #C7B299;
+      --kb-text: #E8EAE9;
+      --kb-text-bright: #ffffff;
+      --kb-muted: #8a8a8a;
+      --kb-border: #2a2a2a;
+      --kb-border-strong: #3a3a3a;
     }
-    * { box-sizing: border-box; }
     body {
-      background: var(--bg);
-      color: var(--text);
+      background: var(--kb-bg);
+      color: var(--kb-text);
       font-family: 'Space Grotesk', sans-serif;
-      max-width: 820px;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 3rem 1.5rem 5rem;
+      padding: 96px 1.5rem 5rem;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
-    .back {
-      display: inline-block;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.9rem;
-      margin-bottom: 2rem;
+
+    /* ── Header / intro ─────────────────────────── */
+    .kb-header { margin: 2rem 0 2.5rem; max-width: 720px; }
+    .kb-eyebrow {
+      color: var(--kb-yellow);
       font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0 0 0.75rem;
     }
-    .back:hover { color: var(--yellow); }
-    h1 {
-      color: var(--yellow);
-      font-size: clamp(2rem, 5vw, 2.6rem);
+    .kb-h1 {
+      color: var(--kb-text-bright);
+      font-size: clamp(2.2rem, 5vw, 3rem);
       margin: 0 0 1rem;
-      line-height: 1.15;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
-    .intro {
-      color: var(--muted);
-      font-size: 1rem;
-      margin-bottom: 3rem;
-      max-width: 640px;
+    .kb-h1 em { color: var(--kb-yellow); font-style: normal; }
+    .kb-intro {
+      color: var(--kb-muted);
+      font-size: 1.05rem;
+      margin: 0;
+      line-height: 1.55;
     }
-    .intro a { color: var(--yellow); text-decoration: underline; text-underline-offset: 3px; }
-    .list {
+    .kb-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .kb-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .kb-stat-num {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--kb-text-bright);
+      line-height: 1;
+    }
+    .kb-stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--kb-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Grid ───────────────────────────────────── */
+    .kb-grid {
       list-style: none;
       padding: 0;
       margin: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
     }
-    .list li {
-      border-bottom: 1px solid var(--border);
-      padding: 1.75rem 0;
+    @media (max-width: 960px) { .kb-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .kb-grid { grid-template-columns: 1fr; gap: 1rem; } }
+
+    /* ── Card ───────────────────────────────────── */
+    .kb-card {
+      position: relative;
+      background: var(--kb-card);
+      border: 1px solid var(--kb-border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 200ms,
+                  background 200ms;
     }
-    .list li:first-child { border-top: 1px solid var(--border); }
-    .list a.title {
-      color: var(--text-bright);
+    .kb-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--kb-yellow) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 200ms;
+    }
+    .kb-card:hover,
+    .kb-card:focus-within {
+      transform: translateY(-3px);
+      border-color: var(--kb-border-strong);
+      background: var(--kb-card-hover);
+    }
+    .kb-card:hover::before,
+    .kb-card:focus-within::before { opacity: 1; }
+
+    .kb-card-link {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      padding: 1.5rem 1.4rem 1.4rem;
+      color: inherit;
       text-decoration: none;
-      font-size: 1.25rem;
-      font-weight: 600;
-      display: block;
-      line-height: 1.3;
-      transition: color 0.2s;
+      height: 100%;
     }
-    .list a.title:hover { color: var(--yellow); }
-    .list .meta {
-      color: var(--muted);
+    .kb-card-link:focus-visible { outline: 2px solid var(--kb-yellow); outline-offset: -2px; border-radius: 12px; }
+
+    .kb-card-meta {
+      color: var(--kb-muted);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
-      margin-top: 0.4rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
-    .list .excerpt {
-      color: var(--text);
-      margin-top: 0.6rem;
-      font-size: 0.95rem;
+    .kb-card-title {
+      color: var(--kb-text-bright);
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.35;
+      margin: 0;
+      /* line-clamp 3 */
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      transition: color 200ms;
+    }
+    .kb-card:hover .kb-card-title { color: var(--kb-yellow); }
+    .kb-card-excerpt {
+      color: var(--kb-muted);
+      font-size: 0.875rem;
       line-height: 1.55;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
-    .empty {
-      color: var(--muted);
+    .kb-card-cta {
+      margin-top: auto;
+      padding-top: 0.75rem;
+      color: var(--kb-yellow);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      opacity: 0.7;
+      transition: opacity 200ms, transform 200ms;
+    }
+    .kb-card:hover .kb-card-cta { opacity: 1; transform: translateX(2px); }
+
+    .kb-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--kb-muted);
+      padding: 3rem 1rem;
+      border: 1px dashed var(--kb-border);
+      border-radius: 12px;
       font-style: italic;
-      padding: 2rem 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .kb-card, .kb-card::before, .kb-card-title, .kb-card-cta { transition: none !important; }
+      .kb-card:hover { transform: none; }
     }
   </style>
 </head>
 <body>
-  <a class="back" href="/">← Volver a TheNucleo</a>
-  <h1>Conocimiento Zenyx</h1>
-  <p class="intro">
-    Artículos sobre gestión, escalado y operaciones de agencias de marketing digital.
-  </p>
-  <ul class="list">
-    {%- if collections.blog and collections.blog.length -%}
-      {%- for post in collections.blog | reverse -%}
-      <li>
-        <a class="title" href="{{ post.url }}">{{ post.data.title }}</a>
-        <div class="meta">{{ post.data.date | dateES }}</div>
-        {%- if post.data.excerpt -%}
-        <div class="excerpt">{{ post.data.excerpt }}</div>
-        {%- endif -%}
-      </li>
-      {%- endfor -%}
-    {%- else -%}
-      <li class="empty">Aún no hay artículos publicados.</li>
-    {%- endif -%}
-  </ul>
 
-  <!-- Cookie consent (RGPD/AEPD) -->
-  <script defer src="/assets/js/consent.js"></script>
+<nav id="nav">
+  <a class="nav-left" href="/" aria-label="TheNucleo">
+    <svg class="nav-isotipo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="iso-g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-160.001,160.001,0,159.389,157.823)">
+          <stop offset=".676" stop-color="#000000" stop-opacity="0"/>
+          <stop offset=".982" stop-color="#f3f959" stop-opacity="1"/>
+        </radialGradient>
+      </defs>
+      <path style="mix-blend-mode:screen;fill:url(#iso-g1)" d="m160 0c-88.37 0-160 71.63-160 160 0 88.37 71.63 160 160 160 88.37 0 160-71.63 160-160 0-88.37-71.63-160-160-160z"/>
+    </svg>
+    <svg class="nav-logotipo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg">
+      <style>.lt0{fill:#e6e6e6}</style>
+      <g>
+        <path class="lt0" d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+        <path class="lt0" d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+        <path class="lt0" d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+        <path class="lt0" fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+        <path class="lt0" d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+        <path class="lt0" d="m273.92 10.83h-37.52v15.56h37.52z"/>
+        <path class="lt0" d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+      </g>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="/">Funcionalidades</a>
+    <a href="/">Resultados</a>
+    <a href="/">Plataforma</a>
+    <a href="/">Precios</a>
+    <a href="/comunidad/">Comunidad</a>
+    <a href="/conocimiento-zenyx/" class="active">Conocimiento</a>
+  </div>
+  <div class="nav-right">
+    <div id="auth-menu" class="auth-menu" style="display:none">
+      <button id="auth-menu-trigger" class="auth-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="auth-menu-dropdown">
+        <span class="auth-menu-avatar-wrap">
+          <img id="auth-menu-avatar" class="auth-menu-avatar" alt="" referrerpolicy="no-referrer" />
+          <span id="auth-menu-initials" class="auth-menu-initials" aria-hidden="true">?</span>
+        </span>
+        <span id="auth-menu-name" class="auth-menu-name">Cuenta</span>
+        <svg class="auth-menu-caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div id="auth-menu-dropdown" class="auth-menu-dropdown" role="menu">
+        <div class="auth-menu-header">
+          <div class="auth-menu-fullname" id="auth-menu-fullname">—</div>
+          <div class="auth-menu-email" id="auth-menu-email">—</div>
+        </div>
+        <a href="/comunidad/admin/" class="auth-menu-item" role="menuitem" data-admin-only style="display:none">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          Panel admin
+        </a>
+        <a href="/incidencias" class="auth-menu-item" role="menuitem" data-admin-only style="display:none">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3l8 14H2L10 3zM10 8v4M10 15h.01" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Incidencias n8n
+        </a>
+        <button id="auth-menu-logout" class="auth-menu-item" role="menuitem" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H5a1 1 0 00-1 1v10a1 1 0 001 1h3M13 7l3 3-3 3M16 10H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+
+    <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm">Acceder &rarr;</a>
+  </div>
+</nav>
+
+<header class="kb-header">
+  <p class="kb-eyebrow">Conocimiento</p>
+  <h1 class="kb-h1">Zenyx — gestión, escalado y operaciones de <em>agencias de marketing</em>.</h1>
+  <p class="kb-intro">
+    Aprendizajes destilados en formato corto. 1 artículo nuevo cada día a las 18:00.
+  </p>
+  {%- if collections.blog and collections.blog.length -%}
+  <div class="kb-stats">
+    <div class="kb-stat">
+      <span class="kb-stat-num">{{ collections.blog.length }}</span>
+      <span class="kb-stat-label">artículos</span>
+    </div>
+    <div class="kb-stat">
+      <span class="kb-stat-num">1<span style="opacity:.6">/día</span></span>
+      <span class="kb-stat-label">cadencia</span>
+    </div>
+  </div>
+  {%- endif -%}
+</header>
+
+<ul class="kb-grid">
+  {%- if collections.blog and collections.blog.length -%}
+    {%- for post in collections.blog | reverse -%}
+    <li class="kb-card">
+      <a class="kb-card-link" href="{{ post.url }}">
+        <span class="kb-card-meta">{{ post.data.date | dateES }}</span>
+        <h3 class="kb-card-title">{{ post.data.title }}</h3>
+        {%- if post.data.excerpt -%}
+        <p class="kb-card-excerpt">{{ post.data.excerpt }}</p>
+        {%- endif -%}
+        <span class="kb-card-cta">Leer →</span>
+      </a>
+    </li>
+    {%- endfor -%}
+  {%- else -%}
+    <li class="kb-empty">Aún no hay artículos publicados.</li>
+  {%- endif -%}
+</ul>
+
+<script>
+  (function () {
+    var nav = document.getElementById('nav');
+    if (!nav) return;
+    var update = function () { nav.classList.toggle('scrolled', (window.scrollY || 0) > 40); };
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+</script>
+<script type="module" src="/assets/js/comunidad-supabase.js"></script>
+<script defer src="/assets/js/consent.js"></script>
 </body>
 </html>
