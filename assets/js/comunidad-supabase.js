@@ -13,6 +13,7 @@ export const supabase = createClient(url, key, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: "thenucleo-comunidad-auth",
+    lock: async (_name, _acquireTimeout, fn) => fn(),
   },
 });
 
