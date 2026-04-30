@@ -798,7 +798,7 @@
     }
 
     /* ── PHASE 4 — PRICING ─────────────────────────── */
-    .phase-pricing { flex-direction: column; gap: 28px; }
+    .phase-pricing { flex-direction: column; gap: 18px; }
     .pricing-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
       max-width: 1060px; width: 100%;
@@ -822,23 +822,155 @@
     }
     .pricing-card.popular {
       border-color: var(--yellow);
-      transform: scale(1.04);
-      box-shadow: 0 0 40px rgba(243,249,89,.08), 0 0 80px rgba(243,249,89,.04);
-    }
-    .pricing-card.popular:hover {
-      transform: scale(1.04) translateY(-4px);
-      border-color: var(--yellow);
+      box-shadow: 0 0 36px rgba(243,249,89,.10), 0 0 80px rgba(243,249,89,.04);
     }
     .pricing-card.popular::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0;
       height: 2px;
       background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+      pointer-events: none;
     }
     .pricing-card.popular::after {
       content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
-      width: 300px; height: 300px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(243,249,89,.06) 0%, transparent 65%);
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(243,249,89,.08) 0%, transparent 65%);
       pointer-events: none;
+    }
+    /* ROI calculator (premium engagement loop) */
+    .roi-calc {
+      max-width: 1060px; width: 100%; margin: 0 auto;
+      background: var(--bg-card);
+      backdrop-filter: blur(24px) saturate(1.3);
+      -webkit-backdrop-filter: blur(24px) saturate(1.3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 24px;
+      position: relative; overflow: hidden;
+    }
+    .roi-calc::before {
+      content: ''; position: absolute; top: 0; left: 24px; right: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--yellow-glow), transparent);
+    }
+    .roi-calc-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 28px; align-items: center;
+    }
+    .roi-slider label {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 12px; color: var(--muted); font-weight: 500;
+      letter-spacing: .02em; margin-bottom: 8px;
+    }
+    .roi-slider label strong {
+      font-family: var(--mono); font-size: 18px; font-weight: 600;
+      color: var(--text-bright); letter-spacing: -.02em;
+    }
+    .roi-slider input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 4px; border-radius: 2px;
+      background: var(--border); outline: none; cursor: pointer;
+      transition: background .2s;
+    }
+    .roi-slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--yellow);
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--yellow), 0 0 12px var(--yellow-glow);
+      cursor: grab; transition: transform .15s;
+    }
+    .roi-slider input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.15); }
+    .roi-slider input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--yellow);
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--yellow), 0 0 12px var(--yellow-glow);
+      cursor: grab;
+    }
+    .roi-output {
+      display: flex; gap: 18px;
+      padding-left: 24px;
+      border-left: 1px solid var(--border);
+      min-width: 240px;
+    }
+    .roi-stat { text-align: left; }
+    .roi-stat-num {
+      font-family: var(--mono); font-size: 22px; font-weight: 600;
+      color: var(--yellow); letter-spacing: -.03em; line-height: 1;
+      margin-bottom: 4px;
+      transition: color .2s;
+    }
+    .roi-stat-lbl {
+      font-size: 11px; color: var(--muted); font-weight: 500;
+      letter-spacing: .02em;
+    }
+    /* Anchor competitivo (línea inline) */
+    .pricing-anchor {
+      max-width: 1060px; width: 100%; margin: 0 auto;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 10px 14px;
+      padding: 11px 22px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12.5px; color: var(--muted);
+    }
+    .pricing-anchor .anchor-lbl {
+      color: var(--accent); font-weight: 500;
+      text-transform: uppercase; letter-spacing: .08em; font-size: 10px;
+    }
+    .pricing-anchor .anchor-stack { color: var(--subtle); }
+    .pricing-anchor .anchor-stack strong { color: var(--text-bright); font-weight: 600; }
+    .pricing-anchor .anchor-eq { color: var(--muted); }
+    .pricing-anchor .anchor-total {
+      color: var(--text); font-weight: 600;
+      text-decoration: line-through;
+      text-decoration-color: var(--red);
+      text-decoration-thickness: 1.5px;
+    }
+    .pricing-anchor .anchor-vs { color: var(--muted); font-size: 12.5px; }
+    .pricing-anchor .anchor-our { color: var(--yellow); font-weight: 700; }
+    /* Sello bloqueo precio anual (gradient holográfico) */
+    .pricing-highlight--seal {
+      background: linear-gradient(110deg,
+        rgba(243,249,89,.04) 0%,
+        rgba(34,197,94,.10) 30%,
+        rgba(243,249,89,.18) 50%,
+        rgba(34,197,94,.10) 70%,
+        rgba(243,249,89,.04) 100%);
+      background-size: 220% 100%;
+      animation: seal-shift 5s linear infinite;
+      border-color: rgba(243,249,89,.22);
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .pricing-highlight--seal svg { width: 11px; height: 11px; flex-shrink: 0; opacity: .9; }
+    @keyframes seal-shift {
+      from { background-position: 0% 50%; }
+      to   { background-position: 220% 50%; }
+    }
+    /* Lista incluido inline (compacta, debajo del grid) */
+    .pricing-included--inline {
+      max-width: 1060px;
+      padding: 12px 22px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 6px 18px;
+    }
+    .pricing-included--inline .pricing-included-title {
+      margin-bottom: 0; font-size: 10px;
+    }
+    .pricing-included--inline .pricing-included-items {
+      font-size: 12px; color: var(--subtle);
+      display: inline-flex; flex-wrap: wrap; gap: 4px 12px;
+      justify-content: center;
+    }
+    .pricing-included--inline .pricing-included-items span {
+      display: inline-flex; align-items: center; gap: 6px;
+      white-space: nowrap;
+    }
+    .pricing-included--inline .pricing-included-items span::before {
+      content: ''; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--yellow); flex-shrink: 0;
     }
     .pricing-badge {
       display: inline-block;
@@ -1230,10 +1362,28 @@
       .cta-box { padding: 48px 28px; }
       .phase-dots { right: 12px; }
       .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
-      .pricing-card.popular { transform: scale(1); }
-      .pricing-card.popular:hover { transform: translateY(-4px); }
       .pricing-included { padding: 20px 20px; max-width: 400px; }
       .pricing-included-list { grid-template-columns: 1fr; gap: 10px; }
+      /* ROI calc apilado en mobile */
+      .roi-calc { padding: 16px 18px; max-width: 480px; margin: 0 auto; }
+      .roi-calc-inner { grid-template-columns: 1fr; gap: 16px; }
+      .roi-output {
+        padding-left: 0; padding-top: 14px;
+        border-left: none; border-top: 1px solid var(--border);
+        min-width: 0; gap: 24px; justify-content: space-around;
+      }
+      .roi-stat-num { font-size: 20px; }
+      /* Anchor en mobile: wrap natural, tipo más pequeño */
+      .pricing-anchor {
+        border-radius: 14px; padding: 12px 16px; font-size: 12px;
+        gap: 6px 10px; max-width: 480px; margin: 0 auto;
+      }
+      /* Touch targets ampliados */
+      .roi-slider input[type="range"]::-webkit-slider-thumb { width: 22px; height: 22px; }
+      .roi-slider input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; }
+      /* Included inline en mobile */
+      .pricing-included--inline { padding: 12px 16px; gap: 8px 10px; max-width: 480px; }
+      .pricing-included--inline .pricing-included-items { gap: 4px 10px; }
       .phase-showcase { flex-direction: column; gap: 24px; padding: 0 24px; align-items: center; }
       .showcase-left { width: 100%; gap: 24px; }
       .laptop-wrapper { width: 100%; max-width: 340px; margin: 0 auto; flex: 0 0 auto; }
@@ -1426,6 +1576,17 @@
       .pricing-divider { margin-bottom: 10px; }
       .pricing-highlight { margin-bottom: 12px; padding: 6px 12px; font-size: 12px; }
       .pricing-cta { padding: 10px 0; font-size: 13px; }
+      .roi-calc { padding: 12px 18px; }
+      .roi-calc-inner { gap: 20px; }
+      .roi-slider label { font-size: 11px; margin-bottom: 6px; }
+      .roi-slider label strong { font-size: 16px; }
+      .roi-output { padding-left: 18px; min-width: 220px; gap: 14px; }
+      .roi-stat-num { font-size: 19px; }
+      .roi-stat-lbl { font-size: 10.5px; }
+      .pricing-anchor { padding: 9px 18px; font-size: 11.5px; }
+      .pricing-anchor .anchor-lbl { font-size: 9.5px; }
+      .pricing-included--inline { padding: 9px 18px; }
+      .pricing-included--inline .pricing-included-items { font-size: 11px; }
     }
 
     /* Laptops muy cortos (≤800px alto): apura aún más */
@@ -1444,6 +1605,15 @@
       .pricing-divider { margin-bottom: 8px; }
       .pricing-highlight { margin-bottom: 10px; padding: 5px 10px; }
       .pricing-cta { padding: 9px 0; font-size: 12.5px; }
+      .roi-calc { padding: 10px 16px; }
+      .roi-calc-inner { gap: 16px; }
+      .roi-slider label { font-size: 10.5px; margin-bottom: 4px; }
+      .roi-slider label strong { font-size: 14px; }
+      .roi-slider input[type="range"] { height: 3px; }
+      .roi-output { padding-left: 14px; min-width: 200px; gap: 12px; }
+      .roi-stat-num { font-size: 17px; }
+      .pricing-anchor { padding: 7px 16px; font-size: 11px; gap: 6px 10px; }
+      .pricing-included--inline { padding: 7px 16px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1807,23 +1977,40 @@
           <h2 class="section-title">Un plan simple.<br/><em>Sin sorpresas.</em></h2>
           <p class="section-desc">Todas las funciones desde el d&iacute;a uno. M&aacute;s compromiso, mejor precio.</p>
         </div>
-        <div class="pricing-included">
-          <div class="pricing-included-title">Todo incluido en cualquier plan</div>
-          <ul class="pricing-included-list">
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Integraci&oacute;n con Notion o ClickUp</li>
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Automatizaciones ilimitadas</li>
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Onboarding 1-a-1 con el equipo</li>
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Q&amp;A en directo cada mes</li>
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> IA cocreativa: Newsletter + An&aacute;lisis estrat&eacute;gico de clientes</li>
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Alertas de Meta Ads y Google Ads en tiempo real</li>
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Tus datos siempre exportables</li>
-            <li><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke="#F3F959" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Soporte y actualizaciones incluidas</li>
-          </ul>
+        <!-- ROI Calculator -->
+        <div class="roi-calc" aria-label="Calculadora de ahorro estimado">
+          <div class="roi-calc-inner">
+            <div class="roi-slider">
+              <label for="roi-clientes">Clientes que gestionas <strong id="roi-c-val">12</strong></label>
+              <input type="range" id="roi-clientes" min="1" max="40" value="12" step="1" aria-valuemin="1" aria-valuemax="40" aria-valuenow="12">
+            </div>
+            <div class="roi-slider">
+              <label for="roi-team">Personas en el equipo <strong id="roi-t-val">4</strong></label>
+              <input type="range" id="roi-team" min="1" max="20" value="4" step="1" aria-valuemin="1" aria-valuemax="20" aria-valuenow="4">
+            </div>
+            <div class="roi-output" aria-live="polite">
+              <div class="roi-stat">
+                <div class="roi-stat-num" id="roi-hours">11,6 h</div>
+                <div class="roi-stat-lbl">ahorradas/semana</div>
+              </div>
+              <div class="roi-stat">
+                <div class="roi-stat-num" id="roi-savings">&euro;2.148</div>
+                <div class="roi-stat-lbl">ROI estimado/mes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Anchor competitivo -->
+        <div class="pricing-anchor">
+          <span class="anchor-lbl">Equivalente sin TheNucleo</span>
+          <span class="anchor-stack">PM senior <strong>1.800&euro;</strong> + Stack SaaS operativo <strong>200&euro;</strong></span>
+          <span class="anchor-eq">=</span>
+          <span class="anchor-total">2.000&euro;/m</span>
+          <span class="anchor-vs">vs <span class="anchor-our">desde 58&euro;/m</span></span>
         </div>
         <div class="pricing-grid">
           <!-- Mensual -->
           <div class="pricing-card">
-            <div class="pricing-badge spacer-badge">&nbsp;</div>
             <div class="pricing-plan-name">Mensual</div>
             <div class="pricing-amount"><span class="currency">&euro;</span><em>79</em></div>
             <div class="pricing-period">al mes</div>
@@ -1851,9 +2038,25 @@
             <div class="pricing-period">al a&ntilde;o</div>
             <div class="pricing-equivalent">~58 &euro;/mes &middot; <span class="pricing-save">Ahorras 26%</span></div>
             <div class="pricing-divider"></div>
-            <div class="pricing-highlight">Precio bloqueado 12 meses</div>
+            <div class="pricing-highlight pricing-highlight--seal">
+              <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 6V4.5a3 3 0 0 1 6 0V6M3.5 6h7a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5z" stroke="#F3F959" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Precio bloqueado 12 meses
+            </div>
             <a href="https://buy.stripe.com/test_9B6cN62aDbUegiX5pX9sk02" class="pricing-cta secondary">Empezar</a>
           </div>
+        </div>
+        <!-- Incluido en todos (franja inline compacta) -->
+        <div class="pricing-included pricing-included--inline">
+          <span class="pricing-included-title">Incluido en todos</span>
+          <span class="pricing-included-items">
+            <span>+50 integraciones (y subiendo)</span>
+            <span>Automatizaciones ilimitadas</span>
+            <span>Onboarding 1-a-1</span>
+            <span>IA cocreativa</span>
+            <span>Alertas Meta &amp; Google Ads</span>
+            <span>Datos exportables</span>
+            <span>Q&amp;A en directo + soporte</span>
+          </span>
         </div>
       </div>
 
@@ -2513,6 +2716,39 @@
       backdrop && backdrop.addEventListener('click', close);
       document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
       window.addEventListener('resize', () => { if (window.innerWidth > 900) close(); });
+    })();
+
+    /* ── ROI CALCULATOR ─────────────────────────────── */
+    (function roiCalc() {
+      const cl = document.getElementById('roi-clientes');
+      const tm = document.getElementById('roi-team');
+      if (!cl || !tm) return;
+      const cV = document.getElementById('roi-c-val');
+      const tV = document.getElementById('roi-t-val');
+      const hOut = document.getElementById('roi-hours');
+      const sOut = document.getElementById('roi-savings');
+      const fmt = new Intl.NumberFormat('es-ES');
+      function paintTrack(input) {
+        const pct = ((input.value - input.min) / (input.max - input.min)) * 100;
+        input.style.background = `linear-gradient(90deg, var(--yellow) 0%, var(--yellow) ${pct}%, var(--border) ${pct}%, var(--border) 100%)`;
+      }
+      function compute() {
+        const c = parseInt(cl.value, 10);
+        const t = parseInt(tm.value, 10);
+        cV.textContent = c;
+        tV.textContent = t;
+        cl.setAttribute('aria-valuenow', c);
+        tm.setAttribute('aria-valuenow', t);
+        const weeklyHours = c * 0.7 + t * 0.8;
+        const monthlySaved = Math.round(weeklyHours * 4.33 * 40 + 140);
+        hOut.textContent = weeklyHours.toFixed(1).replace('.', ',') + ' h';
+        sOut.textContent = '€' + fmt.format(monthlySaved);
+        paintTrack(cl);
+        paintTrack(tm);
+      }
+      cl.addEventListener('input', compute);
+      tm.addEventListener('input', compute);
+      compute();
     })();
 
     /* ── CURSOR ──────────────────────────────────────── */
