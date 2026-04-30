@@ -166,6 +166,86 @@
       opacity: .5;
       border-radius: 1px;
     }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    /* Burger + mobile menu (landing) */
+    .nav-burger {
+      display: none;
+      width: 38px; height: 38px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      padding: 0;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      transition: border-color .2s, background .2s;
+    }
+    .nav-burger:hover { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.04); }
+    .nav-burger:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+    .nav-burger-bar {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 18px; height: 1.5px;
+      margin-left: -9px;
+      background: var(--text-bright);
+      border-radius: 2px;
+      transition: transform .28s cubic-bezier(.16,1,.3,1), opacity .18s ease, top .28s cubic-bezier(.16,1,.3,1);
+    }
+    .nav-burger-bar:nth-child(1) { top: calc(50% - 6px); }
+    .nav-burger-bar:nth-child(2) { top: 50%; }
+    .nav-burger-bar:nth-child(3) { top: calc(50% + 6px); }
+    .nav-burger.is-open .nav-burger-bar:nth-child(1) { top: 50%; transform: rotate(45deg); }
+    .nav-burger.is-open .nav-burger-bar:nth-child(2) { opacity: 0; }
+    .nav-burger.is-open .nav-burger-bar:nth-child(3) { top: 50%; transform: rotate(-45deg); }
+    .nav-mobile-menu {
+      display: none;
+      position: fixed;
+      left: 12px; right: 12px;
+      top: 70px;
+      background: rgba(23,23,23,.92);
+      backdrop-filter: blur(28px) saturate(1.4);
+      -webkit-backdrop-filter: blur(28px) saturate(1.4);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04) inset;
+      z-index: 99;
+      opacity: 0;
+      transform: translateY(-8px) scale(.98);
+      transform-origin: top right;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+    }
+    .nav-mobile-menu.is-open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .nav-mobile-menu a {
+      display: block;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-bright);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background .15s, color .15s;
+    }
+    .nav-mobile-menu a:hover,
+    .nav-mobile-menu a:focus-visible {
+      background: rgba(255,255,255,.06);
+      color: var(--yellow);
+      outline: none;
+    }
+    .nav-mobile-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 98;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .nav-mobile-backdrop.is-open { display: block; opacity: 1; }
     .btn-sm {
       background: var(--yellow); color: var(--bg);
       font-family: var(--sans); font-size: 13px; font-weight: 600;
@@ -1140,6 +1220,10 @@
       nav { width: calc(100% - 24px); padding: 12px 18px; top: 10px; border-radius: 14px; }
       nav.scrolled { padding: 10px 18px; top: 8px; }
       .nav-links { display: none; }
+      .nav-burger { display: inline-flex; align-items: center; justify-content: center; }
+      .nav-mobile-menu { display: block; }
+      .nav-logotipo { display: none; }
+      .btn-sm { padding: 8px 12px; font-size: 12px; }
       .phase { padding: 0 24px; }
       .cap-grid { grid-template-columns: 1fr 1fr; }
       .metrics-grid { grid-template-columns: 1fr 1fr; }
@@ -1479,8 +1563,25 @@
       <a href="/comunidad/">Comunidad</a>
       <a href="/conocimiento-zenyx/">Conocimiento</a>
     </div>
-    <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm" style="text-decoration:none;">Acceder &rarr;</a>
+    <div class="nav-right">
+      <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm" style="text-decoration:none;">Acceder &rarr;</a>
+      <button id="nav-burger" class="nav-burger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav-mobile-menu">
+        <span class="nav-burger-bar"></span>
+        <span class="nav-burger-bar"></span>
+        <span class="nav-burger-bar"></span>
+      </button>
+    </div>
   </nav>
+
+  <div id="nav-mobile-backdrop" class="nav-mobile-backdrop" aria-hidden="true"></div>
+  <div id="nav-mobile-menu" class="nav-mobile-menu" role="menu" aria-label="Menú principal">
+    <a href="#" data-phase="1" role="menuitem">Funcionalidades</a>
+    <a href="#" data-phase="2" role="menuitem">Resultados</a>
+    <a href="#" data-phase="3" role="menuitem">Plataforma</a>
+    <a href="#" data-phase="4" role="menuitem">Precios</a>
+    <a href="/comunidad/" role="menuitem">Comunidad</a>
+    <a href="/conocimiento-zenyx/" role="menuitem">Conocimiento</a>
+  </div>
 
   <!-- Scene overlay -->
   <div class="scene-overlay" id="overlay"></div>
@@ -2329,22 +2430,62 @@
     });
 
     /* ── NAV LINKS ───────────────────────────────────── */
-    // Aterrizar en el medio de la fase para que el smooth-scroll recorra las
-    // animaciones de cards y la fase muestre contenido visible al detenerse.
+    // Desktop: aterrizar a 0.55 de la fase para que el smooth-scroll recorra la animación.
+    // Mobile (≤1024px): scroll-jacking desactivado, las phases son bloques flow normal,
+    // así que se navega directo al .phase[data-p="N"] (offset por el nav fijo ~80px).
     document.querySelectorAll('[data-phase]').forEach(el => {
       if (el.tagName === 'A') {
         el.addEventListener('click', e => {
           e.preventDefault();
           const idx = parseInt(el.dataset.phase);
-          const sectionH = experience.offsetHeight - window.innerHeight;
-          const start = phaseEdges[idx];
-          const end = phaseEdges[idx + 1] ?? 1;
-          const targetT = start + 0.55 * (end - start);
-          const target = experience.offsetTop + targetT * sectionH;
+          const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+          let target;
+          if (isMobile) {
+            const phaseEl = document.querySelector('.phase[data-p="' + idx + '"]');
+            if (!phaseEl) return;
+            // El padding-top:96px de .phase en mobile ya da aire bajo el nav fijo (~70px).
+            target = phaseEl.getBoundingClientRect().top + window.scrollY;
+          } else {
+            const sectionH = experience.offsetHeight - window.innerHeight;
+            const start = phaseEdges[idx];
+            const end = phaseEdges[idx + 1] ?? 1;
+            const targetT = start + 0.55 * (end - start);
+            target = experience.offsetTop + targetT * sectionH;
+          }
           window.scrollTo({ top: target, behavior: 'smooth' });
         });
       }
     });
+
+    /* ── NAV BURGER (mobile) ─────────────────────────── */
+    (function () {
+      const burger = document.getElementById('nav-burger');
+      const menu = document.getElementById('nav-mobile-menu');
+      const backdrop = document.getElementById('nav-mobile-backdrop');
+      if (!burger || !menu) return;
+      function close() {
+        burger.classList.remove('is-open');
+        menu.classList.remove('is-open');
+        backdrop && backdrop.classList.remove('is-open');
+        burger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+      function open() {
+        burger.classList.add('is-open');
+        menu.classList.add('is-open');
+        backdrop && backdrop.classList.add('is-open');
+        burger.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+      burger.addEventListener('click', e => {
+        e.stopPropagation();
+        burger.classList.contains('is-open') ? close() : open();
+      });
+      menu.addEventListener('click', e => { if (e.target.closest('a')) close(); });
+      backdrop && backdrop.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      window.addEventListener('resize', () => { if (window.innerWidth > 900) close(); });
+    })();
 
     /* ── CURSOR ──────────────────────────────────────── */
     const dot = document.getElementById('cursorDot');

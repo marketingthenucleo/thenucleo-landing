@@ -214,8 +214,24 @@
     </div>
 
     <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm">Acceder &rarr;</a>
+
+    <button id="nav-burger" class="nav-burger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav-mobile-menu">
+      <span class="nav-burger-bar"></span>
+      <span class="nav-burger-bar"></span>
+      <span class="nav-burger-bar"></span>
+    </button>
   </div>
 </nav>
+
+<div id="nav-mobile-backdrop" class="nav-mobile-backdrop" aria-hidden="true"></div>
+<div id="nav-mobile-menu" class="nav-mobile-menu" role="menu" aria-label="Menú principal">
+  <a href="/" role="menuitem">Funcionalidades</a>
+  <a href="/" role="menuitem">Resultados</a>
+  <a href="/" role="menuitem">Plataforma</a>
+  <a href="/" role="menuitem">Precios</a>
+  <a href="/comunidad/" role="menuitem">Comunidad</a>
+  <a href="/conocimiento-zenyx/" role="menuitem" class="active">Conocimiento</a>
+</div>
 
   <a class="back" href="/conocimiento-zenyx/">← Todos los artículos</a>
   <h1>{{ title }}</h1>
@@ -233,6 +249,34 @@
       var update = function () { nav.classList.toggle('scrolled', (window.scrollY || 0) > 40); };
       window.addEventListener('scroll', update, { passive: true });
       update();
+    })();
+    (function () {
+      var burger = document.getElementById('nav-burger');
+      var menu = document.getElementById('nav-mobile-menu');
+      var backdrop = document.getElementById('nav-mobile-backdrop');
+      if (!burger || !menu) return;
+      function close() {
+        burger.classList.remove('is-open');
+        menu.classList.remove('is-open');
+        backdrop && backdrop.classList.remove('is-open');
+        burger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+      function open() {
+        burger.classList.add('is-open');
+        menu.classList.add('is-open');
+        backdrop && backdrop.classList.add('is-open');
+        burger.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+      burger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        burger.classList.contains('is-open') ? close() : open();
+      });
+      menu.addEventListener('click', function (e) { if (e.target.closest('a')) close(); });
+      backdrop && backdrop.addEventListener('click', close);
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+      window.addEventListener('resize', function () { if (window.innerWidth > 860) close(); });
     })();
   </script>
   <script type="module" src="/assets/js/comunidad-supabase.js"></script>

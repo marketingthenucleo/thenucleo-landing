@@ -940,9 +940,96 @@ footer {
   to { transform: rotate(360deg); }
 }
 
+/* ── NAV BURGER + MOBILE MENU ───────────────────────────── */
+.nav-burger {
+  display: none;
+  width: 38px; height: 38px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+.nav-burger:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+.nav-burger:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.nav-burger-bar {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 18px; height: 1.5px;
+  margin-left: -9px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: transform .28s var(--ease-out), opacity .18s ease, top .28s var(--ease-out);
+}
+.nav-burger-bar:nth-child(1) { top: calc(50% - 6px); }
+.nav-burger-bar:nth-child(2) { top: 50%; }
+.nav-burger-bar:nth-child(3) { top: calc(50% + 6px); }
+.nav-burger.is-open .nav-burger-bar:nth-child(1) { top: 50%; transform: rotate(45deg); }
+.nav-burger.is-open .nav-burger-bar:nth-child(2) { opacity: 0; }
+.nav-burger.is-open .nav-burger-bar:nth-child(3) { top: 50%; transform: rotate(-45deg); }
+
+.nav-mobile-menu {
+  display: none;
+  position: fixed;
+  left: 12px; right: 12px;
+  top: 70px;
+  background: rgba(18,20,27,.92);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset;
+  z-index: 99;
+  opacity: 0;
+  transform: translateY(-8px) scale(.98);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity var(--duration-fast), transform var(--duration-fast);
+}
+.nav-mobile-menu.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.nav-mobile-menu a {
+  display: block;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+.nav-mobile-menu a:hover,
+.nav-mobile-menu a:focus-visible {
+  background: var(--bg-hover);
+  color: var(--accent-primary);
+  outline: none;
+}
+.nav-mobile-menu a.active { color: var(--accent-primary); }
+
+.nav-mobile-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 98;
+  opacity: 0;
+  transition: opacity var(--duration-fast);
+}
+.nav-mobile-backdrop.is-open {
+  display: block;
+  opacity: 1;
+}
+
 /* ── RESPONSIVE ─────────────────────────────────────────── */
 @media (max-width: 860px) {
   .nav-links { display: none; }
+  .nav-burger { display: inline-flex; align-items: center; justify-content: center; }
+  .nav-mobile-menu { display: block; }
   nav#nav { width: calc(100% - 24px); padding: 12px 18px; top: 10px; }
   nav#nav.scrolled { padding: 10px 18px; top: 8px; }
   .page { padding: 100px 20px 60px; }
@@ -953,6 +1040,23 @@ footer {
 
   .login-card { padding: 36px 24px 28px; }
   .auth-menu-name { display: none; }
-  .auth-menu-trigger { padding: 4px; }
+  .auth-menu-trigger { padding: 4px; max-width: none; }
   .auth-menu-dropdown { right: -10px; min-width: 220px; }
+}
+
+/* Móvil estrecho: el header debe caber con isotipo + auth-menu + Acceder.
+   A 375px solo hay ~315px útiles. El logotipo de texto (≈110px) + auth-menu (≈58px)
+   + "Acceder →" (≈95px) + gaps desbordan cuando el usuario está logueado. */
+@media (max-width: 600px) {
+  nav#nav { padding: 10px 14px; gap: 8px; }
+  nav#nav.scrolled { padding: 9px 14px; }
+  .nav-left { gap: 0; min-width: 0; }
+  .nav-logotipo { display: none; }
+  .nav-right { gap: 8px; min-width: 0; flex-shrink: 0; }
+  .btn-sm { padding: 8px 12px; font-size: 12px; }
+}
+
+@media (max-width: 360px) {
+  .btn-sm { padding: 7px 10px; }
+  .auth-menu-dropdown { right: -8px; min-width: 200px; max-width: calc(100vw - 24px); }
 }

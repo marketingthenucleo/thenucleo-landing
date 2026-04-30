@@ -162,7 +162,7 @@ Métricas: FCP 0.7s ✅ · LCP 0.8s ✅ · CLS 0.003 ✅ · TBT **980ms** ⚠️
 
 ## Problemas críticos pendientes (no tocar sin leer ACTION-PLAN.md)
 1. Links de Stripe en **modo TEST** (`buy.stripe.com/test_...`) → se mantiene TEST hasta que Ben finalice la cuenta Stripe PROD (decisión 2026-04-19). Mitigación visual mínima sugerida: banner "Modo prueba" sobre `.pricing-grid`.
-2. **Nav móvil sin hamburguesa** (≤1024px). `.nav-links { display: none }` deja desktop-only los enlaces Funcionalidades/Resultados/Plataforma/Precios/Comunidad/Conocimiento. En móvil solo se ve logo + "Acceder". Bug de discoverability + WCAG. Pendiente añadir toggle responsive en `index.html` y `_includes/comunidad-base.njk`.
+2. ~~**Nav móvil sin hamburguesa**~~ ✅ Resuelto 2026-04-30 — ver "Fix 2026-04-30" abajo.
 3. **`prefers-reduced-motion` no aplica a Three.js / partículas / cursorLoop**. La media query CSS solo neutraliza animaciones CSS, los `requestAnimationFrame` (Scene1, Scene2, particles, cursorLoop) corren igual. Riesgo vestibular para ~15-20% del tráfico móvil con la opción activa. Fix: gate global `if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;` en cada loop de render.
 
 ## Mejoras no críticas
@@ -176,6 +176,16 @@ Métricas: FCP 0.7s ✅ · LCP 0.8s ✅ · CLS 0.003 ✅ · TBT **980ms** ⚠️
 - **Nav header click handler**: enlaces `data-phase="N"` aterrizaban en `phaseEdges[idx]` (boundary inicial) y las cards de Funcionalidades/Resultados animaban a partir de localT 0.10+ → la fase aparecía vacía. Ahora aterrizan a `phaseEdges[idx] + 0.55 * span` para que el smooth-scroll recorra la animación durante el viaje. (`index.html:2331-2346`)
 - **Botones "Empezar ahora"**: hero (línea 1515) + CTA final (línea 1766) pasan de `data-phase="4"` (scroll a Precios) a `https://portal.thenucleo.com/` con `target="_blank" rel="noopener noreferrer"`, mismo patrón que "Acceder" del nav.
 - Auditoría triple completa (UX / seguridad / responsive) consolidada en `C:\Users\Benjamin\.claude\plans\pusea-y-hazme-una-noble-ullman.md` — 3 críticas, 5 altas, 8 medias, 7 bajas. Reusable como referencia para próximas iteraciones.
+
+## Fix 2026-04-30 — Header móvil + hamburguesa en los 4 navs
+- **Bug A (header desbordaba con sesión iniciada en `/comunidad/*`):** a `≤600px` el nav mostraba isotipo + logotipo SVG (~110px) + auth-menu + "Acceder →". Logueado se sumaba avatar/caret y el conjunto excedía el ancho útil (≈315px en iPhone 375).
+- **Bug B (nav móvil sin hamburguesa, ≤860/900px):** `.nav-links { display:none }` dejaba el nav móvil sin acceso a Funcionalidades/Resultados/Plataforma/Precios/Comunidad/Conocimiento. Era el problema crítico #2 documentado en este mismo doc. Solo se veía logo + "Acceder".
+- **Fix A — `assets/css/comunidad.css`:** a `≤600px` ocultar `.nav-logotipo` (solo isotipo circular), nav padding 10px 14px, `.btn-sm` 8px 12px / 12px. A `≤360px` (iPhone SE) padding 7px 10px y dropdown auth-menu limitado a `calc(100vw - 24px)`.
+- **Fix B — Hamburguesa en los 4 navs** (3 barras → X animado, dropdown glass top-right + backdrop, bloquea scroll body, cierra con tap-link/backdrop/Esc/resize > breakpoint):
+  - `assets/css/comunidad.css` — estilos `.nav-burger` + `.nav-mobile-menu` + `.nav-mobile-backdrop` (cubre 3 navs njk).
+  - `_includes/comunidad-base.njk`, `_includes/blog.njk`, `conocimiento-zenyx/index.njk` — burger + menú + JS handler en el `<script>` existente.
+  - `index.html` — CSS inline duplicado (no carga `comunidad.css`), agrupado `Acceder + burger` dentro de un nuevo `.nav-right` (eran hermanos sueltos del `<nav>` con `space-between` → btn quedaba en el centro). Burger handler en el bloque NAV BURGER. Para los links con `data-phase`, en mobile (≤1024px) scrolla directo a `.phase[data-p="N"]` (el padding-top:96px de las phases ya da aire bajo el nav); en desktop sigue el cálculo `phaseEdges + 0.55 * span`.
+- **Sin cambio JS auth:** "Acceder →" sigue visible logueado o no porque comunidad y portal son sesiones separadas (Supabase Auth vs Bubble auth).
 
 ## Reglas de trabajo
 - **NO tocar la arquitectura Three.js / scroll-jacking** sin confirmación explícita
