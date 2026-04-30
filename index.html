@@ -1991,6 +1991,7 @@
     import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
     import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
     import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 
     /* ── HELPERS ──────────────────────────────────────── */
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -2040,18 +2041,13 @@
     torusLight.position.set(22, 3, -2);
     scene.add(torusLight);
 
-    /* ── LOGOS DISPERSOS — sprites con texturas PNG ──── */
-    const LOGO_SRCS = [
-      'icons/GHL.webp','icons/clickup.webp','icons/clientify.webp',
-      'icons/googleads.webp','icons/holded.webp','icons/hostinger.webp',
-      'icons/hubspot.webp','icons/metaads.webp','icons/n8n.webp',
-      'icons/notion.webp','icons/obsidian.webp','icons/wordpres.webp'
+    /* ── LOGOS 3D — SVG extrudidos con bevel ─────────── */
+    const LOGO_SVGS = [
+      'icons/svg/ghl.svg','icons/svg/clickup.svg','icons/svg/clientify.svg',
+      'icons/svg/googleads.svg','icons/svg/holded.svg','icons/svg/hostinger.svg',
+      'icons/svg/hubspot.svg','icons/svg/meta.svg','icons/svg/n8n.svg',
+      'icons/svg/notion.svg','icons/svg/obsidian.svg','icons/svg/wordpress.svg'
     ];
-    const logoTextures = LOGO_SRCS.map(src => {
-      const tex = new THREE.TextureLoader().load(src);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      return tex;
-    });
 
     const TOTAL = 18;
     const assemblage = [];
@@ -2062,6 +2058,9 @@
     const logoGroup = new THREE.Group();
     logoGroup.position.copy(GRAVITY_CENTER);
     scene.add(logoGroup);
+
+    /* Luz ambiente tenue para que el bisel respire incluso lejos del torusLight */
+    scene.add(new THREE.AmbientLight(0xfff5b8, 0.35));
 
     function getAssembledPos(i) {
       const layers = 4;
@@ -2079,61 +2078,90 @@
       );
     }
 
-    const planeGeo = new THREE.PlaneGeometry(1, 1);
-
-    for (let i = 0; i < TOTAL; i++) {
-      const tex = logoTextures[i % logoTextures.length];
-      const mat = new THREE.MeshBasicMaterial({
-        map: tex,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        opacity: 0
+    /* Carga SVG → ExtrudeGeometry normalizada a 1 unidad, Y flipped, centrada */
+    const svgLoader = new SVGLoader();
+    const EXTRUDE_SETTINGS = {
+      depth: 1.5,
+      bevelEnabled: true,
+      bevelThickness: 0.25,
+      bevelSize: 0.18,
+      bevelSegments: 2,
+      curveSegments: 6
+    };
+    function loadLogoGeometry(url) {
+      return new Promise((resolve) => {
+        svgLoader.load(url, (data) => {
+          const shapes = data.paths.flatMap(p => SVGLoader.createShapes(p));
+          const geo = new THREE.ExtrudeGeometry(shapes, EXTRUDE_SETTINGS);
+          geo.computeBoundingBox();
+          const bb = geo.boundingBox;
+          const maxDim = Math.max(bb.max.x - bb.min.x, bb.max.y - bb.min.y);
+          /* Escala uniforme + Y flip (SVG Y crece hacia abajo) */
+          geo.scale(1 / maxDim, -1 / maxDim, 1 / maxDim);
+          geo.center();
+          resolve(geo);
+        }, undefined, () => resolve(null));
       });
-      const mesh = new THREE.Mesh(planeGeo, mat);
-
-      /* Velocidad de spin propia por eje — cada logo gira distinto */
-      const spinSpeed = {
-        x: (Math.random() - 0.5) * 0.012,
-        y: 0.006 + Math.random() * 0.010,
-        z: (Math.random() - 0.5) * 0.004,
-      };
-
-      const scattered = {
-        /* Coords LOCALES al logoGroup: dispersión alrededor de GRAVITY_CENTER */
-        pos: new THREE.Vector3(
-          (Math.random() - 0.5) * 70 - GRAVITY_CENTER.x,
-          (Math.random() - 0.5) * 45 - GRAVITY_CENTER.y,
-          (Math.random() - 0.5) * 35 - GRAVITY_CENTER.z
-        ),
-        rot: new THREE.Euler(
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2
-        ),
-        scale: 0.8 + Math.random() * 0.6,
-        opacity: 0.06
-      };
-
-      const aPos = getAssembledPos(i);
-      const assembled = {
-        pos: aPos,
-        rot: new THREE.Euler(
-          Math.PI * 0.25 * Math.floor(i / 7),
-          (i / TOTAL) * Math.PI * 2,
-          0
-        ),
-        scale: 1.2 + Math.random() * 0.6,
-        opacity: 0.55
-      };
-
-      mesh.position.copy(scattered.pos);
-      mesh.rotation.copy(scattered.rot);
-      mesh.scale.setScalar(scattered.scale);
-      assemblage.push({ mesh, scattered, assembled, isYellow: true, spinSpeed });
-      logoGroup.add(mesh);
     }
+
+    function buildLogos(geometries) {
+      for (let i = 0; i < TOTAL; i++) {
+        const geo = geometries[i % geometries.length];
+        if (!geo) continue;
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xf3f959,
+          emissive: 0xf3f959,
+          emissiveIntensity: 0.55,
+          metalness: 0.25,
+          roughness: 0.4,
+          transparent: true,
+          opacity: 0
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+
+        /* Velocidad de spin propia por eje — cada logo gira distinto */
+        const spinSpeed = {
+          x: (Math.random() - 0.5) * 0.012,
+          y: 0.006 + Math.random() * 0.010,
+          z: (Math.random() - 0.5) * 0.004,
+        };
+
+        const scattered = {
+          pos: new THREE.Vector3(
+            (Math.random() - 0.5) * 70 - GRAVITY_CENTER.x,
+            (Math.random() - 0.5) * 45 - GRAVITY_CENTER.y,
+            (Math.random() - 0.5) * 35 - GRAVITY_CENTER.z
+          ),
+          rot: new THREE.Euler(
+            Math.random() * Math.PI * 2,
+            Math.random() * Math.PI * 2,
+            Math.random() * Math.PI * 2
+          ),
+          scale: 0.8 + Math.random() * 0.6,
+          opacity: 0.06
+        };
+
+        const aPos = getAssembledPos(i);
+        const assembled = {
+          pos: aPos,
+          rot: new THREE.Euler(
+            Math.PI * 0.25 * Math.floor(i / 7),
+            (i / TOTAL) * Math.PI * 2,
+            0
+          ),
+          scale: 1.2 + Math.random() * 0.6,
+          opacity: 0.7
+        };
+
+        mesh.position.copy(scattered.pos);
+        mesh.rotation.copy(scattered.rot);
+        mesh.scale.setScalar(scattered.scale);
+        assemblage.push({ mesh, scattered, assembled, isYellow: true, spinSpeed });
+        logoGroup.add(mesh);
+      }
+    }
+
+    Promise.all(LOGO_SVGS.map(loadLogoGeometry)).then(buildLogos);
 
     /* Mouse parallax — desplaza la escena levemente con el ratón */
     let mouseX = 0, mouseY = 0;
