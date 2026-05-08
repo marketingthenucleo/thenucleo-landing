@@ -237,6 +237,14 @@ eleventyExcludeFromCollections: true
   .col-actions button { padding: 6px 10px; font-size: 12px; }
   .col-actions button + button { margin-left: 6px; }
 
+  thead th.col-bulk { text-align: right; padding: 6px 12px; }
+  #bulkResolveHeaderBtn {
+    padding: 6px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
   .empty {
     text-align: center;
     padding: 64px 24px;
@@ -477,7 +485,11 @@ eleventyExcludeFromCollections: true
             <th>Nodo</th>
             <th>Error</th>
             <th>Estado</th>
-            <th></th>
+            <th class="col-bulk">
+              <button id="bulkResolveHeaderBtn" type="button" style="display:none;">
+                Resolver todas (<span id="bulkCountHeader">0</span>)
+              </button>
+            </th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -525,6 +537,12 @@ function refreshBulkUI() {
   const count = $("bulkCount");
   count.textContent = selectedIds.size;
   btn.disabled = selectedIds.size === 0;
+  const headerBtn = $("bulkResolveHeaderBtn");
+  const headerCount = $("bulkCountHeader");
+  if (headerBtn && headerCount) {
+    headerCount.textContent = selectedIds.size;
+    headerBtn.style.display = selectedIds.size > 0 ? "inline-flex" : "none";
+  }
   // Sincronizar select-all con estado actual
   const checks = tbody.querySelectorAll(".row-select");
   const allCheck = $("selectAll");
@@ -768,6 +786,7 @@ $("selectAll").addEventListener("change", (e) => {
 });
 
 $("bulkResolveBtn").addEventListener("click", bulkResolve);
+$("bulkResolveHeaderBtn").addEventListener("click", bulkResolve);
 
 $("modal").addEventListener("click", (e) => {
   if (e.target === $("modal")) $("modal").classList.remove("active");
