@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquetipo de Marca · TheNucleo</title>
+<meta name="description" content="Descubre el arquetipo de tu marca según el modelo de Carl Jung. Test gratuito de 8 preguntas en 5 minutos.">
+<link rel="canonical" href="https://work.thenucleo.com/arquetipo/">
+<meta property="og:title" content="Arquetipo de Marca · TheNucleo">
+<meta property="og:description" content="Descubre la personalidad de tu marca con el modelo de los 12 arquetipos de Jung.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://work.thenucleo.com/arquetipo/">
+<meta property="og:image" content="https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --yellow: #F3F959;
+    --yellow-soft: rgba(243,249,89,0.08);
+    --yellow-glow: rgba(243,249,89,0.18);
+    --dark: #0c0d12;
+    --dark-2: #13151c;
+    --dark-3: #1e2130;
+    --tierra: #998675;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #edeef3;
+    --text-mute: rgba(237,238,243,0.55);
+    --text-dim: rgba(237,238,243,0.35);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  ::selection { background: var(--yellow); color: var(--dark); }
+
+  /* ── HEADER ── */
+  .site-header {
+    padding: 1.75rem 2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-mute);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--text); }
+  .back-link svg { transition: transform 0.2s; }
+  .back-link:hover svg { transform: translateX(-2px); }
+  .back-link strong { font-weight: 500; color: var(--text); }
+  .back-link em { font-style: normal; color: var(--yellow); font-weight: 500; }
+
+  .progress-counter {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    max-width: 880px;
+    margin: 1.5rem auto 0;
+    padding: 0 2rem;
+  }
+  .progress-track {
+    height: 1px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--yellow);
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* ── CONTAINER ── */
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 2rem 5rem;
+  }
+
+  /* ── INTRO ── */
+  .intro-screen {
+    padding-top: 6rem;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 2rem;
+    font-weight: 500;
+  }
+
+  .intro-title {
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin-bottom: 1.75rem;
+  }
+  .intro-title em { font-style: normal; color: var(--yellow); }
+
+  .intro-body {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--text-mute);
+    max-width: 540px;
+    margin-bottom: 3rem;
+  }
+
+  .intro-meta {
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  .meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .meta-value { font-size: 26px; font-weight: 300; color: var(--yellow); letter-spacing: -0.02em; }
+  .meta-label { font-size: 11px; color: var(--text-mute); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: var(--yellow);
+    color: var(--dark);
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 0;
+  }
+  .btn-primary:hover { background: #f9ff7a; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled,
+  .btn-primary.is-disabled {
+    background: var(--yellow-soft);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    border: 1px solid var(--yellow-glow);
+  }
+  .btn-primary:disabled:hover,
+  .btn-primary.is-disabled:hover { transform: none; background: var(--yellow-soft); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: transparent;
+    color: var(--text-mute);
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--border-strong); color: var(--text); }
+
+  /* ── QUESTION ── */
+  .question-screen {
+    display: none;
+    padding-top: 5rem;
+    min-height: 80vh;
+    animation: fadeUp 0.4s ease;
+  }
+  .question-screen.active { display: flex; flex-direction: column; justify-content: center; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-number {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+  }
+
+  .q-text {
+    font-size: clamp(1.4rem, 3.2vw, 2rem);
+    font-weight: 300;
+    line-height: 1.3;
+    letter-spacing: -0.012em;
+    margin-bottom: 2.5rem;
+    max-width: 600px;
+  }
+
+  /* ── RADIOS ── */
+  .options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 3rem; }
+  .option-item { position: relative; }
+  .option-item input[type="radio"] {
+    position: absolute; opacity: 0; width: 0; height: 0;
+  }
+  .option-label {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.18s;
+    background: transparent;
+    font-size: 15px;
+    color: var(--text-mute);
+    line-height: 1.4;
+  }
+  .option-label:hover {
+    border-color: rgba(243,249,89,0.32);
+    color: var(--text);
+    background: var(--yellow-soft);
+  }
+  .option-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.22);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s;
+  }
+  .option-dot::after {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--yellow);
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+  input[type="radio"]:checked + .option-label {
+    border-color: var(--yellow);
+    color: var(--text);
+    background: var(--yellow-soft);
+  }
+  input[type="radio"]:checked + .option-label .option-dot {
+    border-color: var(--yellow);
+  }
+  input[type="radio"]:checked + .option-label .option-dot::after { opacity: 1; }
+
+  /* ── NAV ── */
+  .q-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  /* ── OPEN ── */
+  .open-section {
+    display: none;
+    padding-top: 5rem;
+    animation: fadeUp 0.4s ease;
+  }
+  .open-section.active { display: block; }
+
+  .open-heading {
+    font-size: clamp(1.5rem, 3.4vw, 2.2rem);
+    font-weight: 300;
+    letter-spacing: -0.012em;
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+    max-width: 580px;
+  }
+  .open-sub {
+    font-size: 15px;
+    color: var(--text-mute);
+    margin-bottom: 2.5rem;
+    max-width: 520px;
+  }
+
+  .open-fields { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2.5rem; }
+
+  .field-wrap label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 8px;
+  }
+  .field-wrap .field-hint {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .field-wrap input,
+  .field-wrap textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 13px 16px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+    border-radius: 0;
+  }
+  .field-wrap textarea { min-height: 96px; line-height: 1.6; }
+  .field-wrap input:focus,
+  .field-wrap textarea:focus { border-color: rgba(243,249,89,0.45); }
+  .field-wrap input::placeholder,
+  .field-wrap textarea::placeholder { color: rgba(237,238,243,0.22); }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ── TONE ── */
+  .tone-section { margin-bottom: 2.5rem; }
+  .tone-title {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 1.25rem;
+  }
+  .tone-grid { display: flex; flex-direction: column; gap: 1.1rem; }
+  .tone-row {
+    display: grid;
+    grid-template-columns: 130px 1fr 130px;
+    align-items: center;
+    gap: 16px;
+  }
+  .tone-row span {
+    font-size: 13px;
+    color: var(--text-mute);
+  }
+  .tone-row span:last-child { text-align: right; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 1px;
+    background: rgba(255,255,255,0.18);
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--yellow);
+    cursor: pointer;
+    border: 0;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--yellow);
+    cursor: pointer; border: 0;
+  }
+
+  /* ── LOADING ── */
+  .loading-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    animation: fadeUp 0.4s ease;
+  }
+  .loading-screen.active { display: flex; }
+
+  .loader-ring {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(243,249,89,0.18);
+    border-top-color: var(--yellow);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 1.75rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-label {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  /* ── RESULT ── */
+  .result-screen {
+    display: none;
+    padding-top: 4rem;
+    animation: fadeUp 0.5s ease;
+  }
+  .result-screen.active { display: block; }
+
+  .result-hero {
+    border: 1px solid rgba(243,249,89,0.22);
+    background: var(--yellow-soft);
+    padding: 2.5rem;
+    margin-bottom: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(243,249,89,0.12) 0%, transparent 60%);
+    transform: translate(35%, -35%);
+    pointer-events: none;
+  }
+
+  .result-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 0.85rem;
+    position: relative;
+  }
+
+  .result-archetype {
+    font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    color: var(--yellow);
+    margin-bottom: 0.5rem;
+    line-height: 1.05;
+    position: relative;
+  }
+
+  .result-essence {
+    font-size: 16.5px;
+    color: var(--text);
+    line-height: 1.6;
+    position: relative;
+    max-width: 540px;
+  }
+
+  .result-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+    padding: 6px 14px;
+    border: 1px solid var(--border-strong);
+    font-size: 12px;
+    color: var(--text-mute);
+    letter-spacing: 0.04em;
+    position: relative;
+  }
+  .result-secondary strong { color: var(--text); font-weight: 500; }
+
+  .result-block {
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 0;
+  }
+  .result-block:last-of-type { border-bottom: none; }
+
+  .rb-label {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 1rem;
+  }
+  .rb-text {
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: rgba(237,238,243,0.85);
+    max-width: 600px;
+  }
+
+  /* ── CTA exhaustivo ── */
+  .upsell {
+    margin-top: 2rem;
+    padding: 2.25rem 2rem;
+    background: linear-gradient(135deg, rgba(243,249,89,0.05) 0%, rgba(243,249,89,0.02) 100%);
+    border: 1px solid rgba(243,249,89,0.22);
+    position: relative;
+    overflow: hidden;
+  }
+  .upsell::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -10%;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(243,249,89,0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .upsell-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 0.75rem;
+    position: relative;
+  }
+  .upsell-title {
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    margin-bottom: 1rem;
+    position: relative;
+    max-width: 520px;
+  }
+  .upsell-body {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text-mute);
+    margin-bottom: 1.75rem;
+    position: relative;
+    max-width: 560px;
+  }
+  .upsell-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 20px;
+    margin-bottom: 1.75rem;
+    position: relative;
+  }
+  .upsell-list li {
+    font-size: 13.5px;
+    color: var(--text-mute);
+    padding-left: 18px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .upsell-list li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 9px;
+    width: 8px; height: 1px;
+    background: var(--yellow);
+  }
+  .upsell-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .upsell-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .result-footer {
+    display: flex;
+    gap: 12px;
+    padding-top: 2.5rem;
+    margin-top: 1rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  /* ── ERROR ── */
+  .error-msg {
+    padding: 12px 16px;
+    border: 1px solid rgba(255,80,80,0.32);
+    color: rgba(255,130,130,0.92);
+    font-size: 13px;
+    margin-bottom: 1.5rem;
+    display: none;
+    background: rgba(255,80,80,0.04);
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    .site-header { padding: 1.25rem 1.25rem 0; }
+    .container { padding: 0 1.25rem 3rem; }
+    .progress-wrap { padding: 0 1.25rem; }
+    .intro-screen { padding-top: 3rem; }
+    .question-screen { padding-top: 3rem; }
+    .open-section { padding-top: 3rem; }
+    .tone-row { grid-template-columns: 80px 1fr 80px; gap: 8px; }
+    .tone-row span { font-size: 11px; }
+    .result-hero { padding: 1.75rem 1.5rem; }
+    .upsell { padding: 1.75rem 1.5rem; }
+    .upsell-list { grid-template-columns: 1fr; }
+    .row2 { grid-template-columns: 1fr; }
+    .intro-meta { gap: 1.75rem; }
+    .result-footer { flex-direction: column; align-items: stretch; }
+    .result-footer .btn-ghost { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="back-link" href="/" aria-label="Volver a TheNucleo">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <strong>The</strong>&nbsp;<em>Nucleo</em>
+  </a>
+  <div class="progress-counter" id="progressCounter"></div>
+</header>
+<div class="progress-wrap">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- INTRO -->
+  <section class="intro-screen" id="screenIntro" aria-labelledby="introTitle">
+    <div class="eyebrow">Test de arquetipo · Modelo Jung</div>
+    <h1 class="intro-title" id="introTitle">Descubre la<br>personalidad<br>de tu <em>marca.</em></h1>
+    <p class="intro-body">
+      Identifica tu arquetipo según el modelo de Carl Jung — la base sobre la que construir tu voz, tu vocabulario y tu estrategia de contenido.
+    </p>
+    <div class="intro-meta">
+      <div class="meta-item"><span class="meta-value">8</span><span class="meta-label">preguntas</span></div>
+      <div class="meta-item"><span class="meta-value">~5'</span><span class="meta-label">minutos</span></div>
+      <div class="meta-item"><span class="meta-value">12</span><span class="meta-label">arquetipos</span></div>
+    </div>
+    <div>
+      <button class="btn-primary" type="button" onclick="startTest()">
+        Comenzar test
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- QUESTIONS 1-8 -->
+  <section class="question-screen" id="qscreen" aria-labelledby="qText">
+    <div class="q-number" id="qNumber">Pregunta 1 de 8</div>
+    <div class="q-text" id="qText"></div>
+    <div class="options-list" id="optionsList"></div>
+    <div class="q-nav">
+      <button class="btn-ghost" type="button" id="btnPrev" onclick="prevQ()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Anterior
+      </button>
+      <button class="btn-primary" type="button" id="btnNext" onclick="nextQ()" disabled>
+        Siguiente
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- OPEN QUESTIONS -->
+  <section class="open-section" id="openSection" aria-labelledby="openHeading">
+    <div class="eyebrow">Última parte · Tu marca en palabras</div>
+    <h2 class="open-heading" id="openHeading">Cuéntanos un poco más sobre tu negocio.</h2>
+    <p class="open-sub">Dos minutos. Cuanto más concretes, más afinado quedará el resultado.</p>
+
+    <div class="open-fields">
+      <div class="row2">
+        <div class="field-wrap">
+          <label for="f_nombre">Nombre de la empresa</label>
+          <input type="text" id="f_nombre" placeholder="Ej. Academia Pádel Sur" />
+        </div>
+        <div class="field-wrap">
+          <label for="f_sector">Sector / actividad</label>
+          <input type="text" id="f_sector" placeholder="Ej. academia deportiva" />
+        </div>
+      </div>
+      <div class="field-wrap">
+        <label for="f_oferta">¿Qué ofreces en una frase?</label>
+        <input type="text" id="f_oferta" placeholder="Ej. Clases de pádel para adultos en Madrid" />
+      </div>
+      <div class="field-wrap">
+        <label for="f_diferenciacion">¿Por qué te eligen a ti y no a la competencia?</label>
+        <textarea id="f_diferenciacion" placeholder="Trato personalizado, experiencia, instalaciones..."></textarea>
+      </div>
+      <div class="field-wrap">
+        <label for="f_vozejemplo">Escribe 2-3 frases como hablaría tu marca</label>
+        <div class="field-hint">No las pulas. Tal cual te salgan.</div>
+        <textarea id="f_vozejemplo" placeholder="Ej. Hola, somos una academia donde el deporte se vive distinto..."></textarea>
+      </div>
+      <div class="field-wrap">
+        <label for="f_promesa">¿Cuál es la promesa que le haces a tu cliente?</label>
+        <input type="text" id="f_promesa" placeholder="Ej. Aprenderás, te sentirás bien y querrás repetir." />
+      </div>
+    </div>
+
+    <div class="tone-section">
+      <div class="tone-title">Calibra el tono de tu marca</div>
+      <div class="tone-grid">
+        <div class="tone-row"><span>Formal</span><input type="range" min="1" max="5" value="3" id="t1" aria-label="Formal a Informal"/><span>Informal</span></div>
+        <div class="tone-row"><span>Serio</span><input type="range" min="1" max="5" value="3" id="t2" aria-label="Serio a Desenfadado"/><span>Desenfadado</span></div>
+        <div class="tone-row"><span>Técnico</span><input type="range" min="1" max="5" value="3" id="t3" aria-label="Técnico a Divulgativo"/><span>Divulgativo</span></div>
+        <div class="tone-row"><span>Racional</span><input type="range" min="1" max="5" value="3" id="t4" aria-label="Racional a Emocional"/><span>Emocional</span></div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="openError">Rellena al menos el nombre de la empresa y el sector para continuar.</div>
+
+    <div class="q-nav">
+      <button class="btn-ghost" type="button" onclick="showQScreen()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Anterior
+      </button>
+      <button class="btn-primary" type="button" onclick="submitAll()">
+        Ver mi arquetipo
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <div class="loading-screen" id="loadingScreen" role="status" aria-live="polite">
+    <div class="loader-ring"></div>
+    <div class="loading-label">Calculando tu arquetipo</div>
+  </div>
+
+  <!-- RESULT -->
+  <section class="result-screen" id="resultScreen" aria-labelledby="resultTitle">
+    <div id="resultContent"></div>
+    <div class="result-footer">
+      <button class="btn-ghost" type="button" onclick="restartTest()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8a6 6 0 1 0 1.76-4.24M2 3v3h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Repetir test
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const QUESTIONS = [
+  { text: "¿Cómo describirías el estilo de liderazgo en tu organización?", options: [
+    { text: "Valiente, retador, motivador",         archetypes: { hero: 3 } },
+    { text: "Creativo, disruptivo, innovador",      archetypes: { creator: 3 } },
+    { text: "Cercano, protector, empático",         archetypes: { caregiver: 3 } },
+    { text: "Aventurero, libre, espontáneo",        archetypes: { explorer: 3 } },
+    { text: "Sobrio, disciplinado, estructurado",   archetypes: { ruler: 3 } },
+    { text: "Divertido, optimista, informal",       archetypes: { jester: 3 } }
+  ]},
+  { text: "¿Qué valores inspiran el día a día de tu organización?", options: [
+    { text: "Superación constante",                 archetypes: { hero: 2, sage: 1 } },
+    { text: "Creatividad y originalidad",           archetypes: { creator: 2, outlaw: 1 } },
+    { text: "Empatía y cuidado de las personas",    archetypes: { caregiver: 2, lover: 1 } },
+    { text: "Libertad y autonomía",                 archetypes: { explorer: 2, outlaw: 1 } },
+    { text: "Orden y excelencia",                   archetypes: { ruler: 2, sage: 1 } },
+    { text: "Alegría y cercanía",                   archetypes: { jester: 2, innocent: 1 } }
+  ]},
+  { text: "¿Qué impacto aspira a tener tu marca en la vida de las personas?", options: [
+    { text: "Ayudarles a superar retos y alcanzar logros",       archetypes: { hero: 3 } },
+    { text: "Despertar su lado creativo y original",             archetypes: { creator: 3 } },
+    { text: "Brindarles apoyo, protección y tranquilidad",       archetypes: { caregiver: 2, innocent: 1 } },
+    { text: "Animarles a descubrir y explorar nuevos caminos",   archetypes: { explorer: 3 } },
+    { text: "Ofrecerles seguridad y confianza",                  archetypes: { ruler: 2, sage: 1 } },
+    { text: "Hacer su vida más divertida y positiva",            archetypes: { jester: 2, innocent: 1 } }
+  ]},
+  { text: "¿Qué rol quieres que tu marca juegue en la vida de tus clientes?", options: [
+    { text: "Mentor que impulsa",        archetypes: { sage: 2, hero: 1 } },
+    { text: "Socio creativo",            archetypes: { creator: 2, magician: 1 } },
+    { text: "Cuidador que protege",      archetypes: { caregiver: 3 } },
+    { text: "Compañero de aventuras",    archetypes: { explorer: 2, jester: 1 } },
+    { text: "Líder que guía",            archetypes: { ruler: 2, sage: 1 } },
+    { text: "Amigo cercano",             archetypes: { everyman: 2, innocent: 1 } }
+  ]},
+  { text: "Si tu marca fuera una persona, ¿cómo sería?", options: [
+    { text: "Fuerte, valiente y decidida",          archetypes: { hero: 3 } },
+    { text: "Creativa, soñadora y original",        archetypes: { creator: 2, magician: 1 } },
+    { text: "Protectora, empática y solidaria",     archetypes: { caregiver: 3 } },
+    { text: "Libre, aventurera y espontánea",       archetypes: { explorer: 2, outlaw: 1 } },
+    { text: "Elegante, sofisticada y dominante",    archetypes: { ruler: 2, lover: 1 } },
+    { text: "Divertida, alegre y cercana",          archetypes: { jester: 2, everyman: 1 } }
+  ]},
+  { text: "¿Cómo te gustaría que la audiencia percibiera a tu marca?", options: [
+    { text: "Como un líder fuerte",          archetypes: { ruler: 2, hero: 1 } },
+    { text: "Como una fuente de inspiración", archetypes: { magician: 2, sage: 1 } },
+    { text: "Como un refugio de confianza",  archetypes: { caregiver: 2, innocent: 1 } },
+    { text: "Como un compañero divertido",   archetypes: { jester: 2, everyman: 1 } },
+    { text: "Como un símbolo de distinción", archetypes: { ruler: 1, lover: 2 } },
+    { text: "Como un guía sabio",            archetypes: { sage: 3 } }
+  ]},
+  { text: "¿Cómo describes la forma en que se comunica tu marca?", options: [
+    { text: "Poderosa, firme e inspiradora",      archetypes: { hero: 2, ruler: 1 } },
+    { text: "Original, disruptiva y expresiva",   archetypes: { outlaw: 2, creator: 1 } },
+    { text: "Humana, cercana y confiable",        archetypes: { caregiver: 2, everyman: 1 } },
+    { text: "Natural, fresca y desenfadada",      archetypes: { explorer: 2, innocent: 1 } },
+    { text: "Estructurada, elegante y refinada",  archetypes: { ruler: 2, lover: 1 } },
+    { text: "Divertida, irónica y alegre",        archetypes: { jester: 3 } }
+  ]},
+  { text: "¿Qué propósito principal mueve a tu organización?", options: [
+    { text: "Superar desafíos",                       archetypes: { hero: 3 } },
+    { text: "Transformar la creatividad en realidad", archetypes: { creator: 2, magician: 1 } },
+    { text: "Cuidar y proteger a las personas",       archetypes: { caregiver: 3 } },
+    { text: "Hacer la vida más divertida",            archetypes: { jester: 2, innocent: 1 } },
+    { text: "Ofrecer prestigio y seguridad",          archetypes: { ruler: 2, sage: 1 } },
+    { text: "Compartir conocimientos y enseñar",      archetypes: { sage: 3 } }
+  ]}
+];
+
+const ARCHETYPE_NAMES = {
+  hero: 'El Héroe', creator: 'El Creador', caregiver: 'El Cuidador',
+  explorer: 'El Explorador', ruler: 'El Gobernante', jester: 'El Bufón',
+  sage: 'El Sabio', magician: 'El Mago', innocent: 'El Inocente',
+  outlaw: 'El Forajido', lover: 'El Amante', everyman: 'El Tipo Corriente'
+};
+
+// Esencia genérica · 1 frase por arquetipo (informe básico)
+const ARCHETYPE_ESSENCE = {
+  hero:      'Marcas que inspiran superación, valor y logro.',
+  creator:   'Marcas que liberan la imaginación y crean lo nuevo.',
+  caregiver: 'Marcas que protegen, cuidan y generan confianza.',
+  explorer:  'Marcas que despiertan curiosidad y empujan al descubrimiento.',
+  ruler:     'Marcas que ofrecen orden, prestigio y excelencia.',
+  jester:    'Marcas que hacen la vida más ligera y divertida.',
+  sage:      'Marcas que enseñan, guían y comparten conocimiento.',
+  magician:  'Marcas que transforman lo posible en realidad.',
+  innocent:  'Marcas que ofrecen simplicidad, optimismo y pureza.',
+  outlaw:    'Marcas que rompen reglas y defienden la libertad.',
+  lover:     'Marcas que despiertan deseo, intimidad y belleza.',
+  everyman:  'Marcas honestas, cercanas y para todos.'
+};
+
+// Descripción larga genérica (3-4 frases) para el bloque "Qué significa este arquetipo"
+const ARCHETYPE_DESCRIPTION = {
+  hero:      'Las marcas Héroe se construyen sobre el valor, la disciplina y el logro. Inspiran a sus clientes a dar lo mejor de sí, a superar retos y a sentirse capaces. Su voz es directa, motivadora y firme. Funcionan especialmente en deporte, fitness, formación, herramientas profesionales y categorías que celebran el esfuerzo.',
+  creator:   'Las marcas Creador se mueven por la imaginación, la originalidad y la libertad expresiva. Animan a sus clientes a crear, diseñar e imaginar lo que aún no existe. Su voz es vibrante, evocadora y sin miedo a lo nuevo. Funcionan en diseño, arte, tecnología creativa, contenido, moda y herramientas para makers.',
+  caregiver: 'Las marcas Cuidador se basan en proteger, atender y hacer la vida más fácil. Generan confianza siendo cálidas, presentes y atentas al detalle humano. Su voz es empática, clara y amable, sin dramatizar. Funcionan en salud, familia, educación infantil, seguros, cuidado personal y servicios de atención.',
+  explorer:  'Las marcas Explorador apelan a la libertad, la curiosidad y el deseo de salir de lo conocido. Empujan a sus clientes a probar, descubrir y vivir cosas nuevas. Su voz es fresca, despreocupada y honesta. Funcionan en viajes, outdoor, automoción, lifestyle, tecnología y categorías aspiracionales.',
+  ruler:     'Las marcas Gobernante proyectan orden, prestigio y control. Sus clientes buscan calidad, durabilidad y una sensación de mando sobre su entorno. Su voz es sobria, segura y precisa, sin grandilocuencia barata. Funcionan en lujo, banca, B2B premium, tecnología empresarial, automoción alta gama e inmobiliaria.',
+  jester:    'Las marcas Bufón ven el mundo en clave ligera, divertida y compartida. Aligeran al cliente, le sacan una sonrisa y lo invitan a no tomarse todo demasiado en serio. Su voz es chispeante, irónica y cercana. Funcionan en entretenimiento, restauración, snacks, redes sociales, gaming y categorías de consumo masivo.',
+  sage:      'Las marcas Sabio educan, ordenan información y dan claridad donde había ruido. Su poder está en el rigor, la curaduría y la pedagogía. Su voz es clara, fundamentada y didáctica, sin pedantería. Funcionan en consultoría, medios, formación, software analítico, salud técnica y servicios profesionales.',
+  magician:  'Las marcas Mago prometen transformación: convertir lo difícil en simple, lo cotidiano en extraordinario. Trabajan con el "antes y el después" como columna vertebral. Su voz es visionaria, evocadora y un punto mística. Funcionan en bienestar, tecnología disruptiva, branding, formación transformadora y experiencias inmersivas.',
+  innocent:  'Las marcas Inocente ofrecen simplicidad, optimismo y un mundo más amable. Su mensaje es claro, sin letra pequeña ni dobleces. Su voz es luminosa, sincera y positiva. Funcionan en alimentación natural, productos para niños, sostenibilidad, cosmética suave y categorías que prometen "volver a lo esencial".',
+  outlaw:    'Las marcas Forajido cuestionan lo establecido y defienden a quien no encaja. Construyen tribu desde la diferencia, no desde la mayoría. Su voz es directa, irreverente y sin pedir permiso. Funcionan en contracultura, tecnología disruptiva, fitness extremo, alcohol, moda alternativa y servicios "anti-status quo".',
+  lover:     'Las marcas Amante apelan al deseo, los sentidos y la conexión. Hablan de placer, intimidad y belleza, sin asomo de cinismo. Su voz es sensual, cuidada y emocional. Funcionan en perfumería, moda, restauración premium, joyería, viajes románticos, cuidado personal y categorías estéticas.',
+  everyman:  'Las marcas Tipo Corriente se construyen sobre la honestidad y el "como tú". No miran por encima ni juegan a ser aspiracionales: son fiables, sin pretensiones y para cualquiera. Su voz es llana, simpática y sin tecnicismos. Funcionan en retail, alimentación de gran consumo, banca cercana, telco, seguros sencillos y servicios cotidianos.'
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentQ = 0;
+let answers = new Array(QUESTIONS.length).fill(null);
+let scores = {};
+let lastResult = null;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+function v(id) { const e = $(id); return e ? e.value.trim() : ''; }
+
+function updateProgress(step, total) {
+  const pct = total > 0 ? (step / total) * 100 : 0;
+  $('progressFill').style.width = pct + '%';
+  $('progressCounter').textContent = (step > 0 && total > 0) ? (step + ' / ' + total) : '';
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function startTest() {
+  $('screenIntro').style.display = 'none';
+  currentQ = 0;
+  renderQuestion();
+  $('qscreen').classList.add('active');
+  updateProgress(1, QUESTIONS.length + 1);
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  $('qNumber').textContent = 'Pregunta ' + (currentQ + 1) + ' de ' + QUESTIONS.length;
+  $('qText').textContent = q.text;
+
+  const list = $('optionsList');
+  list.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option-item';
+    div.innerHTML = `
+      <input type="radio" name="q${currentQ}" id="opt${currentQ}_${i}" value="${i}" onchange="onSelect(${i})">
+      <label class="option-label" for="opt${currentQ}_${i}">
+        <span class="option-dot" aria-hidden="true"></span>
+        <span>${opt.text}</span>
+      </label>`;
+    list.appendChild(div);
+    if (answers[currentQ] === i) div.querySelector('input').checked = true;
+  });
+
+  $('btnPrev').style.display = currentQ === 0 ? 'none' : 'inline-flex';
+  const isLast = currentQ === QUESTIONS.length - 1;
+  $('btnNext').innerHTML = (isLast ? 'Continuar' : 'Siguiente') +
+    '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  $('btnNext').disabled = answers[currentQ] === null;
+}
+
+function onSelect(i) {
+  answers[currentQ] = i;
+  $('btnNext').disabled = false;
+}
+
+function nextQ() {
+  if (answers[currentQ] === null) return;
+  if (currentQ < QUESTIONS.length - 1) {
+    currentQ++;
+    renderQuestion();
+    updateProgress(currentQ + 1, QUESTIONS.length + 1);
+  } else {
+    showOpenSection();
+  }
+}
+
+function prevQ() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion();
+    updateProgress(currentQ + 1, QUESTIONS.length + 1);
+  }
+}
+
+function showQScreen() {
+  $('openSection').classList.remove('active');
+  $('qscreen').classList.add('active');
+  currentQ = QUESTIONS.length - 1;
+  renderQuestion();
+  updateProgress(QUESTIONS.length, QUESTIONS.length + 1);
+}
+
+function showOpenSection() {
+  $('qscreen').classList.remove('active');
+  $('openSection').classList.add('active');
+  updateProgress(QUESTIONS.length + 1, QUESTIONS.length + 1);
+}
+
+// ── SCORING ───────────────────────────────────────────────────────────────────
+function calcScores() {
+  scores = {};
+  answers.forEach((idx, qi) => {
+    if (idx === null) return;
+    const archs = QUESTIONS[qi].options[idx].archetypes;
+    Object.entries(archs).forEach(([arch, pts]) => {
+      scores[arch] = (scores[arch] || 0) + pts;
+    });
+  });
+  return scores;
+}
+
+function getTopArchetypes() {
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const total = sorted.reduce((s, [, v]) => s + v, 0) || 1;
+  const top1 = sorted[0];
+  const top2 = sorted[1];
+  return {
+    main: top1[0],
+    secondary: top2 ? top2[0] : null,
+    pct1: Math.round((top1[1] / total) * 100),
+    pct2: top2 ? Math.round((top2[1] / total) * 100) : 0
+  };
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+function submitAll() {
+  if (!v('f_nombre') || !v('f_sector')) {
+    $('openError').style.display = 'block';
+    return;
+  }
+  $('openError').style.display = 'none';
+  calcScores();
+  const tops = getTopArchetypes();
+  showLoadingThenResult(tops);
+}
+
+function showLoadingThenResult(tops) {
+  $('openSection').classList.remove('active');
+  const loading = $('loadingScreen');
+  loading.style.display = 'flex';
+  setTimeout(() => loading.classList.add('active'), 10);
+  $('progressCounter').textContent = '';
+  $('progressFill').style.width = '100%';
+
+  setTimeout(() => {
+    loading.classList.remove('active');
+    loading.style.display = 'none';
+    showResult(tops);
+  }, 900);
+}
+
+// ── RESULT ────────────────────────────────────────────────────────────────────
+function showResult(tops) {
+  lastResult = tops;
+  const mainKey = tops.main;
+  const secKey = tops.secondary;
+  const empresa = v('f_nombre') || 'tu marca';
+
+  const html = `
+    <div class="result-hero">
+      <div class="result-eyebrow">Tu arquetipo principal · ${tops.pct1}%</div>
+      <h2 class="result-archetype" id="resultTitle">${ARCHETYPE_NAMES[mainKey]}</h2>
+      <p class="result-essence">${ARCHETYPE_ESSENCE[mainKey]}</p>
+      ${secKey ? `<div class="result-secondary">Secundario: <strong>${ARCHETYPE_NAMES[secKey]}</strong> · ${tops.pct2}%</div>` : ''}
+    </div>
+
+    <div class="result-block">
+      <div class="rb-label">Qué significa este arquetipo</div>
+      <p class="rb-text">${ARCHETYPE_DESCRIPTION[mainKey]}</p>
+    </div>
+
+    <aside class="upsell" aria-labelledby="upsellTitle">
+      <div class="upsell-eyebrow">Análisis exhaustivo · personalizado</div>
+      <h3 class="upsell-title" id="upsellTitle">Obtén tu análisis de arquetipo de forma exhaustiva.</h3>
+      <p class="upsell-body">
+        Lo de arriba es la versión genérica del arquetipo. La versión completa está escrita con la voz real de <strong>${escapeHtml(empresa)}</strong>, no con frases de manual.
+      </p>
+      <ul class="upsell-list">
+        <li>Voz de marca: qué decir y qué evitar</li>
+        <li>Vocabulario propio y palabras vetadas</li>
+        <li>Frases listas para publicar</li>
+        <li>Ideas de contenido específicas</li>
+        <li>Intro de newsletter con tu tono</li>
+        <li>Elevator pitch redactado para ti</li>
+      </ul>
+      <div class="upsell-actions">
+        <button class="btn-primary is-disabled" type="button" id="btnExhaustivo" aria-disabled="true" onclick="onExhaustivoClick()">
+          Generar análisis personalizado
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="upsell-note">Próximamente</span>
+      </div>
+    </aside>
+  `;
+
+  $('resultContent').innerHTML = html;
+  $('resultScreen').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function onExhaustivoClick() {
+  // Intencionalmente no funcional. Pendiente conectar con Edge Function.
+  console.info('[arquetipo] CTA exhaustivo: pendiente conectar con backend IA.');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function restartTest() {
+  currentQ = 0;
+  answers = new Array(QUESTIONS.length).fill(null);
+  scores = {};
+  lastResult = null;
+  ['f_nombre','f_sector','f_oferta','f_diferenciacion','f_vozejemplo','f_promesa'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+  ['t1','t2','t3','t4'].forEach(id => { const el = $(id); if (el) el.value = '3'; });
+  $('resultScreen').classList.remove('active');
+  $('openSection').classList.remove('active');
+  $('qscreen').classList.remove('active');
+  $('screenIntro').style.display = '';
+  updateProgress(0, QUESTIONS.length + 1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
