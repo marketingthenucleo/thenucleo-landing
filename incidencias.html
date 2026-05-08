@@ -461,7 +461,7 @@ eleventyExcludeFromCollections: true
     <button class="chip" data-filter="resolved">Resueltas</button>
     <button class="chip" data-filter="all">Todas</button>
     <span class="spacer"></span>
-    <button class="bulk-btn" id="bulkResolveBtn" style="display:none;" type="button">
+    <button class="bulk-btn" id="bulkResolveBtn" type="button" disabled>
       Resolver seleccionadas (<span id="bulkCount">0</span>)
     </button>
   </div>
@@ -524,7 +524,7 @@ function refreshBulkUI() {
   const btn = $("bulkResolveBtn");
   const count = $("bulkCount");
   count.textContent = selectedIds.size;
-  btn.style.display = selectedIds.size > 0 ? "" : "none";
+  btn.disabled = selectedIds.size === 0;
   // Sincronizar select-all con estado actual
   const checks = tbody.querySelectorAll(".row-select");
   const allCheck = $("selectAll");
