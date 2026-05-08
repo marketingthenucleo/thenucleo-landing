@@ -9,6 +9,8 @@ Repo: `marketingthenucleo/thenucleo-landing`
 ## URLs
 - **Producción:** https://work.thenucleo.com/
 - **Blog:** https://work.thenucleo.com/conocimiento-zenyx/
+- **Comunidad:** https://work.thenucleo.com/comunidad/
+- **Arquetipo de Marca (leadgen):** https://work.thenucleo.com/arquetipo/
 - **Vercel fallback:** https://app-landing-thenucleo.vercel.app/
 - **Dev:** `npm run dev` → `http://localhost:8080`
 
@@ -29,6 +31,8 @@ _data/
 _includes/
   blog.njk                  ← layout de cada post del blog
   comunidad-base.njk        ← layout común de /comunidad/* (nav + footer + modal global "Crear propuesta")
+arquetipo/
+  index.html                ← /arquetipo/ test público de leadgen (12 arquetipos Jung). Standalone HTML+CSS+JS inline, passthrough copy. Sin IA por ahora — calcula arquetipo principal/secundario y muestra descripción genérica + CTA "Generar análisis personalizado" (botón disabled, pendiente Edge Function).
 conocimiento-zenyx/
   index.njk                 ← listado /conocimiento-zenyx/
 comunidad/
@@ -81,7 +85,7 @@ La navegación usa `href="#"` + `data-phase` → JS puro, no anclas reales.
 El `index.html` Three.js NO pasa por el template engine (excluido en `.eleventyignore`). Solo se procesan los `.md` del blog, `conocimiento-zenyx/index.njk` y `sitemap.njk`.
 
 ## Blog — /conocimiento-zenyx/
-Posts generados por el workflow n8n `CNlBtiFCwY69I6Wl` ("BLOG Zenyx — DIARIO 18:00 Madrid") a las 18:00 Madrid cada día. El workflow:
+Posts generados por el workflow n8n `CNlBtiFCwY69I6Wl` ("CRON BLOG — Zenyx Diario 18:00") a las 18:00 Madrid cada día. El workflow:
 1. Lee el siguiente pendiente de Supabase (`v_blog_videos_pendientes` ORDER BY orden ASC)
 2. Obtiene transcript de YouTube vía Supadata
 3. Claude genera el artículo (title, slug, excerpt, markdown_body)
@@ -95,13 +99,13 @@ Indexa en Bing + Yandex (no Google). El archivo de la key **NO se borra** — si
 
 Backlog inicial: 75 vídeos del canal de Miguel Villamil (@soymiguelvillamil), orden cronológico (EP01 primero).
 
-**Documentación completa del blog:** [`../docs/blog-zenyx-workflow.md`](../docs/blog-zenyx-workflow.md)
+**Documentación completa del blog:** [`../docs/publico/blog-zenyx-workflow.md`](../docs/publico/blog-zenyx-workflow.md)
 
 ## Comunidad pública — `/comunidad/`
 Comunidad pública de propuestas (ideas, servicios, herramientas) con votación, comentarios y crowdfunding. Migrada del portal Bubble el 2026-04-28.
 
 **Stack:**
-- **Datos:** tablas nativas en Supabase cbi (`comunidad_propuestas`, `comunidad_comentarios`, `comunidad_votos_*`, `comunidad_admins`). Detalle en `../docs/supabase-schema.md` sección "Comunidad pública".
+- **Datos:** tablas nativas en Supabase cbi (`comunidad_propuestas`, `comunidad_comentarios`, `comunidad_votos_*`, `comunidad_admins`). Detalle en `../docs/infra/supabase-schema.md` sección "Comunidad pública".
 - **Auth:** Supabase Auth Google OAuth. Login centralizado en `/comunidad/entrar/` (pantalla estilo Google + widget "No soy un robot" — local, gesto humano antes de OAuth). `goToLogin()` redirige cualquier flujo a `/entrar/?next=<retorno>`. Logout desde menú avatar en nav (dropdown con nombre/email + "Cerrar sesión").
 - **SSG:** Eleventy lee `v_comunidad_propuestas_publicas` en build-time (`_data/comunidad.js`) y pre-renderiza listado y fichas. Webhook Supabase → Vercel Deploy Hook al aprobar propuesta (regenera SSG).
 - **Cliente:** `@supabase/supabase-js` vía CDN jsdelivr (sin bundler). Globals inyectados en `<head>` por `_includes/comunidad-base.njk` desde `_data/site.js`.
@@ -122,7 +126,7 @@ Comunidad pública de propuestas (ideas, servicios, herramientas) con votación,
 - **Reparto de campos usuario vs admin** (2026-04-29):
   - Usuario en el modal solo envía: `titulo`, `descripcion`, `problema`, `beneficio`, `modo`. La nota en el modal lo aclara.
   - Admin en `/comunidad/admin/` fija los numéricos: `cotizacion_precio` + `umbral_financiacion_pool` (pool) o `precio_adhoc` (referidos). También puede corregir los textos del usuario (ortografía, reformular) antes de aprobar.
-  - Panel admin con dos secciones: **Pendientes** (Aprobar/Rechazar) y **Aprobadas** (Guardar cambios). Aprobar guarda ediciones + dispara Edge Function + rebuild Vercel. Guardar en aprobadas hace UPDATE directo vía RLS admin (NO rebuild — ver troubleshooting en `docs/comunidad-publica.md`).
+  - Panel admin con dos secciones: **Pendientes** (Aprobar/Rechazar) y **Aprobadas** (Guardar cambios). Aprobar guarda ediciones + dispara Edge Function + rebuild Vercel. Guardar en aprobadas hace UPDATE directo vía RLS admin (NO rebuild — ver troubleshooting en `docs/publico/comunidad-publica.md`).
 
 **Bootstrap admin:**
 Tras el primer login Google de Ben en `/comunidad/admin/`, ejecutar en Supabase:
