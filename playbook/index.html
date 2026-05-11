@@ -126,6 +126,23 @@ body.viewer .editor-only { display:none !important; }
 body.viewer [contenteditable] { pointer-events: none !important; }
 body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { cursor: default !important; }
 
+/* Viewer: ocultar TODO lo que sugiere editable */
+body.viewer .tabla thead th.check-col,
+body.viewer .tabla td.check-cell,
+body.viewer .row-actions,
+body.viewer .row-delete { display: none !important; }
+body.viewer .tabla .owner-cell::after { content: none !important; display: none !important; }
+body.viewer .tabla .client-cell:hover .client-mini-empty::after { content: none !important; }
+body.viewer .tabla .client-cell:hover .client-mini-pill { transform: none !important; }
+body.viewer .tabla tbody tr.task-row:hover {
+  background: var(--bg-hover) !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+body.viewer .tabla .day-cell:hover,
+body.viewer .tabla .owner-cell:hover .owner-mini-name { color: inherit !important; }
+body.viewer .tabla input[type=checkbox] { display: none !important; }
+
 
 
 /* ============================================
@@ -133,54 +150,55 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
    Timeline vertical de la escaleta post-venta
    ============================================ */
 
-/* --- Hero / Header --- */
-.playbook-hero {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 32px; margin-bottom: 32px;
+/* --- Hero band (compact: título + KPIs inline en una sola fila) --- */
+.playbook-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; padding: 14px 0 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
-.playbook-hero h1 {
-  font-size: 32px; font-weight: 700; letter-spacing: -0.5px;
-  line-height: 1.1; margin-bottom: 8px;
-}
-.playbook-hero-sub {
-  font-size: 15px; color: var(--text-secondary); max-width: 580px;
-  line-height: 1.5;
-}
-.playbook-hero-meta {
-  font-family: var(--font-mono); font-size: 12px;
-  color: var(--text-tertiary); text-transform: uppercase;
-  letter-spacing: 0.8px; margin-bottom: 8px;
-}
-
-/* --- KPI strip (slim, contextual) --- */
-.playbook-kpis {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 16px; margin-bottom: 24px;
-}
-.pk-card {
-  background: var(--bg-card); border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg); padding: 16px 20px;
-  display: flex; align-items: center; gap: 14px;
-  transition: all var(--duration-base) var(--ease-out);
-}
-.pk-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
-.pk-card-icon {
-  width: 38px; height: 38px; border-radius: var(--radius-md);
+.playbook-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+.playbook-header-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-md);
+  background: var(--accent-secondary-muted);
+  color: var(--accent-secondary);
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0;
+  flex-shrink: 0;
 }
-.pk-card-icon.info     { background: var(--status-info-bg);    color: var(--status-info); }
-.pk-card-icon.success  { background: var(--status-success-bg); color: var(--status-success); }
-.pk-card-icon.warning  { background: var(--status-warning-bg); color: var(--status-warning); }
-.pk-card-icon.violet   { background: var(--status-violet-bg);  color: var(--status-violet); }
-.pk-card-value {
-  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
-  line-height: 1.1;
+.playbook-header-icon svg { width: 18px; height: 18px; }
+.playbook-header-text { min-width: 0; }
+.playbook-header h1 {
+  font-size: 18px; font-weight: 600; letter-spacing: -0.2px;
+  line-height: 1.2; color: var(--text-primary);
 }
-.pk-card-label {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
-  color: var(--text-secondary); font-weight: 500; margin-top: 2px;
+.playbook-header-sub {
+  font-size: 12px; color: var(--text-tertiary);
+  line-height: 1.4; margin-top: 2px;
 }
+.playbook-stats {
+  display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.playbook-stat {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.playbook-stat-value {
+  font-family: var(--font-mono); font-weight: 700;
+  color: var(--text-primary);
+}
+.playbook-stat-label {
+  color: var(--text-tertiary);
+  text-transform: lowercase;
+}
+.playbook-stat.client .playbook-stat-value { color: var(--accent-secondary); }
+.playbook-stat.tbd .playbook-stat-value { color: var(--status-warning); }
 
 /* --- Filter bar (sticky) --- */
 .filter-bar {
@@ -1090,7 +1108,8 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
 
 /* Responsive */
 @media (max-width: 900px) {
-  .playbook-kpis { grid-template-columns: repeat(2, 1fr); }
+  .playbook-stats { gap: 6px; }
+  .playbook-stat { padding: 4px 9px; font-size: 11px; }
   .day-row, .phase-divider { grid-template-columns: 64px 1fr; gap: 16px; }
   .timeline-track { left: 56px; }
   .day-bubble { padding: 6px 10px; font-size: 11px; }
@@ -1129,54 +1148,22 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
   <!-- MAIN -->
   <main class="main" style="margin-left:0;width:100%;">
 
-    <!-- HERO -->
-    <section class="playbook-hero">
-      <div>
-        <div class="playbook-hero-meta">Operaciones · Onboarding</div>
-        <h1>Playbook de onboarding</h1>
-        <p class="playbook-hero-sub">
-          Escaleta operativa desde el cierre de venta hasta el lanzamiento de campañas y presentación de estrategia. Marca lo que toca a cada miembro día por día.
-        </p>
-      </div>
-    </section>
-
-    <!-- KPIs -->
-    <section class="playbook-kpis">
-      <div class="pk-card">
-        <div class="pk-card-icon info">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <!-- HEADER BAND (compact: título + KPIs inline) -->
+    <section class="playbook-header">
+      <div class="playbook-header-left">
+        <div class="playbook-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
         </div>
-        <div>
-          <div class="pk-card-value">16+</div>
-          <div class="pk-card-label">Días totales</div>
+        <div class="playbook-header-text">
+          <h1>Playbook de onboarding</h1>
+          <div class="playbook-header-sub">Operaciones · escaleta cliente desde cierre de venta hasta Mes 4</div>
         </div>
       </div>
-      <div class="pk-card">
-        <div class="pk-card-icon success">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        </div>
-        <div>
-          <div class="pk-card-value">29</div>
-          <div class="pk-card-label">Tareas en la escaleta</div>
-        </div>
-      </div>
-      <div class="pk-card">
-        <div class="pk-card-icon violet">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </div>
-        <div>
-          <div class="pk-card-value">12</div>
-          <div class="pk-card-label">Con impacto cliente</div>
-        </div>
-      </div>
-      <div class="pk-card">
-        <div class="pk-card-icon warning">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <div>
-          <div class="pk-card-value">7</div>
-          <div class="pk-card-label">Miembros implicados</div>
-        </div>
+      <div class="playbook-stats">
+        <span class="playbook-stat"><span class="playbook-stat-value" id="kpi-days">—</span><span class="playbook-stat-label">días</span></span>
+        <span class="playbook-stat"><span class="playbook-stat-value" id="kpi-tasks">—</span><span class="playbook-stat-label">tareas</span></span>
+        <span class="playbook-stat client"><span class="playbook-stat-value" id="kpi-client">—</span><span class="playbook-stat-label">cliente</span></span>
+        <span class="playbook-stat"><span class="playbook-stat-value" id="kpi-members">—</span><span class="playbook-stat-label">miembros</span></span>
       </div>
     </section>
 
@@ -1938,15 +1925,15 @@ function updateStatusBar() {
   document.getElementById('active-filters-meta').textContent = parts.length ? txt : 'Sin filtros aplicados';
   document.getElementById('ct-timeline').textContent = v.length;
   document.getElementById('ct-tabla').textContent = v.length;
-  const kpis = document.querySelectorAll('.playbook-kpis .pk-card-value');
-  if (kpis.length >= 4) {
+  const kpiDays = document.getElementById('kpi-days');
+  if (kpiDays) {
     const distinctDays = new Set(TASKS.map(t => t.dayKey)).size;
-    kpis[0].textContent = distinctDays;
-    kpis[1].textContent = TASKS.length;
-    kpis[2].textContent = TASKS.filter(t=>t.client).length;
+    kpiDays.textContent = distinctDays;
+    document.getElementById('kpi-tasks').textContent = TASKS.length;
+    document.getElementById('kpi-client').textContent = TASKS.filter(t=>t.client).length;
     const ownersUsed = new Set();
     TASKS.forEach(t => t.owners.forEach(o => o!=='tbd' && ownersUsed.add(o)));
-    kpis[3].textContent = ownersUsed.size;
+    document.getElementById('kpi-members').textContent = ownersUsed.size;
   }
 }
 
