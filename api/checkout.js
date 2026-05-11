@@ -131,8 +131,8 @@ async function createStripeSession(params) {
   body.set("line_items[0][quantity]", "1");
 
   params.addon_prices.forEach((price, idx) => {
-    body.set("subscription_data[add_invoice_items][" + idx + "][price]", price);
-    body.set("subscription_data[add_invoice_items][" + idx + "][quantity]", "1");
+    body.set("line_items[" + (idx + 1) + "][price]", price);
+    body.set("line_items[" + (idx + 1) + "][quantity]", "1");
   });
 
   if (params.stripe_coupon_id) {
