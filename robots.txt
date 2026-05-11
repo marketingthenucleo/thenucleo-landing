@@ -2,4 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /comunidad/admin/
 Disallow: /comunidad/entrar/
+Disallow: /onboarding/
+Disallow: /api/
 Sitemap: https://work.thenucleo.com/sitemap.xml

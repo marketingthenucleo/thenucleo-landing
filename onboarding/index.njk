@@ -1,0 +1,150 @@
+---
+layout: onboarding-base.njk
+title: Configura tu Stack — TheNucleo
+description: "Selecciona los addons de tu agencia y empieza tu onboarding en TheNucleo."
+permalink: /onboarding/
+---
+
+<div class="onboarding-hero">
+  <h1>Configura tu <span class="lime">Stack</span> en 2 minutos</h1>
+  <p>Selecciona las herramientas que ya usas en tu agencia. El Stack TheNucleo (Notion, Holded, GoHighLevel, Fireflies, Drive, Clockify) está incluido sin coste; cualquier alternativa equivalente añade un único pago de implementación.</p>
+</div>
+
+{% if not tarifas.default %}
+
+<div class="onboarding-empty">
+  <h2>Planes no disponibles</h2>
+  <p>No hemos podido cargar las tarifas. Inténtalo de nuevo en unos minutos.</p>
+</div>
+
+{% elif addons.total == 0 %}
+
+<div class="onboarding-empty">
+  <h2>Catálogo no disponible</h2>
+  <p>No hemos podido cargar el catálogo de addons. Inténtalo de nuevo en unos minutos.</p>
+</div>
+
+{% else %}
+
+<section class="onboarding-category onboarding-plan-section"
+         data-tarifa-bubble-id="{{ tarifas.default.bubble_id }}"
+         data-tarifa-tipo="{{ tarifas.default.tipo }}"
+         data-tarifa-nombre="{{ tarifas.default.nombre }}">
+  <header class="onboarding-category-header">
+    <div class="onboarding-category-title">{{ tarifas.default.nombre }}</div>
+    <div class="onboarding-category-hint">Elige periodo de facturación</div>
+  </header>
+  <div class="onboarding-grid" role="radiogroup" aria-label="Periodo de facturación">
+    {% for p in tarifas.default.periodos %}
+    <label class="addon-card tarifa-card"
+           data-tarifa="true"
+           data-periodo="{{ p.periodo }}"
+           data-precio="{{ p.precio_eur }}"
+           data-nombre="{{ tarifas.default.nombre }} — {{ p.label }}"
+           data-stripe-price-id="{{ p.stripe_price_id }}"
+           tabindex="0"
+           role="radio"
+           aria-checked="false">
+      <input type="radio" name="tarifa-periodo" value="{{ p.periodo }}" tabindex="-1">
+      <div class="addon-card-header">
+        <div class="addon-card-name">{{ p.label }}</div>
+        <div class="addon-card-check" aria-hidden="true">
+          <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      {% if tarifas.default.descripcion and loop.first %}<div class="addon-card-desc">{{ tarifas.default.descripcion }}</div>{% endif %}
+      <div class="addon-card-footer">
+        <div class="addon-card-price">{{ p.precio_label }}</div>
+      </div>
+    </label>
+    {% endfor %}
+  </div>
+</section>
+
+<div id="onboarding-catalog">
+  {% for grupo in addons.categorias %}
+  <section class="onboarding-category" data-categoria="{{ grupo.categoria }}">
+    <header class="onboarding-category-header">
+      <div class="onboarding-category-title">{{ grupo.label }}</div>
+      <div class="onboarding-category-hint">Elige uno</div>
+    </header>
+    <div class="onboarding-grid" role="radiogroup" aria-label="{{ grupo.label }}">
+      {% for a in grupo.items %}
+      <label class="addon-card"
+             data-slug="{{ a.slug }}"
+             data-categoria="{{ a.categoria }}"
+             data-precio="{{ a.precio_eur }}"
+             data-nombre="{{ a.nombre }}"
+             data-incluido="{{ 'true' if a.es_gratis else 'false' }}"
+             tabindex="0"
+             role="radio"
+             aria-checked="false">
+        <input type="radio" name="cat-{{ grupo.categoria }}" value="{{ a.slug }}" tabindex="-1">
+        <div class="addon-card-header">
+          <div class="addon-card-name">{{ a.nombre }}</div>
+          <div class="addon-card-check" aria-hidden="true">
+            <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        {% if a.descripcion %}<div class="addon-card-desc">{{ a.descripcion }}</div>{% endif %}
+        <div class="addon-card-footer">
+          <div class="addon-card-price">{{ a.precio_label }}</div>
+          {% if a.es_gratis %}<div class="addon-card-included-tag">Stack TheNucleo</div>{% endif %}
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+
+<aside class="onboarding-cart" role="region" aria-label="Resumen de tu selección">
+  <div class="onboarding-cart-summary">
+    <div class="onboarding-cart-line" id="cart-count">0 addons seleccionados</div>
+    <div class="onboarding-cart-total" id="cart-total">Gratis</div>
+  </div>
+  <button type="button" class="onboarding-cart-cta" id="cart-cta" disabled>Continuar al pago →</button>
+</aside>
+
+<div class="onboarding-modal-overlay" id="onb-modal" role="dialog" aria-modal="true" aria-labelledby="onb-modal-title">
+  <div class="onboarding-modal">
+    <h3 id="onb-modal-title">Confirma tu Stack</h3>
+    <p class="subtitle">Te enviaremos al pago seguro de Stripe. Tras confirmar, recibirás un email con el siguiente paso.</p>
+
+    <div class="onboarding-modal-summary" id="onb-summary-list" aria-live="polite"></div>
+
+    <form id="onb-form" novalidate>
+      <div class="onboarding-field" id="onb-email-wrap">
+        <label for="onb-email">Email</label>
+        <input type="email" id="onb-email" autocomplete="email" placeholder="tu@agencia.com" required>
+        <div class="onboarding-field-error" id="onb-email-error"></div>
+      </div>
+
+      <div class="onboarding-field" id="onb-agencia-wrap">
+        <label for="onb-agencia">Nombre de tu agencia</label>
+        <input type="text" id="onb-agencia" autocomplete="organization" placeholder="Acme Marketing" required>
+        <div class="onboarding-field-error" id="onb-agencia-error"></div>
+      </div>
+
+      <div class="onboarding-field">
+        <label for="onb-coupon-input">Código de descuento (opcional)</label>
+        <div class="coupon-row">
+          <input type="text" id="onb-coupon-input" placeholder="CodigoZenyx" autocomplete="off" autocapitalize="characters">
+          <button type="button" id="onb-coupon-btn">Aplicar</button>
+        </div>
+        <div class="coupon-feedback" id="onb-coupon-feedback"></div>
+      </div>
+
+      <div class="onboarding-modal-actions">
+        <button type="button" class="secondary" id="onb-modal-close">Volver</button>
+        <button type="submit" class="primary" id="onb-submit">Continuar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endif %}
+
+{% block scripts %}
+<script src="/assets/js/onboarding.js" defer></script>
+{% endblock %}

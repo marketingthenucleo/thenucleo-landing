@@ -1,0 +1,27 @@
+---
+layout: onboarding-base.njk
+title: ¡Bienvenido a TheNucleo!
+description: "Confirmación de tu Stack TheNucleo."
+permalink: /onboarding/ok/
+---
+
+<div class="onboarding-hero" style="margin-top:40px">
+  <div style="font-size:48px;line-height:1;margin-bottom:18px">✨</div>
+  <h1>¡Tu Stack está <span class="lime">en marcha</span>!</h1>
+  <p>Hemos recibido tu confirmación. En los próximos minutos recibirás un email con el siguiente paso: configurar tus credenciales y reservar el calendario de onboarding.</p>
+</div>
+
+<div style="max-width:480px;margin:0 auto;text-align:center">
+  <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="onboarding-cart-cta" style="position:static;display:inline-block;text-decoration:none">Ir al portal &rarr;</a>
+  <p style="margin-top:24px;font-size:13px;color:var(--text-tertiary)">¿Algún problema? Escríbenos a <a href="mailto:hola@thenucleo.com" style="color:var(--accent-lime)">hola@thenucleo.com</a></p>
+</div>
+
+{% block scripts %}
+<script>
+  (function () {
+    try {
+      localStorage.removeItem("tn_onboarding_selection_v1");
+    } catch (_) {}
+  })();
+</script>
+{% endblock %}

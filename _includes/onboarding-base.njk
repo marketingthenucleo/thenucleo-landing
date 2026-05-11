@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Configura tu Stack — TheNucleo" }}</title>
+  <meta name="description" content="{{ description or 'Selecciona los addons de tu agencia y empieza tu onboarding en TheNucleo.' }}" />
+  <link rel="canonical" href="https://work.thenucleo.com{{ permalink }}" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta property="og:title" content="{{ title or 'Configura tu Stack — TheNucleo' }}" />
+  <meta property="og:description" content="{{ description or 'Selecciona los addons de tu agencia.' }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://work.thenucleo.com{{ permalink }}" />
+  <meta property="og:image" content="https://work.thenucleo.com/Media/Logo_the_nucleo_circulo.png" />
+  <link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png" />
+  <link rel="stylesheet" href="/assets/css/comunidad.css" />
+  <link rel="stylesheet" href="/assets/css/onboarding.css" />
+</head>
+<body class="onboarding-body">
+
+  <nav id="nav">
+    <a class="nav-left" href="/" aria-label="TheNucleo">
+      <svg class="nav-isotipo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="iso-g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-160.001,160.001,0,159.389,157.823)">
+            <stop offset=".676" stop-color="#000000" stop-opacity="0"/>
+            <stop offset=".982" stop-color="#f3f959" stop-opacity="1"/>
+          </radialGradient>
+        </defs>
+        <path style="mix-blend-mode:screen;fill:url(#iso-g1)" d="m160 0c-88.37 0-160 71.63-160 160 0 88.37 71.63 160 160 160 88.37 0 160-71.63 160-160 0-88.37-71.63-160-160-160z"/>
+      </svg>
+      <span class="nav-logotipo-text">TheNucleo</span>
+    </a>
+    <div class="onboarding-step-indicator" aria-hidden="true">
+      <span class="step active">1</span>
+      <span class="step-line"></span>
+      <span class="step">2</span>
+      <span class="step-line"></span>
+      <span class="step">3</span>
+    </div>
+    <div class="nav-right">
+      <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="btn-sm">Acceder &rarr;</a>
+    </div>
+  </nav>
+
+  <main class="onboarding-main">
+    {{ content | safe }}
+  </main>
+
+  <footer class="onboarding-footer">
+    <div class="onboarding-footer-inner">
+      <div class="onboarding-footer-copy">&copy; 2026 TheNucleo</div>
+      <div class="onboarding-footer-links">
+        <a href="/privacidad">Privacidad</a>
+        <a href="/aviso-legal">Aviso legal</a>
+        <a href="mailto:hola@thenucleo.com">Contacto</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var nav = document.getElementById('nav');
+      if (!nav) return;
+      var update = function () { nav.classList.toggle('scrolled', (window.scrollY || 0) > 40); };
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    })();
+  </script>
+  {% block scripts %}{% endblock %}
+  <script defer src="/assets/js/consent.js"></script>
+</body>
+</html>
