@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playbook de onboarding — TheNucleo</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Playbook operativo de onboarding TheNucleo. Editable solo por Ben.">
+<style>
+/* ============================================
+   THENUCLEO DESIGN TOKENS (inline)
+   ============================================ */
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Light.woff2') format('woff2'); font-weight:300; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+
+:root {
+  --bg-base:#090a0f; --bg-card:#12141b; --bg-elevated:#1a1d27;
+  --bg-hover:#1e2130; --bg-active:#252836;
+  --border-subtle:#1e2130; --border-default:#2a2d3e; --border-strong:#363a4e;
+  --text-primary:#edeef3; --text-secondary:#8b8fa8; --text-tertiary:#5c6078; --text-inverse:#090a0f;
+  --accent-primary:#22c55e; --accent-primary-hover:#16a34a; --accent-primary-muted:rgba(34,197,94,0.12);
+  --accent-secondary:#3b82f6; --accent-secondary-hover:#2563eb; --accent-secondary-muted:rgba(59,130,246,0.12);
+  --status-success:#22c55e; --status-success-bg:rgba(34,197,94,0.10);
+  --status-warning:#f59e0b; --status-warning-bg:rgba(245,158,11,0.10);
+  --status-error:#ef4444; --status-error-bg:rgba(239,68,68,0.10);
+  --status-info:#3b82f6; --status-info-bg:rgba(59,130,246,0.10);
+  --status-neutral:#6b7280; --status-neutral-bg:rgba(107,114,128,0.10);
+  --status-violet:#8b5cf6; --status-violet-bg:rgba(139,92,246,0.10);
+  --font-ui:'NewBlack',sans-serif; --font-mono:'NewBlack',sans-serif;
+  --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px;
+  --ease-out:cubic-bezier(0.16,1,0.3,1); --duration-fast:150ms; --duration-base:200ms; --duration-slow:300ms;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font-ui); background:var(--bg-base); color:var(--text-primary); font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+a { color:inherit; text-decoration:none; }
+img { max-width:100%; display:block; }
+
+.app { display:flex; min-height:100vh; }
+.main { flex:1; padding:32px 40px; min-height:100vh; }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes popIn { from{opacity:0;transform:scale(0.95) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes dotPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.3);opacity:0.7} }
+.animate-in { animation:fadeInUp var(--duration-slow) var(--ease-out) both; }
+.custom-scroll { scrollbar-width:thin; scrollbar-color:var(--border-default) transparent; }
+.custom-scroll::-webkit-scrollbar { width:6px; }
+.custom-scroll::-webkit-scrollbar-thumb { background:var(--border-default); border-radius:3px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--font-ui); font-size:14px; font-weight:500; border:none; border-radius:var(--radius-md); cursor:pointer; transition:all var(--duration-fast) var(--ease-out); height:40px; padding:0 20px; }
+.btn--primary { background:var(--accent-primary); color:var(--text-inverse); }
+.btn--primary:hover { background:var(--accent-primary-hover); }
+.btn--secondary { background:transparent; color:var(--text-primary); border:1px solid var(--border-default); }
+.btn--secondary:hover { background:var(--bg-hover); border-color:var(--border-strong); }
+.btn--sm { height:32px; font-size:13px; padding:0 12px; }
+.icon-btn { width:36px; height:36px; border-radius:var(--radius-md); border:1px solid var(--border-default); background:var(--bg-card); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all var(--duration-fast) var(--ease-out); font-size:16px; }
+.icon-btn:hover { background:var(--bg-hover); border-color:var(--border-strong); color:var(--text-primary); }
+.header-actions { display:flex; align-items:center; gap:12px; }
+
+
+/* ============================================
+   AUTH BAR — public/editor switch
+   ============================================ */
+.auth-bar {
+  position: sticky; top: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+  z-index: 200;
+}
+.auth-bar-left { display:flex; align-items:center; gap:10px; }
+.auth-bar-mode {
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.6px;
+}
+.auth-bar-mode.viewer { background: var(--status-info-bg); color: var(--status-info); }
+.auth-bar-mode.editor { background: var(--status-success-bg); color: var(--status-success); }
+.auth-bar-mode .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+.auth-bar-meta { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 11px; }
+.auth-bar-actions { display:flex; align-items:center; gap:8px; }
+
+/* Hide editor-only UI when in viewer mode */
+body.viewer .editor-only { display:none !important; }
+body.viewer [contenteditable] { pointer-events: none !important; }
+body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { cursor: default !important; }
+
+
+
+/* ============================================
+   PAGE-SPECIFIC: Onboarding Playbook
+   Timeline vertical de la escaleta post-venta
+   ============================================ */
+
+/* --- Hero / Header --- */
+.playbook-hero {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 32px; margin-bottom: 32px;
+}
+.playbook-hero h1 {
+  font-size: 32px; font-weight: 700; letter-spacing: -0.5px;
+  line-height: 1.1; margin-bottom: 8px;
+}
+.playbook-hero-sub {
+  font-size: 15px; color: var(--text-secondary); max-width: 580px;
+  line-height: 1.5;
+}
+.playbook-hero-meta {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-tertiary); text-transform: uppercase;
+  letter-spacing: 0.8px; margin-bottom: 8px;
+}
+
+/* --- KPI strip (slim, contextual) --- */
+.playbook-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 16px; margin-bottom: 24px;
+}
+.pk-card {
+  background: var(--bg-card); border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg); padding: 16px 20px;
+  display: flex; align-items: center; gap: 14px;
+  transition: all var(--duration-base) var(--ease-out);
+}
+.pk-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.pk-card-icon {
+  width: 38px; height: 38px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.pk-card-icon.info     { background: var(--status-info-bg);    color: var(--status-info); }
+.pk-card-icon.success  { background: var(--status-success-bg); color: var(--status-success); }
+.pk-card-icon.warning  { background: var(--status-warning-bg); color: var(--status-warning); }
+.pk-card-icon.violet   { background: var(--status-violet-bg);  color: var(--status-violet); }
+.pk-card-value {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+  line-height: 1.1;
+}
+.pk-card-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-secondary); font-weight: 500; margin-top: 2px;
+}
+
+/* --- Filter bar (sticky) --- */
+.filter-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-base);
+  padding: 16px 0; margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.filter-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-tertiary); font-weight: 600; margin-right: 4px;
+}
+.filter-divider { width: 1px; height: 24px; background: var(--border-subtle); }
+
+/* Member chip filter */
+.member-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 6px;
+  background: var(--bg-card); border: 1px solid var(--border-default);
+  border-radius: 999px; font-size: 13px; font-weight: 500;
+  color: var(--text-secondary); cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.member-chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.member-chip.active {
+  background: var(--bg-elevated); color: var(--text-primary);
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+.member-chip .member-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+}
+
+/* Toggle pill */
+.toggle-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  background: var(--bg-card); border: 1px solid var(--border-default);
+  border-radius: 999px; font-size: 13px; font-weight: 500;
+  color: var(--text-secondary); cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.toggle-pill:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.toggle-pill.active {
+  background: var(--accent-secondary-muted); border-color: var(--accent-secondary);
+  color: var(--accent-secondary);
+}
+.toggle-pill svg { width: 14px; height: 14px; }
+
+/* --- Timeline layout --- */
+.timeline {
+  position: relative;
+  padding-left: 0;
+  max-width: 1100px;
+}
+.timeline-track {
+  position: absolute; left: 76px; top: 8px; bottom: 0;
+  width: 2px; background: var(--border-subtle);
+  z-index: 0;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 32px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+/* Day marker (rail left) */
+.day-marker {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding-top: 8px;
+}
+.day-bubble {
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  color: var(--text-primary); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  position: relative;
+}
+.day-bubble.is-start { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+.day-bubble.is-launch { border-color: var(--accent-primary); color: var(--accent-primary); }
+.day-bubble.is-tbd { border-color: var(--status-warning); color: var(--status-warning); }
+.day-bubble::after {
+  content: ''; position: absolute; right: -18px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 2px; background: var(--border-subtle);
+}
+.day-sublabel {
+  font-size: 10px; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 8px; text-align: right; max-width: 80px;
+  line-height: 1.3;
+}
+
+/* Day content (cards stacked) */
+.day-content {
+  padding-bottom: 32px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* Task card */
+.task-card {
+  background: var(--bg-card); border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: flex-start;
+  transition: all var(--duration-fast) var(--ease-out);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.task-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.task-card:hover {
+  border-color: var(--border-strong);
+  transform: translateX(2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+.task-card:hover::before { transform: scaleY(1); }
+
+/* Member-color tint */
+.task-card[data-owner="alex"]::before     { background: #3b82f6; }
+.task-card[data-owner="mel"]::before      { background: #22c55e; }
+.task-card[data-owner="valentina"]::before{ background: #8b5cf6; }
+.task-card[data-owner="valentin"]::before { background: #ec4899; }
+.task-card[data-owner="joaquin"]::before  { background: #f59e0b; }
+.task-card[data-owner="camilo"]::before   { background: #0ea5e9; }
+.task-card[data-owner="damian"]::before   { background: #ef4444; }
+.task-card[data-owner="tbd"]::before      { background: var(--text-tertiary); }
+
+/* Owner avatar */
+.owner-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.owner-avatar[data-owner="alex"]     { background: #3b82f6; }
+.owner-avatar[data-owner="mel"]      { background: #22c55e; color: #03190b; }
+.owner-avatar[data-owner="valentina"]{ background: #8b5cf6; }
+.owner-avatar[data-owner="valentin"] { background: #ec4899; }
+.owner-avatar[data-owner="joaquin"]  { background: #f59e0b; color: #2d1d00; }
+.owner-avatar[data-owner="camilo"]   { background: #0ea5e9; }
+.owner-avatar[data-owner="damian"]   { background: #ef4444; }
+.owner-avatar[data-owner="tbd"]      {
+  background: transparent; border: 1.5px dashed var(--text-tertiary);
+  color: var(--text-tertiary); font-size: 13px;
+}
+/* Multi-owner stack */
+.owner-stack { display: flex; flex-shrink: 0; }
+.owner-stack .owner-avatar:not(:first-child) {
+  margin-left: -8px; border: 2px solid var(--bg-card);
+}
+
+/* Task body */
+.task-body { min-width: 0; }
+.task-title {
+  font-size: 14px; font-weight: 500; line-height: 1.4;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.task-sub {
+  font-size: 12px; line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  white-space: pre-line;
+}
+.task-meta {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 11px; color: var(--text-tertiary);
+}
+.task-meta-item {
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.task-meta-item svg { width: 12px; height: 12px; opacity: 0.7; }
+
+/* Right column: badges */
+.task-side {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  flex-shrink: 0;
+}
+.client-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--accent-secondary-muted); color: var(--accent-secondary);
+  white-space: nowrap;
+}
+.client-pill svg { width: 12px; height: 12px; }
+.owner-name {
+  font-size: 11px; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500;
+}
+
+/* Long-form card (for onboarding session detail) */
+.task-card--expanded .task-sub { display: block; }
+.task-card.is-expandable .task-sub-trigger {
+  font-size: 12px; color: var(--accent-secondary);
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 4px;
+}
+.task-card.is-expandable .task-sub-trigger:hover { text-decoration: underline; }
+.task-card.is-expandable .task-checklist {
+  display: none;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px dashed var(--border-subtle);
+  display: none;
+}
+.task-card.is-expandable.is-open .task-checklist { display: block; }
+.task-card.is-expandable.is-open .task-sub-trigger svg { transform: rotate(180deg); }
+.task-checklist ul { list-style: none; padding: 0; }
+.task-checklist li {
+  font-size: 12px; line-height: 1.7; color: var(--text-secondary);
+  padding-left: 18px; position: relative;
+}
+.task-checklist li::before {
+  content: '→'; position: absolute; left: 0;
+  color: var(--text-tertiary);
+}
+
+/* Phase divider */
+.phase-divider {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 32px;
+  margin: 16px 0 16px;
+  align-items: center;
+}
+.phase-spacer { /* aligns with day-marker column */ }
+.phase-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--text-tertiary);
+  display: flex; align-items: center; gap: 12px;
+}
+.phase-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(to right, var(--border-default), transparent);
+}
+
+/* Stagger animation */
+.day-row { animation: fadeInUp 400ms var(--ease-out) both; }
+.day-row:nth-child(1)  { animation-delay: 40ms; }
+.day-row:nth-child(2)  { animation-delay: 80ms; }
+.day-row:nth-child(3)  { animation-delay: 120ms; }
+.day-row:nth-child(4)  { animation-delay: 160ms; }
+.day-row:nth-child(5)  { animation-delay: 200ms; }
+.day-row:nth-child(6)  { animation-delay: 240ms; }
+.day-row:nth-child(7)  { animation-delay: 280ms; }
+.day-row:nth-child(8)  { animation-delay: 320ms; }
+.day-row:nth-child(9)  { animation-delay: 360ms; }
+.day-row:nth-child(10) { animation-delay: 400ms; }
+
+/* ============================================
+   VIEW SWITCHER (Timeline · Tabla · Por persona)
+   ============================================ */
+.view-switcher {
+  display: flex; gap: 4px; align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.view-tab {
+  padding: 10px 14px; font-size: 13px; font-weight: 500;
+  background: transparent; border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--duration-fast) var(--ease-out);
+  font-family: var(--font-ui);
+}
+.view-tab:hover { color: var(--text-primary); }
+.view-tab.active {
+  color: var(--accent-secondary);
+  border-bottom-color: var(--accent-secondary);
+  font-weight: 600;
+}
+.view-tab svg { width: 14px; height: 14px; }
+.view-tab .count {
+  font-family: var(--font-mono); font-size: 10px;
+  background: var(--bg-active); color: var(--text-tertiary);
+  padding: 2px 7px; border-radius: 999px;
+  margin-left: 2px;
+}
+.view-tab.active .count { background: var(--accent-secondary-muted); color: var(--accent-secondary); }
+.view-spacer { flex: 1; }
+.view-tab-meta {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.view-pane[hidden] { display: none !important; }
+
+
+/* ============================================
+   SEARCH (inside filter bar)
+   ============================================ */
+.search-input-wrap {
+  position: relative; width: 260px; margin-right: 4px;
+}
+.search-input-wrap svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: var(--text-tertiary);
+  pointer-events: none;
+}
+.search-input {
+  width: 100%; height: 32px; padding: 0 10px 0 32px;
+  font-family: var(--font-ui); font-size: 13px;
+  background: var(--bg-card); color: var(--text-primary);
+  border: 1px solid var(--border-default); border-radius: 999px;
+  outline: none;
+  transition: all var(--duration-fast);
+}
+.search-input:focus {
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 0 3px var(--accent-secondary-muted);
+}
+.search-input::placeholder { color: var(--text-tertiary); }
+
+
+/* ============================================
+   TABLA VIEW (Excel++)
+   ============================================ */
+.tabla-view {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.tabla-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  flex-wrap: wrap;
+}
+
+.density-toggle {
+  display: inline-flex; gap: 2px;
+  background: var(--bg-base); border: 1px solid var(--border-default);
+  border-radius: var(--radius-md); padding: 2px;
+}
+.density-toggle button {
+  background: transparent; border: none;
+  padding: 5px 10px; font-size: 12px; font-weight: 500;
+  color: var(--text-secondary); cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+}
+.density-toggle button.active {
+  background: var(--bg-card); color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.bulk-bar {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.bulk-bar .bulk-count strong {
+  font-family: var(--font-mono);
+  color: var(--accent-secondary);
+}
+.bulk-bar .btn--sm { height: 30px; padding: 0 12px; font-size: 12px; }
+
+.tabla-wrap {
+  max-height: 70vh; overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+.tabla-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.tabla-wrap::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+.tabla-wrap::-webkit-scrollbar-track { background: transparent; }
+
+.tabla {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  font-size: 13px;
+}
+
+.tabla thead th {
+  position: sticky; top: 0; z-index: 4;
+  background: var(--bg-elevated);
+  font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+  user-select: none;
+}
+.tabla thead th.sortable { cursor: pointer; transition: color var(--duration-fast); }
+.tabla thead th.sortable:hover { color: var(--text-primary); }
+.tabla thead th .sort-ind {
+  display: inline-block; margin-left: 4px;
+  font-size: 9px; opacity: 0.3;
+  transition: all var(--duration-fast);
+}
+.tabla thead th.sort-asc .sort-ind,
+.tabla thead th.sort-desc .sort-ind { opacity: 1; color: var(--accent-secondary); }
+.tabla thead th.check-col { width: 36px; padding-right: 0; }
+
+.tabla tbody tr.task-row {
+  transition: background var(--duration-fast);
+  border-left: 3px solid transparent;
+}
+.tabla tbody tr.task-row:hover { background: var(--bg-hover); }
+.tabla tbody tr.task-row.selected {
+  background: var(--accent-secondary-muted);
+}
+.tabla tbody tr.task-row[data-owner="alex"]     { border-left-color: #3b82f6; }
+.tabla tbody tr.task-row[data-owner="mel"]      { border-left-color: #22c55e; }
+.tabla tbody tr.task-row[data-owner="valentina"]{ border-left-color: #8b5cf6; }
+.tabla tbody tr.task-row[data-owner="valentin"] { border-left-color: #ec4899; }
+.tabla tbody tr.task-row[data-owner="joaquin"]  { border-left-color: #f59e0b; }
+.tabla tbody tr.task-row[data-owner="camilo"]   { border-left-color: #0ea5e9; }
+.tabla tbody tr.task-row[data-owner="damian"]   { border-left-color: #ef4444; }
+.tabla tbody tr.task-row[data-owner="tbd"]      { border-left-color: var(--text-tertiary); }
+
+.tabla tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+.tabla.dense tbody td { padding: 6px 14px; }
+.tabla.dense .task-sub-inline { display: none; }
+.tabla.dense .reg-tag { padding: 2px 6px; font-size: 10px; }
+
+.tabla td.check-cell { padding: 0 0 0 16px; width: 36px; }
+.tabla td.day-cell {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary); white-space: nowrap;
+}
+.tabla td.client-cell, .tabla td.reg-cell { color: var(--text-secondary); }
+
+.tabla tbody tr.day-group {
+  position: sticky; top: 36px; z-index: 3;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  border-left: 3px solid var(--accent-secondary);
+}
+.tabla tbody tr.day-group:hover { background: var(--bg-hover); }
+.tabla tbody tr.day-group td {
+  padding: 8px 14px;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-default);
+}
+.tabla tr.day-group .chevron {
+  display: inline-block; margin-right: 10px;
+  color: var(--text-tertiary); font-size: 10px;
+  transition: transform var(--duration-fast);
+}
+.tabla tr.day-group.collapsed .chevron { transform: rotate(-90deg); }
+.tabla tr.day-group .group-sub {
+  margin-left: 12px; font-weight: 500; color: var(--text-tertiary);
+  text-transform: none; letter-spacing: 0;
+}
+.tabla tr.day-group .group-chips {
+  margin-left: 8px;
+  display: inline-flex; gap: 6px;
+  vertical-align: middle;
+}
+.tabla tr.day-group .group-chip {
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 1px 7px; border-radius: 999px;
+  background: var(--bg-active); color: var(--text-tertiary);
+  text-transform: none; letter-spacing: 0; font-weight: 500;
+}
+.tabla tr.day-group .group-chip.client {
+  background: var(--accent-secondary-muted); color: var(--accent-secondary);
+}
+
+.task-title-cell .task-name {
+  font-weight: 500; color: var(--text-primary);
+  line-height: 1.4;
+}
+.task-title-cell .task-sub-inline {
+  font-size: 12px; color: var(--text-tertiary);
+  margin-top: 3px; line-height: 1.4;
+}
+
+.owner-mini {
+  display: inline-flex; align-items: center; gap: 8px;
+  white-space: nowrap;
+}
+.owner-mini .owner-avatar { width: 24px; height: 24px; font-size: 10px; }
+.owner-mini-name {
+  font-size: 12.5px; color: var(--text-primary); font-weight: 500;
+}
+.owner-mini-stack { display: inline-flex; }
+.owner-mini-stack .owner-avatar:not(:first-child) {
+  margin-left: -6px; border: 1.5px solid var(--bg-card);
+}
+
+.reg-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text-secondary);
+  padding: 3px 9px; background: var(--bg-active);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.reg-tag svg { width: 11px; height: 11px; opacity: 0.6; }
+.reg-empty {
+  color: var(--text-tertiary); font-style: italic; font-size: 12px;
+}
+
+.tabla input[type=checkbox] {
+  width: 14px; height: 14px;
+  accent-color: var(--accent-secondary);
+  cursor: pointer;
+}
+
+.client-mini-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--accent-secondary-muted); color: var(--accent-secondary);
+}
+.client-mini-pill svg { width: 11px; height: 11px; }
+.client-mini-empty {
+  font-size: 11px; color: var(--text-tertiary);
+}
+
+/* Status bar */
+.tabla-statusbar {
+  display: flex; align-items: center; gap: 18px;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px; color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+.sb-item {
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.sb-item strong {
+  font-family: var(--font-mono);
+  color: var(--text-primary); font-weight: 700;
+}
+.sb-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-tertiary);
+}
+.sb-dot.success { background: var(--status-success); }
+.sb-dot.warning { background: var(--status-warning); }
+.sb-dot.info { background: var(--accent-secondary); }
+.sb-divider { width: 1px; height: 14px; background: var(--border-subtle); }
+.sb-spacer { flex: 1; }
+.sb-active-filters {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+
+/* ============================================
+   KANBAN VIEW (Por persona)
+   ============================================ */
+.kanban-view {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(220px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+.kanban-view::-webkit-scrollbar { height: 8px; }
+.kanban-view::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+
+.kanban-col {
+  background: var(--bg-card); border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  display: flex; flex-direction: column;
+  min-height: 240px;
+  position: relative;
+  overflow: hidden;
+}
+.kanban-col::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.kanban-col[data-owner="alex"]::before     { background: #3b82f6; }
+.kanban-col[data-owner="mel"]::before      { background: #22c55e; }
+.kanban-col[data-owner="valentina"]::before{ background: #8b5cf6; }
+.kanban-col[data-owner="valentin"]::before { background: #ec4899; }
+.kanban-col[data-owner="joaquin"]::before  { background: #f59e0b; }
+.kanban-col[data-owner="camilo"]::before   { background: #0ea5e9; }
+.kanban-col[data-owner="damian"]::before   { background: #ef4444; }
+.kanban-col[data-owner="tbd"]::before      { background: var(--text-tertiary); }
+
+.kanban-col-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.kanban-col-header .owner-avatar { width: 26px; height: 26px; font-size: 10px; }
+.kanban-col-header .col-name {
+  font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+}
+.kanban-col-header .col-meta {
+  font-size: 10.5px; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.kanban-col-header .col-count {
+  margin-left: auto;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--bg-active); color: var(--text-secondary);
+}
+
+.kanban-col-body {
+  padding: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 70vh;
+  scrollbar-width: thin;
+}
+.kanban-col-body::-webkit-scrollbar { width: 4px; }
+.kanban-col-body::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 2px; }
+
+.kanban-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 6px;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+.kanban-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.kanban-card .k-day {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.kanban-card .k-day .k-client-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-secondary);
+}
+.kanban-card .k-title {
+  font-size: 12.5px; line-height: 1.45; color: var(--text-primary);
+}
+.kanban-card .k-reg {
+  font-size: 10.5px; color: var(--text-tertiary);
+  margin-top: 2px; padding-top: 6px;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.kanban-empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 12px; color: var(--text-tertiary);
+  font-style: italic;
+}
+
+
+/* ============================================
+   EDIT MODE — Excel-like inline editing
+   ============================================ */
+.tabla [contenteditable] {
+  outline: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  cursor: text;
+  display: inline-block;
+  min-width: 40px;
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+.tabla [contenteditable]:hover {
+  background: var(--bg-active);
+}
+.tabla [contenteditable]:focus {
+  background: var(--bg-base);
+  box-shadow: 0 0 0 2px var(--accent-secondary);
+}
+.tabla [contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-tertiary);
+  font-style: italic;
+  font-size: 12px;
+}
+.tabla .task-title-cell .task-name[contenteditable],
+.tabla .task-title-cell .task-sub-inline[contenteditable] {
+  display: block;
+  width: 100%;
+}
+.tabla .notas-cell { max-width: 240px; white-space: normal; }
+.tabla .notas-cell .notas-text {
+  display: block; font-size: 12px;
+  color: var(--text-secondary); line-height: 1.4; width: 100%;
+}
+
+/* Editable owner cell */
+.tabla .owner-cell { cursor: pointer; }
+.tabla .owner-cell:hover .owner-mini-name { color: var(--accent-secondary); }
+.tabla .owner-cell::after {
+  content: '▾'; margin-left: 4px;
+  color: var(--text-tertiary); font-size: 10px;
+  opacity: 0; transition: opacity 120ms;
+}
+.tabla .owner-cell:hover::after { opacity: 1; }
+
+/* Editable client cell */
+.tabla .client-cell { cursor: pointer; user-select: none; }
+.tabla .client-cell:hover .client-mini-pill { transform: scale(1.05); }
+.tabla .client-cell:hover .client-mini-empty { color: var(--accent-secondary); }
+.tabla .client-cell:hover .client-mini-empty::after { content: ' →SI'; font-size: 10px; }
+
+/* Editable day cell */
+.tabla .day-cell { cursor: pointer; }
+.tabla .day-cell:hover { color: var(--accent-secondary); }
+
+/* Row delete */
+.row-actions { width: 28px; text-align: right; padding-right: 12px !important; }
+.row-delete {
+  width: 24px; height: 24px;
+  border-radius: var(--radius-sm); border: none;
+  background: transparent; color: var(--text-tertiary);
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; opacity: 0;
+  transition: all 120ms;
+}
+.task-row:hover .row-delete { opacity: 1; }
+.row-delete:hover { background: var(--status-error-bg); color: var(--status-error); }
+
+/* Add-task row */
+.add-task-row td {
+  padding: 6px 14px !important;
+  background: transparent;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.add-task-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-tertiary);
+  background: transparent; border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 5px 12px; cursor: pointer;
+  font-family: var(--font-ui);
+  transition: all 150ms;
+}
+.add-task-btn:hover {
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  background: var(--accent-secondary-muted);
+}
+
+/* Owner picker popover */
+.owner-picker {
+  position: absolute;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  z-index: 1000; min-width: 200px;
+  padding: 6px;
+  animation: popIn 150ms var(--ease-out);
+}
+.owner-picker .picker-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-tertiary);
+  padding: 6px 10px 4px;
+}
+.owner-picker .opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 13px;
+  color: var(--text-primary);
+  transition: background 100ms;
+}
+.owner-picker .opt:hover { background: var(--bg-hover); }
+.owner-picker .opt.selected {
+  background: var(--accent-secondary-muted);
+  font-weight: 500;
+}
+.owner-picker .opt .check {
+  margin-left: auto; color: var(--accent-secondary);
+  width: 14px; height: 14px;
+}
+.owner-picker .picker-hint {
+  font-size: 10px; color: var(--text-tertiary);
+  padding: 6px 10px 4px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4px; font-style: italic;
+}
+
+/* Save indicator */
+.save-indicator {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  padding: 0 10px;
+}
+.save-indicator .save-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-tertiary);
+}
+.save-indicator.saved .save-dot {
+  background: var(--status-success);
+  box-shadow: 0 0 0 3px var(--status-success-bg);
+}
+.save-indicator.saving .save-dot {
+  background: var(--status-warning);
+  animation: dotPulse 1s ease infinite;
+}
+
+/* Toolbar action button */
+.toolbar-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px;
+  font-size: 12px; font-weight: 500;
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer; font-family: var(--font-ui);
+  transition: all 120ms;
+}
+.toolbar-action:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+.toolbar-action.danger:hover {
+  border-color: var(--status-error);
+  color: var(--status-error);
+  background: var(--status-error-bg);
+}
+.toolbar-action svg { width: 12px; height: 12px; }
+
+/* Add-day row */
+.add-day-row td {
+  padding: 12px !important;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+/* Day-picker for changing a task's day */
+.day-picker {
+  position: absolute;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  z-index: 1000; min-width: 220px; max-height: 320px; overflow-y: auto;
+  padding: 6px;
+  animation: popIn 150ms var(--ease-out);
+}
+.day-picker .opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 13px;
+  font-family: var(--font-mono);
+  transition: background 100ms;
+}
+.day-picker .opt:hover { background: var(--bg-hover); }
+.day-picker .opt.selected {
+  background: var(--accent-secondary-muted); font-weight: 600;
+}
+.day-picker .opt .day-sub {
+  font-family: var(--font-ui); font-size: 11px;
+  color: var(--text-tertiary); margin-left: auto;
+}
+
+
+/* Responsive */
+@media (max-width: 900px) {
+  .playbook-kpis { grid-template-columns: repeat(2, 1fr); }
+  .day-row, .phase-divider { grid-template-columns: 64px 1fr; gap: 16px; }
+  .timeline-track { left: 56px; }
+  .day-bubble { padding: 6px 10px; font-size: 11px; }
+  .day-bubble::after { display: none; }
+  .day-sublabel { display: none; }
+  .task-card { grid-template-columns: auto 1fr; }
+  .task-side { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: flex-end; }
+}
+</style>
+</head>
+<body>
+
+<div class="app" style="flex-direction:column;">
+
+  <!-- AUTH BAR -->
+  <div class="auth-bar">
+    <div class="auth-bar-left">
+      <strong style="font-size:13px;font-weight:600;">Playbook de onboarding · TheNucleo</strong>
+      <span class="auth-bar-mode viewer" id="auth-mode-pill">
+        <span class="dot"></span>
+        <span class="auth-mode-label">Vista pública</span>
+      </span>
+    </div>
+    <div class="auth-bar-actions">
+      <span class="auth-bar-meta" id="auth-meta"></span>
+      <button class="btn btn--secondary btn--sm" id="btn-login">Entrar como editor</button>
+      <button class="btn btn--secondary btn--sm" id="btn-logout" style="display:none;">Salir</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="main" style="margin-left:0;width:100%;">
+
+    <!-- HERO -->
+    <section class="playbook-hero">
+      <div>
+        <div class="playbook-hero-meta">Operaciones · Onboarding</div>
+        <h1>Playbook de onboarding</h1>
+        <p class="playbook-hero-sub">
+          Escaleta operativa desde el cierre de venta hasta el lanzamiento de campañas y presentación de estrategia. Marca lo que toca a cada miembro día por día.
+        </p>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="playbook-kpis">
+      <div class="pk-card">
+        <div class="pk-card-icon info">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="pk-card-value">16+</div>
+          <div class="pk-card-label">Días totales</div>
+        </div>
+      </div>
+      <div class="pk-card">
+        <div class="pk-card-icon success">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div>
+          <div class="pk-card-value">29</div>
+          <div class="pk-card-label">Tareas en la escaleta</div>
+        </div>
+      </div>
+      <div class="pk-card">
+        <div class="pk-card-icon violet">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div>
+          <div class="pk-card-value">12</div>
+          <div class="pk-card-label">Con impacto cliente</div>
+        </div>
+      </div>
+      <div class="pk-card">
+        <div class="pk-card-icon warning">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <div class="pk-card-value">7</div>
+          <div class="pk-card-label">Miembros implicados</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FILTERS -->
+    <section class="filter-bar">
+      <div class="search-input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="search-input" id="search-input" placeholder="Buscar tarea, registro, día…">
+      </div>
+      <div class="filter-divider"></div>
+      <span class="filter-label">Responsable</span>
+      <span class="member-chip active"><span class="member-dot" style="background:#3b82f6;">A</span>Alex</span>
+      <span class="member-chip active"><span class="member-dot" style="background:#22c55e;color:#03190b;">M</span>Mel</span>
+      <span class="member-chip active"><span class="member-dot" style="background:#8b5cf6;">V</span>Valentina</span>
+      <span class="member-chip active"><span class="member-dot" style="background:#ec4899;">V</span>Valentín</span>
+      <span class="member-chip active"><span class="member-dot" style="background:#f59e0b;color:#2d1d00;">J</span>Joaquín</span>
+      <span class="member-chip active"><span class="member-dot" style="background:#0ea5e9;">C</span>Camilo</span>
+      <span class="member-chip active"><span class="member-dot" style="background:#ef4444;">D</span>Damián</span>
+      <div class="filter-divider"></div>
+      <span class="toggle-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Solo impacto cliente
+      </span>
+    </section>
+
+    <!-- VIEW SWITCHER -->
+    <div class="view-switcher">
+      <button class="view-tab active" data-view="tabla">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+        Tabla
+        <span class="count" id="ct-tabla">32</span>
+      </button>
+      <button class="view-tab" data-view="timeline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        Timeline
+        <span class="count" id="ct-timeline">32</span>
+      </button>
+      <button class="view-tab" data-view="kanban">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="18" rx="1"/><rect x="11" y="3" width="6" height="11" rx="1"/><rect x="19" y="3" width="2" height="14" rx="1"/></svg>
+        Por persona
+        <span class="count" id="ct-kanban">8</span>
+      </button>
+      <div class="view-spacer"></div>
+      <span class="view-tab-meta" id="active-filters-meta">Sin filtros aplicados</span>
+    </div>
+
+    <!-- TIMELINE VIEW (rendered by JS from TASKS) -->
+    <section class="timeline view-pane" data-pane="timeline" id="timeline-pane" hidden>
+      <div class="timeline-track"></div>
+    </section>
+
+    <!-- TABLA VIEW -->
+    <section class="tabla-view view-pane" data-pane="tabla">
+      <div class="tabla-toolbar">
+        <div class="density-toggle" id="density-toggle">
+          <button data-density="comfy" class="active">Cómodo</button>
+          <button data-density="dense">Compacto</button>
+        </div>
+
+        <div class="save-indicator editor-only" id="save-indicator">
+          <span class="save-dot"></span>
+          <span class="save-text">Sin cambios</span>
+        </div>
+
+        <div class="bulk-bar" id="bulk-bar" style="display:none;">
+          <span class="bulk-count"><strong id="bulk-count">0</strong> seleccionadas</span>
+          <button class="btn btn--secondary btn--sm" id="bulk-delete">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Eliminar
+          </button>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="toolbar-action" id="btn-export" data-help="Descargar todas las filas como CSV">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar CSV
+          </button>
+          <button class="toolbar-action danger editor-only" id="btn-reset" data-help="Descartar todos los cambios">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Reset
+          </button>
+        </div>
+      </div>
+      <div class="tabla-wrap custom-scroll">
+        <table class="tabla" id="tabla">
+          <thead>
+            <tr>
+              <th class="check-col"><input type="checkbox" id="check-all"></th>
+              <th class="sortable" data-sort="day">Día <span class="sort-ind">▼</span></th>
+              <th class="sortable" data-sort="title">Tarea <span class="sort-ind">▼</span></th>
+              <th class="sortable" data-sort="owner">Responsable <span class="sort-ind">▼</span></th>
+              <th class="sortable" data-sort="client">Impacto <span class="sort-ind">▼</span></th>
+              <th>Registrado en</th>
+              <th>Notas</th>
+              <th class="row-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body">
+            <!-- rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="tabla-statusbar">
+        <span class="sb-item"><span class="sb-dot"></span><strong id="sb-total">32</strong> tareas</span>
+        <span class="sb-divider"></span>
+        <span class="sb-item"><span class="sb-dot info"></span><strong id="sb-client">12</strong> impacto cliente</span>
+        <span class="sb-divider"></span>
+        <span class="sb-item"><span class="sb-dot warning"></span><strong id="sb-tbd">6</strong> sin responsable</span>
+        <span class="sb-divider"></span>
+        <span class="sb-item"><span class="sb-dot success"></span><strong id="sb-reg">5</strong> con registro</span>
+        <span class="sb-spacer"></span>
+        <span class="sb-active-filters" id="sb-filters">Todos los responsables activos</span>
+      </div>
+    </section>
+
+    <!-- KANBAN VIEW (Por persona) -->
+    <section class="kanban-view view-pane" data-pane="kanban" hidden id="kanban-view">
+      <!-- rendered by JS -->
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Supabase config — URL y anon key son públicas por diseño (misma key que /comunidad)
+  window.__SUPABASE_URL__ = "https://cbixhqjsnpuhcrcjppah.supabase.co";
+  window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaXhocWpzbnB1aGNyY2pwcGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzU0OTksImV4cCI6MjA4OTE1MTQ5OX0.vbls3tGYkbgUNDhOzgEMBTG7nTlKfLMyTWzlWTmWxTM";
+</script>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const SUPABASE = createClient(window.__SUPABASE_URL__, window.__SUPABASE_ANON_KEY__, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: "thenucleo-comunidad-auth",  // misma sesión que /comunidad
+    lock: async (_n,_t,fn) => fn(),
+  }
+});
+
+const EDITOR_EMAIL = "benjamin.sanchis@thenucleo.com";
+const STORAGE_KEY = "thenucleo-comunidad-auth";
+const PLAYBOOK_SLUG = "default";
+
+function readStoredSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s?.expires_at && s.expires_at * 1000 < Date.now()) return null;
+    return s ?? null;
+  } catch { return null; }
+}
+function getCurrentUser() { return readStoredSession()?.user ?? null; }
+function getAccessToken() { return readStoredSession()?.access_token ?? null; }
+
+/* ============================================
+   DATA
+   ============================================ */
+const OWNERS = {
+  alex:      {name:'Alex',      initial:'A', bg:'#3b82f6', fg:'#fff'},
+  mel:       {name:'Mel',       initial:'M', bg:'#22c55e', fg:'#03190b'},
+  valentina: {name:'Valentina', initial:'V', bg:'#8b5cf6', fg:'#fff'},
+  valentin:  {name:'Valentín',  initial:'V', bg:'#ec4899', fg:'#fff'},
+  joaquin:   {name:'Joaquín',   initial:'J', bg:'#f59e0b', fg:'#2d1d00'},
+  camilo:    {name:'Camilo',    initial:'C', bg:'#0ea5e9', fg:'#fff'},
+  damian:    {name:'Damián',    initial:'D', bg:'#ef4444', fg:'#fff'},
+  tbd:       {name:'Por asignar', initial:'?', bg:'transparent', fg:'#5c6078'},
+};
+
+const PHASES = {
+  1: 'Fase 1 · Pre-onboarding',
+  2: 'Fase 2 · Onboarding + análisis',
+  3: 'Fase 3 · Setup Meta + iteración creativa',
+  4: 'Fase 4 · Lanzamiento + estrategia',
+};
+
+const DEFAULT_TASKS = [
+  {id:1,  day:0,    dayKey:'d0',  dayLabel:'Día 0',       daySub:'Cierre venta',              phase:1, title:'Correo de bienvenida y presentación', sub:'', owners:['alex'], client:true,  reg:'Plantilla email · Auto calendario', notas:''},
+  {id:2,  day:0,    dayKey:'d0',  dayLabel:'Día 0',       daySub:'Cierre venta',              phase:1, title:'Email confirmando día de onboarding', sub:'Material a traer + fotos/vídeos en carpeta', owners:['mel'], client:true, reg:'Doc requisitos pre-onboarding', notas:''},
+  {id:3,  day:0,    dayKey:'d0',  dayLabel:'Día 0',       daySub:'Cierre venta',              phase:1, title:'Grabación Loom interno del proyecto', sub:'Envío a Mel y Valentina', owners:['alex'], client:false, reg:'', notas:''},
+  {id:4,  day:0.5,  dayKey:'dseg',dayLabel:'Seguimiento', daySub:'Entre cierre y onboarding', phase:1, title:'Llamada de seguimiento al cliente',   sub:'Si no rellenó formulario o ficha', owners:['tbd'], client:true, reg:'', notas:''},
+  {id:5,  day:1,    dayKey:'d1',  dayLabel:'Día 1',  daySub:'Sesión onboarding',     phase:2, title:'Sesión de onboarding teórico + técnico', sub:'12 sub-tareas: entrevista, expectativas, accesos a plataformas, definición de funnel…', owners:['mel'], client:true, reg:'Pdte. Doc ficha cliente', notas:''},
+  {id:6,  day:1,    dayKey:'d1',  dayLabel:'Día 1',  daySub:'Sesión onboarding',     phase:2, title:'Crear grupo de WhatsApp y chat de Google', sub:'', owners:['tbd'], client:false, reg:'', notas:''},
+  {id:7,  day:1,    dayKey:'d1',  dayLabel:'Día 1',  daySub:'Sesión onboarding',     phase:2, title:'Enviar recap interno del cliente', sub:'', owners:['mel'], client:false, reg:'', notas:''},
+  {id:8,  day:2,    dayKey:'d2',  dayLabel:'Día 2',  daySub:'Planificación',         phase:2, title:'Planificación de tareas del cliente en Notion', sub:'', owners:['valentina'], client:false, reg:'Notion · Plantilla cliente', notas:''},
+  {id:9,  day:3,    dayKey:'d3',  dayLabel:'Día 3',  daySub:'Análisis + briefing',   phase:2, title:'Enviar Píldora X por WhatsApp', sub:'', owners:['mel'], client:true, reg:'', notas:''},
+  {id:10, day:3,    dayKey:'d3',  dayLabel:'Día 3',  daySub:'Análisis + briefing',   phase:2, title:'Análisis inicial con la plataforma', sub:'', owners:['valentina'], client:false, reg:'', notas:''},
+  {id:11, day:3,    dayKey:'d3',  dayLabel:'Día 3',  daySub:'Análisis + briefing',   phase:2, title:'Briefing con ángulos de venta para diseño', sub:'Envío al equipo creativo', owners:['valentina'], client:false, reg:'', notas:''},
+  {id:12, day:3,    dayKey:'d3',  dayLabel:'Día 3',  daySub:'Análisis + briefing',   phase:2, title:'Redacción primer email de confirmación', sub:'', owners:['valentina'], client:false, reg:'', notas:''},
+  {id:13, day:3,    dayKey:'d3',  dayLabel:'Día 3',  daySub:'Análisis + briefing',   phase:2, title:'Creación del documento Ficha Cliente', sub:'', owners:['valentina'], client:false, reg:'', notas:''},
+  {id:14, day:4,    dayKey:'d4',  dayLabel:'Día 4',  daySub:'Producción + CRM',      phase:2, title:'Diseño de estáticos', sub:'', owners:['valentin'], client:false, reg:'', notas:''},
+  {id:15, day:4,    dayKey:'d4',  dayLabel:'Día 4',  daySub:'Producción + CRM',      phase:2, title:'Diseño de vídeo', sub:'', owners:['joaquin'], client:false, reg:'', notas:''},
+  {id:16, day:4,    dayKey:'d4',  dayLabel:'Día 4',  daySub:'Producción + CRM',      phase:2, title:'Montar el CRM (GHL)', sub:'Subcuenta, DNS, pipeline inicial, flujos contacto/oportunidad', owners:['camilo'], client:false, reg:'', notas:''},
+  {id:17, day:4,    dayKey:'d4',  dayLabel:'Día 4',  daySub:'Producción + CRM',      phase:2, title:'Preparar presentación de buyer persona', sub:'', owners:['tbd'], client:false, reg:'', notas:''},
+  {id:18, day:5,    dayKey:'d5',  dayLabel:'Día 5',  daySub:'Pulso cliente',         phase:2, title:'Enviar Píldora Y por WhatsApp', sub:'', owners:['mel'], client:true, reg:'', notas:''},
+  {id:19, day:6,    dayKey:'d6',  dayLabel:'Día 6',  daySub:'Análisis grabado',      phase:2, title:'Grabación del análisis inicial + presentación estáticos y vídeos', sub:'', owners:['valentina'], client:false, reg:'', notas:''},
+  {id:20, day:7,    dayKey:'d7',  dayLabel:'Día 7',  daySub:'Entrega análisis',      phase:2, title:'Enviar grabación de Valentina al cliente', sub:'', owners:['mel'], client:true, reg:'Pdte. Docx del análisis', notas:''},
+  {id:21, day:8,    dayKey:'d8',  dayLabel:'Día 8',  daySub:'Setup Meta',            phase:3, title:'Configuración técnica de Meta Ads', sub:'', owners:['damian'], client:false, reg:'', notas:''},
+  {id:22, day:10,   dayKey:'d10', dayLabel:'Día 10', daySub:'Iteración creativa',    phase:3, title:'Correcciones de diseño en vídeo y estáticos', sub:'', owners:['valentin','joaquin'], client:false, reg:'', notas:''},
+  {id:23, day:11,   dayKey:'d11', dayLabel:'Día 11', daySub:'Entrega correcciones',  phase:3, title:'Envío del material corregido al cliente', sub:'', owners:['mel'], client:true, reg:'', notas:''},
+  {id:24, day:12,   dayKey:'d12', dayLabel:'Día 12', daySub:'Programación',          phase:3, title:'Programación de campañas en Meta', sub:'', owners:['damian'], client:false, reg:'', notas:''},
+  {id:25, day:13,   dayKey:'d13', dayLabel:'Día 13', daySub:'Keywords',              phase:3, title:'Análisis de keywords', sub:'', owners:['damian'], client:false, reg:'', notas:''},
+  {id:26, day:13,   dayKey:'d13', dayLabel:'Día 13', daySub:'Keywords',              phase:3, title:'Enviar análisis de keywords al cliente', sub:'', owners:['mel'], client:true, reg:'', notas:''},
+  {id:27, day:16,   dayKey:'d16', dayLabel:'Día 16', daySub:'Lanzamiento',           phase:4, title:'Lanzar anuncios en Meta', sub:'', owners:['tbd'], client:false, reg:'', notas:''},
+  {id:28, day:999,  dayKey:'dtbd',dayLabel:'Día ¿?', daySub:'Reunión estrategia',    phase:4, title:'Grabación de presentación de estrategia', sub:'', owners:['valentina'], client:false, reg:'', notas:''},
+  {id:29, day:999,  dayKey:'dtbd',dayLabel:'Día ¿?', daySub:'Reunión estrategia',    phase:4, title:'Enviar grabación al cliente', sub:'', owners:['mel'], client:true, reg:'', notas:''},
+  {id:30, day:999,  dayKey:'dtbd',dayLabel:'Día ¿?', daySub:'Reunión estrategia',    phase:4, title:'Seguimiento de confirmación (máx 2 días)', sub:'', owners:['mel'], client:true, reg:'', notas:''},
+  {id:31, day:999,  dayKey:'dtbd',dayLabel:'Día ¿?', daySub:'Reunión estrategia',    phase:4, title:'Llamada de confirmación de reunión "Estrategia"', sub:'', owners:['tbd'], client:true, reg:'', notas:''},
+  {id:32, day:999,  dayKey:'dtbd',dayLabel:'Día ¿?', daySub:'Reunión estrategia',    phase:4, title:'Reunión de "Estrategia" con el cliente', sub:'', owners:['tbd'], client:true, reg:'', notas:''},
+];
+
+let TASKS = [];
+
+const STATE = {
+  view: 'tabla',
+  activeOwners: new Set(Object.keys(OWNERS)),
+  clientOnly: false,
+  search: '',
+  sortBy: 'day',
+  sortDir: 'asc',
+  collapsedDays: new Set(),
+  selectedIds: new Set(),
+  density: 'comfy',
+  lastSaved: null,
+  canEdit: false,
+  user: null,
+};
+
+/* ============================================
+   AUTH
+   ============================================ */
+function refreshAuthUI() {
+  const u = STATE.user;
+  const isBen = u && u.email && u.email.toLowerCase() === EDITOR_EMAIL.toLowerCase();
+  STATE.canEdit = !!isBen;
+  document.body.classList.toggle('viewer', !STATE.canEdit);
+  document.body.classList.toggle('editor', STATE.canEdit);
+
+  const pill = document.getElementById('auth-mode-pill');
+  const pillLabel = pill.querySelector('.auth-mode-label');
+  const meta = document.getElementById('auth-meta');
+  const btnLogin = document.getElementById('btn-login');
+  const btnLogout = document.getElementById('btn-logout');
+
+  if (STATE.canEdit) {
+    pill.classList.remove('viewer'); pill.classList.add('editor');
+    pillLabel.textContent = 'Editor';
+    meta.textContent = u.email;
+    btnLogin.style.display = 'none';
+    btnLogout.style.display = '';
+  } else {
+    pill.classList.remove('editor'); pill.classList.add('viewer');
+    pillLabel.textContent = u ? 'Solo lectura' : 'Vista pública';
+    meta.textContent = u ? (u.email + ' · solo Ben puede editar') : '';
+    btnLogin.style.display = '';
+    btnLogout.style.display = u ? '' : 'none';
+  }
+}
+
+document.getElementById('btn-login').addEventListener('click', () => {
+  const next = '/playbook/';
+  window.location.assign('/comunidad/entrar/?next=' + encodeURIComponent(next));
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  SUPABASE.auth.signOut().catch(() => {});
+  STATE.user = null;
+  refreshAuthUI();
+  rerender();
+});
+
+/* ============================================
+   PERSISTENCE — Supabase
+   ============================================ */
+async function loadFromSupabase() {
+  try {
+    const url = `${window.__SUPABASE_URL__}/rest/v1/playbook_onboarding?slug=eq.${PLAYBOOK_SLUG}&select=data,updated_at,updated_by`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + (getAccessToken() || window.__SUPABASE_ANON_KEY__),
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+    if (!rows.length) return false;
+    const row = rows[0];
+    if (Array.isArray(row.data) && row.data.length > 0) {
+      TASKS = row.data;
+      STATE.lastSaved = row.updated_at ? new Date(row.updated_at) : null;
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error('[playbook] load failed', e);
+    return false;
+  }
+}
+
+let saveTimer = null;
+function scheduleSave() {
+  if (!STATE.canEdit) return;
+  setSaveIndicator('saving');
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToSupabase, 600);
+}
+
+async function saveToSupabase() {
+  if (!STATE.canEdit) return;
+  const token = getAccessToken();
+  if (!token) { setSaveIndicator('error', 'Sesión expirada'); return; }
+  try {
+    const url = `${window.__SUPABASE_URL__}/rest/v1/playbook_onboarding?slug=eq.${PLAYBOOK_SLUG}`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({
+        data: TASKS,
+        updated_by: STATE.user?.email || null,
+      })
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('HTTP ' + res.status + ' — ' + txt);
+    }
+    const rows = await res.json();
+    if (rows[0]) STATE.lastSaved = new Date(rows[0].updated_at);
+    setSaveIndicator('saved');
+  } catch (e) {
+    console.error('[playbook] save failed', e);
+    setSaveIndicator('error', e.message);
+  }
+}
+
+function setSaveIndicator(state, msg) {
+  const ind = document.getElementById('save-indicator');
+  if (!ind) return;
+  const txt = ind.querySelector('.save-text');
+  ind.classList.remove('saved','saving');
+  if (state === 'saved') {
+    ind.classList.add('saved');
+    const t = STATE.lastSaved || new Date();
+    txt.textContent = 'Guardado · ' + t.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  } else if (state === 'saving') {
+    ind.classList.add('saving');
+    txt.textContent = 'Guardando…';
+  } else if (state === 'error') {
+    txt.textContent = '⚠ ' + (msg || 'Error');
+  } else {
+    txt.textContent = 'Sin cambios';
+  }
+}
+
+async function resetData() {
+  if (!STATE.canEdit) return;
+  if (!confirm('¿Descartar todos los cambios y volver a la escaleta original?')) return;
+  TASKS = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+  STATE.selectedIds.clear();
+  STATE.collapsedDays.clear();
+  await saveToSupabase();
+  rerender();
+}
+
+/* ============================================
+   EXPORT CSV
+   ============================================ */
+function exportCSV() {
+  const headers = ['Día','Fase','Tarea','Detalle','Responsables','Impacto cliente','Registrado en','Notas'];
+  const rows = [headers];
+  const sorted = [...TASKS].sort((a,b)=>a.day-b.day);
+  sorted.forEach(t => {
+    rows.push([
+      t.dayLabel,
+      PHASES[t.phase] || ('Fase ' + t.phase),
+      t.title,
+      t.sub || '',
+      t.owners.map(o => OWNERS[o].name).join(' + '),
+      t.client ? 'SI' : '',
+      t.reg || '',
+      t.notas || ''
+    ]);
+  });
+  const csv = rows.map(r =>
+    r.map(c => '"' + String(c || '').replace(/"/g,'""') + '"').join(',')
+  ).join('\r\n');
+  const blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'onboarding-playbook-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================
+   HELPERS
+   ============================================ */
+function escapeHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function matchesFilters(t) {
+  const ownerPass = t.owners.some(o => STATE.activeOwners.has(o));
+  const clientPass = !STATE.clientOnly || t.client;
+  const q = STATE.search.trim().toLowerCase();
+  const searchPass = !q || (
+    (t.title||'').toLowerCase().includes(q) ||
+    (t.sub||'').toLowerCase().includes(q) ||
+    (t.reg||'').toLowerCase().includes(q) ||
+    (t.notas||'').toLowerCase().includes(q) ||
+    (t.dayLabel||'').toLowerCase().includes(q) ||
+    t.owners.some(o => OWNERS[o].name.toLowerCase().includes(q))
+  );
+  return ownerPass && clientPass && searchPass;
+}
+function visibleTasks() { return TASKS.filter(matchesFilters); }
+function ownerAvatar(o, size=22) {
+  const m = OWNERS[o];
+  const dashed = o === 'tbd' ? `border:1.5px dashed ${m.fg}; background:transparent;` : `background:${m.bg};`;
+  return `<span class="owner-avatar" data-owner="${o}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.42)}px;color:${m.fg};${dashed}">${m.initial}</span>`;
+}
+function findTask(id) { return TASKS.find(t => t.id === id); }
+function nextId() { return Math.max(0, ...TASKS.map(t => t.id)) + 1; }
+
+/* ============================================
+   RENDER · TIMELINE
+   ============================================ */
+function renderTimeline() {
+  const v = visibleTasks();
+  const pane = document.getElementById('timeline-pane');
+  if (!pane) return;
+  const byPhase = {};
+  v.forEach(t => {
+    byPhase[t.phase] = byPhase[t.phase] || {};
+    (byPhase[t.phase][t.dayKey] = byPhase[t.phase][t.dayKey] || []).push(t);
+  });
+  let html = '<div class="timeline-track"></div>';
+  Object.keys(byPhase).sort().forEach(ph => {
+    html += `
+      <div class="phase-divider">
+        <div class="phase-spacer"></div>
+        <div class="phase-label">${PHASES[ph]}</div>
+      </div>`;
+    const dayKeys = Object.keys(byPhase[ph]).sort((a,b) =>
+      byPhase[ph][a][0].day - byPhase[ph][b][0].day
+    );
+    dayKeys.forEach(dk => {
+      const tasks = byPhase[ph][dk];
+      const head = tasks[0];
+      const bubbleClass = head.day === 0 ? 'is-start' : head.day === 16 ? 'is-launch' : head.day === 999 ? 'is-tbd' : '';
+      html += `
+        <div class="day-row">
+          <div class="day-marker">
+            <span class="day-bubble ${bubbleClass}">${head.dayLabel}</span>
+            <span class="day-sublabel">${escapeHtml(head.daySub)}</span>
+          </div>
+          <div class="day-content">
+            ${tasks.map(t => {
+              const primary = t.owners[0];
+              const avatars = t.owners.length > 1
+                ? `<div class="owner-stack">${t.owners.map(o=>`<div class="owner-avatar" data-owner="${o}">${OWNERS[o].initial}</div>`).join('')}</div>`
+                : `<div class="owner-avatar" data-owner="${primary}">${OWNERS[primary].initial}</div>`;
+              return `
+                <article class="task-card" data-owner="${primary}" data-id="${t.id}">
+                  ${avatars}
+                  <div class="task-body">
+                    <div class="task-title">${escapeHtml(t.title)}</div>
+                    ${t.sub ? `<div class="task-sub">${escapeHtml(t.sub)}</div>` : ''}
+                    ${t.reg ? `<div class="task-meta"><span class="task-meta-item">📍 ${escapeHtml(t.reg)}</span></div>` : ''}
+                  </div>
+                  <div class="task-side">
+                    ${t.client ? `<span class="client-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Cliente</span>` : ''}
+                    <span class="owner-name">${t.owners.map(o=>OWNERS[o].name).join(' + ')}</span>
+                  </div>
+                </article>`;
+            }).join('')}
+          </div>
+        </div>`;
+    });
+  });
+  if (!v.length) {
+    html += '<p style="color:var(--text-tertiary);text-align:center;padding:48px;font-style:italic;">Sin tareas que mostrar con los filtros actuales.</p>';
+  }
+  pane.innerHTML = html;
+}
+
+/* ============================================
+   RENDER · TABLA
+   ============================================ */
+function renderTabla() {
+  const tasks = visibleTasks();
+  let sorted = [...tasks];
+  if (STATE.sortBy === 'day') {
+    sorted.sort((a,b) => STATE.sortDir==='asc' ? a.day-b.day : b.day-a.day);
+  } else if (STATE.sortBy === 'title') {
+    sorted.sort((a,b) => STATE.sortDir==='asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+  } else if (STATE.sortBy === 'owner') {
+    sorted.sort((a,b) => {
+      const ao = OWNERS[a.owners[0]].name, bo = OWNERS[b.owners[0]].name;
+      return STATE.sortDir==='asc' ? ao.localeCompare(bo) : bo.localeCompare(ao);
+    });
+  } else if (STATE.sortBy === 'client') {
+    sorted.sort((a,b) => STATE.sortDir==='asc' ? (b.client - a.client) : (a.client - b.client));
+  }
+
+  const groupByDay = STATE.sortBy === 'day';
+  let html = '';
+  if (groupByDay) {
+    const byDay = {};
+    sorted.forEach(t => { (byDay[t.dayKey] = byDay[t.dayKey] || []).push(t); });
+    const dayKeys = Object.keys(byDay).sort((a,b) => byDay[a][0].day - byDay[b][0].day);
+    dayKeys.forEach(dk => {
+      const rows = byDay[dk];
+      const head = rows[0];
+      const clientCount = rows.filter(r => r.client).length;
+      const collapsed = STATE.collapsedDays.has(dk) ? 'collapsed' : '';
+      html += `
+        <tr class="day-group ${collapsed}" data-day="${dk}">
+          <td colspan="8">
+            <span class="chevron">▼</span>
+            ${head.dayLabel}
+            <span class="group-sub">${escapeHtml(head.daySub)}</span>
+            <span class="group-chips">
+              <span class="group-chip">${rows.length} tarea${rows.length>1?'s':''}</span>
+              ${clientCount? `<span class="group-chip client">${clientCount} cliente</span>` : ''}
+            </span>
+          </td>
+        </tr>`;
+      if (!collapsed) {
+        rows.forEach(t => { html += renderTaskRow(t); });
+        if (STATE.canEdit) {
+          html += `
+            <tr class="add-task-row editor-only" data-day="${dk}">
+              <td colspan="8">
+                <button class="add-task-btn" data-action="add-task"
+                  data-day-key="${dk}" data-day="${head.day}"
+                  data-day-label="${escapeHtml(head.dayLabel)}"
+                  data-day-sub="${escapeHtml(head.daySub)}"
+                  data-phase="${head.phase}">
+                  + Añadir tarea a ${head.dayLabel}
+                </button>
+              </td>
+            </tr>`;
+        }
+      }
+    });
+  } else {
+    sorted.forEach(t => { html += renderTaskRow(t); });
+  }
+
+  if (STATE.canEdit) {
+    html += `
+      <tr class="add-day-row editor-only">
+        <td colspan="8">
+          <button class="add-task-btn" data-action="add-day">+ Añadir nuevo día / fase</button>
+        </td>
+      </tr>`;
+  }
+
+  if (!sorted.length) {
+    html = `<tr><td colspan="8" style="text-align:center;padding:48px 16px;color:var(--text-tertiary);font-style:italic;">Sin resultados con los filtros actuales.</td></tr>` + html;
+  }
+
+  document.getElementById('tabla-body').innerHTML = html;
+  document.getElementById('tabla').classList.toggle('dense', STATE.density === 'dense');
+}
+
+function renderTaskRow(t) {
+  const primaryOwner = t.owners[0];
+  const ownersHtml = t.owners.length > 1
+    ? `<span class="owner-mini-stack">${t.owners.map(o => ownerAvatar(o,22)).join('')}</span>`
+    : ownerAvatar(primaryOwner,22);
+  const ownerNames = t.owners.map(o => OWNERS[o].name).join(' + ');
+  const checked = STATE.selectedIds.has(t.id) ? 'checked' : '';
+  const selectedCls = STATE.selectedIds.has(t.id) ? 'selected' : '';
+  const editable = STATE.canEdit ? 'contenteditable="plaintext-only"' : '';
+  const deleteBtn = STATE.canEdit
+    ? `<button class="row-delete" data-action="delete-row" title="Eliminar fila">✕</button>`
+    : '';
+
+  return `
+    <tr class="task-row ${selectedCls}" data-owner="${primaryOwner}" data-id="${t.id}">
+      <td class="check-cell"><input type="checkbox" data-id="${t.id}" ${checked} ${STATE.canEdit?'':'disabled'}></td>
+      <td class="day-cell" ${STATE.canEdit?'data-action="edit-day"':''} title="${STATE.canEdit?'Click para cambiar día':''}">${t.dayLabel}</td>
+      <td class="task-title-cell">
+        <span class="task-name" ${editable} data-field="title" data-placeholder="Escribe la tarea…">${escapeHtml(t.title)}</span>
+        <span class="task-sub-inline" ${editable} data-field="sub" data-placeholder="+ añadir detalle">${escapeHtml(t.sub)}</span>
+      </td>
+      <td class="owner-cell" ${STATE.canEdit?'data-action="edit-owner"':''} title="${STATE.canEdit?'Click para cambiar responsable':''}">
+        <span class="owner-mini">
+          ${ownersHtml}
+          <span class="owner-mini-name">${escapeHtml(ownerNames)}</span>
+        </span>
+      </td>
+      <td class="client-cell" ${STATE.canEdit?'data-action="toggle-client"':''} title="${STATE.canEdit?'Click para alternar':''}">
+        ${t.client
+          ? `<span class="client-mini-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>SI</span>`
+          : `<span class="client-mini-empty">—</span>`}
+      </td>
+      <td class="reg-cell">
+        <span ${editable} data-field="reg" data-placeholder="+ dónde se registra"
+          style="${t.reg ? 'background:var(--bg-active);padding:3px 9px;border-radius:var(--radius-sm);font-size:11px;color:var(--text-secondary);' : ''}">${escapeHtml(t.reg)}</span>
+      </td>
+      <td class="notas-cell">
+        <span class="notas-text" ${editable} data-field="notas" data-placeholder="+ nota interna">${escapeHtml(t.notas)}</span>
+      </td>
+      <td class="row-actions">${deleteBtn}</td>
+    </tr>`;
+}
+
+/* ============================================
+   RENDER · KANBAN
+   ============================================ */
+function renderKanban() {
+  const tasks = visibleTasks();
+  const order = ['alex','mel','valentina','valentin','joaquin','camilo','damian','tbd'];
+  let html = '';
+  order.forEach(o => {
+    if (!STATE.activeOwners.has(o)) return;
+    const list = tasks.filter(t => t.owners.includes(o)).sort((a,b)=>a.day-b.day);
+    const meta = OWNERS[o];
+    html += `
+      <div class="kanban-col" data-owner="${o}">
+        <div class="kanban-col-header">
+          ${ownerAvatar(o,26)}
+          <div>
+            <div class="col-name">${meta.name}</div>
+            <div class="col-meta">${list.filter(t=>t.client).length} cliente${list.filter(t=>t.client).length===1?'':'s'}</div>
+          </div>
+          <span class="col-count">${list.length}</span>
+        </div>
+        <div class="kanban-col-body custom-scroll">
+          ${list.length === 0
+            ? `<div class="kanban-empty">Sin tareas</div>`
+            : list.map(t => `
+              <div class="kanban-card" data-id="${t.id}">
+                <div class="k-day">
+                  ${t.client ? '<span class="k-client-dot"></span>' : ''}
+                  ${t.dayLabel}
+                </div>
+                <div class="k-title">${escapeHtml(t.title)}</div>
+                ${t.reg ? `<div class="k-reg">📍 ${escapeHtml(t.reg)}</div>` : ''}
+              </div>
+            `).join('')}
+        </div>
+      </div>`;
+  });
+  document.getElementById('kanban-view').innerHTML = html;
+  document.getElementById('ct-kanban').textContent = order.filter(o => STATE.activeOwners.has(o)).length;
+}
+
+/* ============================================
+   STATUS BAR
+   ============================================ */
+function updateStatusBar() {
+  const v = visibleTasks();
+  document.getElementById('sb-total').textContent = v.length;
+  document.getElementById('sb-client').textContent = v.filter(t=>t.client).length;
+  document.getElementById('sb-tbd').textContent = v.filter(t=>t.owners.includes('tbd')).length;
+  document.getElementById('sb-reg').textContent = v.filter(t=>t.reg).length;
+  const allOwnersOn = STATE.activeOwners.size === Object.keys(OWNERS).length;
+  const parts = [];
+  if (!allOwnersOn) parts.push(`${STATE.activeOwners.size}/${Object.keys(OWNERS).length} responsables`);
+  if (STATE.clientOnly) parts.push('solo cliente');
+  if (STATE.search) parts.push(`búsqueda: "${STATE.search}"`);
+  const txt = parts.length ? parts.join(' · ') : 'Todos los responsables activos';
+  document.getElementById('sb-filters').textContent = txt;
+  document.getElementById('active-filters-meta').textContent = parts.length ? txt : 'Sin filtros aplicados';
+  document.getElementById('ct-timeline').textContent = v.length;
+  document.getElementById('ct-tabla').textContent = v.length;
+  const kpis = document.querySelectorAll('.playbook-kpis .pk-card-value');
+  if (kpis.length >= 4) {
+    const distinctDays = new Set(TASKS.map(t => t.dayKey)).size;
+    kpis[0].textContent = distinctDays;
+    kpis[1].textContent = TASKS.length;
+    kpis[2].textContent = TASKS.filter(t=>t.client).length;
+    const ownersUsed = new Set();
+    TASKS.forEach(t => t.owners.forEach(o => o!=='tbd' && ownersUsed.add(o)));
+    kpis[3].textContent = ownersUsed.size;
+  }
+}
+
+function rerender() {
+  renderTimeline();
+  renderTabla();
+  renderKanban();
+  updateStatusBar();
+  setSaveIndicator(STATE.lastSaved ? 'saved' : 'idle');
+}
+
+/* ============================================
+   PICKERS
+   ============================================ */
+function closePickers() {
+  document.querySelectorAll('.owner-picker, .day-picker').forEach(p => p.remove());
+}
+function showOwnerPicker(cell, task) {
+  if (!STATE.canEdit) return;
+  closePickers();
+  const picker = document.createElement('div');
+  picker.className = 'owner-picker';
+  const order = ['alex','mel','valentina','valentin','joaquin','camilo','damian','tbd'];
+  picker.innerHTML = `
+    <div class="picker-title">Responsable</div>
+    ${order.map(o => {
+      const m = OWNERS[o];
+      const sel = task.owners.includes(o) ? 'selected' : '';
+      const check = sel ? '<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : '';
+      return `<div class="opt ${sel}" data-owner="${o}">${ownerAvatar(o,22)}<span>${m.name}</span>${check}</div>`;
+    }).join('')}
+    <div class="picker-hint">Click para alternar (multi-selección)</div>`;
+  const rect = cell.getBoundingClientRect();
+  picker.style.left = (rect.left + window.scrollX) + 'px';
+  picker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  document.body.appendChild(picker);
+  picker.addEventListener('click', e => {
+    const opt = e.target.closest('.opt'); if (!opt) return;
+    const o = opt.dataset.owner;
+    if (task.owners.includes(o)) {
+      task.owners = task.owners.filter(x => x !== o);
+      if (task.owners.length === 0) task.owners = ['tbd'];
+    } else {
+      if (o !== 'tbd') task.owners = task.owners.filter(x => x !== 'tbd');
+      task.owners.push(o);
+    }
+    scheduleSave(); rerender();
+    const newCell = document.querySelector(`.task-row[data-id="${task.id}"] .owner-cell`);
+    if (newCell) showOwnerPicker(newCell, task);
+  });
+  setTimeout(() => {
+    const handler = (e) => {
+      if (!picker.contains(e.target) && !e.target.closest('.owner-cell')) {
+        picker.remove();
+        document.removeEventListener('click', handler);
+      }
+    };
+    document.addEventListener('click', handler);
+  }, 10);
+}
+function showDayPicker(cell, task) {
+  if (!STATE.canEdit) return;
+  closePickers();
+  const days = {};
+  TASKS.forEach(t => { days[t.dayKey] = {dayKey:t.dayKey, day:t.day, dayLabel:t.dayLabel, daySub:t.daySub, phase:t.phase}; });
+  const list = Object.values(days).sort((a,b)=>a.day-b.day);
+  const picker = document.createElement('div');
+  picker.className = 'day-picker';
+  picker.innerHTML = `
+    <div class="picker-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-tertiary);padding:6px 10px 4px;">Mover a día</div>
+    ${list.map(d => {
+      const sel = d.dayKey === task.dayKey ? 'selected' : '';
+      return `<div class="opt ${sel}" data-day-key="${d.dayKey}">${d.dayLabel}<span class="day-sub">${escapeHtml(d.daySub)}</span></div>`;
+    }).join('')}`;
+  const rect = cell.getBoundingClientRect();
+  picker.style.left = (rect.left + window.scrollX) + 'px';
+  picker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  document.body.appendChild(picker);
+  picker.addEventListener('click', e => {
+    const opt = e.target.closest('.opt'); if (!opt) return;
+    const newKey = opt.dataset.dayKey;
+    const target = list.find(d => d.dayKey === newKey); if (!target) return;
+    task.dayKey = target.dayKey; task.day = target.day;
+    task.dayLabel = target.dayLabel; task.daySub = target.daySub; task.phase = target.phase;
+    scheduleSave(); rerender(); picker.remove();
+  });
+  setTimeout(() => {
+    const handler = (e) => {
+      if (!picker.contains(e.target) && !e.target.closest('.day-cell')) {
+        picker.remove();
+        document.removeEventListener('click', handler);
+      }
+    };
+    document.addEventListener('click', handler);
+  }, 10);
+}
+
+/* ============================================
+   CRUD
+   ============================================ */
+function addTaskToDay(meta) {
+  if (!STATE.canEdit) return;
+  const id = nextId();
+  TASKS.push({
+    id,
+    day: parseFloat(meta.day),
+    dayKey: meta.dayKey,
+    dayLabel: meta.dayLabel,
+    daySub: meta.daySub,
+    phase: parseInt(meta.phase, 10),
+    title: '', sub: '', owners: ['tbd'],
+    client: false, reg: '', notas: ''
+  });
+  scheduleSave(); rerender();
+  setTimeout(() => {
+    const row = document.querySelector(`.task-row[data-id="${id}"]`);
+    if (row) {
+      const title = row.querySelector('.task-name');
+      if (title) { title.focus(); document.execCommand('selectAll', false, null); }
+      row.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+  }, 50);
+}
+function addNewDay() {
+  if (!STATE.canEdit) return;
+  const dayInput = prompt('Etiqueta del nuevo día (ej. "Día 9"):');
+  if (!dayInput) return;
+  const dayNumMatch = dayInput.match(/(\d+)/);
+  const dayNum = dayNumMatch ? parseInt(dayNumMatch[1], 10) : (Math.max(...TASKS.map(t => t.day)) + 1);
+  const sub = prompt('Sub-etiqueta:') || '';
+  const phase = prompt('Fase (1, 2, 3 o 4):', '2') || '2';
+  const dayKey = 'd' + dayNum + '_' + Date.now().toString(36).slice(-4);
+  addTaskToDay({ day: dayNum, dayKey, dayLabel: dayInput, daySub: sub, phase });
+}
+function deleteTask(id) {
+  if (!STATE.canEdit) return;
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  const idx = TASKS.findIndex(t => t.id === id);
+  if (idx >= 0) TASKS.splice(idx, 1);
+  STATE.selectedIds.delete(id);
+  scheduleSave(); rerender(); updateBulkBar();
+}
+function bulkDelete() {
+  if (!STATE.canEdit) return;
+  if (!STATE.selectedIds.size) return;
+  if (!confirm(`¿Eliminar ${STATE.selectedIds.size} tareas seleccionadas?`)) return;
+  TASKS = TASKS.filter(t => !STATE.selectedIds.has(t.id));
+  STATE.selectedIds.clear();
+  scheduleSave(); rerender(); updateBulkBar();
+}
+
+/* ============================================
+   EVENT WIRING
+   ============================================ */
+document.querySelectorAll('.member-chip').forEach(chip => {
+  const txt = chip.textContent.trim().toLowerCase();
+  const map = {'alex':'alex','mel':'mel','valentina':'valentina','valentín':'valentin','joaquín':'joaquin','camilo':'camilo','damián':'damian'};
+  const ownerKey = Object.keys(map).find(k => txt.includes(k));
+  const owner = map[ownerKey];
+  if (!owner) return;
+  chip.dataset.owner = owner;
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('active');
+    if (chip.classList.contains('active')) STATE.activeOwners.add(owner);
+    else STATE.activeOwners.delete(owner);
+    rerender();
+  });
+});
+
+const clientToggle = document.querySelector('.toggle-pill');
+clientToggle.addEventListener('click', () => {
+  clientToggle.classList.toggle('active');
+  STATE.clientOnly = clientToggle.classList.contains('active');
+  rerender();
+});
+
+const searchInput = document.getElementById('search-input');
+searchInput.addEventListener('input', e => {
+  STATE.search = e.target.value;
+  rerender();
+});
+
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    STATE.view = tab.dataset.view;
+    document.querySelectorAll('.view-pane').forEach(p => {
+      p.hidden = p.dataset.pane !== STATE.view;
+    });
+  });
+});
+
+document.querySelectorAll('#density-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#density-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    STATE.density = btn.dataset.density;
+    renderTabla();
+  });
+});
+
+document.querySelectorAll('.tabla thead th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.sort;
+    if (STATE.sortBy === col) STATE.sortDir = STATE.sortDir === 'asc' ? 'desc' : 'asc';
+    else { STATE.sortBy = col; STATE.sortDir = 'asc'; }
+    document.querySelectorAll('.tabla thead th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+    th.classList.add('sort-' + STATE.sortDir);
+    renderTabla();
+  });
+});
+
+const tablaBody = document.getElementById('tabla-body');
+tablaBody.addEventListener('click', e => {
+  const grp = e.target.closest('.day-group');
+  if (grp && !e.target.closest('input, button')) {
+    const k = grp.dataset.day;
+    if (STATE.collapsedDays.has(k)) STATE.collapsedDays.delete(k);
+    else STATE.collapsedDays.add(k);
+    renderTabla();
+    return;
+  }
+  const cb = e.target.closest('input[type=checkbox]');
+  if (cb && cb.dataset.id && STATE.canEdit) {
+    const id = parseInt(cb.dataset.id, 10);
+    if (cb.checked) STATE.selectedIds.add(id);
+    else STATE.selectedIds.delete(id);
+    cb.closest('tr').classList.toggle('selected', cb.checked);
+    updateBulkBar();
+    return;
+  }
+  const actor = e.target.closest('[data-action]');
+  if (!actor) return;
+  const action = actor.dataset.action;
+  const row = actor.closest('.task-row');
+  const t = row ? findTask(parseInt(row.dataset.id, 10)) : null;
+
+  if (action === 'edit-owner' && t) showOwnerPicker(actor, t);
+  else if (action === 'edit-day' && t) showDayPicker(actor, t);
+  else if (action === 'toggle-client' && t) {
+    t.client = !t.client; scheduleSave(); rerender();
+  }
+  else if (action === 'delete-row' && t) deleteTask(t.id);
+  else if (action === 'add-task') {
+    addTaskToDay({
+      day: actor.dataset.day, dayKey: actor.dataset.dayKey,
+      dayLabel: actor.dataset.dayLabel, daySub: actor.dataset.daySub,
+      phase: actor.dataset.phase
+    });
+  } else if (action === 'add-day') addNewDay();
+});
+
+tablaBody.addEventListener('blur', e => {
+  const el = e.target;
+  if (!el.matches || !el.matches('[contenteditable]')) return;
+  if (!STATE.canEdit) return;
+  const row = el.closest('.task-row'); if (!row) return;
+  const t = findTask(parseInt(row.dataset.id, 10)); if (!t) return;
+  const field = el.dataset.field;
+  const val = el.textContent.trim();
+  if (t[field] === val) return;
+  t[field] = val;
+  scheduleSave();
+  renderTimeline(); renderKanban(); updateStatusBar();
+}, true);
+
+tablaBody.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('[contenteditable]')) {
+    e.preventDefault(); e.target.blur();
+  }
+  if (e.key === 'Escape' && e.target.matches && e.target.matches('[contenteditable]')) {
+    e.target.blur();
+  }
+});
+
+document.getElementById('check-all').addEventListener('change', e => {
+  if (!STATE.canEdit) { e.target.checked = false; return; }
+  if (e.target.checked) visibleTasks().forEach(t => STATE.selectedIds.add(t.id));
+  else STATE.selectedIds.clear();
+  renderTabla(); updateBulkBar();
+});
+
+document.getElementById('bulk-delete').addEventListener('click', bulkDelete);
+
+function updateBulkBar() {
+  const n = STATE.selectedIds.size;
+  document.getElementById('bulk-count').textContent = n;
+  document.getElementById('bulk-bar').style.display = (n && STATE.canEdit) ? 'flex' : 'none';
+}
+
+document.getElementById('btn-export').addEventListener('click', exportCSV);
+document.getElementById('btn-reset').addEventListener('click', resetData);
+
+/* ============================================
+   INIT
+   ============================================ */
+async function init() {
+  STATE.user = getCurrentUser();
+  refreshAuthUI();
+
+  const loaded = await loadFromSupabase();
+  if (!loaded) {
+    // Empty playbook in cloud.
+    if (STATE.canEdit) {
+      // Bootstrap from defaults and save
+      TASKS = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+      await saveToSupabase();
+    } else {
+      // Viewer with no data: show defaults read-only as preview
+      TASKS = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+    }
+  }
+
+  document.querySelector('.tabla thead th[data-sort="day"]').classList.add('sort-asc');
+  rerender();
+}
+
+init();
+</script>
+
+</body>
+</html>

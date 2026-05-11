@@ -10,6 +10,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("Media");
   eleventyConfig.addPassthroughCopy("assets");
   eleventyConfig.addPassthroughCopy("arquetipo");
+  eleventyConfig.addPassthroughCopy("playbook");
   eleventyConfig.addPassthroughCopy("macbook_laptop.glb");
   eleventyConfig.addPassthroughCopy("videonuevo_dashboard.mp4");
 
