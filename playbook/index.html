@@ -1203,10 +1203,6 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar CSV
           </button>
-          <button class="toolbar-action danger editor-only" id="btn-reset" data-help="Descartar todos los cambios">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-            Reset
-          </button>
         </div>
       </div>
       <div class="tabla-wrap custom-scroll">
@@ -1214,10 +1210,10 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
           <thead>
             <tr>
               <th class="check-col"><input type="checkbox" id="check-all"></th>
-              <th class="sortable" data-sort="day">Día <span class="sort-ind">▼</span></th>
-              <th class="sortable" data-sort="title">Tarea <span class="sort-ind">▼</span></th>
-              <th class="sortable" data-sort="owner">Responsable <span class="sort-ind">▼</span></th>
-              <th class="sortable" data-sort="client">Impacto <span class="sort-ind">▼</span></th>
+              <th class="sortable" data-sort="day">Día</th>
+              <th class="sortable" data-sort="title">Tarea</th>
+              <th class="sortable" data-sort="owner">Responsable</th>
+              <th class="sortable" data-sort="client">Impacto</th>
               <th>Registrado en</th>
               <th>Notas</th>
               <th class="row-actions"></th>
@@ -2104,7 +2100,6 @@ function updateBulkBar() {
 }
 
 document.getElementById('btn-export').addEventListener('click', exportCSV);
-document.getElementById('btn-reset').addEventListener('click', resetData);
 
 // Toggle all day groups
 document.getElementById('btn-toggle-all').addEventListener('click', () => {
