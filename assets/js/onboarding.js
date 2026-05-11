@@ -50,6 +50,8 @@ function getCategoriaSelection(categoria) {
 }
 
 function selectAddon(card) {
+  if (card.dataset.comprable === "false") return;
+
   const slug = card.dataset.slug;
   const categoria = card.dataset.categoria;
   const precio_eur = Number(card.dataset.precio || 0);
@@ -169,7 +171,7 @@ function preselectStackDefault() {
     stored.slugs.forEach((slug) => {
       if (!validSlugs.has(slug)) return;
       const card = document.querySelector('.addon-card:not(.tarifa-card)[data-slug="' + CSS.escape(slug) + '"]');
-      if (card) {
+      if (card && card.dataset.comprable !== "false") {
         state.selectionBySlug[slug] = {
           slug,
           categoria: card.dataset.categoria,

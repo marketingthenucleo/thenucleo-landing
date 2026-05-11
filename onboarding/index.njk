@@ -70,16 +70,18 @@ permalink: /onboarding/
     </header>
     <div class="onboarding-grid" role="radiogroup" aria-label="{{ grupo.label }}">
       {% for a in grupo.items %}
-      <label class="addon-card"
+      <label class="addon-card{% if not a.es_comprable %} is-unavailable{% endif %}"
              data-slug="{{ a.slug }}"
              data-categoria="{{ a.categoria }}"
              data-precio="{{ a.precio_eur }}"
              data-nombre="{{ a.nombre }}"
              data-incluido="{{ 'true' if a.es_gratis else 'false' }}"
-             tabindex="0"
+             data-comprable="{{ 'true' if a.es_comprable else 'false' }}"
+             {% if a.es_comprable %}tabindex="0"{% endif %}
              role="radio"
+             {% if not a.es_comprable %}aria-disabled="true"{% endif %}
              aria-checked="false">
-        <input type="radio" name="cat-{{ grupo.categoria }}" value="{{ a.slug }}" tabindex="-1">
+        <input type="radio" name="cat-{{ grupo.categoria }}" value="{{ a.slug }}" tabindex="-1"{% if not a.es_comprable %} disabled{% endif %}>
         <div class="addon-card-header">
           <div class="addon-card-name">{{ a.nombre }}</div>
           <div class="addon-card-check" aria-hidden="true">
@@ -90,6 +92,7 @@ permalink: /onboarding/
         <div class="addon-card-footer">
           <div class="addon-card-price">{{ a.precio_label }}</div>
           {% if a.es_gratis %}<div class="addon-card-included-tag">Stack TheNucleo</div>{% endif %}
+          {% if not a.es_comprable %}<div class="addon-card-unavailable-tag">Próximamente</div>{% endif %}
         </div>
       </label>
       {% endfor %}

@@ -198,6 +198,31 @@
   background: var(--accent-primary-muted);
   color: var(--accent-primary);
 }
+.addon-card-unavailable-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.16);
+  color: rgba(203, 213, 225, 0.85);
+}
+
+/* Unavailable state — no clickable, opacity reducida, "Solicitar" en precio */
+.addon-card.is-unavailable {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.addon-card.is-unavailable .addon-card-price {
+  color: rgba(203, 213, 225, 0.75);
+  font-weight: 600;
+  font-style: italic;
+}
+.addon-card.is-unavailable .addon-card-check {
+  display: none;
+}
 
 /* Selected state */
 .addon-card.is-selected {

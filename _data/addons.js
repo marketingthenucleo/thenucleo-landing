@@ -38,18 +38,29 @@ module.exports = async () => {
       return empty;
     }
     const rows = await res.json();
-    const items = rows.map((r) => ({
-      slug: r.slug,
-      nombre: r.nombre,
-      categoria: r.categoria,
-      categoriaLabel: CATEGORIA_LABELS[r.categoria] || r.categoria,
-      precio_eur: Number(r.precio_eur || 0),
-      precio_label: Number(r.precio_eur) === 0 ? "Incluido" : Number(r.precio_eur).toLocaleString("es-ES") + " €",
-      es_gratis: Number(r.precio_eur || 0) === 0,
-      descripcion: r.descripcion || "",
-      stripe_price_id: r.stripe_price_id || null,
-      orden: r.orden,
-    }));
+    const items = rows.map((r) => {
+      const precio_eur = Number(r.precio_eur || 0);
+      const es_gratis = precio_eur === 0;
+      const tiene_price = !!r.stripe_price_id;
+      const es_comprable = es_gratis || tiene_price;
+      let precio_label;
+      if (es_gratis) precio_label = "Incluido";
+      else if (tiene_price) precio_label = precio_eur.toLocaleString("es-ES") + " €";
+      else precio_label = "Solicitar";
+      return {
+        slug: r.slug,
+        nombre: r.nombre,
+        categoria: r.categoria,
+        categoriaLabel: CATEGORIA_LABELS[r.categoria] || r.categoria,
+        precio_eur,
+        precio_label,
+        es_gratis,
+        es_comprable,
+        descripcion: r.descripcion || "",
+        stripe_price_id: r.stripe_price_id || null,
+        orden: r.orden,
+      };
+    });
 
     const byCategoria = {};
     for (const it of items) {
