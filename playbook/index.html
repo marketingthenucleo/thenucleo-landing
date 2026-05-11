@@ -1180,6 +1180,11 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
           <button data-density="dense">Compacto</button>
         </div>
 
+        <button class="toolbar-action" id="btn-toggle-all" data-help="Plegar o desplegar todos los días a la vez">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          <span id="toggle-all-label">Plegar todos</span>
+        </button>
+
         <div class="save-indicator editor-only" id="save-indicator">
           <span class="save-dot"></span>
           <span class="save-text">Sin cambios</span>
@@ -2100,6 +2105,22 @@ function updateBulkBar() {
 
 document.getElementById('btn-export').addEventListener('click', exportCSV);
 document.getElementById('btn-reset').addEventListener('click', resetData);
+
+// Toggle all day groups
+document.getElementById('btn-toggle-all').addEventListener('click', () => {
+  const allDayKeys = [...new Set(TASKS.map(t => t.dayKey))];
+  const anyOpen = allDayKeys.some(k => !STATE.collapsedDays.has(k));
+  if (anyOpen) {
+    // collapse all
+    allDayKeys.forEach(k => STATE.collapsedDays.add(k));
+    document.getElementById('toggle-all-label').textContent = 'Desplegar todos';
+  } else {
+    // expand all
+    STATE.collapsedDays.clear();
+    document.getElementById('toggle-all-label').textContent = 'Plegar todos';
+  }
+  renderTabla();
+});
 
 /* ============================================
    INIT
