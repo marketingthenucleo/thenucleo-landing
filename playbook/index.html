@@ -1319,7 +1319,10 @@ const SUPABASE = createClient(window.__SUPABASE_URL__, window.__SUPABASE_ANON_KE
   }
 });
 
-const EDITOR_EMAIL = "benjamin.sanchis@thenucleo.com";
+const EDITOR_EMAILS = new Set([
+  "benjamin.sanchis@thenucleo.com",
+  "alejandro.lopez@thenucleo.com",
+]);
 const STORAGE_KEY = "thenucleo-comunidad-auth";
 const PLAYBOOK_SLUG = "default";
 
@@ -1476,8 +1479,8 @@ const STATE = {
    ============================================ */
 function refreshAuthUI() {
   const u = STATE.user;
-  const isBen = u && u.email && u.email.toLowerCase() === EDITOR_EMAIL.toLowerCase();
-  STATE.canEdit = !!isBen;
+  const isEditor = u && u.email && EDITOR_EMAILS.has(u.email.toLowerCase());
+  STATE.canEdit = !!isEditor;
   document.body.classList.toggle('viewer', !STATE.canEdit);
   document.body.classList.toggle('editor', STATE.canEdit);
 
@@ -1496,7 +1499,7 @@ function refreshAuthUI() {
   } else {
     pill.classList.remove('editor'); pill.classList.add('viewer');
     pillLabel.textContent = u ? 'Solo lectura' : 'Vista pública';
-    meta.textContent = u ? (u.email + ' · solo Ben puede editar') : '';
+    meta.textContent = u ? (u.email + ' · sin permisos de edición') : '';
     btnLogin.style.display = '';
     btnLogout.style.display = u ? '' : 'none';
   }
