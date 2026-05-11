@@ -350,6 +350,13 @@ async function submitCheckout(ev) {
     return;
   }
 
+  const couponInpEl = document.getElementById("onb-coupon-input");
+  const typedCoupon = couponInpEl ? (couponInpEl.value || "").trim() : "";
+  if (typedCoupon && (!state.coupon || state.coupon.codigo.toLowerCase() !== typedCoupon.toLowerCase())) {
+    await applyCoupon();
+    if (!state.coupon) return;
+  }
+
   const email = document.getElementById("onb-email").value.trim();
   const agencia = document.getElementById("onb-agencia").value.trim();
   const slugs = Object.keys(state.selectionBySlug);
@@ -429,8 +436,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const modalOverlay = document.getElementById("onb-modal");
   if (modalOverlay) {
+    const modalInner = modalOverlay.querySelector(".onboarding-modal");
+    if (modalInner) modalInner.addEventListener("click", function (e) { e.stopPropagation(); });
     modalOverlay.addEventListener("click", function (e) {
-      if (e.target === modalOverlay) closeModal();
+      if (!e.target.closest(".onboarding-modal")) closeModal();
     });
   }
   document.addEventListener("keydown", function (e) {
