@@ -2268,18 +2268,29 @@ document.getElementById('btn-toggle-all').addEventListener('click', () => {
    INIT
    ============================================ */
 async function init() {
+  // Si venimos del callback OAuth (#access_token=...), esperar a que
+  // el cliente Supabase JS procese el hash y guarde la sesión en localStorage.
+  // Sin esto, el primer paint queda como "viewer" hasta refrescar.
+  if (window.location.hash.includes('access_token')) {
+    for (let i = 0; i < 30; i++) {
+      if (readStoredSession()?.user) break;
+      await new Promise(r => setTimeout(r, 100));
+    }
+    // Limpiar el hash para que la URL quede sin token tras el callback.
+    try {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch {}
+  }
+
   STATE.user = getCurrentUser();
   refreshAuthUI();
 
   const loaded = await loadFromSupabase();
   if (!loaded) {
-    // Empty playbook in cloud.
     if (STATE.canEdit) {
-      // Bootstrap from defaults and save
       TASKS = JSON.parse(JSON.stringify(DEFAULT_TASKS));
       await saveToSupabase();
     } else {
-      // Viewer with no data: show defaults read-only as preview
       TASKS = JSON.parse(JSON.stringify(DEFAULT_TASKS));
     }
   }
@@ -2287,6 +2298,23 @@ async function init() {
   document.querySelector('.tabla thead th[data-sort="day"]').classList.add('sort-asc');
   rerender();
 }
+
+// Listener post-init: si la sesión cambia mientras está abierta la página
+// (login en otra pestaña, refresh-token, OAuth tardío), repintar la UI.
+SUPABASE.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN') {
+    STATE.user = session?.user || readStoredSession()?.user || null;
+    if (window.location.hash.includes('access_token')) {
+      try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch {}
+    }
+    refreshAuthUI();
+    loadFromSupabase().then(() => rerender());
+  } else if (event === 'SIGNED_OUT') {
+    STATE.user = null;
+    refreshAuthUI();
+    rerender();
+  }
+});
 
 init();
 </script>
