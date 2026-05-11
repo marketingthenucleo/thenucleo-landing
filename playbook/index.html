@@ -1106,6 +1106,216 @@ body.viewer .tabla input[type=checkbox] { display: none !important; }
 }
 
 
+/* ============================================
+   NEW · Auto column, lock, phase picker, sub-bullets, sticky phase
+   ============================================ */
+
+/* Auto column (40px) */
+.tabla thead th.auto-col { width: 44px; text-align: center; padding: 10px 6px; }
+.tabla thead th.fija-col { width: 36px; text-align: center; padding: 10px 6px; }
+.tabla td.auto-cell, .tabla td.fija-cell {
+  text-align: center; padding: 8px 4px;
+  cursor: pointer; user-select: none;
+}
+.tabla td.auto-cell .auto-icon, .tabla td.fija-cell .lock-icon {
+  width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 120ms;
+  opacity: 0.25;
+}
+.tabla td.auto-cell.is-auto .auto-icon {
+  opacity: 1;
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+}
+.tabla td.fija-cell.is-fija .lock-icon {
+  opacity: 1;
+  background: var(--status-violet-bg);
+  color: var(--status-violet);
+}
+.tabla td.auto-cell:hover .auto-icon,
+.tabla td.fija-cell:hover .lock-icon { opacity: 0.85; }
+body.viewer .tabla td.auto-cell,
+body.viewer .tabla td.fija-cell { cursor: default; pointer-events: none; }
+
+/* Phase cell — small pill in day-group header */
+.day-group .phase-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 12px;
+  padding: 2px 8px;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  text-transform: none; letter-spacing: 0;
+  border-radius: 999px;
+  background: var(--bg-active); color: var(--text-secondary);
+  cursor: pointer; user-select: none;
+}
+.day-group .phase-tag:hover { background: var(--accent-secondary-muted); color: var(--accent-secondary); }
+body.viewer .day-group .phase-tag { cursor: default; pointer-events: none; }
+
+/* Day-group lock indicator (when all rows of the day are fija) */
+.day-group .day-lock {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px;
+  font-size: 11px; color: var(--status-violet);
+  text-transform: none; letter-spacing: 0; font-weight: 500;
+}
+
+/* Auto picker (popover) */
+.auto-picker {
+  position: absolute;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  z-index: 1000; min-width: 280px;
+  padding: 10px;
+  animation: popIn 150ms var(--ease-out);
+}
+.auto-picker .picker-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-tertiary);
+  padding: 0 0 6px;
+}
+.auto-picker .toggle-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 4px; cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 100ms;
+}
+.auto-picker .toggle-row:hover { background: var(--bg-hover); }
+.auto-picker .toggle-switch {
+  width: 32px; height: 18px;
+  background: var(--bg-active);
+  border-radius: 999px;
+  position: relative; flex-shrink: 0;
+  transition: background 150ms;
+}
+.auto-picker .toggle-switch::after {
+  content: ''; position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: var(--text-tertiary);
+  border-radius: 50%;
+  transition: all 150ms;
+}
+.auto-picker.is-on .toggle-switch {
+  background: var(--status-warning);
+}
+.auto-picker.is-on .toggle-switch::after {
+  left: 16px; background: #fff;
+}
+.auto-picker .toggle-label { font-size: 13px; color: var(--text-primary); }
+.auto-picker .como-textarea {
+  width: 100%; min-height: 80px;
+  padding: 8px 10px; margin-top: 6px;
+  font-family: var(--font-ui); font-size: 12px; line-height: 1.5;
+  color: var(--text-primary); background: var(--bg-base);
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  resize: vertical; outline: none;
+}
+.auto-picker .como-textarea:focus { border-color: var(--accent-secondary); }
+.auto-picker .como-textarea[disabled] { opacity: 0.4; cursor: not-allowed; }
+.auto-picker .como-label {
+  display: block;
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-top: 10px;
+}
+
+/* Phase picker (popover) */
+.phase-picker {
+  position: absolute;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  z-index: 1000; min-width: 280px;
+  padding: 6px;
+  animation: popIn 150ms var(--ease-out);
+}
+.phase-picker .picker-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-tertiary);
+  padding: 6px 10px 4px;
+}
+.phase-picker .opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 12.5px;
+  color: var(--text-primary);
+}
+.phase-picker .opt:hover { background: var(--bg-hover); }
+.phase-picker .opt.selected {
+  background: var(--accent-secondary-muted);
+  font-weight: 500; color: var(--accent-secondary);
+}
+
+/* Day-sub editable (inline contenteditable on day-group header) */
+.tabla tr.day-group .group-sub[contenteditable] {
+  cursor: text;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin: -1px -6px;
+  display: inline-block;
+}
+.tabla tr.day-group .group-sub[contenteditable]:hover { background: var(--bg-active); }
+.tabla tr.day-group .group-sub[contenteditable]:focus {
+  outline: none;
+  background: var(--bg-base);
+  box-shadow: 0 0 0 2px var(--accent-secondary);
+}
+
+/* Sub bullets render as visible list */
+.tabla .sub-bullets {
+  display: block;
+  margin-top: 4px;
+  padding-left: 0;
+  list-style: none;
+}
+.tabla .sub-bullets li {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  padding: 1px 0 1px 14px;
+  position: relative;
+}
+.tabla .sub-bullets li::before {
+  content: '·';
+  position: absolute; left: 4px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+.tabla.dense .sub-bullets { display: none; }
+
+/* Filter chips for fija/auto (extend existing .toggle-pill) */
+.toggle-pill.is-fija.active {
+  background: var(--status-violet-bg); border-color: var(--status-violet);
+  color: var(--status-violet);
+}
+.toggle-pill.is-auto.active {
+  background: var(--status-warning-bg); border-color: var(--status-warning);
+  color: var(--status-warning);
+}
+
+/* Day-cell lock badge inline */
+.tabla td.day-cell .day-cell-lock {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--status-violet);
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* Group chip — fija/auto extension */
+.tabla tr.day-group .group-chip.fija { background: var(--status-violet-bg); color: var(--status-violet); }
+.tabla tr.day-group .group-chip.auto { background: var(--status-warning-bg); color: var(--status-warning); }
+
 /* Responsive */
 @media (max-width: 900px) {
   .playbook-stats { gap: 6px; }
@@ -1184,9 +1394,17 @@ body.viewer .tabla input[type=checkbox] { display: none !important; }
       <span class="member-chip active"><span class="member-dot" style="background:#ef4444;">D</span>Damián</span>
       <span class="member-chip active"><span class="member-dot" style="background:#14b8a6;">V</span>Valeria</span>
       <div class="filter-divider"></div>
-      <span class="toggle-pill">
+      <span class="toggle-pill" data-toggle="client">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         Solo impacto cliente
+      </span>
+      <span class="toggle-pill is-fija" data-toggle="fija" title="Solo tareas con fecha fija (no modificable)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Solo fechas fijas
+      </span>
+      <span class="toggle-pill is-auto" data-toggle="auto" title="Solo tareas marcadas como automatizables">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Solo automatizables
       </span>
     </section>
 
@@ -1255,10 +1473,12 @@ body.viewer .tabla input[type=checkbox] { display: none !important; }
             <tr>
               <th class="check-col"><input type="checkbox" id="check-all"></th>
               <th class="sortable" data-sort="day">Día</th>
+              <th class="sortable fija-col" data-sort="fija" title="Fecha no modificable">🔒</th>
               <th class="sortable" data-sort="title">Tarea</th>
               <th class="sortable" data-sort="owner">Responsable</th>
               <th class="sortable" data-sort="est">Estim.</th>
               <th class="sortable" data-sort="client">Impacto</th>
+              <th class="sortable auto-col" data-sort="auto" title="Automatizable">⚡</th>
               <th>Registrado en</th>
               <th>Notas</th>
               <th class="row-actions"></th>
@@ -1353,98 +1573,94 @@ const PHASES = {
   7: 'Fase 7 · Mes 4 · continuidad',
 };
 
+// Dataset generado desde CSV "OFERTA SERVICIOS · CONTROL DEFINITIVO V1" (2026-05-11).
+// 84 tareas · 49 días · 7 fases · 3 campos nuevos: fechaFija, automatizable, comoAuto.
+// Si el row existe en Supabase, este array NO se usa — solo es semilla inicial / fallback offline.
 const DEFAULT_TASKS = [
-  // ============ FASE 1 · Pre-onboarding ============
-  {id:1,  day:0,    dayKey:'d0',     dayLabel:'Día 0',          daySub:'Cierre venta',                 phase:1, title:'Correo de bienvenida y presentación', sub:'', owners:['alex'],  client:true,  reg:'Plantilla email · automatización calendario', notas:'', est:'10'},
-  {id:2,  day:0,    dayKey:'d0',     dayLabel:'Día 0',          daySub:'Cierre venta',                 phase:1, title:'Email confirmando día de onboarding', sub:'Material a traer + fotos/vídeos en carpeta', owners:['mel'], client:true, reg:'Doc requisitos pre-onboarding', notas:'', est:'Auto'},
-  {id:3,  day:0,    dayKey:'d0',     dayLabel:'Día 0',          daySub:'Cierre venta',                 phase:1, title:'Grabación Loom interno del proyecto', sub:'Envío a Mel y Valentina', owners:['alex'], client:false, reg:'', notas:'', est:'15'},
-  {id:4,  day:0.5,  dayKey:'dseg',   dayLabel:'Seguimiento',    daySub:'Entre cierre y onboarding',    phase:1, title:'Llamada de seguimiento al cliente', sub:'Si no rellenó formulario o ficha', owners:['mel'], client:true, reg:'', notas:'', est:'20'},
-
-  // ============ FASE 2 · Onboarding + análisis ============
-  {id:5,  day:1,    dayKey:'d1',     dayLabel:'Día 1',          daySub:'Sesión onboarding',            phase:2, title:'Sesión de onboarding teórico + técnico', sub:'Entrevista, expectativas, accesos (Meta/Google/GTM/GA/GMB), DNS, RRSS, agendar próxima reunión', owners:['mel'], client:true, reg:'Pdte. Doc ficha cliente', notas:'', est:'90'},
-  {id:6,  day:1,    dayKey:'d1',     dayLabel:'Día 1',          daySub:'Sesión onboarding',            phase:2, title:'Crear grupo de WhatsApp y chat de Google', sub:'', owners:['mel'], client:false, reg:'', notas:'', est:'15'},
-  {id:7,  day:1,    dayKey:'d1',     dayLabel:'Día 1',          daySub:'Sesión onboarding',            phase:2, title:'Enviar recap interno del cliente', sub:'', owners:['mel'], client:false, reg:'', notas:'', est:'30'},
-  {id:8,  day:2,    dayKey:'d2',     dayLabel:'Día 2',          daySub:'Planificación',                phase:2, title:'Planificación de tareas del cliente en Notion', sub:'', owners:['valentina'], client:false, reg:'Notion · plantilla cliente', notas:'', est:'90'},
-  {id:9,  day:3,    dayKey:'d3',     dayLabel:'Día 3',          daySub:'Análisis + briefing',          phase:2, title:'Enviar Píldora X por WhatsApp', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:10, day:3,    dayKey:'d3',     dayLabel:'Día 3',          daySub:'Análisis + briefing',          phase:2, title:'Análisis inicial con la plataforma', sub:'', owners:['valentina'], client:false, reg:'', notas:'', est:'30'},
-  {id:11, day:3,    dayKey:'d3',     dayLabel:'Día 3',          daySub:'Análisis + briefing',          phase:2, title:'Briefing con ángulos de venta para diseño', sub:'Envío al equipo creativo', owners:['valentina'], client:false, reg:'', notas:'', est:'30'},
-  {id:12, day:3,    dayKey:'d3',     dayLabel:'Día 3',          daySub:'Análisis + briefing',          phase:2, title:'Redacción primer email de confirmación', sub:'', owners:['valentina'], client:false, reg:'', notas:'', est:'15'},
-  {id:13, day:3,    dayKey:'d3',     dayLabel:'Día 3',          daySub:'Análisis + briefing',          phase:2, title:'Creación del documento Ficha Cliente', sub:'', owners:['valentina'], client:false, reg:'', notas:'', est:'30'},
-  {id:14, day:4,    dayKey:'d4',     dayLabel:'Día 4',          daySub:'Producción + CRM',             phase:2, title:'Diseño de estáticos', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:'90'},
-  {id:15, day:4,    dayKey:'d4',     dayLabel:'Día 4',          daySub:'Producción + CRM',             phase:2, title:'Diseño de vídeo', sub:'', owners:['joaquin'], client:false, reg:'', notas:'', est:'90'},
-  {id:16, day:4,    dayKey:'d4',     dayLabel:'Día 4',          daySub:'Producción + CRM',             phase:2, title:'Montar el CRM (GHL)', sub:'Subcuenta, DNS, pipeline inicial, flujos contacto/oportunidad', owners:['camilo'], client:false, reg:'', notas:'', est:'90'},
-  {id:17, day:4,    dayKey:'d4',     dayLabel:'Día 4',          daySub:'Producción + CRM',             phase:2, title:'Preparar presentación de buyer persona', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'60'},
-  {id:18, day:5,    dayKey:'d5',     dayLabel:'Día 5',          daySub:'Pulso cliente',                phase:2, title:'Enviar Píldora Y por WhatsApp', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:19, day:6,    dayKey:'d6',     dayLabel:'Día 6',          daySub:'Análisis grabado',             phase:2, title:'Grabación del análisis inicial + presentación estáticos y vídeos', sub:'', owners:['valentina'], client:false, reg:'', notas:'', est:'30'},
-  {id:20, day:7,    dayKey:'d7',     dayLabel:'Día 7',          daySub:'Entrega análisis',             phase:2, title:'Enviar grabación de Valentina al cliente', sub:'', owners:['mel'], client:true, reg:'Pdte. Docx del análisis', notas:'', est:'15'},
-
-  // ============ FASE 3 · Setup + lanzamiento (Meta + Google) ============
-  {id:21, day:8,    dayKey:'d8',     dayLabel:'Día 8',          daySub:'Setup Meta',                   phase:3, title:'Configuración técnica de Meta Ads', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'90'},
-  {id:22, day:8,    dayKey:'d8',     dayLabel:'Día 8',          daySub:'Setup Meta',                   phase:3, title:'Conectar Meta y GHL', sub:'', owners:['damian','camilo'], client:false, reg:'', notas:'', est:'60'},
-  {id:23, day:10,   dayKey:'d10',    dayLabel:'Día 10',         daySub:'Iteración creativa',           phase:3, title:'Correcciones de diseño en vídeo y estáticos', sub:'', owners:['valentin','joaquin'], client:false, reg:'', notas:'', est:'90'},
-  {id:24, day:11,   dayKey:'d11',    dayLabel:'Día 11',         daySub:'Entrega correcciones',         phase:3, title:'Envío del material corregido al cliente', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:25, day:12,   dayKey:'d12',    dayLabel:'Día 12',         daySub:'Programación Meta',            phase:3, title:'Programación de campañas en Meta', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'60'},
-  {id:26, day:13,   dayKey:'d13',    dayLabel:'Día 13',         daySub:'KW + Google Ads',              phase:3, title:'Análisis de KW para Google Ads', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'60'},
-  {id:27, day:13,   dayKey:'d13',    dayLabel:'Día 13',         daySub:'KW + Google Ads',              phase:3, title:'Enviar análisis de KW al cliente', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:28, day:13,   dayKey:'d13',    dayLabel:'Día 13',         daySub:'KW + Google Ads',              phase:3, title:'Configuración técnica de Google Ads', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'120'},
-  {id:29, day:15,   dayKey:'d15',    dayLabel:'Día 15',         daySub:'Correcciones KW',              phase:3, title:'Aplicar cambios y correcciones del cliente de KW', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'60'},
-  {id:30, day:16,   dayKey:'d16',    dayLabel:'Día 16',         daySub:'Lanzamiento Meta',             phase:3, title:'Lanzar los anuncios en Meta', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'15'},
-  {id:31, day:16,   dayKey:'d16',    dayLabel:'Día 16',         daySub:'Lanzamiento Meta',             phase:3, title:'Notificar al cliente que los anuncios en Meta han sido lanzados', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:32, day:17,   dayKey:'d17',    dayLabel:'Día 17',         daySub:'Lanzamiento Google',           phase:3, title:'Lanzar los anuncios de Google Ads', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'15'},
-  {id:33, day:18,   dayKey:'d18',    dayLabel:'Día 18',         daySub:'Lanzamiento Google',           phase:3, title:'Notificar al cliente que los anuncios en Google han sido lanzados', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-
-  // ============ FASE 4 · Mes 1 · GMB + planificación Mes 2 ============
-  {id:34, day:19,   dayKey:'d19_25', dayLabel:'Día 19-25',      daySub:'Seguimiento Mes 1',            phase:4, title:'Ventana de impactos y seguimientos', sub:'Día 19 al 25 — actividad recurrente de Mel: pulsos al cliente y seguimientos.', owners:['mel'], client:true, reg:'', notas:'', est:''},
-  {id:35, day:20,   dayKey:'d20',    dayLabel:'Día 20',         daySub:'Optimización GMB',             phase:4, title:'Optimizar perfil de GMB', sub:'', owners:['damian'], client:false, reg:'', notas:'', est:'60'},
-  {id:36, day:20,   dayKey:'d20',    dayLabel:'Día 20',         daySub:'Optimización GMB',             phase:4, title:'Notificar al cliente que el perfil de GMB ha sido optimizado', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:37, day:25,   dayKey:'d25',    dayLabel:'Día 25',         daySub:'Planificación Mes 2',          phase:4, title:'Reunión de planificación calendario de Mes 2', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'60'},
-  {id:38, day:26,   dayKey:'d26',    dayLabel:'Día 26',         daySub:'Producción Mes 2',             phase:4, title:'Organización tareas Mes 2', sub:'', owners:['valentina'], client:false, reg:'', notas:'', est:'90'},
-  {id:39, day:27,   dayKey:'d27',    dayLabel:'Día 27',         daySub:'Producción Mes 2',             phase:4, title:'Copys emails (Mes 2)', sub:'', owners:['valeria'], client:false, reg:'', notas:'', est:'60'},
-  {id:40, day:28,   dayKey:'d28',    dayLabel:'Día 28',         daySub:'Producción Mes 2',             phase:4, title:'Diseño encabezados copys (Mes 2)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:'90'},
-  {id:41, day:29,   dayKey:'d29',    dayLabel:'Día 29',         daySub:'Producción Mes 2',             phase:4, title:'Maquetar copys en CRM (Mes 2)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:'60'},
-  {id:42, day:30,   dayKey:'d30',    dayLabel:'Día 30',         daySub:'Producción Mes 2',             phase:4, title:'Diseño carruseles RRSS (Mes 2)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:'90'},
-  {id:43, day:30,   dayKey:'d30',    dayLabel:'Día 30',         daySub:'Producción Mes 2',             phase:4, title:'Diseño reel RRSS (Mes 2)', sub:'', owners:['joaquin'], client:false, reg:'', notas:'', est:'90'},
-
-  // ============ FASE 5 · Mes 2 · ejecución + dossiers ============
-  {id:44, day:35,   dayKey:'d35',    dayLabel:'Día 35',         daySub:'Entrega contenido Mes 2',      phase:5, title:'Subir el contenido al calendario Mes 2 (si ha pagado)', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:45, day:37,   dayKey:'d37',    dayLabel:'Día 37',         daySub:'Iteración Mes 2',              phase:5, title:'Ejecutar correcciones del cliente que él no pueda hacer', sub:'', owners:['valentin','joaquin'], client:false, reg:'', notas:'', est:''},
-  {id:46, day:38,   dayKey:'d38',    dayLabel:'Día 38',         daySub:'Programación Mes 2',           phase:5, title:'Programación campañas Email', sub:'', owners:['camilo'], client:false, reg:'', notas:'', est:'60'},
-  {id:47, day:38,   dayKey:'d38',    dayLabel:'Día 38',         daySub:'Programación Mes 2',           phase:5, title:'Programación publicaciones RRSS', sub:'', owners:['joaquin'], client:false, reg:'', notas:'', est:'30'},
-  {id:48, day:38,   dayKey:'d38',    dayLabel:'Día 38',         daySub:'Programación Mes 2',           phase:5, title:'Pedir al cliente que rellene info para dossier de colegios y empresas', sub:'', owners:['mel'], client:true, reg:'Pdte. Doc o guía de recopilación de datos', notas:'', est:''},
-  {id:49, day:39,   dayKey:'d39',    dayLabel:'Día 39',         daySub:'Dossier colegios',             phase:5, title:'Diseño dossier colegios', sub:'', owners:['valentin','joaquin'], client:false, reg:'', notas:'', est:''},
-  {id:50, day:45,   dayKey:'d45',    dayLabel:'Día 45',         daySub:'Entrega dossier colegios',     phase:5, title:'Enviar dossier colegios', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:51, day:46,   dayKey:'d46',    dayLabel:'Día 46',         daySub:'Iteración + dossier empresas', phase:5, title:'Aplicar cambios dossier colegios', sub:'', owners:['valentin','joaquin'], client:false, reg:'', notas:'', est:''},
-  {id:52, day:46,   dayKey:'d46',    dayLabel:'Día 46',         daySub:'Iteración + dossier empresas', phase:5, title:'Diseño dossier empresas', sub:'', owners:['valentin','joaquin'], client:false, reg:'', notas:'', est:''},
-  {id:53, day:50,   dayKey:'d50',    dayLabel:'Día 50',         daySub:'Entrega + OTAs',               phase:5, title:'Enviar dossier empresas', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:'15'},
-  {id:54, day:50,   dayKey:'d50',    dayLabel:'Día 50',         daySub:'Entrega + OTAs',               phase:5, title:'Solicitar info para dar de alta en las OTAs y plataformas de 3os', sub:'', owners:['mel'], client:true, reg:'Doc. y guía de recopilación de datos para OTAs', notas:'', est:''},
-
-  // ============ FASE 6 · Mes 3 · OTAs + calendarios ============
-  {id:55, day:55,   dayKey:'d55',    dayLabel:'Día 55',         daySub:'Planificación Mes 3',          phase:6, title:'Reunión de planificación calendario de Mes 3', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:''},
-  {id:56, day:56,   dayKey:'d56',    dayLabel:'Día 56',         daySub:'Producción Mes 3',             phase:6, title:'Organización tareas Mes 3', sub:'', owners:['valentina'], client:false, reg:'', notas:'', est:''},
-  {id:57, day:57,   dayKey:'d57',    dayLabel:'Día 57',         daySub:'Producción Mes 3',             phase:6, title:'Copys emails (Mes 3)', sub:'', owners:['valeria'], client:false, reg:'', notas:'', est:''},
-  {id:58, day:58,   dayKey:'d58',    dayLabel:'Día 58',         daySub:'Producción Mes 3',             phase:6, title:'Diseño encabezados copys (Mes 3)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:''},
-  {id:59, day:59,   dayKey:'d59',    dayLabel:'Día 59',         daySub:'Producción Mes 3',             phase:6, title:'Maquetar copys en CRM (Mes 3)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:''},
-  {id:60, day:60,   dayKey:'d60',    dayLabel:'Día 60',         daySub:'Producción Mes 3',             phase:6, title:'Diseño carruseles RRSS (Mes 3)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:''},
-  {id:61, day:60,   dayKey:'d60',    dayLabel:'Día 60',         daySub:'Producción Mes 3',             phase:6, title:'Diseño reel RRSS (Mes 3)', sub:'', owners:['joaquin'], client:false, reg:'', notas:'', est:''},
-  {id:62, day:63,   dayKey:'d63',    dayLabel:'Día 63',         daySub:'OTAs · CheckYeti',             phase:6, title:'Dar de alta en CheckYeti', sub:'', owners:['valeria'], client:false, reg:'', notas:'', est:''},
-  {id:63, day:63,   dayKey:'d63',    dayLabel:'Día 63',         daySub:'OTAs · CheckYeti',             phase:6, title:'Notificar cliente de alta en CheckYeti', sub:'', owners:['mel'], client:false, reg:'', notas:'', est:''},
-  {id:64, day:65,   dayKey:'d65',    dayLabel:'Día 65',         daySub:'Entrega Mes 3',                phase:6, title:'Entregar calendario Mes 3 (si ha pagado)', sub:'', owners:['tbd'], client:true, reg:'', notas:'', est:''},
-  {id:65, day:67,   dayKey:'d67',    dayLabel:'Día 67',         daySub:'OTAs · Yumping',               phase:6, title:'Dar de alta en Yumping', sub:'', owners:['valeria'], client:false, reg:'', notas:'', est:''},
-  {id:66, day:67,   dayKey:'d67',    dayLabel:'Día 67',         daySub:'OTAs · Yumping',               phase:6, title:'Notificar cliente de alta en Yumping', sub:'', owners:['mel'], client:false, reg:'', notas:'', est:''},
-  {id:67, day:73,   dayKey:'d73',    dayLabel:'Día 73',         daySub:'OTAs · TripAdvisor',           phase:6, title:'Dar de alta en TripAdvisor', sub:'', owners:['valeria'], client:false, reg:'', notas:'', est:''},
-  {id:68, day:73,   dayKey:'d73',    dayLabel:'Día 73',         daySub:'OTAs · TripAdvisor',           phase:6, title:'Notificar cliente de alta en TripAdvisor', sub:'CSV original dice "yumping" — corregido como probable copy-paste.', owners:['mel'], client:false, reg:'', notas:'', est:''},
-  {id:69, day:79,   dayKey:'d79',    dayLabel:'Día 79',         daySub:'OTAs · Viator',                phase:6, title:'Dar de alta en Viator', sub:'', owners:['valeria'], client:true, reg:'', notas:'', est:''},
-  {id:70, day:79,   dayKey:'d79',    dayLabel:'Día 79',         daySub:'OTAs · Viator',                phase:6, title:'Notificar cliente de alta en Viator', sub:'', owners:['mel'], client:true, reg:'', notas:'', est:''},
-
-  // ============ FASE 7 · Mes 4 · continuidad ============
-  {id:71, day:85,   dayKey:'d85',    dayLabel:'Día 85',         daySub:'Planificación Mes 4',          phase:7, title:'Reunión de planificación calendario de Mes 4', sub:'', owners:['mel'], client:false, reg:'', notas:'', est:''},
-  {id:72, day:86,   dayKey:'d86',    dayLabel:'Día 86',         daySub:'Producción Mes 4',             phase:7, title:'Organización tareas Mes 4', sub:'', owners:['valentina'], client:false, reg:'', notas:'', est:''},
-  {id:73, day:87,   dayKey:'d87',    dayLabel:'Día 87',         daySub:'Producción Mes 4',             phase:7, title:'Copys emails (Mes 4)', sub:'', owners:['valeria'], client:false, reg:'', notas:'', est:''},
-  {id:74, day:88,   dayKey:'d88',    dayLabel:'Día 88',         daySub:'Producción Mes 4',             phase:7, title:'Diseño encabezados copys (Mes 4)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:''},
-  {id:75, day:89,   dayKey:'d89',    dayLabel:'Día 89',         daySub:'Producción Mes 4',             phase:7, title:'Maquetar copys en CRM (Mes 4)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:''},
-  {id:76, day:90,   dayKey:'d90',    dayLabel:'Día 90',         daySub:'Producción Mes 4',             phase:7, title:'Diseño carruseles RRSS (Mes 4)', sub:'', owners:['valentin'], client:false, reg:'', notas:'', est:''},
-  {id:77, day:90,   dayKey:'d90',    dayLabel:'Día 90',         daySub:'Producción Mes 4',             phase:7, title:'Diseño reel RRSS (Mes 4)', sub:'', owners:['joaquin'], client:false, reg:'', notas:'', est:''},
-  {id:78, day:95,   dayKey:'d95',    dayLabel:'Día 95',         daySub:'Entrega Mes 4',                phase:7, title:'Entregar calendario Mes 4 (si ha pagado)', sub:'', owners:['mel'], client:false, reg:'', notas:'', est:''},
+  {id:1, day:0, dayKey:"d0", dayLabel:"Día 0", daySub:"Cierre venta", phase:1, title:"Correo de bienvenida y presentación", sub:"", owners:["alex"], client:true, reg:"Plantilla y calendario para que llegue el siguiente email automático", notas:"", est:"10", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:2, day:0, dayKey:"d0", dayLabel:"Día 0", daySub:"Cierre venta", phase:1, title:"Email confirmando día de onboarding y con todo lo que el cliente necesita para la sesión de onboarding. IMPORTANTE LAS FOTOS Y VIDEOS EN UNA CARPETA", sub:"", owners:["mel"], client:true, reg:"Plantilla y doc. con lo que debe de tener el cliente relleno antes del onboarding.", notas:"", est:"5", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:3, day:0, dayKey:"d0", dayLabel:"Día 0", daySub:"Cierre venta", phase:1, title:"Grabación Loom Interno presentando proyecto y lo envía a Mel y Valen", sub:"", owners:["alex"], client:false, reg:"", notas:"", est:"15", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:4, day:0.5, dayKey:"dseg", dayLabel:"Seguimiento", daySub:"Entre cierre y onboarding", phase:1, title:"Llamar al cliente y hacerle seguimiento si no ha rellenado el formulario o la ficha con todos los datos que necesitamos", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"20", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:5, day:1, dayKey:"d1", dayLabel:"Día 1", daySub:"Sesión onboarding", phase:2, title:"Sesión de onboarding teórico + técnico", sub:"· Entrevista inicial.\n· Explicar documento de estilo de comunicación y arquetipo para que lo rellenen\n· Validación de expectativas del cliente: Expectativas realistas y alineadas con servicio\n· Confirmación inversión y métricas: Presupuesto mensual y KPIs definidos\n· Identificación de canales a trabajar: Meta / Google / otros definidos\n· Propuestas de captación (formularios / mensajes): Tipo de funnel y captación definidos\n· WhatsApp: validación de número y uso\n· WhatsApp: definición de uso en estrategia\n· Google Ads: creación o acceso a cuenta\n· Meta Ads: creación o acceso a cuenta\n· Google Tag Manager: creación o acceso\n· Google Analytics: creación o acceso\n· Google My Business: acceso o creación\n· Servidores / dominio: validación de acceso o configuración de DNS\n· Web: identificación de contacto técnico\n· RRSS: recopilación de accesos\n· Dejar definida próxima reunión o entrega. Si es necesario reunión técnica se queda ya agendada con técnicos correspondientes", owners:["mel","valentina"], client:true, reg:"Pdt. Doc ficha de cliente", notas:"", est:"90", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:6, day:1, dayKey:"d1", dayLabel:"Día 1", daySub:"Sesión onboarding", phase:2, title:"Crear grupo de whatsapp y chat de google", sub:"", owners:["mel"], client:false, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:7, day:1, dayKey:"d1", dayLabel:"Día 1", daySub:"Sesión onboarding", phase:2, title:"Enviar recap del cliente", sub:"", owners:["mel"], client:false, reg:"", notas:"", est:"30", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:8, day:2, dayKey:"d2", dayLabel:"Día 2", daySub:"Planificación", phase:2, title:"Planificación tareas del cliente en Notion", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"90", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:9, day:3, dayKey:"d3", dayLabel:"Día 3", daySub:"Análisis + briefing", phase:2, title:"Enviar Pildora X por el grupo de whatsapp", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:10, day:3, dayKey:"d3", dayLabel:"Día 3", daySub:"Análisis + briefing", phase:2, title:"Análisis inicial con la plataforma", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"30", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:11, day:3, dayKey:"d3", dayLabel:"Día 3", daySub:"Análisis + briefing", phase:2, title:"Briefing con ángulos de venta para diseño y se le envia", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"30", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:12, day:3, dayKey:"d3", dayLabel:"Día 3", daySub:"Análisis + briefing", phase:2, title:"Redacción primer email de confirmación", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"15", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:13, day:3, dayKey:"d3", dayLabel:"Día 3", daySub:"Análisis + briefing", phase:2, title:"Completar documento ficha cliente: La ficha de cliente incluye enlace de correo de formulario y whatsapp inicial", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"30", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:14, day:4, dayKey:"d4", dayLabel:"Día 4", daySub:"Producción + CRM", phase:2, title:"Diseño de estáticos", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:15, day:4, dayKey:"d4", dayLabel:"Día 4", daySub:"Producción + CRM", phase:2, title:"Diseño de video", sub:"", owners:["joaquin"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:16, day:4, dayKey:"d4", dayLabel:"Día 4", daySub:"Producción + CRM", phase:2, title:"Montar el CRM:\nAbrir subcuenta, configuración dominio y DNS, pipeline inicial, flujos: Crear contacto, crear oportunidad, envio información", sub:"", owners:["camilo"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:17, day:4, dayKey:"d4", dayLabel:"Día 4", daySub:"Producción + CRM", phase:2, title:"Preparar presentación de buyer persona", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:18, day:5, dayKey:"d5", dayLabel:"Día 5", daySub:"Pulso cliente", phase:2, title:"Enviar Pildora Y por whatsapp", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:19, day:6, dayKey:"d6", dayLabel:"Día 6", daySub:"Análisis grabado", phase:2, title:"Grabación del análisis inicial y presentación de estáticos y videos", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"30", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:20, day:7, dayKey:"d7", dayLabel:"Día 7", daySub:"Entrega análisis", phase:2, title:"Enviar grabación de valentina al cliente", sub:"", owners:["mel"], client:true, reg:"Pdt. Docx del Analisis", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:21, day:8, dayKey:"d8", dayLabel:"Día 8", daySub:"Setup Meta", phase:3, title:"Configuración técnica de Meta", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:22, day:8, dayKey:"d8", dayLabel:"Día 8", daySub:"Setup Meta", phase:3, title:"Conectar los perfiles de RRSS a GHL", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"30", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:23, day:8, dayKey:"d8", dayLabel:"Día 8", daySub:"Setup Meta", phase:3, title:"Conectar bien Meta y GHL", sub:"", owners:["damian","camilo"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:24, day:8, dayKey:"d8", dayLabel:"Día 8", daySub:"Setup Meta", phase:3, title:"Control de calidad", sub:"", owners:["valentina","camilo"], client:false, reg:"", notas:"", est:"30", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:25, day:10, dayKey:"d10", dayLabel:"Día 10", daySub:"Iteración creativa", phase:3, title:"Correcciones de diseño en video y estático", sub:"", owners:["valentin","joaquin"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:26, day:11, dayKey:"d11", dayLabel:"Día 11", daySub:"Entrega correcciones", phase:3, title:"Envio material correguido al cliente", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:27, day:12, dayKey:"d12", dayLabel:"Día 12", daySub:"Programación Meta", phase:3, title:"Programación campañas en Meta", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:28, day:13, dayKey:"d13", dayLabel:"Día 13", daySub:"KW + Google Ads", phase:3, title:"Análisis de KW para Google Ads", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:29, day:13, dayKey:"d13", dayLabel:"Día 13", daySub:"KW + Google Ads", phase:3, title:"Enviar análisis de KW al cliente", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:30, day:13, dayKey:"d13", dayLabel:"Día 13", daySub:"KW + Google Ads", phase:3, title:"Configuración técnica de Google Ads", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"120", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:31, day:15, dayKey:"d15", dayLabel:"Día 15", daySub:"Correcciones KW", phase:3, title:"Aplicar cambios y correciones del cliente de KW", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:32, day:16, dayKey:"d16", dayLabel:"Día 16", daySub:"Lanzamiento Meta", phase:3, title:"Lanzar los anuncios en Meta", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:33, day:16, dayKey:"d16", dayLabel:"Día 16", daySub:"Lanzamiento Meta", phase:3, title:"Notificar al cliente de que los anuncios en Meta han sido lanzados y envía video de como usar el CRM (de alex)", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:34, day:17, dayKey:"d17", dayLabel:"Día 17", daySub:"Lanzamiento Google", phase:3, title:"Lanzar los anuncios de Google Ads", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:35, day:18, dayKey:"d18", dayLabel:"Día 18", daySub:"Lanzamiento Google", phase:3, title:"Notificar al cliente de que los anuncios en Google han sido lanzados", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:36, day:20, dayKey:"d20", dayLabel:"Día 20", daySub:"Optimización GMB", phase:3, title:"Optimizar perfil de GMB", sub:"", owners:["damian"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:37, day:20, dayKey:"d20", dayLabel:"Día 20", daySub:"Optimización GMB", phase:3, title:"Notificar al cliente de que el perfil de GMB ha sido optimizado", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:38, day:25, dayKey:"d25", dayLabel:"Día 25", daySub:"Planificación Mes 2", phase:4, title:"Reunión planificación calendario de mes 2", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"60", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:39, day:26, dayKey:"d26", dayLabel:"Día 26", daySub:"Producción Mes 2", phase:4, title:"Organización tareas mes 2", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:40, day:27, dayKey:"d27", dayLabel:"Día 27", daySub:"Producción Mes 2", phase:4, title:"Copys emails", sub:"", owners:["valeria"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:41, day:28, dayKey:"d28", dayLabel:"Día 28", daySub:"Producción Mes 2", phase:4, title:"Avisar al cliente de que ya estan los copys para aprobar el mes 2. El cliente modifica directamente tal cual lo quiera", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:42, day:30, dayKey:"d30", dayLabel:"Día 30", daySub:"Producción Mes 2", phase:4, title:"Diseño encabezados copys", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:43, day:30, dayKey:"d30", dayLabel:"Día 30", daySub:"Producción Mes 2", phase:4, title:"Maquetar copys en CRM", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:44, day:30, dayKey:"d30", dayLabel:"Día 30", daySub:"Producción Mes 2", phase:4, title:"Creación de copys de RRSS", sub:"", owners:["joaquin"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:45, day:31, dayKey:"d31", dayLabel:"Día 31", daySub:"Producción Mes 2", phase:4, title:"Diseño carruseles RRSS", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"90", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:46, day:31, dayKey:"d31", dayLabel:"Día 31", daySub:"Producción Mes 2", phase:4, title:"Diseño reel RRSS", sub:"", owners:["joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:47, day:35, dayKey:"d35", dayLabel:"Día 35", daySub:"Entrega contenido Mes 2", phase:5, title:"Subir el contenido al calendario mes 2 (SI HA PAGADO)", sub:"", owners:["valentina"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:48, day:35, dayKey:"d35", dayLabel:"Día 35", daySub:"Entrega contenido Mes 2", phase:5, title:"Avisar al cliente de que ya esta planificado el mes 2 para aprobar", sub:"", owners:["mel"], client:false, reg:"", notas:"", est:"15", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:49, day:37, dayKey:"d37", dayLabel:"Día 37", daySub:"Iteración Mes 2", phase:5, title:"Ejecutar correciones del cliente que el no pueda hacer", sub:"", owners:["valentin","joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:50, day:38, dayKey:"d38", dayLabel:"Día 38", daySub:"Programación Mes 2", phase:5, title:"Programación campañas Email", sub:"", owners:["camilo"], client:false, reg:"", notas:"", est:"60", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:51, day:38, dayKey:"d38", dayLabel:"Día 38", daySub:"Programación Mes 2", phase:5, title:"Programación publicaciones RRSS desde GHL", sub:"", owners:["joaquin"], client:false, reg:"", notas:"", est:"30", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:52, day:38, dayKey:"d38", dayLabel:"Día 38", daySub:"Programación Mes 2", phase:5, title:"Pedir al cliente que rellene la información para el dossier de colegios y empresas", sub:"", owners:["mel"], client:true, reg:"Pdt. Doc o guía de recopilación de datos", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:53, day:39, dayKey:"d39", dayLabel:"Día 39", daySub:"Dossier colegios", phase:5, title:"Diseño dossier colegios", sub:"", owners:["valentin","joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:54, day:47, dayKey:"d47", dayLabel:"Día 47", daySub:"Entrega dossier colegios", phase:5, title:"Enviar dossier colegios", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:55, day:48, dayKey:"d48", dayLabel:"Día 48", daySub:"Iteración + dossier empresas", phase:5, title:"Aplicar cambios dossier colegios", sub:"", owners:["valentin","joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:56, day:48, dayKey:"d48", dayLabel:"Día 48", daySub:"Iteración + dossier empresas", phase:5, title:"Diseño dossier empresas", sub:"", owners:["valentin","joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:57, day:55, dayKey:"d55", dayLabel:"Día 55", daySub:"Entrega empresas + Mes 3", phase:6, title:"Enviar dossier empresas", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:58, day:55, dayKey:"d55", dayLabel:"Día 55", daySub:"Entrega empresas + Mes 3", phase:6, title:"Solicitar información para dar de alta en las OTAs y plataformas de 3os", sub:"", owners:["mel"], client:true, reg:"Doc. y guía de recopliación de datos para OTAs", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:59, day:55, dayKey:"d55", dayLabel:"Día 55", daySub:"Entrega empresas + Mes 3", phase:6, title:"Reunión planificación calendario de mes 3", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:60, day:56, dayKey:"d56", dayLabel:"Día 56", daySub:"Producción Mes 3", phase:6, title:"Organización tareas mes 3", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:61, day:57, dayKey:"d57", dayLabel:"Día 57", daySub:"Producción Mes 3", phase:6, title:"Copys emails", sub:"", owners:["valeria"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:62, day:58, dayKey:"d58", dayLabel:"Día 58", daySub:"Producción Mes 3", phase:6, title:"Avisar al cliente de que ya estan los copys para aprobar el mes 2. El cliente modifica directamente tal cual lo quiera", sub:"", owners:["mel"], client:false, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:63, day:60, dayKey:"d60", dayLabel:"Día 60", daySub:"Producción Mes 3", phase:6, title:"Diseño encabezados copys", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:64, day:60, dayKey:"d60", dayLabel:"Día 60", daySub:"Producción Mes 3", phase:6, title:"Maquetar copys en CRM", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:65, day:60, dayKey:"d60", dayLabel:"Día 60", daySub:"Producción Mes 3", phase:6, title:"Creación de copys de RRSS", sub:"", owners:["joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:66, day:61, dayKey:"d61", dayLabel:"Día 61", daySub:"Producción Mes 3", phase:6, title:"Diseño carruseles RRSS", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:67, day:61, dayKey:"d61", dayLabel:"Día 61", daySub:"Producción Mes 3", phase:6, title:"Diseño reel RRSS", sub:"", owners:["joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:68, day:63, dayKey:"d63", dayLabel:"Día 63", daySub:"OTAs · CheckYeti", phase:6, title:"Dar de alta en checkyeti", sub:"", owners:["valeria"], client:false, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:69, day:63, dayKey:"d63", dayLabel:"Día 63", daySub:"OTAs · CheckYeti", phase:6, title:"Notificar cliente de alta en checkyeti", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:70, day:65, dayKey:"d65", dayLabel:"Día 65", daySub:"Entrega Mes 3", phase:6, title:"Entregar calendario mes 3 (SI HA PAGADO)", sub:"", owners:["alex","mel"], client:true, reg:"", notas:"", est:"15", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:71, day:67, dayKey:"d67", dayLabel:"Día 67", daySub:"OTAs · Yumping", phase:6, title:"Dar de alta en yumping", sub:"", owners:["valeria"], client:false, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:72, day:67, dayKey:"d67", dayLabel:"Día 67", daySub:"OTAs · Yumping", phase:6, title:"Notificar cliente de alta en yumping", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:73, day:73, dayKey:"d73", dayLabel:"Día 73", daySub:"OTAs · TripAdvisor", phase:6, title:"Dar de alta en tripadvisor", sub:"", owners:["valeria"], client:false, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:74, day:73, dayKey:"d73", dayLabel:"Día 73", daySub:"OTAs · TripAdvisor", phase:6, title:"Notificar cliente de alta en TripAdvisor", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:75, day:79, dayKey:"d79", dayLabel:"Día 79", daySub:"OTAs · Viator", phase:6, title:"Dar de alta en Viator", sub:"", owners:["valeria"], client:true, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:76, day:79, dayKey:"d79", dayLabel:"Día 79", daySub:"OTAs · Viator", phase:6, title:"Notificar cliente de alta en Viator", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
+  {id:77, day:85, dayKey:"d85", dayLabel:"Día 85", daySub:"Planificación Mes 4", phase:7, title:"Reunión planificación calendario de mes 4", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:78, day:86, dayKey:"d86", dayLabel:"Día 86", daySub:"Producción Mes 4", phase:7, title:"Organización tareas mes 4", sub:"", owners:["valentina"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:79, day:87, dayKey:"d87", dayLabel:"Día 87", daySub:"Producción Mes 4", phase:7, title:"Copys emails", sub:"", owners:["valeria"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:80, day:88, dayKey:"d88", dayLabel:"Día 88", daySub:"Producción Mes 4", phase:7, title:"Diseño encabezados copys", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:81, day:89, dayKey:"d89", dayLabel:"Día 89", daySub:"Producción Mes 4", phase:7, title:"Maquetar copys en CRM", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:82, day:90, dayKey:"d90", dayLabel:"Día 90", daySub:"Producción Mes 4", phase:7, title:"Diseño carruseles RRSS", sub:"", owners:["valentin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:83, day:90, dayKey:"d90", dayLabel:"Día 90", daySub:"Producción Mes 4", phase:7, title:"Diseño reel RRSS", sub:"", owners:["joaquin"], client:false, reg:"", notas:"", est:"", fechaFija:false, automatizable:false, comoAuto:""},
+  {id:84, day:95, dayKey:"d95", dayLabel:"Día 95", daySub:"Entrega Mes 4", phase:7, title:"Entregar calendario mes 4 (SI HA PAGADO)", sub:"", owners:["mel"], client:true, reg:"", notas:"", est:"", fechaFija:true, automatizable:false, comoAuto:""},
 ];
 
 let TASKS = [];
@@ -1453,6 +1669,8 @@ const STATE = {
   view: 'tabla',
   activeOwners: new Set(Object.keys(OWNERS)),
   clientOnly: false,
+  fijaOnly: false,
+  autoOnly: false,
   search: '',
   sortBy: 'day',
   sortDir: 'asc',
@@ -1609,7 +1827,7 @@ async function resetData() {
    EXPORT CSV
    ============================================ */
 function exportCSV() {
-  const headers = ['Día','Fase','Tarea','Detalle','Responsables','T. EST','Impacto cliente','Registrado en','Notas'];
+  const headers = ['Día','Fase','Tarea','Detalle','Responsables','T. EST','Impacto cliente','Fecha fija','Automatizable','¿Cómo automatizar?','Registrado en','Notas'];
   const rows = [headers];
   const sorted = [...TASKS].sort((a,b)=>a.day-b.day);
   sorted.forEach(t => {
@@ -1621,6 +1839,9 @@ function exportCSV() {
       t.owners.map(o => OWNERS[o].name).join(' + '),
       t.est || '',
       t.client ? 'SI' : '',
+      t.fechaFija ? 'SI' : '',
+      t.automatizable ? 'SI' : '',
+      t.comoAuto || '',
       t.reg || '',
       t.notas || ''
     ]);
@@ -1646,17 +1867,20 @@ function escapeHtml(s) {
 function matchesFilters(t) {
   const ownerPass = t.owners.some(o => STATE.activeOwners.has(o));
   const clientPass = !STATE.clientOnly || t.client;
+  const fijaPass = !STATE.fijaOnly || t.fechaFija;
+  const autoPass = !STATE.autoOnly || t.automatizable;
   const q = STATE.search.trim().toLowerCase();
   const searchPass = !q || (
     (t.title||'').toLowerCase().includes(q) ||
     (t.sub||'').toLowerCase().includes(q) ||
     (t.reg||'').toLowerCase().includes(q) ||
     (t.notas||'').toLowerCase().includes(q) ||
+    (t.comoAuto||'').toLowerCase().includes(q) ||
     (String(t.est||'')).toLowerCase().includes(q) ||
     (t.dayLabel||'').toLowerCase().includes(q) ||
     t.owners.some(o => OWNERS[o].name.toLowerCase().includes(q))
   );
-  return ownerPass && clientPass && searchPass;
+  return ownerPass && clientPass && fijaPass && autoPass && searchPass;
 }
 function visibleTasks() { return TASKS.filter(matchesFilters); }
 function ownerAvatar(o, size=22) {
@@ -1753,6 +1977,10 @@ function renderTabla() {
       return m ? parseInt(m[0], 10) : (String(e).toLowerCase().includes('auto') ? -1 : Infinity);
     };
     sorted.sort((a,b) => STATE.sortDir==='asc' ? toNum(a.est) - toNum(b.est) : toNum(b.est) - toNum(a.est));
+  } else if (STATE.sortBy === 'fija') {
+    sorted.sort((a,b) => STATE.sortDir==='asc' ? (b.fechaFija - a.fechaFija) : (a.fechaFija - b.fechaFija));
+  } else if (STATE.sortBy === 'auto') {
+    sorted.sort((a,b) => STATE.sortDir==='asc' ? (b.automatizable - a.automatizable) : (a.automatizable - b.automatizable));
   }
 
   const groupByDay = STATE.sortBy === 'day';
@@ -1765,16 +1993,26 @@ function renderTabla() {
       const rows = byDay[dk];
       const head = rows[0];
       const clientCount = rows.filter(r => r.client).length;
+      const fijaCount = rows.filter(r => r.fechaFija).length;
+      const autoCount = rows.filter(r => r.automatizable).length;
+      const allFija = fijaCount === rows.length;
       const collapsed = STATE.collapsedDays.has(dk) ? 'collapsed' : '';
+      const editableSub = STATE.canEdit ? 'contenteditable="plaintext-only" data-day-key-edit="' + dk + '"' : '';
+      const phaseTag = `<span class="phase-tag" ${STATE.canEdit ? 'data-action="edit-phase" data-day-key="' + dk + '"' : ''} title="${STATE.canEdit ? 'Cambiar fase' : ''}">F${head.phase}</span>`;
+      const lockBadge = allFija ? `<span class="day-lock" title="Todas las tareas del día tienen fecha fija">🔒 fija</span>` : '';
       html += `
         <tr class="day-group ${collapsed}" data-day="${dk}">
-          <td colspan="9">
+          <td colspan="11">
             <span class="chevron">▼</span>
             ${head.dayLabel}
-            <span class="group-sub">${escapeHtml(head.daySub)}</span>
+            <span class="group-sub" ${editableSub} data-placeholder="+ subtítulo">${escapeHtml(head.daySub)}</span>
+            ${phaseTag}
+            ${lockBadge}
             <span class="group-chips">
               <span class="group-chip">${rows.length} tarea${rows.length>1?'s':''}</span>
               ${clientCount? `<span class="group-chip client">${clientCount} cliente</span>` : ''}
+              ${fijaCount && !allFija ? `<span class="group-chip fija">${fijaCount} fija</span>` : ''}
+              ${autoCount ? `<span class="group-chip auto">${autoCount} auto</span>` : ''}
             </span>
           </td>
         </tr>`;
@@ -1783,7 +2021,7 @@ function renderTabla() {
         if (STATE.canEdit) {
           html += `
             <tr class="add-task-row editor-only" data-day="${dk}">
-              <td colspan="9">
+              <td colspan="11">
                 <button class="add-task-btn" data-action="add-task"
                   data-day-key="${dk}" data-day="${head.day}"
                   data-day-label="${escapeHtml(head.dayLabel)}"
@@ -1803,14 +2041,14 @@ function renderTabla() {
   if (STATE.canEdit) {
     html += `
       <tr class="add-day-row editor-only">
-        <td colspan="9">
+        <td colspan="11">
           <button class="add-task-btn" data-action="add-day">+ Añadir nuevo día / fase</button>
         </td>
       </tr>`;
   }
 
   if (!sorted.length) {
-    html = `<tr><td colspan="9" style="text-align:center;padding:48px 16px;color:var(--text-tertiary);font-style:italic;">Sin resultados con los filtros actuales.</td></tr>` + html;
+    html = `<tr><td colspan="11" style="text-align:center;padding:48px 16px;color:var(--text-tertiary);font-style:italic;">Sin resultados con los filtros actuales.</td></tr>` + html;
   }
 
   document.getElementById('tabla-body').innerHTML = html;
@@ -1830,13 +2068,29 @@ function renderTaskRow(t) {
     ? `<button class="row-delete" data-action="delete-row" title="Eliminar fila">✕</button>`
     : '';
 
+  // sub: si tiene bullets "\n· ", render como <ul>; si no, como span inline
+  let subHtml;
+  const subText = t.sub || '';
+  if (subText.includes('\n· ') || subText.startsWith('· ')) {
+    const items = subText.split(/\n/).map(l => l.replace(/^·\s*/, '').trim()).filter(Boolean);
+    subHtml = `<ul class="sub-bullets">${items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`
+            + `<span class="task-sub-inline" ${editable} data-field="sub" data-placeholder="+ añadir detalle" style="display:none;">${escapeHtml(subText)}</span>`;
+  } else {
+    subHtml = `<span class="task-sub-inline" ${editable} data-field="sub" data-placeholder="+ añadir detalle">${escapeHtml(subText)}</span>`;
+  }
+
+  const lockInline = t.fechaFija ? '<span class="day-cell-lock" title="Fecha no modificable">🔒</span>' : '';
+
   return `
     <tr class="task-row ${selectedCls}" data-owner="${primaryOwner}" data-id="${t.id}">
       <td class="check-cell"><input type="checkbox" data-id="${t.id}" ${checked} ${STATE.canEdit?'':'disabled'}></td>
-      <td class="day-cell" ${STATE.canEdit?'data-action="edit-day"':''} title="${STATE.canEdit?'Click para cambiar día':''}">${t.dayLabel}</td>
+      <td class="day-cell" ${STATE.canEdit && !t.fechaFija ? 'data-action="edit-day"':''} title="${STATE.canEdit ? (t.fechaFija ? 'Fecha bloqueada · usa el 🔒 para liberar' : 'Click para cambiar día') : ''}">${t.dayLabel}${lockInline}</td>
+      <td class="fija-cell ${t.fechaFija?'is-fija':''}" ${STATE.canEdit?'data-action="toggle-fija"':''} title="${STATE.canEdit ? (t.fechaFija ? 'Click: liberar fecha' : 'Click: bloquear fecha') : ''}">
+        <span class="lock-icon">🔒</span>
+      </td>
       <td class="task-title-cell">
         <span class="task-name" ${editable} data-field="title" data-placeholder="Escribe la tarea…">${escapeHtml(t.title)}</span>
-        <span class="task-sub-inline" ${editable} data-field="sub" data-placeholder="+ añadir detalle">${escapeHtml(t.sub)}</span>
+        ${subHtml}
       </td>
       <td class="owner-cell" ${STATE.canEdit?'data-action="edit-owner"':''} title="${STATE.canEdit?'Click para cambiar responsable':''}">
         <span class="owner-mini">
@@ -1844,15 +2098,18 @@ function renderTaskRow(t) {
           <span class="owner-mini-name">${escapeHtml(ownerNames)}</span>
         </span>
       </td>
-      <td class="est-cell">
+      <td class="est-cell" ${STATE.canEdit?'data-action="edit-est"':''} title="${STATE.canEdit?'Click para editar minutos':''}">
         ${t.est
-          ? `<span class="est-pill ${String(t.est).toLowerCase().includes('auto')?'auto':''}">${escapeHtml(String(t.est))}${/^\d+$/.test(String(t.est))?' min':''}</span>`
-          : `<span class="est-pill empty">—</span>`}
+          ? `<span class="est-pill ${String(t.est).toLowerCase().includes('auto')?'auto':''}" ${editable} data-field="est" data-placeholder="—">${escapeHtml(String(t.est))}${/^\d+$/.test(String(t.est))?' min':''}</span>`
+          : `<span class="est-pill empty" ${editable} data-field="est" data-placeholder="—">—</span>`}
       </td>
       <td class="client-cell" ${STATE.canEdit?'data-action="toggle-client"':''} title="${STATE.canEdit?'Click para alternar':''}">
         ${t.client
           ? `<span class="client-mini-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>SI</span>`
           : `<span class="client-mini-empty">—</span>`}
+      </td>
+      <td class="auto-cell ${t.automatizable?'is-auto':''}" ${STATE.canEdit?'data-action="edit-auto"':''} title="${STATE.canEdit?'Click: marcar como automatizable y/o detallar el cómo':(t.comoAuto?'Automatizable: '+t.comoAuto:'')}">
+        <span class="auto-icon">⚡</span>
       </td>
       <td class="reg-cell">
         <span ${editable} data-field="reg" data-placeholder="+ dónde se registra"
@@ -1949,7 +2206,90 @@ function rerender() {
    PICKERS
    ============================================ */
 function closePickers() {
-  document.querySelectorAll('.owner-picker, .day-picker').forEach(p => p.remove());
+  document.querySelectorAll('.owner-picker, .day-picker, .auto-picker, .phase-picker').forEach(p => p.remove());
+}
+
+function showAutoPicker(cell, task) {
+  if (!STATE.canEdit) return;
+  closePickers();
+  const picker = document.createElement('div');
+  picker.className = 'auto-picker' + (task.automatizable ? ' is-on' : '');
+  picker.innerHTML = `
+    <div class="picker-title">Automatización</div>
+    <div class="toggle-row" data-action="auto-toggle">
+      <span class="toggle-switch"></span>
+      <span class="toggle-label">${task.automatizable ? 'Marcada como automatizable' : 'No automatizable'}</span>
+    </div>
+    <label class="como-label">¿Cómo automatizar?</label>
+    <textarea class="como-textarea" data-field="comoAuto" placeholder="Describe la idea de automatización…" ${task.automatizable?'':'disabled'}>${escapeHtml(task.comoAuto||'')}</textarea>
+  `;
+  const rect = cell.getBoundingClientRect();
+  let left = rect.left + window.scrollX;
+  const maxLeft = window.scrollX + window.innerWidth - 300;
+  if (left > maxLeft) left = maxLeft;
+  picker.style.left = left + 'px';
+  picker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  document.body.appendChild(picker);
+  const ta = picker.querySelector('.como-textarea');
+  picker.querySelector('.toggle-row').addEventListener('click', () => {
+    task.automatizable = !task.automatizable;
+    picker.classList.toggle('is-on', task.automatizable);
+    picker.querySelector('.toggle-label').textContent = task.automatizable ? 'Marcada como automatizable' : 'No automatizable';
+    ta.disabled = !task.automatizable;
+    scheduleSave(); rerender();
+  });
+  ta.addEventListener('blur', () => {
+    const v = ta.value.trim();
+    if (task.comoAuto !== v) { task.comoAuto = v; scheduleSave(); renderTabla(); }
+  });
+  setTimeout(() => {
+    const handler = (e) => {
+      if (!picker.contains(e.target) && !e.target.closest('.auto-cell')) {
+        // commit textarea before closing
+        const v = ta.value.trim();
+        if (task.comoAuto !== v) { task.comoAuto = v; scheduleSave(); renderTabla(); }
+        picker.remove();
+        document.removeEventListener('click', handler);
+      }
+    };
+    document.addEventListener('click', handler);
+  }, 10);
+}
+
+function showPhasePicker(tag, dayKey) {
+  if (!STATE.canEdit) return;
+  closePickers();
+  const rowsOfDay = TASKS.filter(t => t.dayKey === dayKey);
+  if (!rowsOfDay.length) return;
+  const currentPhase = rowsOfDay[0].phase;
+  const picker = document.createElement('div');
+  picker.className = 'phase-picker';
+  picker.innerHTML = `
+    <div class="picker-title">Fase del día ${escapeHtml(rowsOfDay[0].dayLabel)}</div>
+    ${Object.entries(PHASES).map(([n, label]) => {
+      const sel = parseInt(n,10) === currentPhase ? 'selected' : '';
+      return `<div class="opt ${sel}" data-phase="${n}">${escapeHtml(label)}</div>`;
+    }).join('')}
+  `;
+  const rect = tag.getBoundingClientRect();
+  picker.style.left = (rect.left + window.scrollX) + 'px';
+  picker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  document.body.appendChild(picker);
+  picker.addEventListener('click', e => {
+    const opt = e.target.closest('.opt'); if (!opt) return;
+    const newPhase = parseInt(opt.dataset.phase, 10);
+    rowsOfDay.forEach(t => { t.phase = newPhase; });
+    scheduleSave(); rerender(); picker.remove();
+  });
+  setTimeout(() => {
+    const handler = (e) => {
+      if (!picker.contains(e.target) && !e.target.closest('.phase-tag')) {
+        picker.remove();
+        document.removeEventListener('click', handler);
+      }
+    };
+    document.addEventListener('click', handler);
+  }, 10);
 }
 function showOwnerPicker(cell, task) {
   if (!STATE.canEdit) return;
@@ -2045,7 +2385,8 @@ function addTaskToDay(meta) {
     daySub: meta.daySub,
     phase: parseInt(meta.phase, 10),
     title: '', sub: '', owners: ['tbd'],
-    client: false, reg: '', notas: ''
+    client: false, reg: '', notas: '', est: '',
+    fechaFija: false, automatizable: false, comoAuto: ''
   });
   scheduleSave(); rerender();
   setTimeout(() => {
@@ -2103,11 +2444,16 @@ document.querySelectorAll('.member-chip').forEach(chip => {
   });
 });
 
-const clientToggle = document.querySelector('.toggle-pill');
-clientToggle.addEventListener('click', () => {
-  clientToggle.classList.toggle('active');
-  STATE.clientOnly = clientToggle.classList.contains('active');
-  rerender();
+document.querySelectorAll('.toggle-pill').forEach(pill => {
+  const which = pill.dataset.toggle;
+  pill.addEventListener('click', () => {
+    pill.classList.toggle('active');
+    const active = pill.classList.contains('active');
+    if (which === 'client') STATE.clientOnly = active;
+    else if (which === 'fija') STATE.fijaOnly = active;
+    else if (which === 'auto') STATE.autoOnly = active;
+    rerender();
+  });
 });
 
 const searchInput = document.getElementById('search-input');
@@ -2150,7 +2496,7 @@ document.querySelectorAll('.tabla thead th.sortable').forEach(th => {
 const tablaBody = document.getElementById('tabla-body');
 tablaBody.addEventListener('click', e => {
   const grp = e.target.closest('.day-group');
-  if (grp && !e.target.closest('input, button')) {
+  if (grp && !e.target.closest('input, button, [contenteditable], .phase-tag, [data-action]')) {
     const k = grp.dataset.day;
     if (STATE.collapsedDays.has(k)) STATE.collapsedDays.delete(k);
     else STATE.collapsedDays.add(k);
@@ -2173,9 +2519,25 @@ tablaBody.addEventListener('click', e => {
   const t = row ? findTask(parseInt(row.dataset.id, 10)) : null;
 
   if (action === 'edit-owner' && t) showOwnerPicker(actor, t);
-  else if (action === 'edit-day' && t) showDayPicker(actor, t);
+  else if (action === 'edit-day' && t) {
+    if (t.fechaFija) return; // bloqueado por candado
+    showDayPicker(actor, t);
+  }
   else if (action === 'toggle-client' && t) {
     t.client = !t.client; scheduleSave(); rerender();
+  }
+  else if (action === 'toggle-fija' && t) {
+    t.fechaFija = !t.fechaFija; scheduleSave(); rerender();
+  }
+  else if (action === 'edit-auto' && t) showAutoPicker(actor, t);
+  else if (action === 'edit-phase') {
+    const dk = actor.dataset.dayKey;
+    if (dk) showPhasePicker(actor, dk);
+  }
+  else if (action === 'edit-est' && t) {
+    // foco en el span editable interno
+    const span = actor.querySelector('[contenteditable]');
+    if (span) { span.focus(); document.execCommand('selectAll', false, null); }
   }
   else if (action === 'delete-row' && t) deleteTask(t.id);
   else if (action === 'add-task') {
@@ -2191,13 +2553,30 @@ tablaBody.addEventListener('blur', e => {
   const el = e.target;
   if (!el.matches || !el.matches('[contenteditable]')) return;
   if (!STATE.canEdit) return;
+
+  // daySub editado en cabecera de grupo
+  const dk = el.dataset.dayKeyEdit;
+  if (dk) {
+    const val = el.textContent.trim();
+    const rows = TASKS.filter(t => t.dayKey === dk);
+    if (rows.length && rows[0].daySub !== val) {
+      rows.forEach(r => { r.daySub = val; });
+      scheduleSave(); renderTimeline(); updateStatusBar();
+    }
+    return;
+  }
+
   const row = el.closest('.task-row'); if (!row) return;
   const t = findTask(parseInt(row.dataset.id, 10)); if (!t) return;
   const field = el.dataset.field;
   const val = el.textContent.trim();
-  if (t[field] === val) return;
-  t[field] = val;
+  // est: limpiar sufijo " min" si el usuario lo dejó
+  let normalized = val;
+  if (field === 'est') normalized = normalized.replace(/\s*min\s*$/i, '').trim();
+  if (t[field] === normalized) return;
+  t[field] = normalized;
   scheduleSave();
+  if (field === 'est') renderTabla(); // re-renderiza la pill
   renderTimeline(); renderKanban(); updateStatusBar();
 }, true);
 
