@@ -33,6 +33,40 @@
   --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px;
   --ease-out:cubic-bezier(0.16,1,0.3,1); --duration-fast:150ms; --duration-base:200ms; --duration-slow:300ms;
 }
+
+[data-theme="light"] {
+  --bg-base:#f5f6f8; --bg-card:#ffffff; --bg-elevated:#ffffff;
+  --bg-hover:#eef0f4; --bg-active:#e4e6ec;
+  --border-subtle:#e4e6ec; --border-default:#d0d3dc; --border-strong:#a0a4b2;
+  --text-primary:#111827; --text-secondary:#4b5563; --text-tertiary:#9ca3af; --text-inverse:#ffffff;
+  --accent-primary:#16a34a; --accent-primary-hover:#15803d; --accent-primary-muted:rgba(22,163,74,0.10);
+  --accent-secondary:#2563eb; --accent-secondary-hover:#1d4ed8; --accent-secondary-muted:rgba(37,99,235,0.10);
+  --status-success:#16a34a; --status-success-bg:rgba(22,163,74,0.10);
+  --status-warning:#d97706; --status-warning-bg:rgba(217,119,6,0.10);
+  --status-error:#dc2626;   --status-error-bg:rgba(220,38,38,0.10);
+  --status-info:#2563eb;    --status-info-bg:rgba(37,99,235,0.10);
+  --status-neutral:#6b7280; --status-neutral-bg:rgba(107,114,128,0.10);
+  --status-violet:#7c3aed;  --status-violet-bg:rgba(124,58,237,0.10);
+}
+[data-theme="light"] body { color: var(--text-primary); }
+
+/* Theme toggle button */
+.theme-switch {
+  display:inline-flex; align-items:center; gap:6px;
+  height:30px; padding:0 10px;
+  font-size:12px; font-weight:500;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:999px;
+  cursor:pointer; font-family:var(--font-ui);
+  transition:all 120ms;
+}
+.theme-switch:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.theme-switch svg { width:14px; height:14px; }
+[data-theme="light"] .theme-switch .icon-moon { display:none; }
+.theme-switch .icon-sun { display:none; }
+[data-theme="light"] .theme-switch .icon-sun { display:inline-block; }
+.theme-switch .icon-moon { display:inline-block; }
+
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:var(--font-ui); background:var(--bg-base); color:var(--text-primary); font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased; }
 a { color:inherit; text-decoration:none; }
@@ -1065,6 +1099,11 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
     </div>
     <div class="auth-bar-actions">
       <span class="auth-bar-meta" id="auth-meta"></span>
+      <button class="theme-switch" id="btn-theme" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>
+        <span class="theme-label">Oscuro</span>
+      </button>
       <button class="btn btn--secondary btn--sm" id="btn-login">Entrar como editor</button>
       <button class="btn btn--secondary btn--sm" id="btn-logout" style="display:none;">Salir</button>
     </div>
@@ -2100,6 +2139,27 @@ function updateBulkBar() {
 }
 
 document.getElementById('btn-export').addEventListener('click', exportCSV);
+
+/* ============================================
+   THEME TOGGLE (dark/light) — preferencia local
+   ============================================ */
+const THEME_KEY = 'tn-playbook-theme';
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const lbl = document.querySelector('#btn-theme .theme-label');
+  if (lbl) lbl.textContent = theme === 'light' ? 'Claro' : 'Oscuro';
+  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+}
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY); } catch {}
+  applyTheme(saved === 'light' ? 'light' : 'dark');
+}
+document.getElementById('btn-theme').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(cur === 'light' ? 'dark' : 'light');
+});
+initTheme();
 
 // Toggle all day groups
 document.getElementById('btn-toggle-all').addEventListener('click', () => {
