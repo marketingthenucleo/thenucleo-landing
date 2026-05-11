@@ -599,32 +599,16 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
 }
 .tabla thead th.sort-asc .sort-ind,
 .tabla thead th.sort-desc .sort-ind { opacity: 1; color: var(--accent-secondary); }
+.tabla thead th.check-col { width: 36px; padding-right: 0; }
+
 .tabla tbody tr.task-row {
-  transition: background var(--duration-base) var(--ease-out),
-              box-shadow var(--duration-base) var(--ease-out);
+  transition: background var(--duration-fast);
   border-left: 3px solid transparent;
-  position: relative;
 }
-.tabla tbody tr.task-row:hover {
-  background: var(--bg-hover);
-  box-shadow: inset 4px 0 0 0 currentColor;
+.tabla tbody tr.task-row:hover { background: var(--bg-hover); }
+.tabla tbody tr.task-row.selected {
+  background: var(--accent-secondary-muted);
 }
-.tabla tbody tr.task-row[data-owner="alex"]:hover     { color: #3b82f6; }
-.tabla tbody tr.task-row[data-owner="mel"]:hover      { color: #22c55e; }
-.tabla tbody tr.task-row[data-owner="valentina"]:hover{ color: #8b5cf6; }
-.tabla tbody tr.task-row[data-owner="valentin"]:hover { color: #ec4899; }
-.tabla tbody tr.task-row[data-owner="joaquin"]:hover  { color: #f59e0b; }
-.tabla tbody tr.task-row[data-owner="camilo"]:hover   { color: #0ea5e9; }
-.tabla tbody tr.task-row[data-owner="damian"]:hover   { color: #ef4444; }
-.tabla tbody tr.task-row[data-owner="valeria"]:hover  { color: #14b8a6; }
-.tabla tbody tr.task-row[data-owner="tbd"]:hover      { color: var(--text-tertiary); }
-/* Restore text colors inside the hovered row so the colored row doesn't bleed */
-.tabla tbody tr.task-row:hover td,
-.tabla tbody tr.task-row:hover .task-name { color: var(--text-primary); }
-.tabla tbody tr.task-row:hover .task-sub-inline,
-.tabla tbody tr.task-row:hover .day-cell,
-.tabla tbody tr.task-row:hover .owner-mini-name,
-.tabla tbody tr.task-row:hover .est-cell { color: var(--text-secondary); }
 .tabla tbody tr.task-row[data-owner="alex"]     { border-left-color: #3b82f6; }
 .tabla tbody tr.task-row[data-owner="mel"]      { border-left-color: #22c55e; }
 .tabla tbody tr.task-row[data-owner="valentina"]{ border-left-color: #8b5cf6; }
@@ -1263,7 +1247,15 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
           <span class="save-text">Sin cambios</span>
         </div>
 
-<div style="margin-left:auto;display:flex;gap:6px;">
+        <div class="bulk-bar" id="bulk-bar" style="display:none;">
+          <span class="bulk-count"><strong id="bulk-count">0</strong> seleccionadas</span>
+          <button class="btn btn--secondary btn--sm" id="bulk-delete">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Eliminar
+          </button>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:6px;">
           <button class="toolbar-action" id="btn-export" data-help="Descargar todas las filas como CSV">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar CSV
@@ -1274,6 +1266,7 @@ body.viewer .day-cell, body.viewer .owner-cell, body.viewer .client-cell { curso
         <table class="tabla" id="tabla">
           <thead>
             <tr>
+              <th class="check-col"><input type="checkbox" id="check-all"></th>
               <th class="sortable" data-sort="day">Día</th>
               <th class="sortable" data-sort="title">Tarea</th>
               <th class="sortable" data-sort="owner">Responsable</th>
@@ -1477,6 +1470,7 @@ const STATE = {
   sortBy: 'day',
   sortDir: 'asc',
   collapsedDays: new Set(),
+  selectedIds: new Set(),
   density: 'comfy',
   lastSaved: null,
   canEdit: false,
@@ -1618,6 +1612,7 @@ async function resetData() {
   if (!STATE.canEdit) return;
   if (!confirm('¿Descartar todos los cambios y volver a la escaleta original?')) return;
   TASKS = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+  STATE.selectedIds.clear();
   STATE.collapsedDays.clear();
   await saveToSupabase();
   rerender();
@@ -1786,7 +1781,7 @@ function renderTabla() {
       const collapsed = STATE.collapsedDays.has(dk) ? 'collapsed' : '';
       html += `
         <tr class="day-group ${collapsed}" data-day="${dk}">
-          <td colspan="8">
+          <td colspan="9">
             <span class="chevron">▼</span>
             ${head.dayLabel}
             <span class="group-sub">${escapeHtml(head.daySub)}</span>
@@ -1801,7 +1796,7 @@ function renderTabla() {
         if (STATE.canEdit) {
           html += `
             <tr class="add-task-row editor-only" data-day="${dk}">
-              <td colspan="8">
+              <td colspan="9">
                 <button class="add-task-btn" data-action="add-task"
                   data-day-key="${dk}" data-day="${head.day}"
                   data-day-label="${escapeHtml(head.dayLabel)}"
@@ -1821,14 +1816,14 @@ function renderTabla() {
   if (STATE.canEdit) {
     html += `
       <tr class="add-day-row editor-only">
-        <td colspan="8">
+        <td colspan="9">
           <button class="add-task-btn" data-action="add-day">+ Añadir nuevo día / fase</button>
         </td>
       </tr>`;
   }
 
   if (!sorted.length) {
-    html = `<tr><td colspan="8" style="text-align:center;padding:48px 16px;color:var(--text-tertiary);font-style:italic;">Sin resultados con los filtros actuales.</td></tr>` + html;
+    html = `<tr><td colspan="9" style="text-align:center;padding:48px 16px;color:var(--text-tertiary);font-style:italic;">Sin resultados con los filtros actuales.</td></tr>` + html;
   }
 
   document.getElementById('tabla-body').innerHTML = html;
@@ -1841,13 +1836,16 @@ function renderTaskRow(t) {
     ? `<span class="owner-mini-stack">${t.owners.map(o => ownerAvatar(o,22)).join('')}</span>`
     : ownerAvatar(primaryOwner,22);
   const ownerNames = t.owners.map(o => OWNERS[o].name).join(' + ');
+  const checked = STATE.selectedIds.has(t.id) ? 'checked' : '';
+  const selectedCls = STATE.selectedIds.has(t.id) ? 'selected' : '';
   const editable = STATE.canEdit ? 'contenteditable="plaintext-only"' : '';
   const deleteBtn = STATE.canEdit
     ? `<button class="row-delete" data-action="delete-row" title="Eliminar fila">✕</button>`
     : '';
 
   return `
-    <tr class="task-row" data-owner="${primaryOwner}" data-id="${t.id}">
+    <tr class="task-row ${selectedCls}" data-owner="${primaryOwner}" data-id="${t.id}">
+      <td class="check-cell"><input type="checkbox" data-id="${t.id}" ${checked} ${STATE.canEdit?'':'disabled'}></td>
       <td class="day-cell" ${STATE.canEdit?'data-action="edit-day"':''} title="${STATE.canEdit?'Click para cambiar día':''}">${t.dayLabel}</td>
       <td class="task-title-cell">
         <span class="task-name" ${editable} data-field="title" data-placeholder="Escribe la tarea…">${escapeHtml(t.title)}</span>
@@ -2088,7 +2086,16 @@ function deleteTask(id) {
   if (!confirm('¿Eliminar esta tarea?')) return;
   const idx = TASKS.findIndex(t => t.id === id);
   if (idx >= 0) TASKS.splice(idx, 1);
-  scheduleSave(); rerender();
+  STATE.selectedIds.delete(id);
+  scheduleSave(); rerender(); updateBulkBar();
+}
+function bulkDelete() {
+  if (!STATE.canEdit) return;
+  if (!STATE.selectedIds.size) return;
+  if (!confirm(`¿Eliminar ${STATE.selectedIds.size} tareas seleccionadas?`)) return;
+  TASKS = TASKS.filter(t => !STATE.selectedIds.has(t.id));
+  STATE.selectedIds.clear();
+  scheduleSave(); rerender(); updateBulkBar();
 }
 
 /* ============================================
@@ -2163,6 +2170,15 @@ tablaBody.addEventListener('click', e => {
     renderTabla();
     return;
   }
+  const cb = e.target.closest('input[type=checkbox]');
+  if (cb && cb.dataset.id && STATE.canEdit) {
+    const id = parseInt(cb.dataset.id, 10);
+    if (cb.checked) STATE.selectedIds.add(id);
+    else STATE.selectedIds.delete(id);
+    cb.closest('tr').classList.toggle('selected', cb.checked);
+    updateBulkBar();
+    return;
+  }
   const actor = e.target.closest('[data-action]');
   if (!actor) return;
   const action = actor.dataset.action;
@@ -2206,6 +2222,21 @@ tablaBody.addEventListener('keydown', e => {
     e.target.blur();
   }
 });
+
+document.getElementById('check-all').addEventListener('change', e => {
+  if (!STATE.canEdit) { e.target.checked = false; return; }
+  if (e.target.checked) visibleTasks().forEach(t => STATE.selectedIds.add(t.id));
+  else STATE.selectedIds.clear();
+  renderTabla(); updateBulkBar();
+});
+
+document.getElementById('bulk-delete').addEventListener('click', bulkDelete);
+
+function updateBulkBar() {
+  const n = STATE.selectedIds.size;
+  document.getElementById('bulk-count').textContent = n;
+  document.getElementById('bulk-bar').style.display = (n && STATE.canEdit) ? 'flex' : 'none';
+}
 
 document.getElementById('btn-export').addEventListener('click', exportCSV);
 
