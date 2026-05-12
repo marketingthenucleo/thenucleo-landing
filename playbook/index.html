@@ -1489,6 +1489,66 @@ body.cliente-mode .task-row.done {
   .cliente-bar-hint { display: none; }
 }
 
+/* Sector filter — pills toggle */
+.sector-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  margin: -12px 0 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  flex-wrap: wrap;
+}
+.sector-bar-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.sector-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  flex: 1;
+}
+.sector-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 26px; padding: 0 10px;
+  font-family: var(--font-ui); font-size: 12px; font-weight: 500;
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+.sector-pill:hover { color: var(--text-secondary); border-color: var(--border-strong); }
+.sector-pill .sector-pill-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--border-strong);
+  transition: background var(--duration-fast);
+}
+.sector-pill .sector-pill-count {
+  font-family: var(--font-mono); font-size: 10px;
+  background: var(--bg-active); color: var(--text-tertiary);
+  padding: 1px 6px; border-radius: 999px;
+  margin-left: 2px;
+}
+.sector-pill.active {
+  background: var(--accent-secondary-muted);
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+.sector-pill.active .sector-pill-dot { background: var(--accent-secondary); }
+.sector-pill.active .sector-pill-count { background: rgba(59,130,246,.20); color: var(--accent-secondary); }
+.sector-bar-action {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  height: 26px; padding: 0 10px;
+  background: transparent; color: var(--text-tertiary);
+  border: 1px dashed var(--border-default); border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+.sector-bar-action:hover { color: var(--text-primary); border-color: var(--border-strong); border-style: solid; }
+
 /* Checkbox de progreso en Timeline (task-card) y Kanban (kanban-card) — solo en cliente-mode */
 .task-progreso-check { display: none; }
 body.cliente-mode .task-progreso-check {
@@ -1652,6 +1712,13 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
       <span class="cliente-day-pill" id="cliente-day-pill" hidden></span>
       <div class="cliente-bar-spacer"></div>
       <span class="cliente-bar-hint" id="cliente-bar-hint">Selecciona un cliente para ver su timeline con fechas reales, festivos y progreso teórico.</span>
+    </section>
+
+    <!-- SECTOR FILTER (multi-toggle pills) -->
+    <section class="sector-bar" id="sector-bar" hidden>
+      <span class="sector-bar-label">Sector:</span>
+      <div class="sector-pills" id="sector-pills"></div>
+      <button class="sector-bar-action" id="sector-reset" type="button">Todos</button>
     </section>
 
     <!-- TIMELINE VIEW (rendered by JS from TASKS) -->
@@ -2043,17 +2110,54 @@ function setSaveIndicator(state, msg) {
    CLIENTE — vista adaptada (progreso teórico + checks reales)
    ============================================ */
 const PLAYBOOK_MAX_DAY = 95;
+const SIN_SECTOR = '__sin_sector__';
 const CLIENTE_STATE = {
   current: null,            // bubble_id o null = plantilla maestro
-  list: [],                 // [{bubble_id, nombre_empresas, fecha_onboarding}]
+  list: [],                 // [{bubble_id, nombre_empresas, fecha_onboarding, sector}]
   progresoByTaskId: {},     // { 12: true, 47: true, ... }
   festivosSet: new Set(),   // Set<'YYYY-MM-DD'>
   currentHeadDay: null,     // día más cercano (>= hoy) que tiene tareas en TASKS
+  activeSectores: new Set(),// sectores activos (default: todos los presentes en list)
 };
+
+function sectorKey(c) {
+  return c.sector && c.sector.trim() ? c.sector : SIN_SECTOR;
+}
+
+function distinctSectores() {
+  const s = new Set();
+  CLIENTE_STATE.list.forEach(c => s.add(sectorKey(c)));
+  // Ordena alfabéticamente, "Sin sector" al final
+  return [...s].sort((a, b) => {
+    if (a === SIN_SECTOR) return 1;
+    if (b === SIN_SECTOR) return -1;
+    return a.localeCompare(b, 'es');
+  });
+}
+
+function populateSectorPills() {
+  const wrap = document.getElementById('sector-pills');
+  if (!wrap) return;
+  const sectores = distinctSectores();
+  if (!CLIENTE_STATE.activeSectores.size) {
+    sectores.forEach(s => CLIENTE_STATE.activeSectores.add(s));
+  }
+  wrap.innerHTML = sectores.map(s => {
+    const active = CLIENTE_STATE.activeSectores.has(s) ? 'active' : '';
+    const label = s === SIN_SECTOR ? 'Sin sector' : s;
+    const count = CLIENTE_STATE.list.filter(c => sectorKey(c) === s).length;
+    return `<button type="button" class="sector-pill ${active}" data-sector="${escapeHtml(s)}">
+      <span class="sector-pill-dot"></span>
+      ${escapeHtml(label)}
+      <span class="sector-pill-count">${count}</span>
+    </button>`;
+  }).join('');
+  document.getElementById('sector-bar').hidden = false;
+}
 
 async function loadClientes() {
   try {
-    const url = `${window.__SUPABASE_URL__}/rest/v1/v_playbook_clientes?select=bubble_id,nombre_empresas,fecha_onboarding`;
+    const url = `${window.__SUPABASE_URL__}/rest/v1/v_playbook_clientes?select=bubble_id,nombre_empresas,fecha_onboarding,sector`;
     const res = await fetch(url, {
       headers: {
         apikey: window.__SUPABASE_ANON_KEY__,
@@ -2062,6 +2166,7 @@ async function loadClientes() {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     CLIENTE_STATE.list = await res.json();
+    populateSectorPills();
     populateClienteDropdown();
     const bar = document.getElementById('cliente-bar');
     if (bar) bar.hidden = false;
@@ -2074,8 +2179,18 @@ function populateClienteDropdown() {
   const sel = document.getElementById('cliente-selector');
   if (!sel) return;
   const current = sel.value;
+  const filtered = CLIENTE_STATE.list.filter(c => CLIENTE_STATE.activeSectores.has(sectorKey(c)));
+  // Si el cliente seleccionado quedó fuera del filtro actual, lo mantenemos visible en el dropdown
+  // (con sufijo "fuera de filtro") para no perder el contexto del usuario.
+  const currentClient = current ? CLIENTE_STATE.list.find(c => c.bubble_id === current) : null;
+  if (currentClient && !filtered.some(c => c.bubble_id === current)) {
+    filtered.unshift(currentClient);
+  }
   sel.innerHTML = '<option value="">— Plantilla maestro —</option>'
-    + CLIENTE_STATE.list.map(c => `<option value="${c.bubble_id}">${escapeHtml(c.nombre_empresas || '(sin nombre)')}</option>`).join('');
+    + filtered.map(c => {
+        const out = currentClient && c.bubble_id === current && !CLIENTE_STATE.activeSectores.has(sectorKey(c)) ? ' (fuera de filtro)' : '';
+        return `<option value="${c.bubble_id}">${escapeHtml(c.nombre_empresas || '(sin nombre)')}${out}</option>`;
+      }).join('');
   if (current) sel.value = current;
 }
 
@@ -3198,6 +3313,27 @@ document.getElementById('cliente-selector').addEventListener('change', e => {
   onClienteChange(e.target.value);
 });
 
+document.getElementById('sector-pills').addEventListener('click', e => {
+  const pill = e.target.closest('.sector-pill');
+  if (!pill) return;
+  const s = pill.dataset.sector;
+  if (CLIENTE_STATE.activeSectores.has(s)) {
+    // No permitas dejar 0 sectores activos
+    if (CLIENTE_STATE.activeSectores.size === 1) return;
+    CLIENTE_STATE.activeSectores.delete(s);
+  } else {
+    CLIENTE_STATE.activeSectores.add(s);
+  }
+  pill.classList.toggle('active');
+  populateClienteDropdown();
+});
+
+document.getElementById('sector-reset').addEventListener('click', () => {
+  CLIENTE_STATE.activeSectores = new Set(distinctSectores());
+  populateSectorPills();
+  populateClienteDropdown();
+});
+
 // Checks de progreso en Timeline y Kanban (los de Tabla los gestiona tablaBody listener)
 document.addEventListener('change', e => {
   const cb = e.target.closest('input.task-progreso');
@@ -3240,9 +3376,12 @@ SUPABASE.auth.onAuthStateChange((event, session) => {
     STATE.user = null;
     CLIENTE_STATE.current = null;
     CLIENTE_STATE.list = [];
+    CLIENTE_STATE.activeSectores = new Set();
     document.body.classList.remove('cliente-mode');
     const bar = document.getElementById('cliente-bar');
+    const sbar = document.getElementById('sector-bar');
     if (bar) bar.hidden = true;
+    if (sbar) sbar.hidden = true;
     refreshAuthUI();
     rerender();
   }
