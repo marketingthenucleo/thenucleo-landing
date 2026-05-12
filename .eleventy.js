@@ -11,8 +11,6 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("assets");
   eleventyConfig.addPassthroughCopy("arquetipo");
   eleventyConfig.addPassthroughCopy("playbook");
-  eleventyConfig.addPassthroughCopy("macbook_laptop.glb");
-  eleventyConfig.addPassthroughCopy("videonuevo_dashboard.mp4");
 
   eleventyConfig.addFilter("dateES", (d) => {
     return new Date(d).toLocaleDateString("es-ES", {

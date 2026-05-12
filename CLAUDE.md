@@ -59,9 +59,8 @@ assets/js/
   comunidad-admin.js        ← gate admin + aprobar/rechazar via Edge Function
 fonts/                      ← NewBlack Typeface (woff2)
 icons/                      ← logos integraciones
-Media/                      ← logo circular PNG (favicon + OG)
-macbook_laptop.glb          ← modelo 3D del MacBook
-videonuevo_dashboard.mp4    ← video del dashboard
+Media/                      ← logo circular PNG (favicon + OG) + macbook_laptop.glb + videonuevo_dashboard.mp4
+docs/archive/               ← FULL-AUDIT-REPORT.md, ACTION-PLAN.md (auditoría 2026-04-11) + capture_sections.js (script Playwright legacy)
 ```
 
 ## Arquitectura de la landing
@@ -136,9 +135,9 @@ INSERT INTO comunidad_admins (user_id) VALUES ('<uid de auth.users>');
 
 ## SEO — Estado actual landing
 **Score:** 42/100 (auditado 2026-04-11)
-Documentos de referencia:
-- `FULL-AUDIT-REPORT.md` — análisis completo por categoría
-- `ACTION-PLAN.md` — plan priorizado con código listo para aplicar
+Documentos de referencia (archivados en `docs/archive/`):
+- `docs/archive/FULL-AUDIT-REPORT.md` — análisis completo por categoría
+- `docs/archive/ACTION-PLAN.md` — plan priorizado con código listo para aplicar
 
 ## Rendimiento — Estado tras sesión 2026-04-19
 
