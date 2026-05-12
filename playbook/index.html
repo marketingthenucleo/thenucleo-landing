@@ -75,7 +75,7 @@ a { color:inherit; text-decoration:none; }
 img { max-width:100%; display:block; }
 
 .app { display:flex; min-height:100vh; }
-.main { flex:1; padding:32px 40px; min-height:100vh; }
+.main { flex:1; padding:32px clamp(14px, 4vw, 40px); min-height:100vh; }
 
 @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 @keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
@@ -1599,6 +1599,65 @@ body.cliente-mode .task-card.done { opacity: .7; }
 body.cliente-mode .task-card.done .task-title { text-decoration: line-through; color: var(--text-tertiary); }
 body.cliente-mode .kanban-card.done { opacity: .7; }
 body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; color: var(--text-tertiary); }
+
+/* ============================================
+   MOBILE — ≤640px (sin tocar layout, solo confort)
+   ============================================ */
+@media (max-width: 640px) {
+  .main { padding: 20px 14px; }
+
+  /* Auth bar: 2 filas + iconos sin label */
+  .auth-bar { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
+  .auth-bar-meta { display: none; }
+  .theme-switch .theme-label { display: none; }
+  .theme-switch { padding: 0 8px; }
+
+  /* Header band */
+  .playbook-header { padding: 12px 0 14px; gap: 12px; }
+  .playbook-header h1 { font-size: 16px; }
+  .playbook-header-sub { font-size: 11px; }
+  .playbook-header-icon { width: 32px; height: 32px; }
+
+  /* Filter bar: aprieta gaps, los chips/pills hacen wrap solos */
+  .filter-bar { gap: 8px; padding: 12px 0; }
+  .filter-divider { display: none; }
+  .filter-label { width: 100%; margin: 0; }
+  .member-chip, .toggle-pill { font-size: 12px; padding: 8px 12px 8px 6px; }
+  .toggle-pill { padding: 8px 12px; }
+  .search-input-wrap { width: 100%; }
+
+  /* View switcher: tabs fluidas */
+  .view-tab .count { display: none; }
+  .view-tab-meta { display: none; }
+
+  /* Tabla editable: scroll-x cómodo + celdas táctiles + sin scroll-y anidado */
+  .tabla-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
+  .tabla { min-width: 720px; font-size: 14px; }
+  .tabla tbody td { padding: 14px 12px; }
+  .tabla thead th { padding: 12px 12px; }
+  .tabla.dense tbody td { padding: 10px 12px; }
+  .tabla td.day-cell, .tabla td.est-cell { font-size: 12px; }
+
+  /* Bulk bar */
+  .bulk-bar { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .bulk-bar .btn--sm { height: 36px; padding: 0 14px; }
+
+  /* Touch targets WCAG 2.5.5 en pantallas táctiles */
+  .btn--sm { height: 36px; padding: 0 14px; }
+  .icon-btn { width: 40px; height: 40px; }
+
+  /* Cliente bar: el selector ocupa todo + hint ya oculto a 720px */
+  .cliente-bar { padding: 10px 12px; }
+  #cliente-selector { width: 100%; min-width: 0; }
+}
+
+/* Targets mínimos en cualquier dispositivo táctil (sin hover real) */
+@media (hover: none) and (pointer: coarse) {
+  .btn--sm { min-height: 40px; }
+  .icon-btn { min-width: 40px; min-height: 40px; }
+  .tabla input[type=checkbox] { transform: scale(1.2); }
+  .tabla td.check-cell { padding: 0 12px; }
+}
 </style>
 </head>
 <body>
