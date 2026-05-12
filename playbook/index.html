@@ -1420,6 +1420,29 @@ body.viewer .day-group .phase-tag { cursor: default; pointer-events: none; }
   font-family: var(--font-mono);
   max-width: 380px; text-align: right;
 }
+.cliente-bar-share {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px;
+  font-family: var(--font-ui); font-size: 12px; font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+.cliente-bar-share:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+.cliente-bar-share svg { width: 14px; height: 14px; }
+.cliente-bar-share.copied {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-muted);
+}
 
 /* Barra de progreso teórico sobre el timeline-track */
 .timeline-track::after {
@@ -1686,7 +1709,8 @@ html.anon-mode .bulk-bar,
 html.anon-mode #cliente-selector,
 html.anon-mode .cliente-bar-label,
 html.anon-mode .cliente-bar-hint,
-html.anon-mode .cliente-bar-spacer { display: none !important; }
+html.anon-mode .cliente-bar-spacer,
+html.anon-mode .cliente-bar-share { display: none !important; }
 
 html.anon-mode .cliente-bar {
   background: transparent;
@@ -1815,6 +1839,10 @@ html.anon-mode .task-card { grid-template-columns: auto 1fr !important; }
         <option value="">— Plantilla maestro —</option>
       </select>
       <span class="cliente-day-pill" id="cliente-day-pill" hidden></span>
+      <button type="button" class="cliente-bar-share" id="btn-share-link" hidden title="Copia el enlace público para enviarlo al cliente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span class="cliente-bar-share-label">Copiar enlace público</span>
+      </button>
       <div class="cliente-bar-spacer"></div>
       <span class="cliente-bar-hint" id="cliente-bar-hint">Selecciona un cliente para ver su timeline con fechas reales, festivos y progreso teórico.</span>
     </section>
@@ -2550,16 +2578,19 @@ async function onClienteChange(bubbleId) {
   document.body.classList.toggle('cliente-mode', !!CLIENTE_STATE.current);
   const pill = document.getElementById('cliente-day-pill');
   const hint = document.getElementById('cliente-bar-hint');
+  const shareBtn = document.getElementById('btn-share-link');
   if (!bubbleId) {
     document.documentElement.style.setProperty('--cliente-progress', '0%');
     if (pill) { pill.hidden = true; pill.className = 'cliente-day-pill'; }
     if (hint) hint.style.display = '';
+    if (shareBtn) shareBtn.hidden = true;
     CLIENTE_STATE.progresoByTaskId = {};
     CLIENTE_STATE.festivosSet = new Set();
     CLIENTE_STATE.currentHeadDay = null;
     rerender();
     return;
   }
+  if (shareBtn) shareBtn.hidden = false;
   const c = CLIENTE_STATE.list.find(x => x.bubble_id === bubbleId);
   if (!c) return;
   const dias = diasDesdeOnboarding(c.fecha_onboarding);
@@ -3617,6 +3648,28 @@ async function init() {
 
 document.getElementById('cliente-selector').addEventListener('change', e => {
   onClienteChange(e.target.value);
+});
+
+document.getElementById('btn-share-link').addEventListener('click', async () => {
+  const bubbleId = CLIENTE_STATE.current;
+  if (!bubbleId) return;
+  const url = `https://work.thenucleo.com/playbook/${bubbleId}`;
+  const btn = document.getElementById('btn-share-link');
+  const label = btn.querySelector('.cliente-bar-share-label');
+  const prevLabel = label.textContent;
+  try {
+    await navigator.clipboard.writeText(url);
+    btn.classList.add('copied');
+    label.textContent = '✓ Enlace copiado';
+  } catch (e) {
+    console.warn('clipboard failed', e);
+    window.prompt('Copia este enlace:', url);
+    return;
+  }
+  setTimeout(() => {
+    btn.classList.remove('copied');
+    label.textContent = prevLabel;
+  }, 2200);
 });
 
 document.getElementById('sector-pills').addEventListener('click', e => {
