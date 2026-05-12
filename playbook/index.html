@@ -2307,7 +2307,73 @@ function diasDesdeOnboarding(fechaOnboarding) {
 }
 
 function progressPct(dias) {
+  // Linear fallback — solo si aún no hay DOM de timeline (1ª pasada). updateProgressLine() recalcula contra el DOM tras rerender.
   return Math.max(0, Math.min(100, (dias / PLAYBOOK_MAX_DAY) * 100));
+}
+
+// Calcula la altura de la línea verde anclándola a la posición real de las burbujas
+// de día en el DOM (los días no están repartidos linealmente: 0, 0.5, 1, …, 95).
+// Interpola entre las dos burbujas que rodean `dias` cuando la fecha cae en medio.
+function progressPctFromDom(dias) {
+  const pane = document.getElementById('timeline-pane');
+  if (!pane || pane.hidden) return null;
+  const trackEl = pane.querySelector('.timeline-track');
+  if (!trackEl) return null;
+  const trackTop = trackEl.offsetTop;
+  const trackHeight = trackEl.offsetHeight;
+  if (trackHeight <= 0) return null;
+
+  const bubbles = [...pane.querySelectorAll('.day-bubble[data-day]')]
+    .map(el => ({ day: parseFloat(el.dataset.day), el }))
+    .filter(b => Number.isFinite(b.day))
+    .sort((a, b) => a.day - b.day);
+  if (!bubbles.length) return null;
+
+  const centerInTrack = (el) => {
+    let y = el.offsetHeight / 2;
+    let cur = el;
+    while (cur && cur !== pane) {
+      y += cur.offsetTop;
+      cur = cur.offsetParent;
+    }
+    return y - trackTop;
+  };
+
+  let y;
+  if (dias <= bubbles[0].day) {
+    y = centerInTrack(bubbles[0].el);
+  } else if (dias >= bubbles[bubbles.length - 1].day) {
+    y = centerInTrack(bubbles[bubbles.length - 1].el);
+  } else {
+    let lo = bubbles[0], hi = bubbles[bubbles.length - 1];
+    for (let i = 0; i < bubbles.length - 1; i++) {
+      if (bubbles[i].day <= dias && bubbles[i + 1].day >= dias) {
+        lo = bubbles[i]; hi = bubbles[i + 1]; break;
+      }
+    }
+    const loY = centerInTrack(lo.el);
+    const hiY = centerInTrack(hi.el);
+    const span = hi.day - lo.day;
+    const ratio = span > 0 ? (dias - lo.day) / span : 0;
+    y = loY + ratio * (hiY - loY);
+  }
+  return Math.max(0, Math.min(100, (y / trackHeight) * 100));
+}
+
+function updateProgressLine() {
+  if (!CLIENTE_STATE.current) {
+    document.documentElement.style.setProperty('--cliente-progress', '0%');
+    return;
+  }
+  const c = CLIENTE_STATE.list.find(x => x.bubble_id === CLIENTE_STATE.current);
+  if (!c || !c.fecha_onboarding) {
+    document.documentElement.style.setProperty('--cliente-progress', '0%');
+    return;
+  }
+  const dias = diasDesdeOnboarding(c.fecha_onboarding);
+  const pct = progressPctFromDom(dias);
+  if (pct === null) return; // sin DOM medible aún; el siguiente rerender lo recalcula
+  document.documentElement.style.setProperty('--cliente-progress', pct + '%');
 }
 
 function fechaParaDay(fechaOnboarding, dayNum) {
@@ -2572,7 +2638,7 @@ function renderTimeline() {
       html += `
         <div class="day-row">
           <div class="day-marker">
-            <span class="day-bubble ${bubbleClass}">${dayLabelHtml(head)}</span>
+            <span class="day-bubble ${bubbleClass}" data-day="${head.day}">${dayLabelHtml(head)}</span>
             <span class="day-sublabel">${escapeHtml(head.daySub)}</span>
           </div>
           <div class="day-content">
@@ -2871,6 +2937,7 @@ function rerender() {
   renderKanban();
   updateStatusBar();
   setSaveIndicator(STATE.lastSaved ? 'saved' : 'idle');
+  updateProgressLine();
 }
 
 /* ============================================
@@ -3141,6 +3208,16 @@ document.querySelectorAll('.view-tab').forEach(tab => {
     document.querySelectorAll('.view-pane').forEach(p => {
       p.hidden = p.dataset.pane !== STATE.view;
     });
+    if (STATE.view === 'timeline') updateProgressLine();
+  });
+});
+
+let __progressResizeRaf = 0;
+window.addEventListener('resize', () => {
+  if (__progressResizeRaf) cancelAnimationFrame(__progressResizeRaf);
+  __progressResizeRaf = requestAnimationFrame(() => {
+    __progressResizeRaf = 0;
+    updateProgressLine();
   });
 });
 
