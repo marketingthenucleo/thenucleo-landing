@@ -5,7 +5,8 @@
   "rewrites": [
     { "source": "/privacidad", "destination": "/privacidad.html" },
     { "source": "/aviso-legal", "destination": "/aviso-legal.html" },
-    { "source": "/incidencias", "destination": "/incidencias.html" }
+    { "source": "/incidencias", "destination": "/incidencias.html" },
+    { "source": "/playbook/:slug", "destination": "/playbook/index.html" }
   ],
   "headers": [
     {

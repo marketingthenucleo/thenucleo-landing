@@ -8,6 +8,18 @@
 
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="Playbook operativo de onboarding TheNucleo. Editable solo por Ben.">
+<script>
+/* Anti-flicker guard: si la URL es /playbook/<id> marcamos <html> como anon-mode
+   antes de pintar. El módulo JS posterior lo retira si detecta sesión admin. */
+(function () {
+  try {
+    var parts = location.pathname.split('/').filter(Boolean);
+    if (parts[0] === 'playbook' && parts[1]) {
+      document.documentElement.classList.add('anon-mode');
+    }
+  } catch (e) {}
+})();
+</script>
 <style>
 /* ============================================
    THENUCLEO DESIGN TOKENS (inline)
@@ -1658,6 +1670,40 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
   .tabla input[type=checkbox] { transform: scale(1.2); }
   .tabla td.check-cell { padding: 0 12px; }
 }
+
+/* ============================================
+   ANON MODE — /playbook/<bubble_id> sin sesión admin
+   ============================================ */
+html.anon-mode .auth-bar,
+html.anon-mode .filter-bar,
+html.anon-mode .view-switcher,
+html.anon-mode .sector-bar,
+html.anon-mode .playbook-stats,
+html.anon-mode .tabla-view,
+html.anon-mode .kanban-view,
+html.anon-mode .save-indicator,
+html.anon-mode .bulk-bar,
+html.anon-mode #cliente-selector,
+html.anon-mode .cliente-bar-label,
+html.anon-mode .cliente-bar-hint,
+html.anon-mode .cliente-bar-spacer { display: none !important; }
+
+html.anon-mode .cliente-bar {
+  background: transparent;
+  border: none;
+  padding: 0 0 8px 0;
+  justify-content: flex-start;
+}
+html.anon-mode .cliente-day-pill { margin: 0; }
+
+/* Oculta info interna por tarjeta en timeline (responsables, registro, pill cliente) */
+html.anon-mode .task-card .owner-avatar,
+html.anon-mode .task-card .owner-stack,
+html.anon-mode .task-card .owner-name,
+html.anon-mode .task-card .task-meta,
+html.anon-mode .task-card .client-pill,
+html.anon-mode .task-card .task-side { display: none !important; }
+html.anon-mode .task-card { grid-template-columns: auto 1fr !important; }
 </style>
 </head>
 <body>
@@ -1888,6 +1934,13 @@ const EDITOR_EMAILS = new Set([
 const STORAGE_KEY = "thenucleo-comunidad-auth";
 const PLAYBOOK_SLUG = "default";
 
+// Anon mode — /playbook/<bubble_id> sin sesión admin
+function urlBubbleId() {
+  const parts = location.pathname.split('/').filter(Boolean);
+  return parts[0] === 'playbook' && parts[1] ? decodeURIComponent(parts[1]) : null;
+}
+const URL_BUBBLE_ID = urlBubbleId();
+
 function readStoredSession() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1899,6 +1952,43 @@ function readStoredSession() {
 }
 function getCurrentUser() { return readStoredSession()?.user ?? null; }
 function getAccessToken() { return readStoredSession()?.access_token ?? null; }
+
+function isAdminSync() {
+  const u = getCurrentUser();
+  return !!(u && u.email && EDITOR_EMAILS.has(u.email.toLowerCase()));
+}
+
+async function fetchPlaybookPublico(bubbleId) {
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/rpc/playbook_publico`, {
+      method: 'POST',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + window.__SUPABASE_ANON_KEY__,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ p_bubble_id: bubbleId }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.warn('[playbook] fetchPlaybookPublico failed', e);
+    return null;
+  }
+}
+
+function showAnonError() {
+  const main = document.querySelector('main.main');
+  if (main) {
+    main.innerHTML = `
+      <div style="min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:32px;">
+        <div style="font-size:48px;opacity:.4;">🔒</div>
+        <h2 style="font-size:20px;font-weight:600;margin:0;">Enlace privado o no disponible</h2>
+        <p style="color:var(--text-secondary);max-width:440px;margin:0;line-height:1.5;">Esta hoja de ruta no está accesible públicamente. Si crees que es un error, contacta con tu responsable en TheNucleo.</p>
+      </div>`;
+  }
+}
 
 /* ============================================
    DATA
@@ -3428,6 +3518,78 @@ async function init() {
   }
 
   STATE.user = getCurrentUser();
+
+  // ANON MODE — /playbook/<bubble_id> sin sesión admin
+  if (URL_BUBBLE_ID && !isAdminSync()) {
+    STATE.canEdit = false;
+    document.body.classList.add('viewer');
+    const data = await fetchPlaybookPublico(URL_BUBBLE_ID);
+    if (!data || !data.cliente) { showAnonError(); return; }
+
+    TASKS = Array.isArray(data.tasks) && data.tasks.length
+      ? data.tasks
+      : JSON.parse(JSON.stringify(DEFAULT_TASKS));
+    CLIENTE_STATE.list = [data.cliente];
+    CLIENTE_STATE.current = data.cliente.bubble_id;
+    CLIENTE_STATE.progresoByTaskId = Object.fromEntries((data.progreso || []).map(id => [id, true]));
+    document.body.classList.add('cliente-mode');
+
+    await loadFestivosRango(data.cliente.fecha_onboarding);
+    CLIENTE_STATE.currentHeadDay = getCurrentHeadDay();
+
+    // Pill "Día X de N" + barra de progreso (inline: no usar onClienteChange porque hace fetch a playbook_progreso que requiere auth)
+    const dias = diasDesdeOnboarding(data.cliente.fecha_onboarding);
+    const pct = progressPct(dias);
+    document.documentElement.style.setProperty('--cliente-progress', pct + '%');
+    const pill = document.getElementById('cliente-day-pill');
+    if (pill) {
+      pill.hidden = false;
+      pill.className = 'cliente-day-pill';
+      if (dias < 0) {
+        pill.classList.add('is-future');
+        const fechaInicio = new Date(data.cliente.fecha_onboarding);
+        pill.textContent = `Aún no empieza · inicio ${fechaInicio.toLocaleDateString('es', {day:'numeric', month:'short'})}`;
+      } else if (dias > PLAYBOOK_MAX_DAY) {
+        pill.classList.add('is-done');
+        pill.textContent = `Día ${dias} de ${PLAYBOOK_MAX_DAY} · Playbook completado`;
+      } else {
+        pill.textContent = `Día ${dias} de ${PLAYBOOK_MAX_DAY}`;
+      }
+    }
+
+    // Header reformulado
+    const h1 = document.querySelector('.playbook-header h1');
+    const sub = document.querySelector('.playbook-header-sub');
+    if (h1) h1.textContent = 'Tu hoja de ruta con TheNucleo';
+    if (sub) sub.textContent = data.cliente.nombre_empresas || '';
+    document.title = `Tu hoja de ruta · ${data.cliente.nombre_empresas || 'TheNucleo'}`;
+
+    // Forzar vista timeline (la única visible por CSS)
+    STATE.view = 'timeline';
+    document.querySelectorAll('.view-pane').forEach(p => {
+      p.hidden = p.dataset.pane !== 'timeline';
+    });
+
+    // Mostrar cliente-bar (el selector queda oculto por CSS, solo se ve el day-pill)
+    const bar = document.getElementById('cliente-bar');
+    if (bar) bar.hidden = false;
+
+    rerender();
+    return;
+  }
+
+  // No admin sin slug en URL → no exponer plantilla maestra, redirigir a home
+  if (!URL_BUBBLE_ID && !isAdminSync()) {
+    window.location.replace('/');
+    return;
+  }
+
+  // Admin: el guard inline puede haber añadido anon-mode al <html> si la URL tiene slug.
+  // Retirarlo ahora que sabemos que la sesión es admin.
+  if (URL_BUBBLE_ID) {
+    document.documentElement.classList.remove('anon-mode');
+  }
+
   refreshAuthUI();
 
   const loaded = await loadFromSupabase();
@@ -3441,6 +3603,13 @@ async function init() {
   }
 
   if (STATE.user) await loadClientes();
+
+  // Admin con slug en URL → preseleccionar cliente
+  if (URL_BUBBLE_ID && CLIENTE_STATE.list.some(c => c.bubble_id === URL_BUBBLE_ID)) {
+    const sel = document.getElementById('cliente-selector');
+    if (sel) sel.value = URL_BUBBLE_ID;
+    await onClienteChange(URL_BUBBLE_ID);
+  }
 
   document.querySelector('.tabla thead th[data-sort="day"]').classList.add('sort-asc');
   rerender();
