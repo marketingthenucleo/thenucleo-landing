@@ -1328,6 +1328,197 @@ body.viewer .day-group .phase-tag { cursor: default; pointer-events: none; }
   .task-card { grid-template-columns: auto 1fr; }
   .task-side { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: flex-end; }
 }
+
+/* ============================================
+   CLIENTE SELECTOR + barra de progreso teórico + modo cliente
+   ============================================ */
+.cliente-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+.cliente-bar-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.cliente-bar-label svg { width: 14px; height: 14px; }
+#cliente-selector {
+  height: 32px; padding: 0 28px 0 12px;
+  font-family: var(--font-ui); font-size: 13px; font-weight: 500;
+  background: var(--bg-base) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b8fa8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 10px center;
+  color: var(--text-primary);
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  outline: none; cursor: pointer;
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  min-width: 220px;
+  transition: all var(--duration-fast);
+}
+#cliente-selector:hover { border-color: var(--border-strong); }
+#cliente-selector:focus {
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 0 3px var(--accent-secondary-muted);
+}
+.cliente-day-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  background: var(--accent-primary-muted);
+  color: var(--accent-primary);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.cliente-day-pill.is-future {
+  background: var(--status-info-bg);
+  color: var(--status-info);
+}
+.cliente-day-pill.is-done {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+}
+.cliente-bar-spacer { flex: 1; }
+.cliente-bar-hint {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  max-width: 380px; text-align: right;
+}
+
+/* Barra de progreso teórico sobre el timeline-track */
+.timeline-track::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: var(--cliente-progress, 0%);
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-primary-hover));
+  border-radius: 2px;
+  transition: height var(--duration-slow) var(--ease-out);
+  opacity: 0;
+  pointer-events: none;
+}
+body.cliente-mode .timeline-track::after { opacity: .85; }
+
+/* Modo cliente: blinda la plantilla maestro */
+body.cliente-mode [contenteditable="plaintext-only"] {
+  pointer-events: none;
+  background: transparent !important;
+}
+body.cliente-mode .row-delete,
+body.cliente-mode .add-task-row,
+body.cliente-mode .add-day-row,
+body.cliente-mode .day-cell-lock,
+body.cliente-mode .lock-icon,
+body.cliente-mode .bulk-bar,
+body.cliente-mode [data-action="edit-day"],
+body.cliente-mode [data-action="edit-owner"],
+body.cliente-mode [data-action="edit-est"],
+body.cliente-mode [data-action="edit-auto"],
+body.cliente-mode [data-action="edit-phase"],
+body.cliente-mode [data-action="toggle-client"],
+body.cliente-mode [data-action="toggle-fija"] {
+  pointer-events: none !important;
+}
+body.cliente-mode .row-delete,
+body.cliente-mode .add-task-row,
+body.cliente-mode .add-day-row,
+body.cliente-mode .save-indicator { display: none !important; }
+body.cliente-mode [data-action] { cursor: default !important; }
+
+/* Checkbox en modo cliente: estilo "done" con tick verde */
+body.cliente-mode .check-cell input[type=checkbox] {
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+  transform: scale(1.1);
+}
+body.cliente-mode .task-row.done .task-name {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+body.cliente-mode .task-row.done {
+  opacity: .75;
+}
+
+/* Etiquetas de día con fechas reales y festivos */
+.day-label-real {
+  display: inline-flex; align-items: baseline; gap: 6px;
+}
+.day-label-real .dow {
+  font-size: 0.85em; color: var(--text-tertiary); font-weight: 400;
+}
+.day-label-real.is-festivo {
+  color: var(--status-error);
+  font-weight: 700;
+}
+.day-label-real.is-festivo::before {
+  content: '●';
+  margin-right: 4px;
+  color: var(--status-error);
+}
+.day-label-real.is-weekend {
+  color: var(--text-tertiary);
+}
+
+@media (max-width: 720px) {
+  .cliente-bar { gap: 8px; padding: 8px 10px; }
+  #cliente-selector { min-width: 140px; flex: 1; }
+  .cliente-bar-hint { display: none; }
+}
+
+/* Checkbox de progreso en Timeline (task-card) y Kanban (kanban-card) — solo en cliente-mode */
+.task-progreso-check { display: none; }
+body.cliente-mode .task-progreso-check {
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.task-progreso-check input { display: none; }
+.task-progreso-box {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all var(--duration-fast);
+  position: relative;
+}
+.task-progreso-box::after {
+  content: ''; opacity: 0;
+  width: 11px; height: 6px;
+  border-left: 2.5px solid white;
+  border-bottom: 2.5px solid white;
+  transform: rotate(-45deg) translate(1px, -1px);
+  transition: opacity var(--duration-fast);
+}
+.task-progreso-check input:checked + .task-progreso-box {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.task-progreso-check input:checked + .task-progreso-box::after { opacity: 1; }
+.task-progreso-check:hover .task-progreso-box { border-color: var(--accent-primary); }
+
+/* Hueco para el check en Timeline cards: añadir una columna al inicio */
+body.cliente-mode .task-card { grid-template-columns: auto auto 1fr auto; }
+
+/* Kanban: card es block, el check va al principio como flexbox header */
+body.cliente-mode .kanban-card {
+  position: relative;
+  padding-left: 36px;
+}
+body.cliente-mode .kanban-card .task-progreso-check {
+  position: absolute;
+  left: 10px; top: 12px;
+}
+
+/* Estado done en Timeline y Kanban */
+body.cliente-mode .task-card.done { opacity: .7; }
+body.cliente-mode .task-card.done .task-title { text-decoration: line-through; color: var(--text-tertiary); }
+body.cliente-mode .kanban-card.done { opacity: .7; }
+body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; color: var(--text-tertiary); }
 </style>
 </head>
 <body>
@@ -1428,6 +1619,20 @@ body.viewer .day-group .phase-tag { cursor: default; pointer-events: none; }
       <div class="view-spacer"></div>
       <span class="view-tab-meta" id="active-filters-meta">Sin filtros aplicados</span>
     </div>
+
+    <!-- CLIENTE SELECTOR (vista por cliente: timeline real + progreso teórico + checks) -->
+    <section class="cliente-bar" id="cliente-bar" hidden>
+      <label for="cliente-selector" class="cliente-bar-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Vista cliente
+      </label>
+      <select id="cliente-selector">
+        <option value="">— Plantilla maestro —</option>
+      </select>
+      <span class="cliente-day-pill" id="cliente-day-pill" hidden></span>
+      <div class="cliente-bar-spacer"></div>
+      <span class="cliente-bar-hint" id="cliente-bar-hint">Selecciona un cliente para ver su timeline con fechas reales, festivos y progreso teórico.</span>
+    </section>
 
     <!-- TIMELINE VIEW (rendered by JS from TASKS) -->
     <section class="timeline view-pane" data-pane="timeline" id="timeline-pane" hidden>
@@ -1757,6 +1962,7 @@ async function loadFromSupabase() {
 let saveTimer = null;
 function scheduleSave() {
   if (!STATE.canEdit) return;
+  if (CLIENTE_STATE && CLIENTE_STATE.current) return; // En modo cliente no se guarda el master
   setSaveIndicator('saving');
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(saveToSupabase, 600);
@@ -1810,6 +2016,224 @@ function setSaveIndicator(state, msg) {
     txt.textContent = '⚠ ' + (msg || 'Error');
   } else {
     txt.textContent = 'Sin cambios';
+  }
+}
+
+/* ============================================
+   CLIENTE — vista adaptada (progreso teórico + checks reales)
+   ============================================ */
+const PLAYBOOK_MAX_DAY = 95;
+const CLIENTE_STATE = {
+  current: null,            // bubble_id o null = plantilla maestro
+  list: [],                 // [{bubble_id, nombre_empresas, fecha_onboarding}]
+  progresoByTaskId: {},     // { 12: true, 47: true, ... }
+  festivosSet: new Set(),   // Set<'YYYY-MM-DD'>
+};
+
+async function loadClientes() {
+  try {
+    const url = `${window.__SUPABASE_URL__}/rest/v1/v_playbook_clientes?select=bubble_id,nombre_empresas,fecha_onboarding`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + (getAccessToken() || window.__SUPABASE_ANON_KEY__),
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    CLIENTE_STATE.list = await res.json();
+    populateClienteDropdown();
+    const bar = document.getElementById('cliente-bar');
+    if (bar) bar.hidden = false;
+  } catch (e) {
+    console.warn('[playbook] loadClientes failed', e);
+  }
+}
+
+function populateClienteDropdown() {
+  const sel = document.getElementById('cliente-selector');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Plantilla maestro —</option>'
+    + CLIENTE_STATE.list.map(c => `<option value="${c.bubble_id}">${escapeHtml(c.nombre_empresas || '(sin nombre)')}</option>`).join('');
+  if (current) sel.value = current;
+}
+
+async function loadProgresoCliente(bubbleId) {
+  try {
+    const url = `${window.__SUPABASE_URL__}/rest/v1/playbook_progreso?cliente_bubble_id=eq.${encodeURIComponent(bubbleId)}&done=eq.true&select=task_id`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + (getAccessToken() || window.__SUPABASE_ANON_KEY__),
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+    CLIENTE_STATE.progresoByTaskId = Object.fromEntries(rows.map(r => [r.task_id, true]));
+  } catch (e) {
+    console.warn('[playbook] loadProgresoCliente failed', e);
+    CLIENTE_STATE.progresoByTaskId = {};
+  }
+}
+
+async function loadFestivosAnyo(year) {
+  const cacheKey = `festivos_ES_${year}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch {}
+  try {
+    const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ES`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const fechas = data.map(h => h.date);
+    try { localStorage.setItem(cacheKey, JSON.stringify(fechas)); } catch {}
+    return fechas;
+  } catch {
+    return [];
+  }
+}
+
+async function loadFestivosRango(fechaOnboarding) {
+  const startYear = new Date(fechaOnboarding).getFullYear();
+  const endDate = new Date(fechaOnboarding);
+  endDate.setDate(endDate.getDate() + PLAYBOOK_MAX_DAY);
+  const endYear = endDate.getFullYear();
+  const years = [];
+  for (let y = startYear; y <= endYear; y++) years.push(y);
+  const lists = await Promise.all(years.map(loadFestivosAnyo));
+  CLIENTE_STATE.festivosSet = new Set(lists.flat());
+}
+
+function diasDesdeOnboarding(fechaOnboarding) {
+  const ms = Date.now() - new Date(fechaOnboarding).getTime();
+  return Math.floor(ms / 86400000);
+}
+
+function progressPct(dias) {
+  return Math.max(0, Math.min(100, (dias / PLAYBOOK_MAX_DAY) * 100));
+}
+
+function fechaParaDay(fechaOnboarding, dayNum) {
+  const d = new Date(fechaOnboarding);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + Math.floor(dayNum));
+  return d;
+}
+
+function isoDate(d) {
+  // YYYY-MM-DD en horario local (evita el shift de toISOString por UTC)
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function esFestivo(d) {
+  return CLIENTE_STATE.festivosSet.has(isoDate(d));
+}
+
+function esFinDeSemana(d) {
+  const w = d.getDay();
+  return w === 0 || w === 6;
+}
+
+function formatFechaCorta(d) {
+  const dia = d.getDate();
+  const mes = d.toLocaleDateString('es', { month: 'short' }).replace('.', '').replace(/^./, c => c.toUpperCase());
+  const dow = d.toLocaleDateString('es', { weekday: 'short' }).replace('.', '');
+  return { dia, mes, dow };
+}
+
+function dayLabelHtml(t) {
+  // Sin cliente → label original ("Día 0", "Seguimiento", ...)
+  if (!CLIENTE_STATE.current) return escapeHtml(t.dayLabel);
+  const c = CLIENTE_STATE.list.find(x => x.bubble_id === CLIENTE_STATE.current);
+  if (!c || !c.fecha_onboarding) return escapeHtml(t.dayLabel);
+  const fecha = fechaParaDay(c.fecha_onboarding, t.day);
+  const { dia, mes, dow } = formatFechaCorta(fecha);
+  const festivo = esFestivo(fecha);
+  const weekend = esFinDeSemana(fecha);
+  const cls = ['day-label-real'];
+  if (festivo) cls.push('is-festivo');
+  else if (weekend) cls.push('is-weekend');
+  const title = festivo ? 'Festivo nacional · ' + t.dayLabel
+              : weekend ? 'Fin de semana · ' + t.dayLabel
+              : t.dayLabel;
+  return `<span class="${cls.join(' ')}" title="${escapeHtml(title)}">${dia} ${mes} <span class="dow">· ${dow}</span></span>`;
+}
+
+async function onClienteChange(bubbleId) {
+  CLIENTE_STATE.current = bubbleId || null;
+  document.body.classList.toggle('cliente-mode', !!CLIENTE_STATE.current);
+  const pill = document.getElementById('cliente-day-pill');
+  const hint = document.getElementById('cliente-bar-hint');
+  if (!bubbleId) {
+    document.documentElement.style.setProperty('--cliente-progress', '0%');
+    if (pill) { pill.hidden = true; pill.className = 'cliente-day-pill'; }
+    if (hint) hint.style.display = '';
+    CLIENTE_STATE.progresoByTaskId = {};
+    CLIENTE_STATE.festivosSet = new Set();
+    rerender();
+    return;
+  }
+  const c = CLIENTE_STATE.list.find(x => x.bubble_id === bubbleId);
+  if (!c) return;
+  const dias = diasDesdeOnboarding(c.fecha_onboarding);
+  const pct = progressPct(dias);
+  document.documentElement.style.setProperty('--cliente-progress', pct + '%');
+  if (pill) {
+    pill.hidden = false;
+    pill.className = 'cliente-day-pill';
+    if (dias < 0) {
+      pill.classList.add('is-future');
+      const fechaInicio = new Date(c.fecha_onboarding);
+      pill.textContent = `Aún no empieza · inicio ${fechaInicio.toLocaleDateString('es', {day:'numeric', month:'short'})}`;
+    } else if (dias > PLAYBOOK_MAX_DAY) {
+      pill.classList.add('is-done');
+      pill.textContent = `Día ${dias} de ${PLAYBOOK_MAX_DAY} · Playbook completado`;
+    } else {
+      pill.textContent = `Día ${dias} de ${PLAYBOOK_MAX_DAY}`;
+    }
+  }
+  if (hint) hint.style.display = 'none';
+  await Promise.all([loadProgresoCliente(bubbleId), loadFestivosRango(c.fecha_onboarding)]);
+  rerender();
+}
+
+async function toggleProgreso(taskId, done) {
+  if (!STATE.canEdit || !CLIENTE_STATE.current) return false;
+  const token = getAccessToken();
+  if (!token) return false;
+  const body = {
+    cliente_bubble_id: CLIENTE_STATE.current,
+    task_id: taskId,
+    done,
+    done_at: done ? new Date().toISOString() : null,
+    done_by: done ? (STATE.user?.email || null) : null,
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/playbook_progreso?on_conflict=cliente_bubble_id,task_id`, {
+      method: 'POST',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      console.error('[playbook] toggleProgreso failed', res.status, await res.text());
+      return false;
+    }
+    if (done) CLIENTE_STATE.progresoByTaskId[taskId] = true;
+    else delete CLIENTE_STATE.progresoByTaskId[taskId];
+    return true;
+  } catch (e) {
+    console.error('[playbook] toggleProgreso error', e);
+    return false;
   }
 }
 
@@ -1920,7 +2344,7 @@ function renderTimeline() {
       html += `
         <div class="day-row">
           <div class="day-marker">
-            <span class="day-bubble ${bubbleClass}">${head.dayLabel}</span>
+            <span class="day-bubble ${bubbleClass}">${dayLabelHtml(head)}</span>
             <span class="day-sublabel">${escapeHtml(head.daySub)}</span>
           </div>
           <div class="day-content">
@@ -1929,8 +2353,14 @@ function renderTimeline() {
               const avatars = t.owners.length > 1
                 ? `<div class="owner-stack">${t.owners.map(o=>`<div class="owner-avatar" data-owner="${o}">${OWNERS[o].initial}</div>`).join('')}</div>`
                 : `<div class="owner-avatar" data-owner="${primary}">${OWNERS[primary].initial}</div>`;
+              const doneCls = (CLIENTE_STATE.current && CLIENTE_STATE.progresoByTaskId[t.id]) ? 'done' : '';
+              const checkBox = `<label class="task-progreso-check" title="${STATE.canEdit ? 'Marcar como completada para este cliente' : 'Solo lectura'}">
+                <input type="checkbox" class="task-progreso" data-id="${t.id}" ${doneCls ? 'checked' : ''} ${STATE.canEdit ? '' : 'disabled'}>
+                <span class="task-progreso-box"></span>
+              </label>`;
               return `
-                <article class="task-card" data-owner="${primary}" data-id="${t.id}">
+                <article class="task-card ${doneCls}" data-owner="${primary}" data-id="${t.id}">
+                  ${checkBox}
                   ${avatars}
                   <div class="task-body">
                     <div class="task-title">${escapeHtml(t.title)}</div>
@@ -2004,7 +2434,7 @@ function renderTabla() {
         <tr class="day-group ${collapsed}" data-day="${dk}">
           <td colspan="11">
             <span class="chevron">▼</span>
-            ${head.dayLabel}
+            ${dayLabelHtml(rows[0] || head)}
             <span class="group-sub" ${editableSub} data-placeholder="+ subtítulo">${escapeHtml(head.daySub)}</span>
             ${phaseTag}
             ${lockBadge}
@@ -2061,10 +2491,15 @@ function renderTaskRow(t) {
     ? `<span class="owner-mini-stack">${t.owners.map(o => ownerAvatar(o,22)).join('')}</span>`
     : ownerAvatar(primaryOwner,22);
   const ownerNames = t.owners.map(o => OWNERS[o].name).join(' + ');
-  const checked = STATE.selectedIds.has(t.id) ? 'checked' : '';
-  const selectedCls = STATE.selectedIds.has(t.id) ? 'selected' : '';
-  const editable = STATE.canEdit ? 'contenteditable="plaintext-only"' : '';
-  const deleteBtn = STATE.canEdit
+  const inClienteMode = !!CLIENTE_STATE.current;
+  const checked = inClienteMode
+    ? (CLIENTE_STATE.progresoByTaskId[t.id] ? 'checked' : '')
+    : (STATE.selectedIds.has(t.id) ? 'checked' : '');
+  const selectedCls = inClienteMode
+    ? (CLIENTE_STATE.progresoByTaskId[t.id] ? 'done' : '')
+    : (STATE.selectedIds.has(t.id) ? 'selected' : '');
+  const editable = (STATE.canEdit && !inClienteMode) ? 'contenteditable="plaintext-only"' : '';
+  const deleteBtn = (STATE.canEdit && !inClienteMode)
     ? `<button class="row-delete" data-action="delete-row" title="Eliminar fila">✕</button>`
     : '';
 
@@ -2084,7 +2519,7 @@ function renderTaskRow(t) {
   return `
     <tr class="task-row ${selectedCls}" data-owner="${primaryOwner}" data-id="${t.id}">
       <td class="check-cell"><input type="checkbox" data-id="${t.id}" ${checked} ${STATE.canEdit?'':'disabled'}></td>
-      <td class="day-cell" ${STATE.canEdit && !t.fechaFija ? 'data-action="edit-day"':''} title="${STATE.canEdit ? (t.fechaFija ? 'Fecha bloqueada · usa el 🔒 para liberar' : 'Click para cambiar día') : ''}">${t.dayLabel}${lockInline}</td>
+      <td class="day-cell" ${STATE.canEdit && !t.fechaFija && !inClienteMode ? 'data-action="edit-day"':''} title="${STATE.canEdit && !inClienteMode ? (t.fechaFija ? 'Fecha bloqueada · usa el 🔒 para liberar' : 'Click para cambiar día') : ''}">${dayLabelHtml(t)}${inClienteMode ? '' : lockInline}</td>
       <td class="fija-cell ${t.fechaFija?'is-fija':''}" ${STATE.canEdit?'data-action="toggle-fija"':''} title="${STATE.canEdit ? (t.fechaFija ? 'Click: liberar fecha' : 'Click: bloquear fecha') : ''}">
         <span class="lock-icon">🔒</span>
       </td>
@@ -2147,14 +2582,22 @@ function renderKanban() {
           ${list.length === 0
             ? `<div class="kanban-empty">Sin tareas</div>`
             : list.map(t => `
-              <div class="kanban-card" data-id="${t.id}">
-                <div class="k-day">
-                  ${t.client ? '<span class="k-client-dot"></span>' : ''}
-                  ${t.dayLabel}
-                </div>
-                <div class="k-title">${escapeHtml(t.title)}</div>
-                ${t.reg ? `<div class="k-reg">📍 ${escapeHtml(t.reg)}</div>` : ''}
-              </div>
+              ${(() => {
+                const doneCls = (CLIENTE_STATE.current && CLIENTE_STATE.progresoByTaskId[t.id]) ? 'done' : '';
+                const kCheck = `<label class="task-progreso-check" title="${STATE.canEdit ? 'Marcar como completada' : 'Solo lectura'}">
+                  <input type="checkbox" class="task-progreso" data-id="${t.id}" ${doneCls ? 'checked' : ''} ${STATE.canEdit ? '' : 'disabled'}>
+                  <span class="task-progreso-box"></span>
+                </label>`;
+                return `<div class="kanban-card ${doneCls}" data-id="${t.id}">
+                  ${kCheck}
+                  <div class="k-day">
+                    ${t.client ? '<span class="k-client-dot"></span>' : ''}
+                    ${dayLabelHtml(t)}
+                  </div>
+                  <div class="k-title">${escapeHtml(t.title)}</div>
+                  ${t.reg ? `<div class="k-reg">📍 ${escapeHtml(t.reg)}</div>` : ''}
+                </div>`;
+              })()}
             `).join('')}
         </div>
       </div>`;
@@ -2506,14 +2949,30 @@ tablaBody.addEventListener('click', e => {
   const cb = e.target.closest('input[type=checkbox]');
   if (cb && cb.dataset.id && STATE.canEdit) {
     const id = parseInt(cb.dataset.id, 10);
-    if (cb.checked) STATE.selectedIds.add(id);
-    else STATE.selectedIds.delete(id);
-    cb.closest('tr').classList.toggle('selected', cb.checked);
-    updateBulkBar();
+    if (CLIENTE_STATE.current) {
+      // Modo cliente: el checkbox marca/desmarca la tarea como completada para ESTE cliente
+      const prev = cb.checked;
+      toggleProgreso(id, prev).then(ok => {
+        if (!ok) { cb.checked = !prev; return; }
+        cb.closest('tr').classList.toggle('done', prev);
+        // Sincroniza Timeline y Kanban (cards renderizadas en paralelo)
+        document.querySelectorAll(`input.task-progreso[data-id="${id}"]`).forEach(other => {
+          other.checked = prev;
+          other.closest('.task-card, .kanban-card')?.classList.toggle('done', prev);
+        });
+      });
+    } else {
+      // Modo maestro: selección bulk (comportamiento original)
+      if (cb.checked) STATE.selectedIds.add(id);
+      else STATE.selectedIds.delete(id);
+      cb.closest('tr').classList.toggle('selected', cb.checked);
+      updateBulkBar();
+    }
     return;
   }
   const actor = e.target.closest('[data-action]');
   if (!actor) return;
+  if (CLIENTE_STATE.current) return; // En modo cliente, ningún data-action edita el master
   const action = actor.dataset.action;
   const row = actor.closest('.task-row');
   const t = row ? findTask(parseInt(row.dataset.id, 10)) : null;
@@ -2553,6 +3012,7 @@ tablaBody.addEventListener('blur', e => {
   const el = e.target;
   if (!el.matches || !el.matches('[contenteditable]')) return;
   if (!STATE.canEdit) return;
+  if (CLIENTE_STATE.current) return; // En modo cliente no se edita el master
 
   // daySub editado en cabecera de grupo
   const dk = el.dataset.dayKeyEdit;
@@ -2591,6 +3051,7 @@ tablaBody.addEventListener('keydown', e => {
 
 document.getElementById('check-all').addEventListener('change', e => {
   if (!STATE.canEdit) { e.target.checked = false; return; }
+  if (CLIENTE_STATE.current) { e.target.checked = false; return; } // No tiene sentido bulk en modo cliente
   if (e.target.checked) visibleTasks().forEach(t => STATE.selectedIds.add(t.id));
   else STATE.selectedIds.clear();
   renderTabla(); updateBulkBar();
@@ -2674,9 +3135,42 @@ async function init() {
     }
   }
 
+  if (STATE.user) await loadClientes();
+
   document.querySelector('.tabla thead th[data-sort="day"]').classList.add('sort-asc');
   rerender();
 }
+
+document.getElementById('cliente-selector').addEventListener('change', e => {
+  onClienteChange(e.target.value);
+});
+
+// Checks de progreso en Timeline y Kanban (los de Tabla los gestiona tablaBody listener)
+document.addEventListener('change', e => {
+  const cb = e.target.closest('input.task-progreso');
+  if (!cb) return;
+  if (!STATE.canEdit || !CLIENTE_STATE.current) { cb.checked = !cb.checked; return; }
+  const id = parseInt(cb.dataset.id, 10);
+  const checked = cb.checked;
+  toggleProgreso(id, checked).then(ok => {
+    if (!ok) { cb.checked = !checked; return; }
+    // Sincroniza estilo done en card del panel actual
+    const card = cb.closest('.task-card, .kanban-card');
+    if (card) card.classList.toggle('done', checked);
+    // Refresca cualquier instancia paralela del mismo task en otros paneles
+    document.querySelectorAll(`input.task-progreso[data-id="${id}"]`).forEach(other => {
+      if (other !== cb) other.checked = checked;
+      const sib = other.closest('.task-card, .kanban-card');
+      if (sib) sib.classList.toggle('done', checked);
+    });
+    // Y el checkbox en Tabla
+    const tablaCb = document.querySelector(`#tabla-body input[type=checkbox][data-id="${id}"]`);
+    if (tablaCb) {
+      tablaCb.checked = checked;
+      tablaCb.closest('tr')?.classList.toggle('done', checked);
+    }
+  });
+});
 
 // Listener post-init: si la sesión cambia mientras está abierta la página
 // (login en otra pestaña, refresh-token, OAuth tardío), repintar la UI.
@@ -2688,8 +3182,14 @@ SUPABASE.auth.onAuthStateChange((event, session) => {
     }
     refreshAuthUI();
     loadFromSupabase().then(() => rerender());
+    loadClientes();
   } else if (event === 'SIGNED_OUT') {
     STATE.user = null;
+    CLIENTE_STATE.current = null;
+    CLIENTE_STATE.list = [];
+    document.body.classList.remove('cliente-mode');
+    const bar = document.getElementById('cliente-bar');
+    if (bar) bar.hidden = true;
     refreshAuthUI();
     rerender();
   }
