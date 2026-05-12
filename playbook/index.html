@@ -290,6 +290,26 @@ body.viewer .tabla input[type=checkbox] { display: none !important; }
 .day-bubble.is-start { border-color: var(--accent-secondary); color: var(--accent-secondary); }
 .day-bubble.is-launch { border-color: var(--accent-primary); color: var(--accent-primary); }
 .day-bubble.is-tbd { border-color: var(--status-warning); color: var(--status-warning); }
+
+/* Vista cliente */
+.day-bubble.is-today {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+  box-shadow: 0 0 0 4px var(--accent-primary-muted);
+}
+.day-bubble.is-nowork {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.55);
+  color: var(--status-warning);
+}
+/* Hoy + finde/festivo: prioriza is-today (el destacado verde) pero conserva un toque ámbar en el borde */
+.day-bubble.is-today.is-nowork {
+  background: var(--accent-primary);
+  border-color: var(--status-warning);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.20);
+}
 .day-bubble::after {
   content: ''; position: absolute; right: -18px; top: 50%; transform: translateY(-50%);
   width: 14px; height: 2px; background: var(--border-subtle);
@@ -2028,6 +2048,7 @@ const CLIENTE_STATE = {
   list: [],                 // [{bubble_id, nombre_empresas, fecha_onboarding}]
   progresoByTaskId: {},     // { 12: true, 47: true, ... }
   festivosSet: new Set(),   // Set<'YYYY-MM-DD'>
+  currentHeadDay: null,     // día más cercano (>= hoy) que tiene tareas en TASKS
 };
 
 async function loadClientes() {
@@ -2145,6 +2166,36 @@ function formatFechaCorta(d) {
   return { dia, mes, dow };
 }
 
+function getCurrentHeadDay() {
+  if (!CLIENTE_STATE.current) return null;
+  const c = CLIENTE_STATE.list.find(x => x.bubble_id === CLIENTE_STATE.current);
+  if (!c || !c.fecha_onboarding) return null;
+  const dias = diasDesdeOnboarding(c.fecha_onboarding);
+  const distinctDays = [...new Set(TASKS.map(t => t.day))].sort((a, b) => a - b);
+  if (!distinctDays.length) return null;
+  if (dias < distinctDays[0]) return distinctDays[0];
+  // Primer día >= días actuales. Si todos quedaron atrás → último día (playbook completado).
+  const next = distinctDays.find(d => d >= dias);
+  return next ?? distinctDays[distinctDays.length - 1];
+}
+
+function dayBubbleClass(head) {
+  if (!CLIENTE_STATE.current) {
+    // Modo maestro: lógica original (día 0 azul, día 16 verde, 999 ámbar)
+    return head.day === 0 ? 'is-start' : head.day === 16 ? 'is-launch' : head.day === 999 ? 'is-tbd' : '';
+  }
+  // Modo cliente: marca el día que toca + finde/festivo en naranja
+  const c = CLIENTE_STATE.list.find(x => x.bubble_id === CLIENTE_STATE.current);
+  if (!c || !c.fecha_onboarding) return '';
+  const fecha = fechaParaDay(c.fecha_onboarding, head.day);
+  const currentHead = CLIENTE_STATE.currentHeadDay;
+  const cls = [];
+  if (currentHead !== null && head.day === currentHead) cls.push('is-today');
+  if (esFestivo(fecha)) cls.push('is-nowork is-festivo-day');
+  else if (esFinDeSemana(fecha)) cls.push('is-nowork is-weekend-day');
+  return cls.join(' ');
+}
+
 function dayLabelHtml(t) {
   // Sin cliente → label original ("Día 0", "Seguimiento", ...)
   if (!CLIENTE_STATE.current) return escapeHtml(t.dayLabel);
@@ -2174,6 +2225,7 @@ async function onClienteChange(bubbleId) {
     if (hint) hint.style.display = '';
     CLIENTE_STATE.progresoByTaskId = {};
     CLIENTE_STATE.festivosSet = new Set();
+    CLIENTE_STATE.currentHeadDay = null;
     rerender();
     return;
   }
@@ -2198,6 +2250,7 @@ async function onClienteChange(bubbleId) {
   }
   if (hint) hint.style.display = 'none';
   await Promise.all([loadProgresoCliente(bubbleId), loadFestivosRango(c.fecha_onboarding)]);
+  CLIENTE_STATE.currentHeadDay = getCurrentHeadDay();
   rerender();
 }
 
@@ -2340,7 +2393,7 @@ function renderTimeline() {
     dayKeys.forEach(dk => {
       const tasks = byPhase[ph][dk];
       const head = tasks[0];
-      const bubbleClass = head.day === 0 ? 'is-start' : head.day === 16 ? 'is-launch' : head.day === 999 ? 'is-tbd' : '';
+      const bubbleClass = dayBubbleClass(head);
       html += `
         <div class="day-row">
           <div class="day-marker">
