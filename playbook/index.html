@@ -9,13 +9,19 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="Playbook operativo de onboarding TheNucleo. Editable solo por Ben.">
 <script>
-/* Anti-flicker guard: si la URL es /playbook/<id> marcamos <html> como anon-mode
-   antes de pintar. El módulo JS posterior lo retira si detecta sesión admin. */
+/* Anti-flicker guard:
+   - /playbook/<id>     → anon-mode (cliente sin sesión ve su timeline).
+   - /playbook/ (sin id)→ locked-mode (bloquea UI hasta que el JS confirme si la sesión es admin).
+   En ambos casos, si el módulo JS detecta sesión admin retira la clase y pinta la UI completa. */
 (function () {
   try {
     var parts = location.pathname.split('/').filter(Boolean);
-    if (parts[0] === 'playbook' && parts[1]) {
-      document.documentElement.classList.add('anon-mode');
+    if (parts[0] === 'playbook') {
+      if (parts[1]) {
+        document.documentElement.classList.add('anon-mode');
+      } else {
+        document.documentElement.classList.add('locked-mode');
+      }
     }
   } catch (e) {}
 })();
@@ -1697,7 +1703,6 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
 /* ============================================
    ANON MODE — /playbook/<bubble_id> sin sesión admin
    ============================================ */
-html.anon-mode .auth-bar,
 html.anon-mode .filter-bar,
 html.anon-mode .view-switcher,
 html.anon-mode .sector-bar,
@@ -1711,6 +1716,16 @@ html.anon-mode .cliente-bar-label,
 html.anon-mode .cliente-bar-hint,
 html.anon-mode .cliente-bar-spacer,
 html.anon-mode .cliente-bar-share { display: none !important; }
+
+html.anon-mode .auth-bar {
+  background: transparent;
+  border-bottom: none;
+  justify-content: flex-end;
+}
+html.anon-mode .auth-bar-left,
+html.anon-mode #auth-meta,
+html.anon-mode #btn-login,
+html.anon-mode #btn-logout { display: none !important; }
 
 html.anon-mode .cliente-bar {
   background: transparent;
@@ -1728,9 +1743,50 @@ html.anon-mode .task-card .task-meta,
 html.anon-mode .task-card .client-pill,
 html.anon-mode .task-card .task-side { display: none !important; }
 html.anon-mode .task-card { grid-template-columns: auto 1fr !important; }
+
+/* ============================================
+   LOCKED MODE — /playbook/ (sin id) sin sesión admin
+   Bloquea la UI completa y muestra el gate modal.
+   ============================================ */
+html.locked-mode .app { visibility:hidden; }
+html.locked-mode .gate { display:flex !important; }
+
+.gate {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:var(--bg-base); align-items:center; justify-content:center;
+  flex-direction:column; gap:20px; padding:32px; text-align:center;
+}
+.gate-icon { font-size:56px; opacity:.5; }
+.gate h1 { font-size:22px; font-weight:600; margin:0; color:var(--text-primary); }
+.gate p { color:var(--text-secondary); max-width:480px; line-height:1.55; }
+.gate-actions { display:flex; gap:10px; margin-top:10px; }
+.gate .gate-btn-primary {
+  background:var(--accent-primary); color:var(--text-inverse);
+  border:none; padding:10px 18px; border-radius:var(--radius-md);
+  font-weight:600; cursor:pointer; font-size:13px;
+}
+.gate .gate-btn-primary:hover { background:var(--accent-primary-hover); }
+.gate .gate-btn-ghost {
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); padding:10px 18px;
+  border-radius:var(--radius-md); cursor:pointer; font-size:13px;
+  text-decoration:none; display:inline-flex; align-items:center;
+}
+.gate .gate-btn-ghost:hover { color:var(--text-primary); }
 </style>
 </head>
 <body>
+
+<!-- Gate (anon o autenticado-no-admin al entrar en /playbook/ sin id) -->
+<div class="gate" id="gate">
+  <div class="gate-icon">🔒</div>
+  <h1 id="gate-title">Acceso restringido</h1>
+  <p id="gate-msg">El playbook maestro es documentación interna del equipo TheNucleo. Si eres cliente, abre el enlace directo que te pasamos en el onboarding.</p>
+  <div class="gate-actions">
+    <button class="gate-btn-primary" id="gate-login">Iniciar sesión</button>
+    <a class="gate-btn-ghost" href="/">Volver al inicio</a>
+  </div>
+</div>
 
 <div class="app" style="flex-direction:column;">
 
@@ -3609,11 +3665,31 @@ async function init() {
     return;
   }
 
-  // No admin sin slug en URL → no exponer plantilla maestra, redirigir a home
+  // No admin sin slug en URL → no exponer plantilla maestra. Mostrar gate amable.
   if (!URL_BUBBLE_ID && !isAdminSync()) {
-    window.location.replace('/');
+    const u = STATE.user;
+    const gateTitle = document.getElementById('gate-title');
+    const gateMsg   = document.getElementById('gate-msg');
+    const gateBtn   = document.getElementById('gate-login');
+    if (u) {
+      gateTitle.textContent = 'Tu cuenta no tiene acceso';
+      gateMsg.textContent = `${u.email} no está en la allowlist del equipo. Si crees que es un error, contacta con Ben.`;
+      gateBtn.textContent = 'Cambiar de cuenta';
+    } else {
+      gateTitle.textContent = 'Acceso restringido';
+      gateMsg.textContent = 'El playbook maestro es documentación interna del equipo TheNucleo. Si eres cliente, abre el enlace directo que te pasamos en el onboarding.';
+      gateBtn.textContent = 'Iniciar sesión';
+    }
+    gateBtn.addEventListener('click', () => {
+      if (u) { try { localStorage.removeItem(STORAGE_KEY); } catch {} }
+      const next = '/playbook/';
+      location.assign('/comunidad/entrar/?next=' + encodeURIComponent(next));
+    });
+    document.documentElement.classList.add('locked-mode');
     return;
   }
+  // Admin con URL /playbook/ — el guard inline puso locked-mode, retirarlo
+  document.documentElement.classList.remove('locked-mode');
 
   // Admin: el guard inline puede haber añadido anon-mode al <html> si la URL tiene slug.
   // Retirarlo ahora que sabemos que la sesión es admin.
