@@ -288,6 +288,148 @@ button { font-family:inherit; }
   background:var(--bg-card); border:1px dashed var(--border-default);
   border-radius:var(--radius-md);
 }
+
+/* ============================================
+   LIGHT THEME
+   ============================================ */
+[data-theme="light"] {
+  --bg-base:#f5f6f8; --bg-card:#ffffff; --bg-elevated:#ffffff;
+  --bg-hover:#eef0f4; --bg-active:#e4e6ec;
+  --border-subtle:#e4e6ec; --border-default:#d0d3dc; --border-strong:#a0a4b2;
+  --text-primary:#111827; --text-secondary:#4b5563; --text-tertiary:#9ca3af; --text-inverse:#ffffff;
+  --accent-primary:#16a34a; --accent-primary-hover:#15803d; --accent-primary-muted:rgba(22,163,74,0.10);
+  --accent-secondary:#2563eb; --accent-secondary-hover:#1d4ed8; --accent-secondary-muted:rgba(37,99,235,0.10);
+  --status-success:#16a34a; --status-success-bg:rgba(22,163,74,0.10);
+  --status-warning:#d97706; --status-warning-bg:rgba(217,119,6,0.10);
+  --status-error:#dc2626;   --status-error-bg:rgba(220,38,38,0.10);
+  --status-info:#2563eb;    --status-info-bg:rgba(37,99,235,0.10);
+  --status-neutral:#6b7280; --status-neutral-bg:rgba(107,114,128,0.10);
+  --status-violet:#7c3aed;  --status-violet-bg:rgba(124,58,237,0.10);
+}
+[data-theme="light"] .topbar { background:rgba(245,246,248,0.92); }
+[data-theme="light"] .bloque-content { background:var(--bg-base); }
+
+/* Theme switch */
+.theme-switch {
+  display:inline-flex; align-items:center; gap:5px;
+  height:30px; padding:0 10px;
+  font-size:11px; font-weight:500; font-family:var(--font-ui);
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:999px;
+  cursor:pointer; transition:all 120ms;
+}
+.theme-switch:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.theme-switch svg { width:13px; height:13px; flex-shrink:0; }
+[data-theme="light"] .theme-switch .icon-moon { display:none; }
+.theme-switch .icon-sun { display:none; }
+[data-theme="light"] .theme-switch .icon-sun { display:inline-block; }
+.theme-switch .icon-moon { display:inline-block; }
+
+/* View toggle */
+.view-toggle {
+  display:inline-flex; align-items:center; gap:2px;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-sm); padding:3px;
+}
+.view-toggle button {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border:none; border-radius:4px;
+  font-size:11px; font-weight:500; font-family:var(--font-ui);
+  color:var(--text-tertiary); background:transparent; cursor:pointer;
+  transition:all var(--duration-fast);
+}
+.view-toggle button.active { background:var(--bg-active); color:var(--text-primary); }
+.view-toggle button:hover:not(.active) { color:var(--text-secondary); background:var(--bg-hover); }
+.view-toggle button svg { width:13px; height:13px; }
+
+/* ============================================
+   TABLE VIEW
+   ============================================ */
+.table-wrap { width:100%; overflow-x:auto; }
+.fichas-table {
+  width:100%; border-collapse:separate; border-spacing:0; font-size:13px;
+}
+.fichas-table th {
+  position:sticky; top:64px; z-index:5;
+  background:var(--bg-base); text-align:left;
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;
+  color:var(--text-tertiary); padding:8px 12px;
+  border-bottom:2px solid var(--border-default);
+  white-space:nowrap;
+}
+.fichas-table td {
+  padding:6px 10px; vertical-align:top;
+  border-bottom:1px solid var(--border-subtle);
+  min-width:100px; max-width:220px;
+}
+.fichas-table td:first-child { min-width:180px; position:sticky; left:0; background:var(--bg-base); z-index:2; }
+[data-theme="light"] .fichas-table td:first-child { background:var(--bg-base); }
+.fichas-table tr.cat-row td {
+  background:var(--bg-card); padding:10px 12px;
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-secondary); border-bottom:1px solid var(--border-default);
+  position:sticky; left:0; white-space:nowrap;
+}
+.fichas-table tr.cat-row td .cat-bar {
+  display:inline-block; width:3px; height:13px; border-radius:2px;
+  margin-right:8px; vertical-align:middle;
+}
+.fichas-table tr:not(.cat-row):hover td { background:var(--bg-hover); }
+.fichas-table tr:not(.cat-row):hover td:first-child { background:var(--bg-hover); }
+.cell-edit {
+  display:block; width:100%; min-height:32px; padding:4px 6px;
+  border:1px solid transparent; border-radius:var(--radius-sm);
+  outline:none; font-size:12px; line-height:1.5; color:var(--text-primary);
+  font-family:var(--font-ui); white-space:pre-wrap; word-break:break-word;
+  background:transparent; transition:border-color var(--duration-fast), background var(--duration-fast);
+}
+.cell-edit:hover { border-color:var(--border-subtle); background:var(--bg-elevated); }
+.cell-edit:focus { border-color:var(--accent-primary); background:var(--bg-elevated); box-shadow:0 0 0 2px var(--accent-primary-muted); }
+.cell-edit:empty::before { content:attr(data-placeholder); color:var(--text-tertiary); pointer-events:none; }
+.cell-title { font-size:13px; font-weight:600; }
+
+/* ============================================
+   ADD CATEGORY FORM
+   ============================================ */
+.cat-add-btn {
+  display:flex; align-items:center; gap:6px;
+  width:100%; margin-top:8px; padding:7px 10px;
+  background:transparent; color:var(--text-tertiary);
+  border:1px dashed var(--border-default); border-radius:var(--radius-sm);
+  font-size:12px; font-weight:500; font-family:var(--font-ui);
+  cursor:pointer; transition:all var(--duration-fast);
+}
+.cat-add-btn:hover { color:var(--accent-primary); border-color:var(--accent-primary); }
+.cat-form {
+  margin-top:8px; padding:10px;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-md);
+}
+.cat-form input[type="text"] {
+  width:100%; padding:7px 10px; margin-bottom:8px;
+  background:var(--bg-base); border:1px solid var(--border-default);
+  border-radius:var(--radius-sm); color:var(--text-primary);
+  font-size:12px; font-family:var(--font-ui); outline:none;
+}
+.cat-form input[type="text"]:focus { border-color:var(--accent-primary); }
+.cat-colors { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.cat-color-swatch {
+  width:20px; height:20px; border-radius:50%;
+  cursor:pointer; border:2px solid transparent;
+  transition:all var(--duration-fast); flex-shrink:0;
+}
+.cat-color-swatch.selected { border-color:var(--text-primary); transform:scale(1.2); }
+.cat-form-actions { display:flex; gap:6px; }
+.cat-form-actions button {
+  flex:1; padding:6px; font-size:12px; font-family:var(--font-ui);
+  border-radius:var(--radius-sm); cursor:pointer; font-weight:500;
+}
+.cat-form-actions .btn-save { background:var(--accent-primary); color:var(--text-inverse); border:none; }
+.cat-form-actions .btn-save:hover { background:var(--accent-primary-hover); }
+.cat-form-actions .btn-cancel {
+  background:transparent; color:var(--text-secondary); border:1px solid var(--border-default);
+}
+.cat-form-actions .btn-cancel:hover { border-color:var(--border-strong); color:var(--text-primary); }
 </style>
 </head>
 <body class="viewer">
@@ -310,6 +452,20 @@ button { font-family:inherit; }
     </div>
     <div class="topbar-right">
       <span class="save-indicator" id="save-indicator"><span class="dot"></span><span id="save-label">Guardado</span></span>
+      <div class="view-toggle" id="view-toggle">
+        <button class="active" data-view="cards" title="Vista tarjetas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Tarjetas
+        </button>
+        <button data-view="table" title="Vista tabla">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          Tabla
+        </button>
+      </div>
+      <button class="theme-switch" id="btn-theme" title="Cambiar tema claro/oscuro">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
       <span class="user-pill" id="user-pill" style="display:none">
         <span class="avatar" id="user-avatar">?</span>
         <span id="user-name">—</span>
@@ -322,6 +478,7 @@ button { font-family:inherit; }
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-title">Categorías</div>
       <div id="cat-list"></div>
+      <div id="cat-add-container"></div>
     </aside>
     <main class="main" id="main">
       <div class="loading" id="loading">Cargando fichas…</div>
@@ -382,6 +539,7 @@ const STATE = {
   categorias: [],
   fichas: [],
   canEdit: false,
+  view: 'cards',
 };
 
 // ============================================================
@@ -621,6 +779,7 @@ function renderSidebar() {
 }
 
 function renderMain() {
+  if (STATE.view === 'table') { renderTable(); return; }
   const main = document.getElementById('main');
   if (!STATE.categorias.length) {
     main.innerHTML = '<div class="empty-cat">No hay categorías cargadas.</div>';
@@ -647,6 +806,52 @@ function renderMain() {
     `;
   }).join('');
   main.innerHTML = html;
+  attachEditableHandlers();
+  attachToolbarHandlers();
+}
+
+function renderTable() {
+  const main = document.getElementById('main');
+  if (!STATE.categorias.length) {
+    main.innerHTML = '<div class="empty-cat">No hay categorías cargadas.</div>';
+    return;
+  }
+  const cols = [
+    { key:'titulo',       label:'Nombre',                    placeholder:'Nombre' },
+    { key:'estado',       label:'Estado' },
+    { key:'unidad',       label:'Unidad de servicio',        placeholder:'¿Qué cuenta como "1"?' },
+    { key:'alcance',      label:'Alcance',                   placeholder:'¿Qué incluye exactamente?' },
+    { key:'herramientas', label:'Herramientas',              placeholder:'¿Qué herramienta para qué?' },
+    { key:'no_incluye',   label:'No incluye',                placeholder:'Frontera explícita' },
+    { key:'flexibilidad', label:'Flexibilidad',              placeholder:'¿Qué decide el ejecutor?' },
+  ];
+  const editable = STATE.canEdit ? 'contenteditable="plaintext-only"' : '';
+  let rows = '';
+  STATE.categorias.forEach(cat => {
+    const fichasCat = STATE.fichas.filter(f => f.categoria_id === cat.id).sort((a,b) => a.orden - b.orden);
+    rows += `<tr class="cat-row"><td colspan="${cols.length}"><span class="cat-bar" style="background:${cat.color||'#888'}"></span>${escapeHtml(cat.nombre)} <span style="color:var(--text-tertiary);font-weight:400;">(${fichasCat.length})</span>${STATE.canEdit ? `&ensp;<button class="btn-add" style="padding:3px 10px;font-size:11px;" data-action="add-ficha" data-cat="${cat.id}">+ ficha</button>` : ''}</td></tr>`;
+    if (!fichasCat.length) {
+      rows += `<tr><td colspan="${cols.length}" style="padding:10px 12px;color:var(--text-tertiary);font-style:italic;font-size:12px;">Sin fichas todavía.</td></tr>`;
+    } else {
+      fichasCat.forEach(f => {
+        const cells = cols.map(col => {
+          if (col.key === 'estado') {
+            const edAct = STATE.canEdit ? `data-action="toggle-estado" data-id="${f.id}"` : '';
+            return `<td><span class="estado-pill ${f.estado}" ${edAct} style="cursor:${STATE.canEdit?'pointer':'default'}">${f.estado}</span></td>`;
+          }
+          return `<td><div class="cell-edit${col.key==='titulo'?' cell-title':''}" ${editable} data-id="${f.id}" data-field="${col.key}" data-placeholder="${escapeHtml(col.placeholder||'')}">${escapeHtml(f[col.key]||'')}</div></td>`;
+        }).join('');
+        rows += `<tr data-id="${f.id}">${cells}</tr>`;
+      });
+    }
+  });
+  main.innerHTML = `
+    <div class="table-wrap">
+      <table class="fichas-table">
+        <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
   attachEditableHandlers();
   attachToolbarHandlers();
 }
@@ -743,6 +948,75 @@ function closeAllPopovers() {
 function renderAll() {
   renderSidebar();
   renderMain();
+  renderCatAddUI();
+}
+
+// ============================================================
+// ADD CATEGORY
+// ============================================================
+const CAT_COLORS = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#a3a3a3'];
+let _catFormOpen = false;
+let _catFormColor = CAT_COLORS[0];
+
+function renderCatAddUI() {
+  const container = document.getElementById('cat-add-container');
+  if (!container || !STATE.canEdit) { if (container) container.innerHTML = ''; return; }
+  if (!_catFormOpen) {
+    container.innerHTML = `<button class="cat-add-btn" id="cat-add-btn">＋ Nueva categoría</button>`;
+    document.getElementById('cat-add-btn').addEventListener('click', () => { _catFormOpen = true; renderCatAddUI(); });
+    return;
+  }
+  const swatches = CAT_COLORS.map(c =>
+    `<span class="cat-color-swatch${c===_catFormColor?' selected':''}" data-color="${c}" style="background:${c}" title="${c}"></span>`
+  ).join('');
+  container.innerHTML = `
+    <div class="cat-form">
+      <input type="text" id="cat-name-input" placeholder="Nombre de la categoría" autocomplete="off" maxlength="60">
+      <div class="cat-colors">${swatches}</div>
+      <div class="cat-form-actions">
+        <button class="btn-save" id="cat-save-btn">Guardar</button>
+        <button class="btn-cancel" id="cat-cancel-btn">Cancelar</button>
+      </div>
+    </div>`;
+  container.querySelectorAll('.cat-color-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      _catFormColor = sw.dataset.color;
+      container.querySelectorAll('.cat-color-swatch').forEach(s => s.classList.toggle('selected', s === sw));
+    });
+  });
+  document.getElementById('cat-cancel-btn').addEventListener('click', () => {
+    _catFormOpen = false; _catFormColor = CAT_COLORS[0]; renderCatAddUI();
+  });
+  document.getElementById('cat-save-btn').addEventListener('click', async () => {
+    const nombre = (document.getElementById('cat-name-input')?.value || '').trim();
+    if (!nombre) { document.getElementById('cat-name-input')?.focus(); return; }
+    await createCategoria(nombre, _catFormColor);
+    _catFormOpen = false; _catFormColor = CAT_COLORS[0]; renderCatAddUI();
+  });
+  document.getElementById('cat-name-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('cat-save-btn')?.click();
+    if (e.key === 'Escape') document.getElementById('cat-cancel-btn')?.click();
+  });
+  setTimeout(() => document.getElementById('cat-name-input')?.focus(), 30);
+}
+
+async function createCategoria(nombre, color) {
+  const maxOrden = STATE.categorias.reduce((m, c) => Math.max(m, c.orden || 0), 0);
+  setIndicator('saving');
+  try {
+    const res = await authFetch('/fichas_categorias', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ nombre, color, orden: maxOrden + 1 }),
+    });
+    const rows = await res.json();
+    STATE.categorias.push(rows[0]);
+    setIndicator('saved');
+    renderAll();
+  } catch (e) {
+    console.error('[fichas] create cat failed', e);
+    setIndicator('error', e.message);
+  }
 }
 
 // ============================================================
@@ -760,6 +1034,31 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
   SUPABASE.auth.signOut().catch(() => {});
   location.assign('/comunidad/entrar/?next=' + encodeURIComponent('/fichas-de-producto/'));
+});
+
+// ============================================================
+// THEME
+// ============================================================
+const THEME_KEY = 'thenucleo-fichas-theme';
+(function initTheme() {
+  try { document.documentElement.dataset.theme = localStorage.getItem(THEME_KEY) || 'dark'; }
+  catch { document.documentElement.dataset.theme = 'dark'; }
+})();
+document.getElementById('btn-theme').addEventListener('click', () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem(THEME_KEY, t); } catch {}
+});
+
+// ============================================================
+// VIEW TOGGLE
+// ============================================================
+document.querySelectorAll('#view-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    STATE.view = btn.dataset.view;
+    document.querySelectorAll('#view-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    renderMain();
+  });
 });
 
 // ============================================================

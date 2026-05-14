@@ -139,6 +139,36 @@ img { max-width:100%; display:block; }
 .auth-bar-meta { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 11px; }
 .auth-bar-actions { display:flex; align-items:center; gap:8px; }
 
+/* Nav user dropdown */
+.nav-user-btn {
+  width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:var(--radius-sm);
+  cursor:pointer; flex-shrink:0; transition:all 120ms;
+}
+.nav-user-btn:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.nav-user-wrap { position:relative; }
+.nav-user-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0; z-index:300;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-md); padding:6px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.45);
+  min-width:180px;
+  animation:navPopIn 120ms cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes navPopIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.nav-user-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:var(--radius-sm);
+  font-size:13px; font-weight:500; color:var(--text-primary);
+  text-decoration:none; transition:background 120ms; cursor:pointer;
+}
+.nav-user-item:hover { background:var(--bg-hover); }
+.nav-user-item svg { width:15px; height:15px; color:var(--text-tertiary); flex-shrink:0; }
+.nav-user-item.nav-active { color:var(--accent-primary); }
+.nav-user-item.nav-active svg { color:var(--accent-primary); }
+.nav-user-divider { height:1px; background:var(--border-subtle); margin:4px 0; }
+
 /* Hide editor-only UI when in viewer mode */
 body.viewer .editor-only { display:none !important; }
 body.viewer [contenteditable] { pointer-events: none !important; }
@@ -1801,6 +1831,25 @@ html.locked-mode .gate { display:flex !important; }
     </div>
     <div class="auth-bar-actions">
       <span class="auth-bar-meta" id="auth-meta"></span>
+      <div class="nav-user-wrap" id="nav-user-wrap" style="display:none;">
+        <button class="nav-user-btn" id="nav-user-btn" title="Navegación interna" aria-haspopup="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </button>
+        <div class="nav-user-dropdown" id="nav-user-dropdown" style="display:none;" role="menu">
+          <a class="nav-user-item nav-active" href="/playbook/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+            Playbook
+          </a>
+          <a class="nav-user-item" href="/ficha-cliente/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+            Ficha de Cliente
+          </a>
+          <a class="nav-user-item" href="/fichas-de-producto/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Fichas de Producto
+          </a>
+        </div>
+      </div>
       <button class="theme-switch" id="btn-theme" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>
@@ -2224,20 +2273,44 @@ function refreshAuthUI() {
   const btnLogin = document.getElementById('btn-login');
   const btnLogout = document.getElementById('btn-logout');
 
+  const navWrap = document.getElementById('nav-user-wrap');
   if (STATE.canEdit) {
     pill.classList.remove('viewer'); pill.classList.add('editor');
     pillLabel.textContent = 'Editor';
     meta.textContent = u.email;
     btnLogin.style.display = 'none';
     btnLogout.style.display = '';
+    if (navWrap) navWrap.style.display = '';
   } else {
     pill.classList.remove('editor'); pill.classList.add('viewer');
     pillLabel.textContent = u ? 'Solo lectura' : 'Vista pública';
     meta.textContent = u ? (u.email + ' · sin permisos de edición') : '';
     btnLogin.style.display = '';
     btnLogout.style.display = u ? '' : 'none';
+    if (navWrap) navWrap.style.display = 'none';
   }
 }
+
+// Nav user dropdown toggle
+(function initNavUserDropdown() {
+  const btn  = document.getElementById('nav-user-btn');
+  const drop = document.getElementById('nav-user-dropdown');
+  if (!btn || !drop) return;
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = drop.style.display !== 'none';
+    drop.style.display = isOpen ? 'none' : '';
+    if (!isOpen) {
+      setTimeout(() => document.addEventListener('click', function close() {
+        drop.style.display = 'none';
+        document.removeEventListener('click', close);
+      }), 0);
+    }
+  });
+  drop.querySelectorAll('.nav-user-item').forEach(item => {
+    item.addEventListener('click', () => { drop.style.display = 'none'; });
+  });
+})();
 
 document.getElementById('btn-login').addEventListener('click', () => {
   const next = '/playbook/';
