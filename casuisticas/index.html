@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casuísticas · TheNucleo</title>
+<meta name="robots" content="noindex,nofollow">
+
+<script>
+(function () {
+  document.documentElement.classList.add('locked-mode');
+})();
+</script>
+
+<style>
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Light.woff2') format('woff2'); font-weight:300; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+
+:root {
+  --bg-base:#090a0f; --bg-card:#12141b; --bg-elevated:#1a1d27;
+  --bg-hover:#1e2130; --bg-active:#252836;
+  --border-subtle:#1e2130; --border-default:#2a2d3e; --border-strong:#363a4e;
+  --text-primary:#edeef3; --text-secondary:#8b8fa8; --text-tertiary:#5c6078; --text-inverse:#090a0f;
+  --accent-primary:#22c55e; --accent-primary-hover:#16a34a; --accent-primary-muted:rgba(34,197,94,0.12);
+  --accent-secondary:#3b82f6; --accent-secondary-hover:#2563eb; --accent-secondary-muted:rgba(59,130,246,0.12);
+  --status-success:#22c55e; --status-success-bg:rgba(34,197,94,0.10);
+  --status-warning:#f59e0b; --status-warning-bg:rgba(245,158,11,0.10);
+  --status-error:#ef4444;   --status-error-bg:rgba(239,68,68,0.10);
+  --status-info:#3b82f6;    --status-info-bg:rgba(59,130,246,0.10);
+  --status-neutral:#6b7280; --status-neutral-bg:rgba(107,114,128,0.10);
+  --status-violet:#8b5cf6;  --status-violet-bg:rgba(139,92,246,0.10);
+  --font-ui:'NewBlack',sans-serif;
+  --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px;
+  --ease-out:cubic-bezier(0.16,1,0.3,1); --duration-fast:150ms; --duration-base:200ms; --duration-slow:300ms;
+
+  --col-bolsa:   var(--accent-primary);
+  --col-newsletter: var(--accent-secondary);
+  --col-hibrido: var(--status-warning);
+  --col-dudas:   var(--status-neutral);
+}
+
+[data-theme="light"] {
+  --bg-base:#f5f6f8; --bg-card:#ffffff; --bg-elevated:#f0f2f6;
+  --bg-hover:#eef0f4; --bg-active:#e4e6ec;
+  --border-subtle:#e4e6ec; --border-default:#d0d3dc; --border-strong:#a0a4b2;
+  --text-primary:#111827; --text-secondary:#4b5563; --text-tertiary:#9ca3af; --text-inverse:#ffffff;
+  --accent-primary:#16a34a; --accent-primary-hover:#15803d; --accent-primary-muted:rgba(22,163,74,0.10);
+  --accent-secondary:#2563eb; --accent-secondary-hover:#1d4ed8; --accent-secondary-muted:rgba(37,99,235,0.10);
+  --status-success:#16a34a; --status-success-bg:rgba(22,163,74,0.10);
+  --status-warning:#d97706; --status-warning-bg:rgba(217,119,6,0.10);
+  --status-error:#dc2626;   --status-error-bg:rgba(220,38,38,0.10);
+  --status-info:#2563eb;    --status-info-bg:rgba(37,99,235,0.10);
+  --status-neutral:#6b7280; --status-neutral-bg:rgba(107,114,128,0.10);
+  --status-violet:#7c3aed;  --status-violet-bg:rgba(124,58,237,0.10);
+}
+[data-theme="light"] body { color: var(--text-primary); }
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+html.locked-mode .app { visibility:hidden; }
+html.locked-mode .gate { display:flex !important; }
+
+body {
+  font-family:var(--font-ui);
+  background:var(--bg-base);
+  color:var(--text-primary);
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+a { color:inherit; text-decoration:none; }
+button { font-family:inherit; cursor:pointer; }
+
+/* ============================================================
+   GATE
+   ============================================================ */
+.gate {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:var(--bg-base); align-items:center; justify-content:center;
+  flex-direction:column; gap:20px; padding:32px; text-align:center;
+}
+.gate-icon { font-size:56px; opacity:.5; }
+.gate h1 { font-size:22px; font-weight:600; }
+.gate p { color:var(--text-secondary); max-width:440px; line-height:1.55; }
+.gate-actions { display:flex; gap:10px; margin-top:10px; }
+.gate-btn-primary {
+  background:var(--accent-primary); color:var(--text-inverse);
+  border:none; padding:10px 18px; border-radius:var(--radius-md);
+  font-weight:600; font-size:13px; font-family:var(--font-ui);
+}
+.gate-btn-primary:hover { background:var(--accent-primary-hover); }
+.gate-btn-ghost {
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); padding:10px 18px;
+  border-radius:var(--radius-md); font-size:13px; font-family:var(--font-ui);
+}
+.gate-btn-ghost:hover { color:var(--text-primary); border-color:var(--border-strong); }
+
+/* ============================================================
+   AUTH BAR
+   ============================================================ */
+.auth-bar {
+  position:sticky; top:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px;
+  background:var(--bg-card);
+  border-bottom:1px solid var(--border-subtle);
+  font-size:12px;
+}
+.auth-bar-left { display:flex; align-items:center; gap:10px; }
+.auth-bar-title { font-size:13px; font-weight:600; }
+.auth-bar-mode {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px; border-radius:999px;
+  font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.6px;
+}
+.auth-bar-mode.editor { background:var(--status-success-bg); color:var(--status-success); }
+.auth-bar-mode .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+.auth-bar-actions { display:flex; align-items:center; gap:8px; }
+.auth-bar-meta { color:var(--text-tertiary); font-size:11px; }
+
+/* Nav user dropdown */
+.nav-user-wrap { position:relative; }
+.nav-user-btn {
+  width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:var(--radius-sm);
+  cursor:pointer; transition:all 120ms;
+}
+.nav-user-btn:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.nav-user-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0; z-index:300;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-md); padding:6px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.45);
+  min-width:190px;
+  animation:navPopIn 120ms var(--ease-out);
+}
+@keyframes navPopIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.nav-user-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:var(--radius-sm);
+  font-size:13px; font-weight:500; color:var(--text-primary);
+  text-decoration:none; transition:background 120ms;
+}
+.nav-user-item:hover { background:var(--bg-hover); }
+.nav-user-item svg { width:15px; height:15px; color:var(--text-tertiary); flex-shrink:0; }
+.nav-user-item.nav-active { color:var(--accent-primary); }
+.nav-user-item.nav-active svg { color:var(--accent-primary); }
+.nav-user-divider { height:1px; background:var(--border-subtle); margin:4px 0; }
+
+/* Theme switch */
+.theme-switch {
+  display:inline-flex; align-items:center; gap:6px;
+  height:30px; padding:0 10px;
+  font-size:12px; font-weight:500;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:999px;
+  cursor:pointer; font-family:var(--font-ui);
+  transition:all 120ms;
+}
+.theme-switch:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.theme-switch svg { width:14px; height:14px; }
+[data-theme="light"] .theme-switch .icon-moon { display:none; }
+.theme-switch .icon-sun { display:none; }
+[data-theme="light"] .theme-switch .icon-sun { display:inline-block; }
+.theme-switch .icon-moon { display:inline-block; }
+
+.btn-sm {
+  height:30px; padding:0 12px;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:999px;
+  font-size:12px; font-weight:500; font-family:var(--font-ui);
+  transition:all 120ms;
+}
+.btn-sm:hover { color:var(--text-primary); border-color:var(--border-strong); }
+
+/* ============================================================
+   APP LAYOUT
+   ============================================================ */
+.app { display:flex; flex-direction:column; min-height:100vh; }
+
+/* PAGE HEADER */
+.page-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px clamp(14px, 3vw, 32px);
+  border-bottom:1px solid var(--border-subtle);
+  flex-wrap:wrap; gap:10px;
+}
+.page-header-left { display:flex; align-items:center; gap:12px; }
+.page-header-icon {
+  width:36px; height:36px; border-radius:var(--radius-md);
+  background:var(--accent-primary-muted); color:var(--accent-primary);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.page-header-icon svg { width:18px; height:18px; }
+.page-header h1 { font-size:16px; font-weight:600; letter-spacing:-0.01em; }
+.page-header-sub { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+.page-header-actions { display:flex; align-items:center; gap:8px; }
+
+.save-state { font-size:11px; color:var(--text-tertiary); }
+.save-state.saving { color:var(--status-warning); }
+.save-state.saved  { color:var(--status-success); }
+
+/* ============================================================
+   BOARD
+   ============================================================ */
+.board-wrap {
+  flex:1; overflow-x:auto;
+  padding:16px clamp(14px, 3vw, 32px);
+}
+.board {
+  display:grid;
+  grid-template-columns:repeat(4, minmax(260px, 1fr));
+  gap:14px;
+  min-width:1000px;
+}
+@media (max-width:900px) {
+  .board { grid-template-columns:1fr 1fr; min-width:0; }
+}
+@media (max-width:560px) {
+  .board { grid-template-columns:1fr; min-width:0; }
+}
+
+.col {
+  display:flex; flex-direction:column;
+  background:var(--bg-card); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg); overflow:hidden;
+  max-height:calc(100vh - 180px);
+}
+.col-head {
+  padding:14px 14px 12px;
+  border-bottom:1px solid var(--border-subtle);
+  flex-shrink:0;
+}
+.col-head-top { display:flex; align-items:center; gap:8px; }
+.col-head h2 { font-size:13px; font-weight:600; flex:1; }
+.col-count {
+  font-size:11px; color:var(--text-tertiary);
+  background:var(--bg-elevated); border-radius:999px;
+  padding:2px 8px; flex-shrink:0;
+}
+.col-sub { font-size:11px; color:var(--text-tertiary); margin-top:4px; line-height:1.4; }
+
+.col-body {
+  flex:1; overflow-y:auto; padding:10px;
+  display:flex; flex-direction:column; gap:8px;
+  scrollbar-width:thin; scrollbar-color:var(--border-default) transparent;
+}
+.col-body::-webkit-scrollbar { width:4px; }
+.col-body::-webkit-scrollbar-thumb { background:var(--border-default); border-radius:2px; }
+
+.col-body.drag-over {
+  background:var(--accent-primary-muted);
+  outline:2px dashed var(--border-default);
+  outline-offset:-4px;
+  border-radius:var(--radius-md);
+}
+
+.col-add {
+  width:100%; padding:10px;
+  background:transparent; color:var(--text-tertiary);
+  border:none; border-top:1px solid var(--border-subtle);
+  font-size:12px; font-weight:500; font-family:var(--font-ui);
+  text-align:center; flex-shrink:0;
+  transition:color var(--duration-fast), background var(--duration-fast);
+}
+.col-add:hover { color:var(--text-primary); background:var(--bg-hover); }
+
+/* CARD */
+.card {
+  background:var(--bg-elevated); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-md); padding:12px;
+  cursor:grab;
+  animation:cardIn var(--duration-slow) var(--ease-out) both;
+  transition:border-color var(--duration-fast), box-shadow var(--duration-fast), opacity var(--duration-fast);
+}
+@keyframes cardIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.card:active { cursor:grabbing; }
+.card:hover { border-color:var(--border-default); box-shadow:0 4px 16px rgba(0,0,0,0.25); }
+.card.dragging { opacity:.35; }
+
+.card-drag-handle {
+  color:var(--text-tertiary); font-size:14px;
+  flex-shrink:0; margin-top:1px; line-height:1;
+  user-select:none;
+}
+
+.card-inner { display:flex; align-items:flex-start; gap:8px; }
+.card-body { flex:1; min-width:0; }
+
+.card-title {
+  font-size:13px; font-weight:600; line-height:1.35;
+  color:var(--text-primary); outline:none;
+  border-radius:4px; padding:2px 4px; margin:-2px -4px;
+  border:1px solid transparent;
+  white-space:pre-wrap; word-wrap:break-word;
+  transition:border-color var(--duration-fast), background var(--duration-fast);
+}
+.card-title:hover { border-color:var(--border-subtle); }
+.card-title:focus { border-color:var(--accent-primary); background:var(--bg-active); box-shadow:0 0 0 3px var(--accent-primary-muted); }
+
+.card-desc {
+  font-size:12px; color:var(--text-secondary); line-height:1.55; margin-top:6px;
+  outline:none; border-radius:4px; padding:2px 4px; margin-left:-4px; margin-right:-4px;
+  border:1px solid transparent;
+  white-space:pre-wrap; word-wrap:break-word;
+  transition:border-color var(--duration-fast), background var(--duration-fast);
+}
+.card-desc:hover { border-color:var(--border-subtle); }
+.card-desc:focus { border-color:var(--accent-primary); background:var(--bg-active); box-shadow:0 0 0 3px var(--accent-primary-muted); }
+
+.card-footer {
+  display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap;
+}
+
+.duda-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+  padding:3px 8px; border-radius:999px;
+  color:var(--status-warning); background:var(--status-warning-bg);
+  border:1px solid rgba(245,158,11,0.25);
+}
+
+.btn-flag {
+  font-size:10px; font-weight:500; font-family:var(--font-ui);
+  padding:3px 8px; border-radius:999px;
+  background:transparent; color:var(--text-tertiary);
+  border:1px solid var(--border-subtle);
+  transition:all var(--duration-fast);
+}
+.btn-flag:hover { color:var(--status-warning); border-color:rgba(245,158,11,0.35); }
+
+.btn-del {
+  font-size:10px; font-weight:500; font-family:var(--font-ui);
+  padding:3px 8px; border-radius:999px;
+  background:transparent; color:var(--text-tertiary);
+  border:none; margin-left:auto;
+  transition:color var(--duration-fast);
+}
+.btn-del:hover { color:var(--status-error); }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+#toast {
+  position:fixed; bottom:20px; left:50%; transform:translate(-50%, 10px);
+  background:var(--accent-primary); color:var(--text-inverse);
+  font-size:12px; font-weight:600; padding:8px 16px; border-radius:var(--radius-md);
+  opacity:0; pointer-events:none;
+  transition:opacity 200ms, transform 200ms;
+  z-index:500;
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div class="gate" id="gate" style="display:none;">
+  <div class="gate-icon">🔒</div>
+  <h1 id="gate-title">Acceso restringido</h1>
+  <p id="gate-msg">Este tablero es documentación interna del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.</p>
+  <div class="gate-actions">
+    <button class="gate-btn-primary" id="gate-login">Iniciar sesión</button>
+    <a class="gate-btn-ghost" href="/">Volver al inicio</a>
+  </div>
+</div>
+
+<div class="app" id="app">
+
+  <!-- AUTH BAR -->
+  <div class="auth-bar">
+    <div class="auth-bar-left">
+      <span class="auth-bar-title">Casuísticas · TheNucleo</span>
+      <span class="auth-bar-mode editor" id="auth-mode-pill">
+        <span class="dot"></span>
+        <span>Editor</span>
+      </span>
+    </div>
+    <div class="auth-bar-actions">
+      <span class="auth-bar-meta" id="auth-meta"></span>
+      <div class="nav-user-wrap" id="nav-user-wrap" style="display:none;">
+        <button class="nav-user-btn" id="nav-user-btn" title="Navegación interna" aria-haspopup="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </button>
+        <div class="nav-user-dropdown" id="nav-user-dropdown" style="display:none;" role="menu">
+          <a class="nav-user-item" href="/playbook/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+            Playbook
+          </a>
+          <a class="nav-user-item" href="/ficha-cliente/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+            Ficha de Cliente
+          </a>
+          <a class="nav-user-item" href="/fichas-de-producto/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Fichas de Producto
+          </a>
+          <div class="nav-user-divider"></div>
+          <a class="nav-user-item nav-active" href="/casuisticas/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+            Casuísticas
+          </a>
+        </div>
+      </div>
+      <button class="theme-switch" id="btn-theme" title="Cambiar tema" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="btn-sm" id="btn-export">Exportar</button>
+      <button class="btn-sm" id="btn-import">Importar</button>
+      <button class="btn-sm" id="btn-reset" style="color:var(--text-tertiary)">Restaurar</button>
+      <button class="btn-sm" id="btn-logout" style="display:none;">Salir</button>
+      <input id="import-file" type="file" accept="application/json" style="display:none;">
+    </div>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+      </div>
+      <div>
+        <h1>Tablero de casuísticas</h1>
+        <div class="page-header-sub">CRM / Newsletter · Arrastra entre columnas · clic para editar · se guarda en este navegador</div>
+      </div>
+    </div>
+    <span class="save-state" id="save-state">Guardado ✓</span>
+  </div>
+
+  <!-- BOARD -->
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  window.__SUPABASE_URL__ = "https://cbixhqjsnpuhcrcjppah.supabase.co";
+  window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaXhocWpzbnB1aGNyY2pwcGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzU0OTksImV4cCI6MjA4OTE1MTQ5OX0.vbls3tGYkbgUNDhOzgEMBTG7nTlKfLMyTWzlWTmWxTM";
+</script>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const SUPABASE_URL = window.__SUPABASE_URL__;
+const ANON = window.__SUPABASE_ANON_KEY__;
+const AUTH_KEY = "thenucleo-comunidad-auth";
+const BOARD_KEY = "nucleo_casuisticas_v1";
+
+const EDITOR_EMAILS = new Set([
+  "benjamin.sanchis@thenucleo.com",
+  "alejandro.lopez@thenucleo.com",
+  "marketing.thenucleo@gmail.com",
+  "mel.dalmazo@thenucleo.com",
+]);
+
+const SUPABASE = createClient(SUPABASE_URL, ANON, {
+  auth: {
+    persistSession:true, autoRefreshToken:true, detectSessionInUrl:true,
+    storageKey:AUTH_KEY,
+    lock: async (_n,_t,fn) => fn(),
+  }
+});
+
+// ============================================================
+// SESSION
+// ============================================================
+function readStoredSession() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s?.expires_at && s.expires_at * 1000 < Date.now()) return null;
+    return s ?? null;
+  } catch { return null; }
+}
+function currentUser() { return readStoredSession()?.user ?? null; }
+function isAdmin() {
+  const u = currentUser();
+  return !!(u && u.email && EDITOR_EMAILS.has(u.email.toLowerCase()));
+}
+
+// ============================================================
+// GATE
+// ============================================================
+function showGate(kind) {
+  const gate = document.getElementById('gate');
+  const title = document.getElementById('gate-title');
+  const msg = document.getElementById('gate-msg');
+  const btn = document.getElementById('gate-login');
+  if (kind === 'no-admin') {
+    title.textContent = 'Tu cuenta no tiene acceso';
+    msg.textContent = `${currentUser()?.email || 'Tu cuenta'} no está en la allowlist del equipo. Si crees que es un error, contacta con Ben.`;
+    btn.textContent = 'Cambiar de cuenta';
+  } else {
+    title.textContent = 'Acceso restringido';
+    msg.textContent = 'Este tablero es documentación interna del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.';
+    btn.textContent = 'Iniciar sesión';
+  }
+  gate.style.display = 'flex';
+  document.documentElement.classList.add('locked-mode');
+}
+
+document.getElementById('gate-login').addEventListener('click', () => {
+  if (currentUser()) {
+    try { localStorage.removeItem(AUTH_KEY); } catch {}
+  }
+  location.assign('/comunidad/entrar/?next=' + encodeURIComponent('/casuisticas/'));
+});
+
+// ============================================================
+// AUTH INIT
+// ============================================================
+async function initAuth() {
+  // Handle OAuth callback
+  const hash = location.hash;
+  if (hash.includes('access_token')) {
+    await SUPABASE.auth.getSession();
+    history.replaceState(null, '', location.pathname);
+  }
+
+  const user = currentUser();
+  if (!user) { showGate('anon'); return; }
+  if (!isAdmin()) { showGate('no-admin'); return; }
+
+  // Unlock UI
+  document.documentElement.classList.remove('locked-mode');
+  document.getElementById('auth-meta').textContent = user.email;
+  document.getElementById('nav-user-wrap').style.display = '';
+  document.getElementById('btn-logout').style.display = '';
+
+  initBoard();
+}
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await SUPABASE.auth.signOut();
+  try { localStorage.removeItem(AUTH_KEY); } catch {}
+  location.reload();
+});
+
+// ============================================================
+// NAV DROPDOWN
+// ============================================================
+const navBtn = document.getElementById('nav-user-btn');
+const navDropdown = document.getElementById('nav-user-dropdown');
+navBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const isOpen = navDropdown.style.display !== 'none';
+  navDropdown.style.display = isOpen ? 'none' : 'block';
+  navBtn.setAttribute('aria-expanded', String(!isOpen));
+});
+document.addEventListener('click', () => {
+  navDropdown.style.display = 'none';
+  navBtn.setAttribute('aria-expanded', 'false');
+});
+
+// ============================================================
+// THEME
+// ============================================================
+const THEME_KEY = 'nucleo_casuisticas_theme';
+let currentTheme = 'dark';
+try { currentTheme = localStorage.getItem(THEME_KEY) || 'dark'; } catch {}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem(THEME_KEY, t); } catch {}
+}
+applyTheme(currentTheme);
+document.getElementById('btn-theme').addEventListener('click', () => {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(currentTheme);
+});
+
+// ============================================================
+// BOARD DATA
+// ============================================================
+const COLUMNS = [
+  { id:'bolsa',      name:'Bolsa de Horas',                  sub:'Montaje y automatización en el CRM',                  color:'var(--col-bolsa)' },
+  { id:'newsletter', name:'Cantidad Newsletter',              sub:'Copies de email sueltos / nº de correos',             color:'var(--col-newsletter)' },
+  { id:'hibrido',    name:'Híbrido',                          sub:'Mezcla copy + montaje · por definir',                 color:'var(--col-hibrido)' },
+  { id:'dudas',      name:'Dentro de los servicios contratados', sub:'Peticiones cubiertas por el contrato, sin coste extra', color:'var(--col-dudas)' },
+];
+
+const SEED = {
+  bolsa: [
+    { t:'Flujo con 1 email inicial — Formulario GHL', d:'El cliente pide montar un formulario en GHL con las preguntas que necesite, redactar el copy de un email inicial y añadir una etiqueta de control. Todo el montaje se consume de la bolsa de horas.', flag:'' },
+    { t:'Flujo con 1 email inicial — Formulario Meta Ads', d:'Igual que el caso anterior, pero el formulario es de Meta Ads en lugar de GHL. Queda pendiente decidir si esto entra dentro del servicio de campañas en vez de la bolsa de horas.', flag:'duda' },
+    { t:'Flujo countdown NO conectado a una campaña', d:'El cliente pide de forma puntual lanzar un flujo de varios emails escalonados en plazos definidos, dirigido a una base de datos que ya existe. No está ligado a ninguna campaña.', flag:'' },
+    { t:'Flujo countdown conectado a una campaña', d:'El mismo flujo countdown, pero se activa cuando alguien rellena un formulario (GHL o Meta) que está alojado en la landing de una campaña.', flag:'' },
+    { t:'Conectar calendario', d:'El cliente pide tener un calendario con ajustes personalizados.', flag:'' },
+    { t:'Fe de erratas — copies ya excedidos', d:'El cliente se equivocó en la información de un email (error suyo, no nuestro) y pide un copy nuevo para corregirlo. En este caso ya ha superado los copies que tenía contratados.', flag:'' },
+    { t:'Extender un flujo paquetizado con más copies', d:'Un flujo que está dentro del servicio paquetizado y el cliente pide ampliarlo con más copies de los previstos.', flag:'' },
+    { t:'Extender un flujo paquetizado YA montado con más copies', d:'Igual que el caso anterior, pero el flujo ya está montado y funcionando en el momento en que el cliente pide ampliarlo.', flag:'' },
+    { t:'Integración con terceros no contemplada', d:'El cliente pide una integración con una herramienta externa que no está estipulada en el contrato de servicios.', flag:'' },
+    { t:'Flujo posterior a campaña de WhatsApp fuera de alcance', d:'Se contrató una campaña de WhatsApp como servicio y el cliente pide un flujo posterior que supera el alcance contratado. Por ejemplo, varios botones que disparan distintas acciones dentro del CRM.', flag:'' },
+  ],
+  newsletter: [
+    { t:'Avisos por mail', d:'Avisos puntuales y esporádicos que pide el cliente. Suele ser un solo correo. A veces pide filtrar por etiquetas o categorías que no tenemos creadas.', flag:'' },
+    { t:'Recordatorios de un evento concreto', d:'Solicitudes esporádicas del cliente para enviar un recordatorio a una base de datos, esté definida o no.', flag:'' },
+    { t:'Ampliar la estrategia de copies ya cubierta', d:'El cliente pide más copies cuando ya se han cubierto los copies extra solicitados y no entran dentro de la campaña planificada. Ejemplo: pidió 3 copies para Black Friday (los 3 últimos que le quedaban) y, al terminar, pide 3 más — ya excede.', flag:'' },
+    { t:'Fe de erratas — copies NO excedidos', d:'El cliente se equivocó en la información de un email (error suyo, no nuestro) y pide un copy nuevo para corregirlo. En este caso todavía no ha superado los copies contratados.', flag:'' },
+    { t:'Cambio de estrategia tras aprobar y programar', d:'Se planificó la estrategia de copy, se redactó, se aprobó y se programó. Antes de lanzarlos, el cliente pide cambiar la estrategia, lo que obliga a rehacer los copies.', flag:'' },
+    { t:'Cambio de estrategia tras redactar (sin aprobar)', d:'Se planificó la estrategia de copy y se redactó. El cliente pide cambiar la estrategia, lo que obliga a rehacer los copies.', flag:'' },
+    { t:'Campaña promocional planificada al inicio de mes', d:'El cliente planifica con el equipo al inicio del mes una campaña promocional de varios emails para ese mes, con countdown o sin él.', flag:'' },
+  ],
+  hibrido: [
+    { t:'Email del pack que dispara un flujo no contemplado', d:'Un email que se redacta dentro del pack contratado (por ejemplo, el pack de 10 emails), pero el cliente quiere que ese email desencadene un flujo que no estaba contemplado — por ejemplo, añadir una etiqueta que ejecute otro flujo. Combina el copy del pack con un montaje extra en el CRM.', flag:'' },
+  ],
+  dudas: [],
+};
+
+let boardData = loadBoard();
+
+function loadBoard() {
+  try {
+    const raw = localStorage.getItem(BOARD_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return JSON.parse(JSON.stringify(SEED));
+}
+
+let saveTimer;
+function queueSave() {
+  const el = document.getElementById('save-state');
+  if (el) { el.textContent = 'Guardando…'; el.className = 'save-state saving'; }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(BOARD_KEY, JSON.stringify(boardData)); } catch {}
+    if (el) { el.textContent = 'Guardado ✓'; el.className = 'save-state saved'; }
+    setTimeout(() => { if (el) { el.textContent = ''; el.className = 'save-state'; } }, 2000);
+  }, 400);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translate(-50%, 0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translate(-50%, 10px)';
+  }, 1800);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function makeCard(colId, item, idx) {
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.draggable = true;
+  card.dataset.col = colId;
+  card.dataset.idx = idx;
+
+  card.innerHTML = `
+    <div class="card-inner">
+      <span class="card-drag-handle" aria-hidden="true">⠿</span>
+      <div class="card-body">
+        <div class="card-title" contenteditable="true" data-field="t">${escHtml(item.t)}</div>
+        <div class="card-desc"  contenteditable="true" data-field="d">${escHtml(item.d)}</div>
+        <div class="card-footer">
+          ${item.flag === 'duda' ? '<span class="duda-badge">⚠ Duda abierta</span>' : ''}
+          <button class="btn-flag">${item.flag === 'duda' ? 'Quitar duda' : 'Marcar duda'}</button>
+          <button class="btn-del">Borrar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  card.querySelectorAll('[contenteditable]').forEach(el => {
+    el.addEventListener('input', () => {
+      boardData[card.dataset.col][parseInt(card.dataset.idx, 10)][el.dataset.field] = el.textContent;
+      queueSave();
+    });
+    el.addEventListener('mousedown', () => { card.draggable = false; });
+    el.addEventListener('blur', () => { card.draggable = true; });
+  });
+
+  card.querySelector('.btn-del').addEventListener('click', () => {
+    boardData[card.dataset.col].splice(parseInt(card.dataset.idx, 10), 1);
+    queueSave();
+    renderBoard();
+    toast('Caso eliminado');
+  });
+
+  card.querySelector('.btn-flag').addEventListener('click', () => {
+    const i = parseInt(card.dataset.idx, 10);
+    boardData[card.dataset.col][i].flag = boardData[card.dataset.col][i].flag === 'duda' ? '' : 'duda';
+    queueSave();
+    renderBoard();
+  });
+
+  card.addEventListener('dragstart', e => {
+    card.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', JSON.stringify({ col: card.dataset.col, idx: card.dataset.idx }));
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+  return card;
+}
+
+function setupDropzone(body, colId) {
+  body.addEventListener('dragover', e => {
+    e.preventDefault();
+    body.classList.add('drag-over');
+  });
+  body.addEventListener('dragleave', e => {
+    if (!body.contains(e.relatedTarget)) body.classList.remove('drag-over');
+  });
+  body.addEventListener('drop', e => {
+    e.preventDefault();
+    body.classList.remove('drag-over');
+    let payload;
+    try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
+    const { col: fromCol, idx: fromIdxStr } = payload;
+    const fromIdx = parseInt(fromIdxStr, 10);
+    if (fromCol === colId) return;
+    const moved = boardData[fromCol].splice(fromIdx, 1)[0];
+    boardData[colId].push(moved);
+    queueSave();
+    renderBoard();
+    const colName = COLUMNS.find(c => c.id === colId)?.name ?? colId;
+    toast('Movido a ' + colName);
+  });
+}
+
+function addItem(colId) {
+  boardData[colId].push({ t:'Nuevo caso', d:'Describe aquí la casuística…', flag:'' });
+  queueSave();
+  renderBoard();
+  requestAnimationFrame(() => {
+    const body = document.querySelector(`[data-col-body="${colId}"]`);
+    if (body) {
+      body.scrollTop = body.scrollHeight;
+      const last = body.querySelector('.card:last-child .card-title');
+      if (last) { last.focus(); document.getSelection().selectAllChildren(last); }
+    }
+  });
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  COLUMNS.forEach(col => {
+    const items = boardData[col.id] || [];
+    const colEl = document.createElement('section');
+    colEl.className = 'col';
+    colEl.innerHTML = `
+      <div class="col-head" style="border-top:3px solid ${col.color}">
+        <div class="col-head-top">
+          <h2>${escHtml(col.name)}</h2>
+          <span class="col-count">${items.length}</span>
+        </div>
+        <div class="col-sub">${escHtml(col.sub)}</div>
+      </div>
+      <div class="col-body" data-col-body="${col.id}"></div>
+      <button class="col-add" data-col-add="${col.id}">+ Añadir caso</button>
+    `;
+    const body = colEl.querySelector('.col-body');
+    items.forEach((item, idx) => body.appendChild(makeCard(col.id, item, idx)));
+    setupDropzone(body, col.id);
+    colEl.querySelector(`[data-col-add="${col.id}"]`).addEventListener('click', () => addItem(col.id));
+    board.appendChild(colEl);
+  });
+}
+
+// ============================================================
+// EXPORT / IMPORT / RESET
+// ============================================================
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(boardData, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'casuisticas-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exportado');
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!parsed.bolsa || !parsed.newsletter) throw new Error('formato');
+      boardData = parsed;
+      localStorage.setItem(BOARD_KEY, JSON.stringify(boardData));
+      renderBoard();
+      toast('Importado correctamente');
+    } catch { toast('Archivo no válido'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Esto descarta todos tus cambios locales y vuelve a la versión original. ¿Continuar?')) return;
+  boardData = JSON.parse(JSON.stringify(SEED));
+  localStorage.setItem(BOARD_KEY, JSON.stringify(boardData));
+  renderBoard();
+  toast('Restaurado al original');
+});
+
+// ============================================================
+// BOARD INIT
+// ============================================================
+function initBoard() {
+  renderBoard();
+  // Initial save to localStorage
+  try { localStorage.setItem(BOARD_KEY, JSON.stringify(boardData)); } catch {}
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+initAuth();
+</script>
+</body>
+</html>
