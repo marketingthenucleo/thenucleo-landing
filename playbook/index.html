@@ -1652,8 +1652,8 @@ body.cliente-mode .task-progreso-check {
 .task-progreso-check input:checked + .task-progreso-box::after { opacity: 1; }
 .task-progreso-check:hover .task-progreso-box { border-color: var(--accent-primary); }
 
-/* Hueco para el check en Timeline cards: añadir una columna al inicio */
-body.cliente-mode .task-card { grid-template-columns: auto auto 1fr auto; }
+/* Hueco para el check en Timeline cards: añadir columnas al inicio y al final */
+body.cliente-mode .task-card { grid-template-columns: auto auto 1fr auto auto; }
 
 /* Kanban: card es block, el check va al principio como flexbox header */
 body.cliente-mode .kanban-card {
@@ -1901,6 +1901,52 @@ html.anon-mode .ficha-panel { display:none !important; }
 }
 .ficha-add-btn:hover { border-color:var(--accent-secondary); color:var(--accent-secondary); background:var(--accent-secondary-muted); }
 .ficha-panel-loader { display:flex; align-items:center; justify-content:center; padding:24px; color:var(--text-tertiary); font-size:12px; }
+
+/* ============================================
+   TASK FEEDBACK — Marcar duda + Agregar nota
+   Solo visible en cliente-mode para editores
+   ============================================ */
+.task-feedback-actions {
+  display: flex; gap: 4px; align-items: flex-start; padding-top: 2px; flex-shrink: 0;
+}
+.task-btn-duda, .task-btn-nota {
+  height: 22px; padding: 0 7px; white-space: nowrap;
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-tertiary);
+  font-size: 10px; font-family: var(--font-ui); cursor: pointer; transition: all 100ms;
+}
+.task-btn-duda:hover { border-color: #f59e0b; color: #f59e0b; }
+.task-btn-duda.is-duda { background: rgba(245,158,11,0.12); border-color: #f59e0b; color: #f59e0b; }
+.task-btn-nota:hover { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+.task-btn-nota.has-nota { background: var(--bg-elevated); color: var(--text-secondary); }
+.task-nota-area {
+  display: none; grid-column: 1 / -1; padding: 6px 0 2px 0;
+}
+.task-nota-area.open { display: block; }
+.task-nota-inline {
+  width: 100%; min-height: 52px;
+  background: var(--bg-elevated); color: var(--text-primary);
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  padding: 6px 8px; font-size: 11px; font-family: var(--font-ui); resize: none; outline: none;
+}
+.task-nota-inline:focus { border-color: var(--accent-secondary); }
+.task-nota-footer { display: flex; gap: 6px; margin-top: 4px; justify-content: flex-end; }
+.task-nota-save {
+  height: 22px; padding: 0 10px;
+  background: var(--accent-secondary); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 10px; font-family: var(--font-ui); cursor: pointer;
+}
+.task-nota-cancel {
+  height: 22px; padding: 0 8px;
+  background: transparent; color: var(--text-tertiary);
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  font-size: 10px; font-family: var(--font-ui); cursor: pointer;
+}
+.task-nota-save:hover { opacity: .85; }
+.task-nota-cancel:hover { color: var(--text-primary); }
+html.anon-mode .task-feedback-actions,
+html.anon-mode .task-nota-area { display: none !important; }
 </style>
 </head>
 <body>
@@ -2527,6 +2573,7 @@ const CLIENTE_STATE = {
   current: null,            // bubble_id o null = plantilla maestro
   list: [],                 // [{bubble_id, nombre_empresas, fecha_onboarding, sector}]
   progresoByTaskId: {},     // { 12: true, 47: true, ... }
+  feedbackByTaskId: {},     // { 12: {es_duda: true, nota: "texto"}, ... }
   festivosSet: new Set(),   // Set<'YYYY-MM-DD'>
   currentHeadDay: null,     // día más cercano (>= hoy) que tiene tareas en TASKS
   activeSectores: new Set(),// sectores activos (default: todos los presentes en list)
@@ -2622,6 +2669,80 @@ async function loadProgresoCliente(bubbleId) {
     console.warn('[playbook] loadProgresoCliente failed', e);
     CLIENTE_STATE.progresoByTaskId = {};
   }
+}
+
+async function loadFeedbackCliente(bubbleId) {
+  try {
+    const url = `${window.__SUPABASE_URL__}/rest/v1/playbook_task_feedback?cliente_bubble_id=eq.${encodeURIComponent(bubbleId)}&select=task_id,es_duda,nota`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + (getAccessToken() || window.__SUPABASE_ANON_KEY__),
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+    CLIENTE_STATE.feedbackByTaskId = Object.fromEntries(rows.map(r => [r.task_id, { es_duda: r.es_duda, nota: r.nota || '' }]));
+  } catch (e) {
+    console.warn('[playbook] loadFeedbackCliente failed', e);
+    CLIENTE_STATE.feedbackByTaskId = {};
+  }
+}
+
+async function toggleDuda(taskId, isDuda) {
+  if (!STATE.canEdit || !CLIENTE_STATE.current) return false;
+  const token = getAccessToken();
+  if (!token) return false;
+  const cur = CLIENTE_STATE.feedbackByTaskId[taskId] || {};
+  const body = {
+    cliente_bubble_id: CLIENTE_STATE.current,
+    task_id: taskId,
+    es_duda: isDuda,
+    nota: cur.nota || null,
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/playbook_task_feedback?on_conflict=cliente_bubble_id,task_id`, {
+      method: 'POST',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { console.error('[playbook] toggleDuda failed', res.status, await res.text()); return false; }
+    return true;
+  } catch (e) { console.error('[playbook] toggleDuda error', e); return false; }
+}
+
+async function upsertNota(taskId, nota) {
+  if (!STATE.canEdit || !CLIENTE_STATE.current) return false;
+  const token = getAccessToken();
+  if (!token) return false;
+  const cur = CLIENTE_STATE.feedbackByTaskId[taskId] || {};
+  const body = {
+    cliente_bubble_id: CLIENTE_STATE.current,
+    task_id: taskId,
+    es_duda: !!cur.es_duda,
+    nota: nota || null,
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/playbook_task_feedback?on_conflict=cliente_bubble_id,task_id`, {
+      method: 'POST',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { console.error('[playbook] upsertNota failed', res.status, await res.text()); return false; }
+    return true;
+  } catch (e) { console.error('[playbook] upsertNota error', e); return false; }
 }
 
 async function loadFestivosAnyo(year) {
@@ -2819,6 +2940,7 @@ async function onClienteChange(bubbleId) {
     if (hint) hint.style.display = '';
     if (shareBtn) shareBtn.hidden = true;
     CLIENTE_STATE.progresoByTaskId = {};
+    CLIENTE_STATE.feedbackByTaskId = {};
     CLIENTE_STATE.festivosSet = new Set();
     CLIENTE_STATE.currentHeadDay = null;
     rerender();
@@ -2846,7 +2968,7 @@ async function onClienteChange(bubbleId) {
     }
   }
   if (hint) hint.style.display = 'none';
-  await Promise.all([loadProgresoCliente(bubbleId), loadFestivosRango(c.fecha_onboarding)]);
+  await Promise.all([loadProgresoCliente(bubbleId), loadFeedbackCliente(bubbleId), loadFestivosRango(c.fecha_onboarding)]);
   CLIENTE_STATE.currentHeadDay = getCurrentHeadDay();
   rerender();
   loadFichaPanel(bubbleId);
@@ -3009,6 +3131,22 @@ function renderTimeline() {
                 <input type="checkbox" class="task-progreso" data-id="${t.id}" ${doneCls ? 'checked' : ''} ${STATE.canEdit ? '' : 'disabled'}>
                 <span class="task-progreso-box"></span>
               </label>`;
+              const fb = CLIENTE_STATE.feedbackByTaskId[t.id] || {};
+              const isDuda = !!fb.es_duda;
+              const nota = fb.nota || '';
+              const feedbackBtns = STATE.canEdit ? `
+                <div class="task-feedback-actions">
+                  <button class="task-btn-duda${isDuda ? ' is-duda' : ''}" data-id="${t.id}" data-action="toggle-duda" title="Marcar duda">⚠ Duda</button>
+                  <button class="task-btn-nota${nota ? ' has-nota' : ''}" data-id="${t.id}" data-action="toggle-nota" title="${nota ? 'Ver o editar nota' : 'Agregar nota'}">+ Nota</button>
+                </div>` : '';
+              const notaArea = STATE.canEdit ? `
+                <div class="task-nota-area" data-nota-for="${t.id}">
+                  <textarea class="task-nota-inline" rows="2" placeholder="Nota interna sobre esta tarea para este cliente…">${escapeHtml(nota)}</textarea>
+                  <div class="task-nota-footer">
+                    <button class="task-nota-cancel" data-id="${t.id}" data-action="cancel-nota">Cancelar</button>
+                    <button class="task-nota-save" data-id="${t.id}" data-action="save-nota">Guardar</button>
+                  </div>
+                </div>` : '';
               return `
                 <article class="task-card ${doneCls}" data-owner="${primary}" data-id="${t.id}">
                   ${checkBox}
@@ -3022,6 +3160,8 @@ function renderTimeline() {
                     ${t.client ? `<span class="client-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Cliente</span>` : ''}
                     <span class="owner-name">${t.owners.map(o=>OWNERS[o].name).join(' + ')}</span>
                   </div>
+                  ${feedbackBtns}
+                  ${notaArea}
                 </article>`;
             }).join('')}
           </div>
@@ -4346,6 +4486,73 @@ document.getElementById('sector-reset').addEventListener('click', () => {
   CLIENTE_STATE.activeSectores = new Set(distinctSectores());
   populateSectorPills();
   populateClienteDropdown();
+});
+
+// Feedback: Marcar duda + Agregar nota (event delegation)
+document.addEventListener('click', e => {
+  // Toggle duda
+  const dudaBtn = e.target.closest('button[data-action="toggle-duda"]');
+  if (dudaBtn) {
+    if (!STATE.canEdit || !CLIENTE_STATE.current) return;
+    const id = parseInt(dudaBtn.dataset.id, 10);
+    const cur = CLIENTE_STATE.feedbackByTaskId[id] || {};
+    const newDuda = !cur.es_duda;
+    toggleDuda(id, newDuda).then(ok => {
+      if (!ok) return;
+      if (!CLIENTE_STATE.feedbackByTaskId[id]) CLIENTE_STATE.feedbackByTaskId[id] = {};
+      CLIENTE_STATE.feedbackByTaskId[id].es_duda = newDuda;
+      document.querySelectorAll(`button[data-action="toggle-duda"][data-id="${id}"]`).forEach(btn => {
+        btn.classList.toggle('is-duda', newDuda);
+      });
+    });
+    return;
+  }
+
+  // Abrir/cerrar área de nota
+  const notaBtn = e.target.closest('button[data-action="toggle-nota"]');
+  if (notaBtn) {
+    if (!STATE.canEdit || !CLIENTE_STATE.current) return;
+    const id = notaBtn.dataset.id;
+    const area = document.querySelector(`.task-nota-area[data-nota-for="${id}"]`);
+    if (area) area.classList.toggle('open');
+    return;
+  }
+
+  // Cancelar nota
+  const cancelBtn = e.target.closest('button[data-action="cancel-nota"]');
+  if (cancelBtn) {
+    const id = cancelBtn.dataset.id;
+    const area = document.querySelector(`.task-nota-area[data-nota-for="${id}"]`);
+    if (area) {
+      area.classList.remove('open');
+      const ta = area.querySelector('textarea');
+      if (ta) ta.value = CLIENTE_STATE.feedbackByTaskId[parseInt(id, 10)]?.nota || '';
+    }
+    return;
+  }
+
+  // Guardar nota
+  const saveBtn = e.target.closest('button[data-action="save-nota"]');
+  if (saveBtn) {
+    if (!STATE.canEdit || !CLIENTE_STATE.current) return;
+    const id = parseInt(saveBtn.dataset.id, 10);
+    const area = document.querySelector(`.task-nota-area[data-nota-for="${id}"]`);
+    if (!area) return;
+    const ta = area.querySelector('textarea');
+    const nota = ta ? ta.value.trim() : '';
+    upsertNota(id, nota).then(ok => {
+      if (!ok) return;
+      if (!CLIENTE_STATE.feedbackByTaskId[id]) CLIENTE_STATE.feedbackByTaskId[id] = {};
+      CLIENTE_STATE.feedbackByTaskId[id].nota = nota;
+      area.classList.remove('open');
+      document.querySelectorAll(`button[data-action="toggle-nota"][data-id="${id}"]`).forEach(btn => {
+        btn.classList.toggle('has-nota', !!nota);
+        btn.title = nota ? 'Ver o editar nota' : 'Agregar nota';
+        btn.textContent = nota ? '📝 Nota' : '+ Nota';
+      });
+    });
+    return;
+  }
 });
 
 // Checks de progreso en Timeline y Kanban (los de Tabla los gestiona tablaBody listener)
