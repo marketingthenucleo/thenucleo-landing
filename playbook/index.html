@@ -1813,8 +1813,9 @@ html.locked-mode .gate { display:flex !important; }
 
 .ficha-panel {
   width:340px; min-width:340px;
-  max-height:100vh; overflow-y:auto;
-  position:sticky; top:0;
+  height:calc(100vh - 46px); overflow-y:auto;
+  position:sticky; top:46px; /* justo bajo la auth-bar (~46px) */
+  flex-shrink:0;
   padding:20px 16px;
   border-left:1px solid var(--border-subtle);
   background:var(--bg-base);
