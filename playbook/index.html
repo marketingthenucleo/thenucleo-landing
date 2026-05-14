@@ -1803,6 +1803,103 @@ html.locked-mode .gate { display:flex !important; }
   text-decoration:none; display:inline-flex; align-items:center;
 }
 .gate .gate-btn-ghost:hover { color:var(--text-primary); }
+
+/* ============================================
+   FICHA PANEL — ficha del cliente + servicios
+   Solo visible en modo editor con cliente seleccionado
+   ============================================ */
+.app-body { display:flex; flex:1; min-height:0; align-items:flex-start; }
+.app-body > main.main { flex:1; min-width:0; width:auto !important; }
+
+.ficha-panel {
+  width:340px; min-width:340px;
+  max-height:100vh; overflow-y:auto;
+  position:sticky; top:0;
+  padding:20px 16px;
+  border-left:1px solid var(--border-subtle);
+  background:var(--bg-base);
+  display:none; flex-direction:column; gap:12px;
+}
+body.has-ficha .ficha-panel { display:flex; }
+html.anon-mode .ficha-panel { display:none !important; }
+@media(max-width:1100px) { .ficha-panel { display:none !important; } }
+
+.ficha-section {
+  background:var(--bg-card); border:1px solid var(--border-default);
+  border-radius:var(--radius-lg); padding:14px;
+}
+.ficha-section-title {
+  font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:1px; color:var(--text-tertiary);
+  margin-bottom:10px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.ficha-row { display:flex; flex-direction:column; gap:2px; margin-bottom:8px; }
+.ficha-row:last-child { margin-bottom:0; }
+.ficha-label { font-size:10px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; }
+.ficha-value { font-size:12px; color:var(--text-primary); line-height:1.4; word-break:break-word; }
+.ficha-value a { color:var(--accent-secondary); }
+.ficha-value a:hover { text-decoration:underline; }
+.ficha-estado-pill {
+  display:inline-flex; align-items:center; padding:2px 8px;
+  border-radius:999px; font-size:10px; font-weight:600;
+}
+.ficha-money { font-size:17px; font-weight:700; color:var(--accent-primary); line-height:1.1; }
+.ficha-money-label { font-size:10px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.5px; }
+
+/* Servicios */
+.servicio-item {
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-md); padding:9px 10px; margin-bottom:5px;
+  display:flex; flex-direction:column; gap:3px; position:relative;
+}
+.servicio-item:last-child { margin-bottom:0; }
+.servicio-cat-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; flex-shrink:0; }
+.servicio-titulo { font-size:11px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; padding-right:44px; }
+.servicio-meta { display:flex; flex-wrap:wrap; gap:4px; margin-top:2px; }
+.servicio-meta-chip {
+  display:inline-flex; align-items:center; gap:2px;
+  background:var(--bg-hover); border-radius:4px;
+  padding:1px 5px; font-size:10px; color:var(--text-secondary);
+}
+.servicio-actions {
+  position:absolute; top:7px; right:7px;
+  display:flex; gap:3px; opacity:0; transition:opacity 120ms;
+}
+.servicio-item:hover .servicio-actions { opacity:1; }
+.servicio-btn {
+  width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:4px; border:none; cursor:pointer; font-size:11px;
+  background:var(--bg-active); color:var(--text-tertiary);
+}
+.servicio-btn:hover { background:var(--bg-hover); color:var(--text-primary); }
+.servicio-btn.del:hover { background:var(--status-error-bg); color:var(--status-error); }
+
+/* Add-servicio form */
+.add-servicio-form {
+  border:1px dashed var(--border-default); border-radius:var(--radius-md);
+  padding:10px; margin-top:4px; display:none; flex-direction:column; gap:7px;
+}
+.add-servicio-form.open { display:flex; }
+.add-servicio-select, .add-servicio-input {
+  width:100%; height:30px; padding:0 8px;
+  font-family:var(--font-ui); font-size:11px;
+  background:var(--bg-elevated); color:var(--text-primary);
+  border:1px solid var(--border-default); border-radius:var(--radius-sm); outline:none;
+}
+.add-servicio-select:focus, .add-servicio-input:focus { border-color:var(--accent-secondary); }
+.add-servicio-row { display:flex; gap:5px; }
+.add-servicio-row .add-servicio-input { flex:1; min-width:0; }
+.add-servicio-actions { display:flex; gap:5px; justify-content:flex-end; margin-top:2px; }
+.ficha-add-btn {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  width:100%; height:30px;
+  border:1px dashed var(--border-default); border-radius:var(--radius-md);
+  background:transparent; color:var(--text-tertiary);
+  font-size:11px; font-family:var(--font-ui); cursor:pointer; transition:all 120ms;
+}
+.ficha-add-btn:hover { border-color:var(--accent-secondary); color:var(--accent-secondary); background:var(--accent-secondary-muted); }
+.ficha-panel-loader { display:flex; align-items:center; justify-content:center; padding:24px; color:var(--text-tertiary); font-size:12px; }
 </style>
 </head>
 <body>
@@ -1860,6 +1957,8 @@ html.locked-mode .gate { display:flex !important; }
     </div>
   </div>
 
+  <!-- APP BODY (main + ficha panel) -->
+  <div class="app-body">
   <!-- MAIN -->
   <main class="main" style="margin-left:0;width:100%;">
 
@@ -2038,6 +2137,11 @@ html.locked-mode .gate { display:flex !important; }
     </section>
 
   </main>
+
+  <!-- FICHA PANEL (editor-only, rendered by JS when client is selected) -->
+  <aside id="ficha-panel" class="ficha-panel custom-scroll"></aside>
+
+  </div><!-- /app-body -->
 </div>
 
 <script>
@@ -2717,6 +2821,7 @@ async function onClienteChange(bubbleId) {
     CLIENTE_STATE.festivosSet = new Set();
     CLIENTE_STATE.currentHeadDay = null;
     rerender();
+    loadFichaPanel(null);
     return;
   }
   if (shareBtn) shareBtn.hidden = false;
@@ -2743,6 +2848,7 @@ async function onClienteChange(bubbleId) {
   await Promise.all([loadProgresoCliente(bubbleId), loadFestivosRango(c.fecha_onboarding)]);
   CLIENTE_STATE.currentHeadDay = getCurrentHeadDay();
   rerender();
+  loadFichaPanel(bubbleId);
 }
 
 async function toggleProgreso(taskId, done) {
@@ -3662,6 +3768,405 @@ document.getElementById('btn-toggle-all').addEventListener('click', () => {
 /* ============================================
    INIT
    ============================================ */
+/* ============================================
+   FICHA PANEL — Ficha del cliente + Servicios contratados
+   Solo en modo editor con cliente seleccionado.
+   ============================================ */
+const FICHA_STATE = {
+  data: null,    // { cliente:{...}, servicios:[...] }
+  catalog: null, // fichas_de_producto aplanadas con categoría
+};
+
+async function fetchClienteDetalle(bubbleId) {
+  const token = getAccessToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/rpc/playbook_cliente_detalle`, {
+      method: 'POST',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ p_bubble_id: bubbleId }),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { console.warn('[ficha] fetchClienteDetalle failed', e); return null; }
+}
+
+async function loadFichasCatalog() {
+  if (FICHA_STATE.catalog) return FICHA_STATE.catalog;
+  const token = getAccessToken();
+  if (!token) return [];
+  try {
+    const [fichasRes, catsRes] = await Promise.all([
+      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_de_producto?select=id,titulo,categoria_id,estado&order=categoria_id.asc,orden.asc`, {
+        headers: { apikey: window.__SUPABASE_ANON_KEY__, Authorization: 'Bearer ' + token },
+      }),
+      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_categorias?select=id,nombre,color&order=orden.asc`, {
+        headers: { apikey: window.__SUPABASE_ANON_KEY__, Authorization: 'Bearer ' + token },
+      }),
+    ]);
+    const fichas = fichasRes.ok ? await fichasRes.json() : [];
+    const cats   = catsRes.ok  ? await catsRes.json()  : [];
+    const catMap = Object.fromEntries(cats.map(c => [c.id, c]));
+    FICHA_STATE.catalog = fichas.map(f => ({
+      ...f,
+      categoria_nombre: catMap[f.categoria_id]?.nombre || '—',
+      categoria_color:  catMap[f.categoria_id]?.color  || '#6b7280',
+    }));
+    return FICHA_STATE.catalog;
+  } catch (e) { console.warn('[ficha] loadFichasCatalog failed', e); return []; }
+}
+
+async function loadFichaPanel(bubbleId) {
+  const panel = document.getElementById('ficha-panel');
+  if (!panel) return;
+  if (!bubbleId || !STATE.canEdit) {
+    document.body.classList.remove('has-ficha');
+    FICHA_STATE.data = null;
+    return;
+  }
+  document.body.classList.add('has-ficha');
+  panel.innerHTML = '<div class="ficha-panel-loader">Cargando ficha…</div>';
+  const data = await fetchClienteDetalle(bubbleId);
+  FICHA_STATE.data = data;
+  if (!data || !data.cliente) {
+    panel.innerHTML = '<div class="ficha-panel-loader">No se pudo cargar la ficha.</div>';
+    return;
+  }
+  renderFichaPanel(data, bubbleId);
+}
+
+function fichaEstadoPill(estado) {
+  const M = {
+    'Activo':    ['var(--status-success-bg)', 'var(--status-success)'],
+    'Pausado':   ['var(--status-warning-bg)', 'var(--status-warning)'],
+    'Antiguo':   ['var(--status-neutral-bg)', 'var(--status-neutral)'],
+    'Prospecto': ['var(--status-info-bg)',    'var(--status-info)'],
+  };
+  const [bg, color] = M[estado] || ['var(--status-neutral-bg)', 'var(--status-neutral)'];
+  return estado
+    ? `<span class="ficha-estado-pill" style="background:${bg};color:${color}">${escapeHtml(estado)}</span>`
+    : '';
+}
+
+function fichaFecha(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('es', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function fichaEuro(n) {
+  if (n == null || n === '') return '—';
+  return Number(n).toLocaleString('es', { style:'currency', currency:'EUR', maximumFractionDigits:0 });
+}
+
+function renderServiciosList(servicios, bubbleId) {
+  if (!servicios.length) {
+    return '<div style="font-size:11px;color:var(--text-tertiary);padding:2px 0;">Sin servicios asignados aún.</div>';
+  }
+  return servicios.map(s => `
+    <div class="servicio-item" data-id="${escapeHtml(s.id)}">
+      <div class="servicio-titulo">
+        <span class="servicio-cat-dot" style="background:${escapeHtml(s.categoria_color||'#6b7280')}"></span>
+        ${escapeHtml(s.ficha_titulo)}
+      </div>
+      <div class="servicio-meta">
+        ${s.precio != null ? `<span class="servicio-meta-chip">${fichaEuro(s.precio)} / ${escapeHtml(s.periodo||'mes')}</span>` : ''}
+        ${s.unidades ? `<span class="servicio-meta-chip">${escapeHtml(s.unidades)}</span>` : ''}
+        ${s.notas ? `<span class="servicio-meta-chip" title="${escapeHtml(s.notas)}" style="color:var(--text-tertiary);">${escapeHtml(s.notas.length>28?s.notas.slice(0,28)+'…':s.notas)}</span>` : ''}
+        ${s.categoria_nombre&&s.categoria_nombre!=='—' ? `<span class="servicio-meta-chip" style="color:var(--text-tertiary);">${escapeHtml(s.categoria_nombre)}</span>` : ''}
+      </div>
+      <div class="servicio-actions">
+        <button class="servicio-btn edit" title="Editar" onclick="fichaEditServicio('${escapeHtml(s.id)}')">✎</button>
+        <button class="servicio-btn del" title="Eliminar" onclick="fichaDeleteServicio('${escapeHtml(s.id)}','${escapeHtml(bubbleId)}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderFichaPanel(data, bubbleId) {
+  const panel = document.getElementById('ficha-panel');
+  if (!panel) return;
+  const c = data.cliente;
+  const servicios = Array.isArray(data.servicios) ? data.servicios : [];
+  const driveBtn = c.link_drive
+    ? `<a href="${escapeHtml(c.link_drive)}" target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--accent-secondary);">
+         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 0 2-2h6"/>
+           <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+         </svg>Drive</a>` : '';
+  const webLink = c.pagina_web
+    ? `<a href="${c.pagina_web.startsWith('http')?escapeHtml(c.pagina_web):'https://'+escapeHtml(c.pagina_web)}"
+         target="_blank" rel="noopener noreferrer"
+         style="color:var(--accent-secondary);word-break:break-all;">${escapeHtml(c.pagina_web.replace(/^https?:\/\//,''))}</a>`
+    : '—';
+
+  panel.innerHTML = `
+    <!-- Identidad + estado -->
+    <div class="ficha-section" style="border-top:3px solid var(--accent-secondary);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;line-height:1.3;">${escapeHtml(c.nombre_empresas||'—')}</div>
+          ${c.nombre_sociedad&&c.nombre_sociedad!==c.nombre_empresas?`<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${escapeHtml(c.nombre_sociedad)}</div>`:''}
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+          ${fichaEstadoPill(c.estado)}
+          ${driveBtn}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        ${c.sector?`<span style="background:var(--bg-hover);border:1px solid var(--border-default);border-radius:999px;padding:1px 8px;font-size:10px;color:var(--text-secondary);">${escapeHtml(c.sector)}</span>`:''}
+        ${c.niveles?`<span style="background:var(--bg-hover);border:1px solid var(--border-default);border-radius:999px;padding:1px 8px;font-size:10px;color:var(--text-secondary);">${escapeHtml(c.niveles)}</span>`:''}
+      </div>
+      ${c.facturacion!=null?`
+        <div style="padding:9px;background:var(--accent-primary-muted);border-radius:var(--radius-md);margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+          <div>
+            <div class="ficha-money">${fichaEuro(c.facturacion)}</div>
+            <div class="ficha-money-label">/ mes</div>
+          </div>
+          ${c.plan_actual?`<div style="flex:1;border-left:1px solid rgba(34,197,94,.3);padding-left:10px;font-size:11px;color:var(--text-secondary);">${escapeHtml(c.plan_actual)}${c.descripcion_plan?`<br><span style="font-size:10px;color:var(--text-tertiary);">${escapeHtml(c.descripcion_plan)}</span>`:''}</div>`:''}
+        </div>`:''}
+      <div class="ficha-row"><span class="ficha-label">Onboarding</span><span class="ficha-value">${fichaFecha(c.fecha_onboarding)}</span></div>
+      <div class="ficha-row">
+        <span class="ficha-label">Próxima factura</span>
+        <span class="ficha-value">${fichaFecha(c.bb_proxima_factura)}${c.bb_estado_facturacion?` <span style="color:var(--text-tertiary);font-size:10px;">· ${escapeHtml(c.bb_estado_facturacion)}</span>`:''}</span>
+      </div>
+      <div class="ficha-row"><span class="ficha-label">Último seguimiento</span><span class="ficha-value">${fichaFecha(c.ultimo_seguimiento)}</span></div>
+      ${c.nps?`<div class="ficha-row"><span class="ficha-label">NPS</span><span class="ficha-value">${escapeHtml(c.nps)}</span></div>`:''}
+    </div>
+
+    <!-- Contacto -->
+    <div class="ficha-section">
+      <div class="ficha-section-title">Contacto</div>
+      ${c.contacto_principal?`<div class="ficha-row"><span class="ficha-label">Nombre</span><span class="ficha-value">${escapeHtml(c.contacto_principal)}</span></div>`:''}
+      ${c.correo_principal?`<div class="ficha-row"><span class="ficha-label">Email</span><span class="ficha-value"><a href="mailto:${escapeHtml(c.correo_principal)}">${escapeHtml(c.correo_principal)}</a></span></div>`:''}
+      ${c.telefono_principal?`<div class="ficha-row"><span class="ficha-label">Teléfono</span><span class="ficha-value"><a href="tel:${escapeHtml(c.telefono_principal)}">${escapeHtml(c.telefono_principal)}</a></span></div>`:''}
+      ${c.pagina_web?`<div class="ficha-row"><span class="ficha-label">Web</span><span class="ficha-value">${webLink}</span></div>`:''}
+      ${!c.contacto_principal&&!c.correo_principal&&!c.telefono_principal&&!c.pagina_web?`<div style="font-size:11px;color:var(--text-tertiary);">Sin datos de contacto.</div>`:''}
+    </div>
+
+    <!-- Servicios contratados -->
+    <div class="ficha-section" id="ficha-servicios-section">
+      <div class="ficha-section-title">
+        Servicios contratados
+        <span id="ficha-servicios-count" style="font-weight:400;text-transform:none;letter-spacing:0;">${servicios.length>0?servicios.length+' servicio'+(servicios.length>1?'s':''):''}</span>
+      </div>
+      <div id="ficha-servicios-list">${renderServiciosList(servicios,bubbleId)}</div>
+      <div class="add-servicio-form" id="add-servicio-form">
+        <select class="add-servicio-select" id="add-servicio-ficha-select">
+          <option value="">— Selecciona del catálogo —</option>
+        </select>
+        <div class="add-servicio-row">
+          <input type="number" class="add-servicio-input" id="add-servicio-precio" placeholder="€/mes" min="0" step="1" style="width:90px;min-width:0;flex-shrink:0;">
+          <input type="text" class="add-servicio-input" id="add-servicio-unidades" placeholder="Unidades (3 posts/mes…)">
+        </div>
+        <div class="add-servicio-row">
+          <select class="add-servicio-select" id="add-servicio-periodo" style="width:120px;min-width:0;flex-shrink:0;">
+            <option value="mensual">Mensual</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="anual">Anual</option>
+            <option value="único">Único</option>
+          </select>
+          <input type="text" class="add-servicio-input" id="add-servicio-notas" placeholder="Notas…">
+        </div>
+        <div class="add-servicio-actions">
+          <button class="btn btn--secondary btn--sm" id="add-servicio-cancel">Cancelar</button>
+          <button class="btn btn--primary btn--sm" id="add-servicio-save">Añadir</button>
+        </div>
+      </div>
+      <button class="ficha-add-btn editor-only" id="btn-add-servicio" style="margin-top:6px;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Añadir servicio
+      </button>
+    </div>
+  `;
+
+  bindServicioForm(bubbleId);
+  loadFichasCatalog().then(catalog => {
+    const sel = document.getElementById('add-servicio-ficha-select');
+    if (!sel) return;
+    let lastCat = null;
+    catalog.forEach(f => {
+      if (f.categoria_nombre !== lastCat) {
+        lastCat = f.categoria_nombre;
+        const og = document.createElement('optgroup');
+        og.label = f.categoria_nombre;
+        sel.appendChild(og);
+      }
+      const opt = document.createElement('option');
+      opt.value = f.id;
+      opt.textContent = f.titulo;
+      opt.dataset.catNombre = f.categoria_nombre;
+      opt.dataset.catColor  = f.categoria_color;
+      opt.dataset.titulo    = f.titulo;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function bindServicioForm(bubbleId) {
+  const btn    = document.getElementById('btn-add-servicio');
+  const form   = document.getElementById('add-servicio-form');
+  const cancel = document.getElementById('add-servicio-cancel');
+  const save   = document.getElementById('add-servicio-save');
+  if (btn)    btn.addEventListener('click', () => { form.classList.add('open'); btn.style.display='none'; });
+  if (cancel) cancel.addEventListener('click', () => { form.classList.remove('open'); if(btn)btn.style.display=''; fichaResetForm(); });
+  if (save)   save.addEventListener('click', () => fichaDoAdd(bubbleId));
+}
+
+function fichaResetForm() {
+  ['add-servicio-ficha-select','add-servicio-precio','add-servicio-unidades','add-servicio-notas']
+    .forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
+  const per = document.getElementById('add-servicio-periodo');
+  if (per) per.value = 'mensual';
+}
+
+async function fichaDoAdd(bubbleId) {
+  const fichaEl    = document.getElementById('add-servicio-ficha-select');
+  const precioEl   = document.getElementById('add-servicio-precio');
+  const unidadesEl = document.getElementById('add-servicio-unidades');
+  const periodoEl  = document.getElementById('add-servicio-periodo');
+  const notasEl    = document.getElementById('add-servicio-notas');
+  const saveBtn    = document.getElementById('add-servicio-save');
+  if (!fichaEl?.value) { alert('Selecciona un servicio del catálogo.'); return; }
+  const opt  = fichaEl.options[fichaEl.selectedIndex];
+  const body = {
+    cliente_bubble_id: bubbleId,
+    ficha_id:          fichaEl.value,
+    ficha_titulo:      opt.dataset.titulo || opt.textContent.trim(),
+    categoria_nombre:  opt.dataset.catNombre || null,
+    categoria_color:   opt.dataset.catColor  || null,
+    precio:    precioEl?.value !== '' ? Number(precioEl.value) : null,
+    unidades:  unidadesEl?.value.trim() || null,
+    periodo:   periodoEl?.value || 'mensual',
+    notas:     notasEl?.value.trim() || null,
+    orden:     FICHA_STATE.data?.servicios?.length || 0,
+  };
+  const token = getAccessToken();
+  if (!token) return;
+  if (saveBtn) { saveBtn.disabled=true; saveBtn.textContent='Guardando…'; }
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/playbook_cliente_servicios`, {
+      method: 'POST',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + await res.text());
+    const [created] = await res.json();
+    if (FICHA_STATE.data) FICHA_STATE.data.servicios = [...(FICHA_STATE.data.servicios||[]), created];
+    const list  = document.getElementById('ficha-servicios-list');
+    const count = document.getElementById('ficha-servicios-count');
+    if (list)  list.innerHTML = renderServiciosList(FICHA_STATE.data.servicios, bubbleId);
+    const cnt = FICHA_STATE.data.servicios.length;
+    if (count) count.textContent = cnt + ' servicio' + (cnt!==1?'s':'');
+    const form = document.getElementById('add-servicio-form');
+    const addBtn = document.getElementById('btn-add-servicio');
+    if (form)   form.classList.remove('open');
+    if (addBtn) addBtn.style.display = '';
+    fichaResetForm();
+  } catch (e) {
+    console.error('[ficha] fichaDoAdd failed', e);
+    alert('Error al guardar. Inténtalo de nuevo.');
+  } finally {
+    if (saveBtn) { saveBtn.disabled=false; saveBtn.textContent='Añadir'; }
+  }
+}
+
+window.fichaDeleteServicio = async function(id, bubbleId) {
+  if (!confirm('¿Eliminar este servicio de la ficha del cliente?')) return;
+  const token = getAccessToken();
+  if (!token) return;
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/playbook_cliente_servicios?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { apikey: window.__SUPABASE_ANON_KEY__, Authorization: 'Bearer ' + token },
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (FICHA_STATE.data) FICHA_STATE.data.servicios = (FICHA_STATE.data.servicios||[]).filter(s=>s.id!==id);
+    const list  = document.getElementById('ficha-servicios-list');
+    const count = document.getElementById('ficha-servicios-count');
+    if (list)  list.innerHTML = renderServiciosList(FICHA_STATE.data?.servicios||[], bubbleId);
+    const cnt = FICHA_STATE.data?.servicios?.length||0;
+    if (count) count.textContent = cnt>0 ? cnt+' servicio'+(cnt!==1?'s':'') : '';
+  } catch (e) { console.error('[ficha] fichaDeleteServicio failed', e); alert('Error al eliminar.'); }
+};
+
+window.fichaEditServicio = async function(id) {
+  const s = FICHA_STATE.data?.servicios?.find(x=>x.id===id);
+  if (!s) return;
+  const bubbleId = CLIENTE_STATE.current;
+  const item = document.querySelector(`.servicio-item[data-id="${id}"]`);
+  if (!item) return;
+  item.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="font-size:10px;font-weight:600;color:var(--text-tertiary);">${escapeHtml(s.ficha_titulo)}</div>
+      <div class="add-servicio-row">
+        <input type="number" class="add-servicio-input" id="edit-precio-${id}" placeholder="€/mes" value="${s.precio??''}" style="width:90px;min-width:0;flex-shrink:0;">
+        <input type="text"   class="add-servicio-input" id="edit-unidades-${id}" placeholder="Unidades" value="${escapeHtml(s.unidades||'')}">
+      </div>
+      <div class="add-servicio-row">
+        <select class="add-servicio-select" id="edit-periodo-${id}" style="width:120px;min-width:0;flex-shrink:0;">
+          ${['mensual','trimestral','anual','único'].map(p=>`<option value="${p}"${s.periodo===p?' selected':''}>${p.charAt(0).toUpperCase()+p.slice(1)}</option>`).join('')}
+        </select>
+        <input type="text" class="add-servicio-input" id="edit-notas-${id}" placeholder="Notas…" value="${escapeHtml(s.notas||'')}">
+      </div>
+      <div class="add-servicio-actions">
+        <button class="btn btn--secondary btn--sm" onclick="fichaCancelEdit('${escapeHtml(id)}')">Cancelar</button>
+        <button class="btn btn--primary btn--sm" onclick="fichaSaveEdit('${escapeHtml(id)}','${escapeHtml(bubbleId)}')">Guardar</button>
+      </div>
+    </div>`;
+};
+
+window.fichaCancelEdit = function(id) {
+  const bubbleId = CLIENTE_STATE.current;
+  const list = document.getElementById('ficha-servicios-list');
+  if (list) list.innerHTML = renderServiciosList(FICHA_STATE.data?.servicios||[], bubbleId);
+};
+
+window.fichaSaveEdit = async function(id, bubbleId) {
+  const precio    = document.getElementById(`edit-precio-${id}`)?.value;
+  const unidades  = document.getElementById(`edit-unidades-${id}`)?.value.trim();
+  const periodo   = document.getElementById(`edit-periodo-${id}`)?.value;
+  const notas     = document.getElementById(`edit-notas-${id}`)?.value.trim();
+  const token = getAccessToken();
+  if (!token) return;
+  const body = {
+    precio:   precio!=='' ? Number(precio) : null,
+    unidades: unidades || null,
+    periodo:  periodo  || 'mensual',
+    notas:    notas    || null,
+  };
+  try {
+    const res = await fetch(`${window.__SUPABASE_URL__}/rest/v1/playbook_cliente_servicios?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: {
+        apikey: window.__SUPABASE_ANON_KEY__,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (FICHA_STATE.data) {
+      const idx = FICHA_STATE.data.servicios.findIndex(s=>s.id===id);
+      if (idx>=0) Object.assign(FICHA_STATE.data.servicios[idx], body);
+    }
+    const list = document.getElementById('ficha-servicios-list');
+    if (list) list.innerHTML = renderServiciosList(FICHA_STATE.data?.servicios||[], bubbleId);
+  } catch (e) { console.error('[ficha] fichaSaveEdit failed', e); alert('Error al guardar.'); }
+};
+
 async function init() {
   // Si venimos del callback OAuth (#access_token=...), esperar a que
   // el cliente Supabase JS procese el hash y guarde la sesión en localStorage.
