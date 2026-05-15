@@ -4003,9 +4003,7 @@ async function loadFichaPanel(bubbleId) {
 function fichaEstadoPill(estado) {
   const M = {
     'Activo':    ['var(--status-success-bg)', 'var(--status-success)'],
-    'Pausado':   ['var(--status-warning-bg)', 'var(--status-warning)'],
-    'Antiguo':   ['var(--status-neutral-bg)', 'var(--status-neutral)'],
-    'Prospecto': ['var(--status-info-bg)',    'var(--status-info)'],
+    'No Activo': ['var(--status-neutral-bg)', 'var(--status-neutral)'],
   };
   const [bg, color] = M[estado] || ['var(--status-neutral-bg)', 'var(--status-neutral)'];
   return estado
