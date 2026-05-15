@@ -204,6 +204,9 @@ button { font-family:inherit; cursor:pointer; }
 .save-state { font-size:11px; color:var(--text-tertiary); }
 .save-state.saving { color:var(--status-warning); }
 .save-state.saved  { color:var(--status-success); }
+.save-state.error  { color:var(--status-error); }
+.updated-meta { font-size:11px; color:var(--text-tertiary); }
+.header-meta { display:flex; align-items:center; gap:12px; }
 
 /* ============================================================
    BOARD
@@ -458,10 +461,13 @@ button { font-family:inherit; cursor:pointer; }
       </div>
       <div>
         <h1>Tablero de casuísticas</h1>
-        <div class="page-header-sub">CRM / Newsletter · Arrastra entre columnas · clic para editar · se guarda en este navegador</div>
+        <div class="page-header-sub">CRM / Newsletter · Arrastra entre columnas · clic para editar · sincronizado en Supabase</div>
       </div>
     </div>
-    <span class="save-state" id="save-state">Guardado ✓</span>
+    <div class="header-meta">
+      <span class="updated-meta" id="updated-by-meta"></span>
+      <span class="save-state" id="save-state">Cargando…</span>
+    </div>
   </div>
 
   <!-- BOARD -->
@@ -646,26 +652,99 @@ const SEED = {
   dudas: [],
 };
 
-let boardData = loadBoard();
+let boardData = JSON.parse(JSON.stringify(SEED));
+let lastUpdatedBy = null;
+let lastUpdatedAt = null;
 
-function loadBoard() {
+function readCache() {
   try {
     const raw = localStorage.getItem(BOARD_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  return JSON.parse(JSON.stringify(SEED));
+  return null;
+}
+function writeCache(data) {
+  try { localStorage.setItem(BOARD_KEY, JSON.stringify(data)); } catch {}
+}
+
+async function fetchBoardFromSupabase() {
+  const { data, error } = await SUPABASE
+    .from('casuisticas_board')
+    .select('data, updated_at, updated_by')
+    .eq('id', 'global')
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+function timeAgo(d) {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 10) return 'hace unos segundos';
+  if (s < 60) return `hace ${s}s`;
+  const m = Math.floor(s/60); if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m/60); if (h < 24) return `hace ${h} h`;
+  const dd = Math.floor(h/24); return `hace ${dd} d`;
+}
+
+function renderUpdatedMeta() {
+  const meta = document.getElementById('updated-by-meta');
+  if (!meta) return;
+  if (!lastUpdatedAt) { meta.textContent = ''; return; }
+  const when = timeAgo(new Date(lastUpdatedAt));
+  const who = lastUpdatedBy && lastUpdatedBy !== 'seed'
+    ? ` · ${lastUpdatedBy.split('@')[0]}`
+    : '';
+  meta.textContent = `Última edición ${when}${who}`;
 }
 
 let saveTimer;
+let saveInFlight = false;
+let savePendingAfter = false;
+
+async function flushSave() {
+  if (saveInFlight) { savePendingAfter = true; return; }
+  saveInFlight = true;
+  const el = document.getElementById('save-state');
+  try {
+    const email = currentUser()?.email ?? null;
+    const { data, error } = await SUPABASE
+      .from('casuisticas_board')
+      .upsert(
+        { id:'global', data: boardData, updated_by: email, updated_at: new Date().toISOString() },
+        { onConflict:'id' }
+      )
+      .select('updated_at, updated_by')
+      .maybeSingle();
+    if (error) throw error;
+    writeCache(boardData);
+    if (data) {
+      lastUpdatedAt = data.updated_at;
+      lastUpdatedBy = data.updated_by;
+      renderUpdatedMeta();
+    }
+    if (el) { el.textContent = 'Guardado ✓'; el.className = 'save-state saved'; }
+    setTimeout(() => {
+      if (el && el.classList.contains('saved')) { el.textContent = ''; el.className = 'save-state'; }
+    }, 2000);
+  } catch (err) {
+    console.error('[casuisticas] save error', err);
+    if (el) { el.textContent = 'Error al guardar'; el.className = 'save-state error'; }
+    toast('No se pudo guardar en Supabase');
+  } finally {
+    saveInFlight = false;
+    if (savePendingAfter) {
+      savePendingAfter = false;
+      setTimeout(flushSave, 100);
+    }
+  }
+}
+
 function queueSave() {
   const el = document.getElementById('save-state');
   if (el) { el.textContent = 'Guardando…'; el.className = 'save-state saving'; }
+  writeCache(boardData);
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try { localStorage.setItem(BOARD_KEY, JSON.stringify(boardData)); } catch {}
-    if (el) { el.textContent = 'Guardado ✓'; el.className = 'save-state saved'; }
-    setTimeout(() => { if (el) { el.textContent = ''; el.className = 'save-state'; } }, 2000);
-  }, 400);
+  saveTimer = setTimeout(flushSave, 600);
 }
 
 // ============================================================
@@ -865,9 +944,10 @@ document.getElementById('import-file').addEventListener('change', e => {
       const parsed = JSON.parse(reader.result);
       if (!parsed.bolsa || !parsed.newsletter) throw new Error('formato');
       boardData = parsed;
-      localStorage.setItem(BOARD_KEY, JSON.stringify(boardData));
+      ['bolsa','newsletter','hibrido','dudas'].forEach(k => { if (!Array.isArray(boardData[k])) boardData[k] = []; });
       renderBoard();
-      toast('Importado correctamente');
+      queueSave();
+      toast('Importado · subiendo a Supabase…');
     } catch { toast('Archivo no válido'); }
   };
   reader.readAsText(file);
@@ -875,20 +955,52 @@ document.getElementById('import-file').addEventListener('change', e => {
 });
 
 document.getElementById('btn-reset').addEventListener('click', () => {
-  if (!confirm('Esto descarta todos tus cambios locales y vuelve a la versión original. ¿Continuar?')) return;
+  if (!confirm('Esto descarta el estado actual en Supabase y vuelve al SEED original. Afecta a todos los miembros. ¿Continuar?')) return;
   boardData = JSON.parse(JSON.stringify(SEED));
-  localStorage.setItem(BOARD_KEY, JSON.stringify(boardData));
   renderBoard();
-  toast('Restaurado al original');
+  queueSave();
+  toast('Restaurado · subiendo a Supabase…');
 });
 
 // ============================================================
 // BOARD INIT
 // ============================================================
-function initBoard() {
+async function initBoard() {
+  const el = document.getElementById('save-state');
+  if (el) { el.textContent = 'Cargando…'; el.className = 'save-state saving'; }
+  try {
+    const row = await fetchBoardFromSupabase();
+    if (row && row.data && row.data.bolsa) {
+      boardData = row.data;
+      ['bolsa','newsletter','hibrido','dudas'].forEach(k => { if (!Array.isArray(boardData[k])) boardData[k] = []; });
+      lastUpdatedAt = row.updated_at;
+      lastUpdatedBy = row.updated_by;
+      writeCache(boardData);
+      if (el) { el.textContent = 'Sincronizado ✓'; el.className = 'save-state saved'; }
+      setTimeout(() => {
+        if (el && el.classList.contains('saved')) { el.textContent = ''; el.className = 'save-state'; }
+      }, 2000);
+    } else {
+      // No hay fila — la sembramos
+      boardData = JSON.parse(JSON.stringify(SEED));
+      await flushSave();
+    }
+  } catch (err) {
+    console.error('[casuisticas] load error', err);
+    const cached = readCache();
+    if (cached && cached.bolsa) {
+      boardData = cached;
+      ['bolsa','newsletter','hibrido','dudas'].forEach(k => { if (!Array.isArray(boardData[k])) boardData[k] = []; });
+      toast('Sin conexión Supabase — usando cache local');
+    } else {
+      boardData = JSON.parse(JSON.stringify(SEED));
+      toast('Sin conexión Supabase — modo lectura');
+    }
+    if (el) { el.textContent = 'Error de carga'; el.className = 'save-state error'; }
+  }
   renderBoard();
-  // Initial save to localStorage
-  try { localStorage.setItem(BOARD_KEY, JSON.stringify(boardData)); } catch {}
+  renderUpdatedMeta();
+  setInterval(renderUpdatedMeta, 30000);
 }
 
 // ============================================================
