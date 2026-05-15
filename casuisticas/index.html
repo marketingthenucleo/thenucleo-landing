@@ -334,6 +334,38 @@ button { font-family:inherit; cursor:pointer; }
 }
 .btn-flag:hover { color:var(--status-warning); border-color:rgba(245,158,11,0.35); }
 
+.btn-nota {
+  font-size:10px; font-weight:500; font-family:var(--font-ui);
+  padding:3px 8px; border-radius:999px;
+  background:transparent; color:var(--text-tertiary);
+  border:1px solid var(--border-subtle);
+  transition:all var(--duration-fast);
+}
+.btn-nota:hover { color:var(--accent-secondary); border-color:rgba(59,130,246,0.35); }
+.btn-nota.has-nota { color:var(--accent-secondary); border-color:rgba(59,130,246,0.35); background:rgba(59,130,246,0.08); }
+
+.card-nota-wrap {
+  display:none;
+  margin-top:8px;
+  border:1px dashed var(--border-default);
+  border-radius:6px;
+  padding:6px 8px 7px;
+  background:rgba(255,255,255,0.02);
+}
+.card-nota-wrap.is-open { display:block; }
+.card-nota-label {
+  font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-tertiary); margin-bottom:3px;
+}
+.card-nota {
+  font-size:11px; color:var(--text-secondary); line-height:1.45;
+  outline:none; min-height:18px;
+  white-space:pre-wrap; word-wrap:break-word;
+}
+.card-nota:empty::before {
+  content:attr(data-placeholder); color:var(--text-tertiary);
+}
+
 .btn-del {
   font-size:10px; font-weight:500; font-family:var(--font-ui);
   padding:3px 8px; border-radius:999px;
@@ -665,28 +697,57 @@ function makeCard(colId, item, idx) {
   card.dataset.col = colId;
   card.dataset.idx = idx;
 
+  const hasNota = !!(item.nota && item.nota.trim());
+
   card.innerHTML = `
     <div class="card-inner">
       <span class="card-drag-handle" aria-hidden="true">⠿</span>
       <div class="card-body">
         <div class="card-title" contenteditable="true" data-field="t">${escHtml(item.t)}</div>
         <div class="card-desc"  contenteditable="true" data-field="d">${escHtml(item.d)}</div>
+        <div class="card-nota-wrap${hasNota ? ' is-open' : ''}">
+          <div class="card-nota-label">Notas</div>
+          <div class="card-nota" contenteditable="true" data-field="nota" data-placeholder="Escribe una nota…">${escHtml(item.nota || '')}</div>
+        </div>
         <div class="card-footer">
           ${item.flag === 'duda' ? '<span class="duda-badge">⚠ Duda abierta</span>' : ''}
           <button class="btn-flag">${item.flag === 'duda' ? 'Quitar duda' : 'Marcar duda'}</button>
+          <button class="btn-nota${hasNota ? ' has-nota' : ''}">${hasNota ? '📝 Nota' : '+ Nota'}</button>
           <button class="btn-del">Borrar</button>
         </div>
       </div>
     </div>
   `;
 
+  const notaWrap = card.querySelector('.card-nota-wrap');
+  const notaEl   = card.querySelector('.card-nota');
+  const notaBtn  = card.querySelector('.btn-nota');
+
   card.querySelectorAll('[contenteditable]').forEach(el => {
     el.addEventListener('input', () => {
-      boardData[card.dataset.col][parseInt(card.dataset.idx, 10)][el.dataset.field] = el.textContent;
+      const i = parseInt(card.dataset.idx, 10);
+      const val = el.textContent;
+      boardData[card.dataset.col][i][el.dataset.field] = val;
+      if (el.dataset.field === 'nota') {
+        const has = !!val.trim();
+        notaBtn.classList.toggle('has-nota', has);
+        notaBtn.textContent = has ? '📝 Nota' : '+ Nota';
+      }
       queueSave();
     });
     el.addEventListener('mousedown', () => { card.draggable = false; });
     el.addEventListener('blur', () => { card.draggable = true; });
+  });
+
+  notaBtn.addEventListener('click', () => {
+    const willOpen = !notaWrap.classList.contains('is-open');
+    notaWrap.classList.toggle('is-open', willOpen);
+    if (willOpen) {
+      notaEl.focus();
+      const sel = document.getSelection();
+      sel.selectAllChildren(notaEl);
+      sel.collapseToEnd();
+    }
   });
 
   card.querySelector('.btn-del').addEventListener('click', () => {
