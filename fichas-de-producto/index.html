@@ -273,6 +273,26 @@ button { font-family:inherit; }
 .bloque[data-field="herramientas"] .bullet { background:var(--status-violet); }
 .bloque[data-field="no_incluye"]   .bullet { background:var(--status-error); }
 .bloque[data-field="flexibilidad"] .bullet { background:var(--status-warning); }
+.bloque[data-field="sop_url"]      .bullet { background:var(--status-info); }
+
+.bloque-label .sop-open {
+  margin-left:auto; display:inline-flex; align-items:center; gap:4px;
+  font-size:10px; font-weight:600; letter-spacing:0.04em;
+  color:var(--status-info); text-transform:none;
+  padding:2px 8px; border-radius:999px;
+  background:var(--status-info-bg); border:1px solid rgba(59,130,246,0.25);
+  transition:all var(--duration-fast);
+}
+.bloque-label .sop-open:hover { background:var(--status-info); color:var(--text-inverse); }
+.bloque-content.is-url { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; word-break:break-all; }
+.cell-edit.is-url { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; word-break:break-all; }
+.sop-cell-link {
+  display:inline-flex; align-items:center; gap:3px;
+  margin-left:6px; font-size:11px; color:var(--status-info);
+  padding:1px 6px; border-radius:999px;
+  background:var(--status-info-bg); border:1px solid rgba(59,130,246,0.25);
+}
+.sop-cell-link:hover { background:var(--status-info); color:var(--text-inverse); }
 
 .bloque-content {
   background:var(--bg-elevated); border:1px solid var(--border-subtle);
@@ -804,7 +824,14 @@ const FIELDS = [
   { key:'herramientas', label:'Herramientas y cómo se usan', placeholder:'¿Qué herramienta para qué?' },
   { key:'no_incluye',   label:'Lo que NO incluye',          placeholder:'Frontera explícita' },
   { key:'flexibilidad', label:'Dónde hay flexibilidad',     placeholder:'¿Qué decide el ejecutor, qué se escala?' },
+  { key:'sop_url',      label:'SOP',                        placeholder:'https://… (enlace al SOP)', isUrl:true },
 ];
+
+function isValidHttpUrl(s) {
+  if (!s) return false;
+  try { const u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:'; }
+  catch { return false; }
+}
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -876,6 +903,7 @@ function renderTable() {
     { key:'herramientas', label:'Herramientas',              placeholder:'¿Qué herramienta para qué?' },
     { key:'no_incluye',   label:'No incluye',                placeholder:'Frontera explícita' },
     { key:'flexibilidad', label:'Flexibilidad',              placeholder:'¿Qué decide el ejecutor?' },
+    { key:'sop_url',      label:'SOP',                       placeholder:'https://…', isUrl:true },
   ];
   const editable = STATE.canEdit ? 'contenteditable="plaintext-only"' : '';
   let rows = '';
@@ -891,7 +919,12 @@ function renderTable() {
             const edAct = STATE.canEdit ? `data-action="toggle-estado" data-id="${f.id}"` : '';
             return `<td><span class="estado-pill ${f.estado}" ${edAct} style="cursor:${STATE.canEdit?'pointer':'default'}">${f.estado}</span></td>`;
           }
-          return `<td><div class="cell-edit${col.key==='titulo'?' cell-title':''}" ${editable} data-id="${f.id}" data-field="${col.key}" data-placeholder="${escapeHtml(col.placeholder||'')}">${escapeHtml(f[col.key]||'')}</div></td>`;
+          const val = f[col.key] || '';
+          const extraCls = (col.key==='titulo'?' cell-title':'') + (col.isUrl?' is-url':'');
+          const openLink = col.isUrl && isValidHttpUrl(val)
+            ? `<a class="sop-cell-link" href="${escapeHtml(val)}" target="_blank" rel="noopener noreferrer" title="Abrir SOP">↗</a>`
+            : '';
+          return `<td><div class="cell-edit${extraCls}" ${editable} data-id="${f.id}" data-field="${col.key}" data-placeholder="${escapeHtml(col.placeholder||'')}">${escapeHtml(val)}</div>${openLink}</td>`;
         }).join('');
         rows += `<tr data-id="${f.id}">${cells}</tr>`;
       });
@@ -910,14 +943,21 @@ function renderTable() {
 
 function renderFicha(f) {
   const editable = STATE.canEdit ? 'contenteditable="plaintext-only"' : '';
-  const bloques = FIELDS.map(field => `
+  const bloques = FIELDS.map(field => {
+    const val = f[field.key] || '';
+    const openLink = field.isUrl && isValidHttpUrl(val)
+      ? `<a class="sop-open" href="${escapeHtml(val)}" target="_blank" rel="noopener noreferrer" title="Abrir SOP en pestaña nueva">↗ Abrir</a>`
+      : '';
+    const urlClass = field.isUrl ? ' is-url' : '';
+    return `
     <div class="bloque" data-field="${field.key}">
-      <div class="bloque-label"><span class="bullet"></span>${field.label}</div>
-      <div class="bloque-content" ${editable}
+      <div class="bloque-label"><span class="bullet"></span>${field.label}${openLink}</div>
+      <div class="bloque-content${urlClass}" ${editable}
            data-id="${f.id}" data-field="${field.key}"
-           data-placeholder="${escapeHtml(field.placeholder)}">${escapeHtml(f[field.key] || '')}</div>
+           data-placeholder="${escapeHtml(field.placeholder)}">${escapeHtml(val)}</div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   const toolbar = STATE.canEdit ? `
     <div class="ficha-toolbar">
@@ -946,9 +986,10 @@ function attachEditableHandlers() {
     node.addEventListener('focus', () => { initialValue = node.textContent; });
     node.addEventListener('blur', () => {
       const value = node.textContent;
+      const field = node.dataset.field;
+      if (field === 'sop_url') refreshSopOpenLink(node);
       if (value === initialValue) return;
       const id = node.dataset.id;
-      const field = node.dataset.field;
       scheduleSave(id, field, value);
     });
     // guardado mientras escribe (debounced)
@@ -959,6 +1000,39 @@ function attachEditableHandlers() {
       scheduleSave(id, field, value);
     });
   });
+}
+
+function refreshSopOpenLink(node) {
+  const value = (node.textContent || '').trim();
+  // Vista tarjetas
+  const bloque = node.closest('.bloque[data-field="sop_url"]');
+  if (bloque) {
+    const label = bloque.querySelector('.bloque-label');
+    const old = label?.querySelector('.sop-open');
+    if (old) old.remove();
+    if (label && isValidHttpUrl(value)) {
+      const a = document.createElement('a');
+      a.className = 'sop-open';
+      a.href = value; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.title = 'Abrir SOP en pestaña nueva';
+      a.textContent = '↗ Abrir';
+      label.appendChild(a);
+    }
+    return;
+  }
+  // Vista tabla
+  const cell = node.closest('td');
+  if (cell) {
+    const old = cell.querySelector('.sop-cell-link');
+    if (old) old.remove();
+    if (isValidHttpUrl(value)) {
+      const a = document.createElement('a');
+      a.className = 'sop-cell-link';
+      a.href = value; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.title = 'Abrir SOP'; a.textContent = '↗';
+      cell.appendChild(a);
+    }
+  }
 }
 
 function attachToolbarHandlers() {
