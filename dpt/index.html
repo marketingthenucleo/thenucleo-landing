@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheNucleo — DPT · Playbook de Roles</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Playbook de responsabilidades por rol del equipo TheNucleo. Preview interno.">
+<link rel="icon" type="image/png" href="/Media/Logo_the_nucleo_circulo.png">
+<style>
+/* ============================================
+   FONTS + TOKENS
+   ============================================ */
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Light.woff2') format('woff2'); font-weight:300; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+
+:root {
+  --bg-base:#090a0f; --bg-card:#12141b; --bg-elevated:#1a1d27;
+  --bg-hover:#1e2130; --bg-active:#252836;
+  --border-subtle:#1e2130; --border-default:#2a2d3e; --border-strong:#363a4e;
+  --text-primary:#edeef3; --text-secondary:#8b8fa8; --text-tertiary:#5c6078; --text-inverse:#090a0f;
+  --accent-primary:#22c55e; --accent-primary-hover:#16a34a; --accent-primary-muted:rgba(34,197,94,0.12);
+  --accent-secondary:#3b82f6; --accent-secondary-hover:#2563eb; --accent-secondary-muted:rgba(59,130,246,0.12);
+  --status-success:#22c55e; --status-success-bg:rgba(34,197,94,0.10);
+  --status-warning:#f59e0b; --status-warning-bg:rgba(245,158,11,0.10);
+  --status-error:#ef4444;   --status-error-bg:rgba(239,68,68,0.10);
+  --status-info:#3b82f6;    --status-info-bg:rgba(59,130,246,0.10);
+  --status-violet:#8b5cf6;  --status-violet-bg:rgba(139,92,246,0.10);
+  --tipo-aporte:#ec4899;    --tipo-aporte-bg:rgba(236,72,153,0.10);
+  --font-ui:'NewBlack',sans-serif;
+  --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px;
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --duration-fast:150ms; --duration-base:200ms;
+}
+
+* { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  font-family:var(--font-ui);
+  background:var(--bg-base);
+  color:var(--text-primary);
+  font-size:14px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+
+/* ============================================
+   AUTH BAR (idéntica a /playbook/)
+   ============================================ */
+.auth-bar {
+  position:sticky; top:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px;
+  background:var(--bg-card);
+  border-bottom:1px solid var(--border-subtle);
+  font-size:12px;
+  z-index:200;
+}
+.auth-bar-left { display:flex; align-items:center; gap:10px; }
+.auth-bar-mode {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px; border-radius:999px;
+  font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.6px;
+}
+.auth-bar-mode.viewer { background:var(--status-info-bg); color:var(--status-info); }
+.auth-bar-mode .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+.auth-bar-meta { color:var(--text-tertiary); font-family:var(--font-ui); font-size:11px; }
+.auth-bar-actions { display:flex; align-items:center; gap:8px; }
+
+.nav-user-wrap { position:relative; }
+.nav-user-btn {
+  width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:var(--radius-sm);
+  cursor:pointer; flex-shrink:0;
+  transition:all 120ms;
+}
+.nav-user-btn:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.nav-user-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0; z-index:300;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-md); padding:6px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.45);
+  min-width:220px;
+  animation:navPopIn 120ms cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes navPopIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.nav-user-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:var(--radius-sm);
+  font-size:13px; font-weight:500; color:var(--text-primary);
+  text-decoration:none;
+  transition:background 120ms; cursor:pointer;
+}
+.nav-user-item:hover { background:var(--bg-hover); }
+.nav-user-item svg { width:15px; height:15px; color:var(--text-tertiary); flex-shrink:0; }
+.nav-user-item.nav-active { color:var(--accent-primary); }
+.nav-user-item.nav-active svg { color:var(--accent-primary); }
+.nav-user-divider { height:1px; background:var(--border-subtle); margin:4px 0; }
+
+/* ============================================
+   MAIN
+   ============================================ */
+.page { padding:24px 28px 60px; max-width:1600px; margin:0 auto; }
+
+/* ============================================
+   STATS STRIP
+   ============================================ */
+.stats {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  margin-bottom:18px;
+}
+.stat-cell {
+  padding:14px 18px;
+  border-right:1px solid var(--border-subtle);
+}
+.stat-cell:last-child { border-right:none; }
+.stat-label {
+  font-size:10px; color:var(--text-tertiary);
+  text-transform:uppercase; letter-spacing:0.5px;
+  font-weight:500; margin-bottom:4px;
+}
+.stat-value { font-size:22px; font-weight:700; line-height:1; }
+.stat-value.alert { color:var(--accent-primary); }
+.stat-sub { font-size:11px; color:var(--text-secondary); margin-top:4px; }
+
+/* ============================================
+   TOOLBAR
+   ============================================ */
+.toolbar {
+  display:flex; align-items:center; gap:14px;
+  margin-bottom:18px; flex-wrap:wrap;
+}
+.toolbar-label {
+  font-size:10px; color:var(--text-tertiary);
+  text-transform:uppercase; letter-spacing:0.5px;
+  font-weight:600;
+}
+.filter-chips { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
+.chip {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:500;
+  padding:6px 12px; border-radius:20px;
+  background:var(--bg-card);
+  border:1px solid var(--border-default);
+  color:var(--text-secondary);
+  cursor:pointer;
+  transition:all var(--duration-fast) var(--ease-out);
+  user-select:none;
+}
+.chip:hover { border-color:var(--border-strong); color:var(--text-primary); }
+.chip.active {
+  background:var(--accent-secondary-muted);
+  color:var(--accent-secondary);
+  border-color:var(--accent-secondary);
+}
+.chip .dot { width:8px; height:8px; border-radius:50%; }
+
+.btn-primary {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-ui);
+  background:var(--accent-primary); color:var(--text-inverse);
+  border:none; border-radius:var(--radius-md);
+  padding:8px 16px; font-size:13px; font-weight:600;
+  cursor:pointer;
+  transition:all var(--duration-fast) var(--ease-out);
+}
+.btn-primary:hover { background:var(--accent-primary-hover); box-shadow:0 4px 14px rgba(34,197,94,0.3); }
+.btn-primary:active { transform:scale(0.97); }
+
+.btn-secondary {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-ui);
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:var(--radius-md);
+  padding:7px 14px; font-size:12px; font-weight:500;
+  cursor:pointer;
+  transition:all var(--duration-fast);
+}
+.btn-secondary:hover { background:var(--bg-hover); color:var(--text-primary); }
+
+/* ============================================
+   SIN ASIGNAR TRAY
+   ============================================ */
+.tray {
+  background:linear-gradient(180deg,rgba(34,197,94,0.04) 0%,transparent 100%);
+  border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg);
+  margin-bottom:18px;
+  overflow:hidden;
+  transition:all var(--duration-base);
+}
+.tray.is-empty { opacity:0.5; }
+.tray-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 18px;
+  border-bottom:1px dashed var(--border-default);
+}
+.tray-title {
+  display:flex; align-items:center; gap:10px;
+  font-size:12px; font-weight:600;
+  color:var(--text-secondary);
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.pulse-dot {
+  width:8px; height:8px; border-radius:50%;
+  background:var(--accent-primary);
+  animation:trayPulse 2s ease-in-out infinite;
+}
+@keyframes trayPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(34,197,94,0.5); transform:scale(1); }
+  50%     { box-shadow:0 0 0 6px rgba(34,197,94,0); transform:scale(1.2); }
+}
+.tray-count {
+  font-family:var(--font-ui);
+  background:var(--accent-primary); color:var(--text-inverse);
+  font-size:10px; font-weight:700;
+  padding:1px 8px; border-radius:20px;
+}
+.tray-hint {
+  font-size:11px; color:var(--text-tertiary);
+  font-weight:400; text-transform:none; letter-spacing:0;
+}
+.tray-body {
+  display:flex; gap:12px;
+  padding:16px 18px;
+  overflow-x:auto;
+  min-height:90px;
+}
+.tray-body::-webkit-scrollbar { height:6px; }
+.tray-body::-webkit-scrollbar-thumb { background:var(--border-default); border-radius:3px; }
+.tray-empty-state {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  color:var(--text-tertiary); font-size:12px; font-style:italic;
+}
+
+/* ============================================
+   CARD BASE
+   ============================================ */
+.card {
+  background:var(--bg-card);
+  border:1px solid var(--border-default);
+  border-radius:var(--radius-md);
+  padding:11px 13px;
+  cursor:grab;
+  position:relative;
+  transition:transform var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              opacity var(--duration-fast);
+}
+.card:active { cursor:grabbing; }
+.card.dragging { opacity:0.35; transform:scale(0.97); }
+.card:hover {
+  border-color:var(--border-strong);
+  transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(0,0,0,0.25);
+  z-index:3;
+}
+.card-head {
+  display:flex; align-items:center; gap:6px;
+  margin-bottom:7px;
+}
+.tipo-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:9px; font-weight:700;
+  padding:2px 7px;
+  border-radius:20px;
+  text-transform:uppercase; letter-spacing:0.4px;
+}
+.tipo-chip .dot { width:5px; height:5px; border-radius:50%; }
+
+.tipo-construccion { background:var(--status-success-bg); color:var(--status-success); }
+.tipo-construccion .dot { background:var(--status-success); }
+.tipo-cc { background:var(--status-warning-bg); color:var(--status-warning); }
+.tipo-cc .dot { background:var(--status-warning); }
+.tipo-seguimiento { background:var(--status-info-bg); color:var(--status-info); }
+.tipo-seguimiento .dot { background:var(--status-info); }
+.tipo-evaluacion { background:var(--status-violet-bg); color:var(--status-violet); }
+.tipo-evaluacion .dot { background:var(--status-violet); }
+.tipo-aporte { background:var(--tipo-aporte-bg); color:var(--tipo-aporte); }
+.tipo-aporte .dot { background:var(--tipo-aporte); }
+
+.card-title {
+  font-size:12.5px; font-weight:500; line-height:1.35;
+  color:var(--text-primary);
+  margin-bottom:6px;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.card-area {
+  font-size:9.5px; color:var(--text-tertiary);
+  text-transform:uppercase; letter-spacing:0.4px;
+  font-weight:500;
+}
+
+/* Card en tray (expanded, floating) */
+.card--tray {
+  min-width:240px; max-width:240px; flex:0 0 240px;
+  border:1px dashed var(--accent-primary);
+  background:linear-gradient(180deg,rgba(34,197,94,0.07) 0%,var(--bg-card) 70%);
+  box-shadow:0 8px 22px rgba(0,0,0,0.32), 0 0 0 4px rgba(34,197,94,0.04);
+  animation:floatIn 380ms var(--ease-out) both, floatBob 4s ease-in-out infinite;
+}
+.card--tray:hover {
+  border-color:var(--accent-primary);
+  border-style:dashed;
+  box-shadow:0 12px 28px rgba(0,0,0,0.4), 0 0 0 6px rgba(34,197,94,0.08);
+  animation-play-state:paused;
+}
+.card--tray .card-title { -webkit-line-clamp:3; margin-bottom:10px; }
+@keyframes floatIn {
+  from { opacity:0; transform:scale(0.85) translateY(20px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes floatBob {
+  0%,100% { transform:translateY(0); }
+  50%     { transform:translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card--tray { animation:floatIn 380ms var(--ease-out) both; }
+}
+
+.card-grip {
+  position:absolute; top:6px; right:6px;
+  color:var(--text-tertiary);
+  opacity:0; font-size:11px;
+  transition:opacity var(--duration-fast);
+  letter-spacing:-1px;
+}
+.card:hover .card-grip { opacity:0.6; }
+
+/* ============================================
+   SECTION LABEL
+   ============================================ */
+.section-label {
+  display:flex; align-items:center; gap:12px;
+  font-size:11px; font-weight:600;
+  color:var(--text-tertiary);
+  text-transform:uppercase; letter-spacing:0.6px;
+  margin:6px 0 12px;
+}
+.section-label::after {
+  content:''; flex:1; height:1px;
+  background:var(--border-subtle);
+}
+
+/* ============================================
+   KANBAN
+   ============================================ */
+.kanban {
+  display:grid;
+  grid-template-columns:repeat(6,minmax(220px,1fr));
+  gap:12px;
+  overflow-x:auto;
+  padding-bottom:8px;
+}
+.col {
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg);
+  display:flex; flex-direction:column;
+  min-height:520px;
+  max-height:calc(100vh - 280px);
+  overflow:hidden;
+  position:relative;
+  transition:border-color var(--duration-fast), background var(--duration-fast);
+}
+.col::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:var(--col-accent, var(--accent-secondary));
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+}
+.col.drop-target {
+  border-color:var(--col-accent);
+  background:color-mix(in srgb, var(--col-accent) 5%, var(--bg-card));
+}
+.col-head {
+  padding:14px 14px 10px;
+  border-bottom:1px solid var(--border-subtle);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.col-title {
+  font-size:13px; font-weight:600;
+  display:flex; align-items:center; gap:8px;
+}
+.col-title .dot-rol {
+  width:8px; height:8px; border-radius:50%;
+  background:var(--col-accent);
+}
+.col-count {
+  font-size:10px; font-weight:700;
+  background:var(--bg-active); color:var(--text-secondary);
+  padding:2px 8px; border-radius:20px;
+  min-width:24px; text-align:center;
+}
+.col-action {
+  width:24px; height:24px; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text-tertiary); cursor:pointer;
+  transition:all var(--duration-fast); font-size:16px; line-height:1;
+}
+.col-action:hover { background:var(--bg-hover); color:var(--text-primary); }
+.col-body {
+  display:flex; flex-direction:column; gap:8px;
+  padding:10px;
+  overflow-y:auto;
+  flex:1;
+  scrollbar-width:thin;
+}
+.col-body::-webkit-scrollbar { width:5px; }
+.col-body::-webkit-scrollbar-thumb { background:var(--border-default); border-radius:3px; }
+.col-empty {
+  text-align:center; font-size:11px;
+  color:var(--text-tertiary);
+  padding:24px 12px;
+  border:1px dashed var(--border-subtle);
+  border-radius:var(--radius-md);
+  margin-top:auto;
+}
+
+/* ============================================
+   TOOLTIP (hover)
+   ============================================ */
+.tooltip {
+  position:fixed;
+  background:var(--bg-elevated);
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-md);
+  padding:10px 13px;
+  font-size:12px; line-height:1.5;
+  color:var(--text-primary);
+  max-width:300px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.55);
+  z-index:1000;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 140ms var(--ease-out);
+}
+.tooltip.visible { opacity:1; }
+.tooltip-meta {
+  display:flex; gap:6px; margin-bottom:6px;
+  font-size:10px; text-transform:uppercase; letter-spacing:0.4px;
+  color:var(--text-tertiary); font-weight:600;
+}
+
+/* ============================================
+   MODAL (edit / view)
+   ============================================ */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
+  z-index:500;
+  align-items:center; justify-content:center;
+}
+.modal-overlay.visible { display:flex; animation:fadeIn 180ms; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.modal {
+  background:var(--bg-elevated);
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-xl);
+  width:560px; max-width:calc(100vw - 32px);
+  max-height:85vh; overflow-y:auto;
+  box-shadow:0 24px 64px rgba(0,0,0,0.5);
+  animation:modalIn 220ms var(--ease-out);
+}
+@keyframes modalIn {
+  from { opacity:0; transform:scale(0.95) translateY(10px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 24px 14px;
+  border-bottom:1px solid var(--border-subtle);
+}
+.modal-header h3 { font-size:16px; font-weight:600; }
+.modal-close {
+  width:30px; height:30px; border-radius:var(--radius-sm);
+  border:none; background:var(--bg-active);
+  color:var(--text-secondary); cursor:pointer;
+  font-size:16px;
+  transition:all var(--duration-fast);
+}
+.modal-close:hover { background:var(--status-error-bg); color:var(--status-error); }
+.modal-body { padding:20px 24px; }
+.modal-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; padding:14px 24px;
+  border-top:1px solid var(--border-subtle);
+}
+.modal-footer .actions-right { display:flex; gap:10px; }
+
+.field { margin-bottom:14px; }
+.field-label {
+  display:block; font-size:10px; font-weight:600;
+  color:var(--text-tertiary); margin-bottom:6px;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.field-input, .field-select, .field-textarea {
+  width:100%;
+  font-family:var(--font-ui); font-size:13px;
+  background:var(--bg-base); color:var(--text-primary);
+  border:1px solid var(--border-default); border-radius:var(--radius-md);
+  padding:9px 11px;
+  outline:none;
+  transition:border-color var(--duration-fast);
+}
+.field-input:focus, .field-select:focus, .field-textarea:focus {
+  border-color:var(--accent-secondary);
+  box-shadow:0 0 0 3px rgba(59,130,246,0.15);
+}
+.field-textarea { min-height:96px; resize:vertical; line-height:1.5; }
+.field-select { appearance:none; padding-right:32px;
+  background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238b8fa8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 11px center;
+}
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btn-danger {
+  font-family:var(--font-ui); font-size:12px; font-weight:500;
+  background:transparent; color:var(--status-error);
+  border:1px solid var(--status-error-bg);
+  padding:7px 14px; border-radius:var(--radius-md);
+  cursor:pointer;
+  transition:all var(--duration-fast);
+}
+.btn-danger:hover { background:var(--status-error-bg); }
+
+/* Reset btn */
+.btn-reset {
+  font-family:var(--font-ui);
+  background:transparent; color:var(--text-tertiary);
+  border:1px solid var(--border-subtle);
+  font-size:11px; padding:5px 10px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  transition:all var(--duration-fast);
+}
+.btn-reset:hover { color:var(--text-secondary); border-color:var(--border-default); }
+
+/* ============================================
+   ANIMATIONS / UTIL
+   ============================================ */
+.fade-in { animation:fadeInUp 320ms var(--ease-out) both; }
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ============================================
+   VIEW SWITCH
+   ============================================ */
+.view-switch {
+  display:inline-flex;
+  background:var(--bg-card);
+  border:1px solid var(--border-default);
+  border-radius:var(--radius-md);
+  padding:3px;
+  gap:2px;
+}
+.view-switch button {
+  background:transparent; border:none;
+  color:var(--text-secondary); font-family:var(--font-ui);
+  font-size:12px; font-weight:500; cursor:pointer;
+  padding:5px 12px; border-radius:var(--radius-sm);
+  display:inline-flex; align-items:center; gap:6px;
+  transition:all var(--duration-fast);
+}
+.view-switch button:hover { color:var(--text-primary); }
+.view-switch button.active {
+  background:var(--bg-active);
+  color:var(--text-primary);
+  box-shadow:0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* ============================================
+   TABLE VIEW
+   ============================================ */
+.table-wrap {
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+}
+.dpt-table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+.dpt-table thead th {
+  font-size:10px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.5px;
+  color:var(--text-tertiary);
+  padding:12px 18px;
+  text-align:left;
+  border-bottom:1px solid var(--border-default);
+  background:rgba(255,255,255,0.01);
+  white-space:nowrap;
+}
+.dpt-table tbody tr {
+  border-bottom:1px solid var(--border-subtle);
+  transition:background var(--duration-fast);
+  cursor:pointer;
+  position:relative;
+}
+.dpt-table tbody tr:last-child { border-bottom:none; }
+.dpt-table tbody tr:nth-child(even) { background:rgba(255,255,255,0.015); }
+.dpt-table tbody tr:hover { background:var(--bg-hover); }
+.dpt-table tbody tr::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:2px; background:var(--accent-secondary);
+  transform:scaleY(0);
+  transition:transform var(--duration-fast);
+}
+.dpt-table tbody tr:hover::before { transform:scaleY(1); }
+.dpt-table tbody td {
+  padding:11px 18px;
+  vertical-align:middle;
+  color:var(--text-primary);
+}
+.dpt-table .cell-tipo { width:130px; white-space:nowrap; }
+.dpt-table .cell-titulo { font-weight:500; max-width:480px; }
+.dpt-table .cell-area {
+  font-size:11px;
+  color:var(--text-tertiary);
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  font-weight:500;
+  white-space:nowrap;
+}
+.dpt-table .cell-rol { white-space:nowrap; }
+.dpt-table .cell-actions { width:80px; text-align:right; }
+
+.rol-tag {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:600;
+  padding:3px 10px; border-radius:20px;
+  background:color-mix(in srgb, var(--rol-c) 12%, transparent);
+  color:var(--rol-c);
+}
+.rol-tag .dot { width:6px; height:6px; border-radius:50%; background:var(--rol-c); }
+.rol-sin {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:500;
+  padding:3px 10px; border-radius:20px;
+  background:rgba(34,197,94,0.10); color:var(--accent-primary);
+  border:1px dashed var(--accent-primary);
+}
+
+.btn-row {
+  font-family:var(--font-ui);
+  background:transparent; color:var(--accent-secondary);
+  border:1px solid var(--border-default);
+  font-size:11px; font-weight:600;
+  padding:4px 12px; border-radius:var(--radius-sm);
+  cursor:pointer;
+  transition:all var(--duration-fast);
+}
+.btn-row:hover {
+  background:var(--accent-secondary-muted);
+  border-color:var(--accent-secondary);
+}
+
+.table-empty {
+  text-align:center; padding:60px 20px;
+  color:var(--text-tertiary); font-size:13px; font-style:italic;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 900px) {
+  .kanban { grid-template-columns:repeat(6,minmax(240px,260px)); }
+  .stats { grid-template-columns:repeat(2,1fr); }
+  .stat-cell:nth-child(2n) { border-right:none; }
+  .stat-cell:nth-child(-n+2) { border-bottom:1px solid var(--border-subtle); }
+  .page { padding:18px 16px 50px; }
+  .topbar { padding:12px 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="auth-bar">
+  <div class="auth-bar-left">
+    <strong style="font-size:13px;font-weight:600;">DPT · Playbook de Roles</strong>
+    <span class="auth-bar-mode viewer">
+      <span class="dot"></span>
+      <span>Preview interno</span>
+    </span>
+  </div>
+  <div class="auth-bar-actions">
+    <span class="auth-bar-meta">Mockup · localStorage</span>
+    <div class="nav-user-wrap" id="nav-user-wrap">
+      <button class="nav-user-btn" id="nav-user-btn" title="Navegación interna" aria-haspopup="true" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </button>
+      <div class="nav-user-dropdown" id="nav-user-dropdown" style="display:none;" role="menu">
+        <a class="nav-user-item nav-active" href="/dpt/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          DPT · Playbook de Roles
+        </a>
+        <a class="nav-user-item" href="/playbook/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          Playbook
+        </a>
+        <a class="nav-user-item" href="/ficha-cliente/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+          Ficha de Cliente
+        </a>
+        <a class="nav-user-item" href="/fichas-de-producto/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Fichas de Producto
+        </a>
+        <div class="nav-user-divider"></div>
+        <a class="nav-user-item" href="/casuisticas/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+          Casuísticas
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="page">
+
+  <div class="stats fade-in">
+    <div class="stat-cell">
+      <div class="stat-label">Total responsabilidades</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-sub">distribuidas en <span id="stat-roles">—</span> roles</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Sin asignar</div>
+      <div class="stat-value alert" id="stat-sin">—</div>
+      <div class="stat-sub">flotando arriba para ubicar</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Áreas cubiertas</div>
+      <div class="stat-value" id="stat-areas">—</div>
+      <div class="stat-sub">CRM, Meta, Google, RRSS, Procesos…</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-label">Tipo dominante</div>
+      <div class="stat-value" style="font-size:15px;line-height:1.4;color:var(--status-success);" id="stat-tipo">—</div>
+      <div class="stat-sub" id="stat-tipo-sub">—</div>
+    </div>
+  </div>
+
+  <div class="toolbar fade-in">
+    <span class="toolbar-label">Tipo</span>
+    <div class="filter-chips" id="filter-chips">
+      <span class="chip active" data-tipo="all">Todos</span>
+      <span class="chip" data-tipo="construccion"><span class="dot" style="background:var(--status-success);"></span> Construcción</span>
+      <span class="chip" data-tipo="cc"><span class="dot" style="background:var(--status-warning);"></span> CC</span>
+      <span class="chip" data-tipo="seguimiento"><span class="dot" style="background:var(--status-info);"></span> Seguimiento</span>
+      <span class="chip" data-tipo="evaluacion"><span class="dot" style="background:var(--status-violet);"></span> Evaluación</span>
+      <span class="chip" data-tipo="aporte"><span class="dot" style="background:var(--tipo-aporte);"></span> Aporte estr.</span>
+    </div>
+    <div class="view-switch" id="view-switch">
+      <button data-view="kanban" class="active" type="button">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="18" rx="1"/><rect x="11" y="3" width="6" height="11" rx="1"/><rect x="19" y="3" width="2" height="7" rx="1"/></svg>
+        Kanban
+      </button>
+      <button data-view="tabla" type="button">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Tabla
+      </button>
+    </div>
+    <button class="btn-reset" id="btn-reset" title="Restablecer datos del CSV">Reset</button>
+    <button class="btn-primary" id="btn-nueva">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nueva responsabilidad
+    </button>
+  </div>
+
+  <section id="view-kanban">
+
+  <div class="tray fade-in" id="tray">
+    <div class="tray-header">
+      <div class="tray-title">
+        <span class="pulse-dot"></span>
+        <span>Sin asignar</span>
+        <span class="tray-count" id="tray-count">0</span>
+      </div>
+      <span class="tray-hint">Arrastra a la columna del rol responsable ↓</span>
+    </div>
+    <div class="tray-body" id="tray-body">
+      <div class="tray-empty-state">Sin pendientes — todas las responsabilidades están asignadas a un rol</div>
+    </div>
+  </div>
+
+  <div class="section-label">Kanban por rol</div>
+
+  <div class="kanban fade-in" id="kanban"></div>
+
+  </section>
+
+  <section id="view-tabla" style="display:none;">
+    <div class="section-label">Tabla de responsabilidades</div>
+    <div class="table-wrap fade-in">
+      <table class="dpt-table">
+        <thead>
+          <tr>
+            <th class="cell-tipo">Tipo</th>
+            <th>Título</th>
+            <th>Área</th>
+            <th>Rol</th>
+            <th class="cell-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Modal edit -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Editar responsabilidad</h3>
+      <button class="modal-close" id="modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label">Título</label>
+        <input type="text" class="field-input" id="f-titulo" placeholder="Ej. CC de listas inteligentes">
+      </div>
+      <div class="field">
+        <label class="field-label">Explicación</label>
+        <textarea class="field-textarea" id="f-explicacion" placeholder="Qué incluye, cuándo se hace, criterios de éxito…"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">Tipo</label>
+          <select class="field-select" id="f-tipo">
+            <option value="construccion">Construcción</option>
+            <option value="cc">Control de calidad</option>
+            <option value="seguimiento">Seguimiento</option>
+            <option value="evaluacion">Evaluación de resultados</option>
+            <option value="aporte">Aporte estratégico</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Área</label>
+          <input type="text" class="field-input" id="f-area" placeholder="Ej. CRM">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Rol asignado</label>
+        <select class="field-select" id="f-rol"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="btn-delete">Eliminar</button>
+      <div class="actions-right">
+        <button class="btn-secondary" id="btn-cancel">Cancelar</button>
+        <button class="btn-primary" id="btn-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================
+   DATA — Roles + Tipos + Seed CSV (72 rows)
+   ============================================ */
+const ROLES = [
+  { id:'crm',       nombre:'CRM Manager',     color:'#8b5cf6' },
+  { id:'media',     nombre:'Media Buyer',     color:'#06b6d4' },
+  { id:'pm',        nombre:'Project Manager', color:'#22c55e' },
+  { id:'account',   nombre:'Account Mgr',     color:'#f59e0b' },
+  { id:'estratega', nombre:'Estratega',       color:'#ec4899' },
+  { id:'coo',       nombre:'COO',             color:'#3b82f6' }
+];
+
+const TIPOS = {
+  construccion: { nombre:'Construcción',             corto:'Construc.', cls:'tipo-construccion' },
+  cc:           { nombre:'Control de calidad',       corto:'CC',        cls:'tipo-cc' },
+  seguimiento:  { nombre:'Seguimiento',              corto:'Segu.',     cls:'tipo-seguimiento' },
+  evaluacion:   { nombre:'Evaluación de resultados', corto:'Eval.',     cls:'tipo-evaluacion' },
+  aporte:       { nombre:'Aporte estratégico',       corto:'Aporte',    cls:'tipo-aporte' }
+};
+
+const SEED = [
+  // CRM MANAGER (17)
+  { rol:'crm', area:'DNS / Acceso', tipo:'construccion', titulo:'Preparar la configuración de DNS para el técnico del cliente', explicacion:'Dejar lista la documentación técnica de DNS (registros, valores, instrucciones) para que el técnico informático del cliente pueda aplicarlos sin fricción.' },
+  { rol:'crm', area:'DNS / Acceso', tipo:'construccion', titulo:'Gestionar el acceso directo del cliente para configurar los DNS en plazo', explicacion:'Conseguir credenciales o acceso al panel de dominios del cliente y asegurar que los DNS quedan configurados dentro del plazo previsto del proyecto.' },
+  { rol:'crm', area:'CRM', tipo:'cc', titulo:'CC de listas inteligentes', explicacion:'Revisar que las listas dinámicas del CRM filtran correctamente los contactos según los criterios definidos antes de usarlas en campañas.' },
+  { rol:'crm', area:'CRM', tipo:'cc', titulo:'CC de los flujos y su contenido', explicacion:'Revisar que los flujos automatizados (triggers, condiciones, mensajes) están bien construidos antes de activarlos en vivo.' },
+  { rol:'crm', area:'CRM', tipo:'construccion', titulo:'Construir los flujos y su contenido', explicacion:'Montar los flujos automatizados del CRM (secuencias, condiciones, ramas) junto con el contenido de los mensajes que se envían en cada paso.' },
+  { rol:'crm', area:'CRM', tipo:'cc', titulo:'CC de la coherencia de etiquetas', explicacion:'Revisar que las etiquetas (tags) que se ponen a los contactos son coherentes y consistentes, ya que se usan para construir listas inteligentes y segmentaciones.' },
+  { rol:'crm', area:'CRM', tipo:'seguimiento', titulo:'Seguimiento de salud del CRM', explicacion:'Vigilancia continua del estado técnico del CRM: rate limits, caídas, bloqueos, integraciones rotas, errores de envío.' },
+  { rol:'crm', area:'CRM', tipo:'cc', titulo:'CC de integraciones (WhatsApp, forms) bien conectados', explicacion:'Revisar que las integraciones externas (WhatsApp, formularios, etc.) están correctamente conectadas y los datos entran al CRM como se espera.' },
+  { rol:'crm', area:'CRM', tipo:'construccion', titulo:'Construir y mantener el dashboard estándar por cliente', explicacion:'Montar y mantener un dashboard de métricas del cliente. Es estándar (mismo formato para todos los clientes) y de uso interno del equipo.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'construccion', titulo:'Construir la cadena de emails', explicacion:'Montar la secuencia de emails en el CRM: programación, condiciones de envío, segmentación.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'cc', titulo:'CC de la cadena de emails', explicacion:'Revisar que la cadena de emails está bien construida antes de activarla: enlaces, segmentación, timing, contenido.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'evaluacion', titulo:'Evaluación de resultados de la cadena de emails', explicacion:'Medir resultados de la cadena después de su ejecución: aperturas, clics, conversiones, bajas.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'evaluacion', titulo:'Evaluación de que una cadena de emails se está lanzando correctamente', explicacion:'Revisar después del lanzamiento que los emails efectivamente se enviaron, llegaron y no quedaron bloqueados.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'construccion', titulo:'Construir las publicaciones de RRSS (en base al contenido del diseñador)', explicacion:'Montar las publicaciones en redes sociales partiendo del contenido creativo entregado por el diseñador.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'cc', titulo:'CC de las publicaciones de RRSS', explicacion:'Revisar que las publicaciones están bien montadas antes de programarlas: copy, imágenes, etiquetas, formato.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'construccion', titulo:'Programar lanzamientos de RRSS', explicacion:'Programar las publicaciones en las herramientas correspondientes para que se publiquen en la fecha y hora previstas.' },
+  { rol:'crm', area:'Emails y RRSS', tipo:'evaluacion', titulo:'Evaluación de RRSS que se están lanzando correctamente', explicacion:'Revisar después del lanzamiento que las publicaciones efectivamente se publicaron en tiempo y forma.' },
+
+  // MEDIA BUYER (18)
+  { rol:'media', area:'META', tipo:'cc', titulo:'CC de Buyer Persona y ángulos de venta antes de activar campaña', explicacion:'Revisar el Buyer Persona y los ángulos de venta entregados por el estratega antes de llevarlos a la campaña de Meta.' },
+  { rol:'media', area:'META', tipo:'cc', titulo:'CC de la configuración Meta → CRM (leads)', explicacion:'Revisar que la integración entre Meta y el CRM está bien configurada y los leads llegan correctamente antes de activar la campaña.' },
+  { rol:'media', area:'META', tipo:'evaluacion', titulo:'Evaluación de resultados y métricas de ángulos de venta respaldado por ADS', explicacion:'Medir qué ángulos de venta funcionaron mejor según las métricas reales de los anuncios.' },
+  { rol:'media', area:'META', tipo:'evaluacion', titulo:'Evaluación de campañas y propuesta de mejoras / solicitud de nuevos anuncios', explicacion:'Analizar el rendimiento de las campañas activas y proponer mejoras o pedir nuevos creativos al equipo correspondiente.' },
+  { rol:'media', area:'META', tipo:'evaluacion', titulo:'Evaluación de configuración Meta → CRM (post-activación)', explicacion:'Revisar después de la activación que los leads siguen llegando correctamente al CRM y la integración no se ha roto.' },
+  { rol:'media', area:'META', tipo:'seguimiento', titulo:'Seguimiento de la coherencia estratégica global de la campaña', explicacion:'Conocer lo definido entre cliente, account y estratega y vigilar de forma continua que las campañas no se desalineen de esa estrategia ni dejen de funcionar con ella.' },
+  { rol:'media', area:'META', tipo:'aporte', titulo:'Aportar criterio estratégico sobre Buyer Persona y ángulos de venta', explicacion:'Sumar visión propia como Media Buyer sobre el Buyer Persona y los ángulos definidos, basándose en su experiencia operando campañas.' },
+  { rol:'media', area:'META', tipo:'aporte', titulo:'Aportar creatividad en el diseño de la estrategia', explicacion:'Proponer enfoques creativos en cómo se estructura la estrategia de campaña, no solo ejecutar lo recibido.' },
+  { rol:'media', area:'GOOGLE', tipo:'cc', titulo:'CC de la configuración Google Ads → CRM (leads)', explicacion:'Revisar que la integración entre Google Ads y el CRM está bien configurada antes de activar la campaña.' },
+  { rol:'media', area:'GOOGLE', tipo:'evaluacion', titulo:'Evaluación de configuración Google Ads → CRM (post-activación)', explicacion:'Revisar después de la activación que los leads siguen llegando correctamente al CRM desde Google Ads.' },
+  { rol:'media', area:'GOOGLE', tipo:'evaluacion', titulo:'Evaluación de resultados de las estrategias de campañas', explicacion:'Medir el rendimiento de las campañas de Google Ads y evaluar si las decisiones estratégicas dieron resultados.' },
+  { rol:'media', area:'GOOGLE', tipo:'evaluacion', titulo:'Evaluación de resultados del análisis de keywords', explicacion:'Medir qué keywords funcionaron y cuáles no, evaluando si la investigación inicial fue acertada.' },
+  { rol:'media', area:'GOOGLE', tipo:'construccion', titulo:'Realizar análisis de keywords', explicacion:'Investigar y seleccionar las palabras clave sobre las que se construirá la campaña de Google Ads.' },
+  { rol:'media', area:'GOOGLE', tipo:'construccion', titulo:'Crear la estructura de la campaña', explicacion:'Diseñar la arquitectura de la campaña de Google Ads: grupos de anuncios, segmentaciones, pujas, extensiones.' },
+  { rol:'media', area:'GOOGLE', tipo:'aporte', titulo:'Aportar criterio estratégico en la elección de keywords y estructura de campaña', explicacion:'Sumar visión propia en las decisiones de keywords y estructura, basándose en experiencia operativa.' },
+  { rol:'media', area:'GMB', tipo:'construccion', titulo:'Optimización SEO de la ficha de GMB (keywords, categorías)', explicacion:'Optimizar la ficha de Google My Business para mejorar su posicionamiento local: keywords, categorías, descripción.' },
+  { rol:'media', area:'GMB', tipo:'construccion', titulo:'Actualización mensual de la ficha (datos, horarios, fotos)', explicacion:'Mantener la ficha de GMB actualizada cada mes con datos correctos, horarios, fotos nuevas.' },
+  { rol:'media', area:'GMB', tipo:'construccion', titulo:'Redactar respuestas a reseñas', explicacion:'Redactar las respuestas a las reseñas recibidas en la ficha de GMB.' },
+
+  // PROJECT MANAGER (8)
+  { rol:'pm', area:'Gestión de Equipo', tipo:'construccion', titulo:'Planificar las tareas del equipo a 2 semanas vista', explicacion:'Planificar la carga de tareas del equipo con horizonte de 2 semanas, no día a día.' },
+  { rol:'pm', area:'Gestión de Equipo', tipo:'construccion', titulo:'Distribuir tareas entre el equipo', explicacion:'Asignar las tareas a las personas adecuadas según rol, disponibilidad y prioridad.' },
+  { rol:'pm', area:'Gestión de Equipo', tipo:'construccion', titulo:'Gestión de la carga de trabajo del equipo', explicacion:'Operar el reparto de carga: evitar sobrecargas, equilibrar volúmenes, reasignar si es necesario.' },
+  { rol:'pm', area:'Gestión de Equipo', tipo:'construccion', titulo:'Registrar peticiones del cliente en Notion el mismo día', explicacion:'Recoger las peticiones que el Account Manager transmite y registrarlas en Notion el mismo día en que entran.' },
+  { rol:'pm', area:'Gestión de Equipo', tipo:'construccion', titulo:'Transferir inputs del cliente al equipo', explicacion:'Convertir los inputs recogidos por el Account Manager en tareas concretas y comunicarlas al equipo.' },
+  { rol:'pm', area:'Gestión de Equipo', tipo:'seguimiento', titulo:'Seguimiento del cumplimiento de plazos de las tareas', explicacion:'Vigilancia continua de que las tareas asignadas se están ejecutando dentro de los plazos previstos.' },
+  { rol:'pm', area:'Medición del Equipo', tipo:'cc', titulo:'CC de la gestión de cargas', explicacion:'Revisar de forma periódica si el reparto de carga está bien hecho: nadie sobrecargado, nadie infrautilizado, prioridades correctas.' },
+  { rol:'pm', area:'Medición del Equipo', tipo:'cc', titulo:'CC de la calidad de las tareas realizadas', explicacion:'Revisar que las tareas entregadas por el equipo están bien hechas antes de darlas por buenas o pasarlas al cliente.' },
+
+  // ACCOUNT MANAGER (6)
+  { rol:'account', area:'Relación Cliente', tipo:'construccion', titulo:'Recoger inputs del cliente', explicacion:'Recibir y registrar lo que el cliente comunica activamente (peticiones, dudas, cambios) en cada interacción.' },
+  { rol:'account', area:'Relación Cliente', tipo:'construccion', titulo:'Detectar necesidades del cliente', explicacion:'Identificar de forma proactiva necesidades que el cliente tiene pero no ha verbalizado: estar avispada, leer entre líneas.' },
+  { rol:'account', area:'Relación Cliente', tipo:'construccion', titulo:'Tener relación continua con el cliente', explicacion:'Mantener un canal de comunicación activo y constante con el cliente, no solo cuando hay incidencias.' },
+  { rol:'account', area:'Relación Cliente', tipo:'construccion', titulo:'Documentar las reuniones con el cliente', explicacion:'Tomar notas durante las reuniones y redactar el acta o resumen con acuerdos, decisiones y próximos pasos.' },
+  { rol:'account', area:'Relación Cliente', tipo:'seguimiento', titulo:'Seguimiento de la salud del cliente', explicacion:'Vigilancia continua del estado de la relación: nivel de satisfacción, riesgos de churn, señales de fricción.' },
+  { rol:'account', area:'Relación Cliente', tipo:'cc', titulo:'CC de la documentación de la reunión', explicacion:'Revisar que el acta o documentación de la reunión está completa y bien redactada antes de compartirla o archivarla.' },
+
+  // ESTRATEGA (16)
+  { rol:'estratega', area:'META', tipo:'construccion', titulo:'Crear Buyer Persona en base al cliente', explicacion:'Definir el perfil de cliente ideal del cliente final basándose en sus datos, mercado y objetivos.' },
+  { rol:'estratega', area:'META', tipo:'construccion', titulo:'Elaborar estrategias sobre ángulos de venta', explicacion:'Definir los ángulos de venta (mensajes, posicionamientos, beneficios destacados) sobre los que se construirán las campañas.' },
+  { rol:'estratega', area:'META', tipo:'construccion', titulo:'Proponer copies creativos y desarrollar un briefing', explicacion:'Generar las propuestas de copy creativo y redactar el briefing que guiará al equipo de diseño y media.' },
+  { rol:'estratega', area:'META', tipo:'cc', titulo:'CC de Buyer Persona y ángulos de venta', explicacion:'Revisar el Buyer Persona y ángulos de venta una vez construidos para validar coherencia y calidad antes de entregarlos.' },
+  { rol:'estratega', area:'META', tipo:'cc', titulo:'CC del briefing y copies creativos propuestos', explicacion:'Revisar el briefing y los copies propuestos antes de entregarlos al equipo de diseño o media.' },
+  { rol:'estratega', area:'Copies de Estáticos y Videos', tipo:'construccion', titulo:'Redactar copies creativos en base a las propuestas y briefing', explicacion:'Redactar los textos finales de los creativos (estáticos y videos) partiendo de las propuestas y el briefing aprobado.' },
+  { rol:'estratega', area:'Copies de Estáticos y Videos', tipo:'construccion', titulo:'Proponer estrategias de guion', explicacion:'Proponer estructuras narrativas y enfoques de guion para los vídeos.' },
+  { rol:'estratega', area:'Copies de Estáticos y Videos', tipo:'cc', titulo:'CC de los copies redactados', explicacion:'Revisar los copies redactados antes de entregarlos al diseñador o videógrafo: ortografía, tono, claridad, encaje con el brief.' },
+  { rol:'estratega', area:'RRSS', tipo:'construccion', titulo:'Bajar a tierra la planificación global de RRSS (dirige; Account participa)', explicacion:'Traducir la estrategia general del cliente en un plan concreto de publicaciones (temas, frecuencia, tipo de contenido). El estratega dirige, el Account participa.' },
+  { rol:'estratega', area:'RRSS', tipo:'construccion', titulo:'Redactar briefing del contenido y del continente de las publicaciones', explicacion:'Redactar el briefing tanto del contenido (textos/mensajes) como del continente (descripciones de las imágenes que acompañan).' },
+  { rol:'estratega', area:'RRSS', tipo:'construccion', titulo:'Redactar copies de las publicaciones (captions)', explicacion:'Redactar los textos que acompañan la publicación (caption / pie de la publicación), no el texto que va dentro del creativo.' },
+  { rol:'estratega', area:'RRSS', tipo:'cc', titulo:'CC de los copies de RRSS', explicacion:'Revisar los copies de RRSS antes de entregarlos para programación: ortografía, tono, alineación con la estrategia.' },
+  { rol:'estratega', area:'Cadena de Correos', tipo:'construccion', titulo:'Bajar a tierra la planificación de email marketing', explicacion:'Traducir la estrategia general en un plan concreto de cadena de correos: temas, secuencia, timing.' },
+  { rol:'estratega', area:'Cadena de Correos', tipo:'construccion', titulo:'Redactar los emails', explicacion:'Redactar el contenido final de cada email de la cadena.' },
+  { rol:'estratega', area:'Cadena de Correos', tipo:'construccion', titulo:'Plantear cómo será el diseño de cada correo', explicacion:'Definir la estructura visual y de diseño de cada correo: secciones, jerarquía, elementos visuales (no maqueta, indica al diseñador).' },
+  { rol:'estratega', area:'Cadena de Correos', tipo:'cc', titulo:'CC de los emails redactados', explicacion:'Revisar los emails redactados antes de entregarlos al CRM Manager: ortografía, enlaces, tono, claridad.' },
+
+  // COO (7)
+  { rol:'coo', area:'Procesos', tipo:'construccion', titulo:'Diseño de nuevos procesos', explicacion:'Diseñar nuevos procesos operativos cuando se detectan huecos o ineficiencias en la operativa de la agencia.' },
+  { rol:'coo', area:'Procesos', tipo:'construccion', titulo:'Asignación de KPIs de roles del equipo', explicacion:'Definir los KPIs (indicadores) con los que se va a medir el desempeño de cada rol del equipo.' },
+  { rol:'coo', area:'Procesos', tipo:'cc', titulo:'CC de procesos antes de implantarlos al equipo', explicacion:'Revisar que un proceso recién diseñado está bien construido (lógica, claridad, sin huecos) antes de lanzarlo al equipo.' },
+  { rol:'coo', area:'Procesos', tipo:'cc', titulo:'CC de los KPIs definidos antes de asignarlos', explicacion:'Revisar que los KPIs son medibles, justos y conectan con resultados reales antes de comunicárselos al equipo.' },
+  { rol:'coo', area:'Procesos', tipo:'evaluacion', titulo:'Evaluación de calidad de procesos', explicacion:'Medir si los procesos actuales están bien diseñados o si presentan problemas de fondo.' },
+  { rol:'coo', area:'Procesos', tipo:'evaluacion', titulo:'Evaluación de cumplimiento de procesos', explicacion:'Medir si el equipo está usando los procesos definidos o si se los está saltando.' },
+  { rol:'coo', area:'Procesos', tipo:'evaluacion', titulo:'Evaluación de resultados del equipo según KPIs', explicacion:'Medir el desempeño del equipo contrastando los resultados reales con los KPIs definidos.' }
+];
+
+/* ============================================
+   STATE — load/save to localStorage
+   ============================================ */
+const LS_KEY = 'thenucleo-dpt-v1';
+let state = null;
+let activeFilter = 'all';
+let viewMode = localStorage.getItem(LS_KEY + '-view') || 'kanban';
+
+function nextId() {
+  return 'r_' + Math.random().toString(36).slice(2,9);
+}
+
+function seedWithIds() {
+  return SEED.map((r,i) => ({ id:'r_seed_'+i, ...r }));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return seedWithIds();
+}
+
+function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function resetState() {
+  if (!confirm('¿Restablecer los datos al CSV original? Se perderán los cambios locales.')) return;
+  state = seedWithIds();
+  saveState();
+  render();
+}
+
+/* ============================================
+   RENDER
+   ============================================ */
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
+
+function tipoChip(tipoKey) {
+  const t = TIPOS[tipoKey] || TIPOS.construccion;
+  return `<span class="tipo-chip ${t.cls}"><span class="dot"></span> ${t.corto}</span>`;
+}
+
+function renderCard(r, isTray = false) {
+  const cls = isTray ? 'card card--tray' : 'card';
+  const filterPass = activeFilter === 'all' || r.tipo === activeFilter;
+  if (!filterPass) return '';
+  return `
+    <div class="${cls}" draggable="true" data-id="${r.id}">
+      <div class="card-grip">⋮⋮</div>
+      <div class="card-head">${tipoChip(r.tipo)}</div>
+      <div class="card-title">${escapeHtml(r.titulo)}</div>
+      <div class="card-area">${escapeHtml(r.area || '—')}</div>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replaceAll('&','&amp;').replaceAll('<','&lt;')
+    .replaceAll('>','&gt;').replaceAll('"','&quot;');
+}
+
+function renderTray() {
+  const tray = $('#tray-body');
+  const sinAsignar = state.filter(r => !r.rol);
+  $('#tray-count').textContent = sinAsignar.length;
+  $('#tray').classList.toggle('is-empty', sinAsignar.length === 0);
+
+  if (sinAsignar.length === 0) {
+    tray.innerHTML = '<div class="tray-empty-state">Sin pendientes — todas las responsabilidades están asignadas a un rol</div>';
+    return;
+  }
+
+  const visibles = sinAsignar.filter(r => activeFilter === 'all' || r.tipo === activeFilter);
+  if (visibles.length === 0) {
+    tray.innerHTML = '<div class="tray-empty-state">Ninguna pendiente coincide con el filtro actual</div>';
+    return;
+  }
+
+  tray.innerHTML = visibles.map(r => renderCard(r, true)).join('');
+}
+
+function renderKanban() {
+  const kanban = $('#kanban');
+  kanban.innerHTML = ROLES.map(rol => {
+    const cards = state.filter(r => r.rol === rol.id);
+    const visibles = cards.filter(r => activeFilter === 'all' || r.tipo === activeFilter);
+    return `
+      <div class="col" data-rol="${rol.id}" style="--col-accent:${rol.color};">
+        <div class="col-head">
+          <div class="col-title">
+            <span class="dot-rol"></span>
+            <span>${rol.nombre}</span>
+            <span class="col-count">${cards.length}</span>
+          </div>
+          <div class="col-action" data-action="new-in-col" data-rol="${rol.id}" title="Crear en ${rol.nombre}">+</div>
+        </div>
+        <div class="col-body" data-rol-drop="${rol.id}">
+          ${visibles.length === 0
+            ? `<div class="col-empty">${cards.length === 0 ? 'Sin responsabilidades · arrastra aquí' : 'Sin coincidencias con el filtro'}</div>`
+            : visibles.map(r => renderCard(r, false)).join('')
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderStats() {
+  $('#stat-total').textContent = state.length;
+  $('#stat-roles').textContent = ROLES.length;
+  $('#stat-sin').textContent = state.filter(r => !r.rol).length;
+  const areas = new Set(state.map(r => r.area).filter(Boolean));
+  $('#stat-areas').textContent = areas.size;
+
+  const counts = {};
+  state.forEach(r => { counts[r.tipo] = (counts[r.tipo]||0) + 1; });
+  let top = null, topCount = 0;
+  Object.entries(counts).forEach(([k,c]) => { if (c > topCount) { top = k; topCount = c; } });
+  if (top) {
+    $('#stat-tipo').textContent = TIPOS[top].nombre;
+    $('#stat-tipo-sub').textContent = topCount + ' responsabilidades · ' + Math.round(topCount/state.length*100) + '%';
+  }
+}
+
+function renderTable() {
+  const tbody = $('#table-body');
+  const visibles = state.filter(r => activeFilter === 'all' || r.tipo === activeFilter);
+  const sorted = [...visibles].sort((a,b) => {
+    const ra = a.rol ? ROLES.findIndex(x => x.id === a.rol) : 999;
+    const rb = b.rol ? ROLES.findIndex(x => x.id === b.rol) : 999;
+    if (ra !== rb) return ra - rb;
+    return (a.titulo||'').localeCompare(b.titulo||'');
+  });
+
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Sin coincidencias con el filtro</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = sorted.map(r => {
+    const rol = ROLES.find(x => x.id === r.rol);
+    const rolCell = rol
+      ? `<span class="rol-tag" style="--rol-c:${rol.color};"><span class="dot"></span> ${escapeHtml(rol.nombre)}</span>`
+      : `<span class="rol-sin">Sin asignar</span>`;
+    return `
+      <tr data-id="${r.id}">
+        <td class="cell-tipo">${tipoChip(r.tipo)}</td>
+        <td class="cell-titulo">${escapeHtml(r.titulo || '(sin título)')}</td>
+        <td class="cell-area">${escapeHtml(r.area || '—')}</td>
+        <td class="cell-rol">${rolCell}</td>
+        <td class="cell-actions"><button class="btn-row" type="button">Editar</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  $$('#table-body tr').forEach(tr => {
+    tr.addEventListener('click', () => openEdit(tr.dataset.id));
+  });
+}
+
+function applyViewMode() {
+  $('#view-kanban').style.display = viewMode === 'kanban' ? '' : 'none';
+  $('#view-tabla').style.display  = viewMode === 'tabla'  ? '' : 'none';
+}
+
+function render() {
+  renderStats();
+  applyViewMode();
+  if (viewMode === 'kanban') {
+    renderTray();
+    renderKanban();
+    attachCardListeners();
+    attachDropTargets();
+  } else {
+    renderTable();
+  }
+}
+
+/* ============================================
+   FILTERS
+   ============================================ */
+$('#filter-chips').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  $$('.chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeFilter = chip.dataset.tipo;
+  render();
+});
+
+/* View switch (Kanban | Tabla) */
+$('#view-switch').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-view]');
+  if (!btn) return;
+  $$('#view-switch button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  viewMode = btn.dataset.view;
+  localStorage.setItem(LS_KEY + '-view', viewMode);
+  render();
+});
+
+/* Sync initial active state */
+$$('#view-switch button').forEach(b => b.classList.toggle('active', b.dataset.view === viewMode));
+
+/* ============================================
+   DRAG & DROP
+   ============================================ */
+let draggedId = null;
+
+function attachCardListeners() {
+  $$('.card').forEach(card => {
+    card.addEventListener('dragstart', onDragStart);
+    card.addEventListener('dragend', onDragEnd);
+    card.addEventListener('click', onCardClick);
+    card.addEventListener('mouseenter', onCardHover);
+    card.addEventListener('mouseleave', onCardLeave);
+    card.addEventListener('mousemove', onCardMove);
+  });
+}
+
+function onDragStart(e) {
+  draggedId = e.currentTarget.dataset.id;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  hideTooltip();
+}
+
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  $$('.col').forEach(c => c.classList.remove('drop-target'));
+  $('#tray').classList.remove('drop-target');
+  draggedId = null;
+}
+
+function attachDropTargets() {
+  $$('.col').forEach(col => {
+    col.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      col.classList.add('drop-target');
+    });
+    col.addEventListener('dragleave', (e) => {
+      if (!col.contains(e.relatedTarget)) col.classList.remove('drop-target');
+    });
+    col.addEventListener('drop', (e) => {
+      e.preventDefault();
+      col.classList.remove('drop-target');
+      if (!draggedId) return;
+      const rolDest = col.dataset.rol;
+      const item = state.find(r => r.id === draggedId);
+      if (item && item.rol !== rolDest) {
+        item.rol = rolDest;
+        saveState();
+        render();
+      }
+    });
+  });
+
+  // Tray as drop target (to unassign)
+  const tray = $('#tray');
+  tray.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    tray.style.borderColor = 'var(--accent-primary)';
+  });
+  tray.addEventListener('dragleave', (e) => {
+    if (!tray.contains(e.relatedTarget)) tray.style.borderColor = '';
+  });
+  tray.addEventListener('drop', (e) => {
+    e.preventDefault();
+    tray.style.borderColor = '';
+    if (!draggedId) return;
+    const item = state.find(r => r.id === draggedId);
+    if (item && item.rol) {
+      item.rol = null;
+      saveState();
+      render();
+    }
+  });
+}
+
+/* ============================================
+   TOOLTIP (hover)
+   ============================================ */
+const tooltip = $('#tooltip');
+let tooltipTimer = null;
+
+function onCardHover(e) {
+  const id = e.currentTarget.dataset.id;
+  const r = state.find(x => x.id === id);
+  if (!r) return;
+  clearTimeout(tooltipTimer);
+  tooltipTimer = setTimeout(() => {
+    const tipoLabel = TIPOS[r.tipo]?.nombre || '';
+    tooltip.innerHTML = `
+      <div class="tooltip-meta">
+        <span style="color:${getRolColor(r.rol)};">${getRolName(r.rol) || 'Sin asignar'}</span>
+        <span>·</span>
+        <span>${escapeHtml(r.area || '—')}</span>
+        <span>·</span>
+        <span>${tipoLabel}</span>
+      </div>
+      <div>${escapeHtml(r.explicacion || '(sin explicación)')}</div>
+    `;
+    positionTooltip(e);
+    tooltip.classList.add('visible');
+  }, 350);
+}
+
+function onCardMove(e) {
+  if (tooltip.classList.contains('visible')) positionTooltip(e);
+}
+
+function onCardLeave() {
+  clearTimeout(tooltipTimer);
+  hideTooltip();
+}
+
+function hideTooltip() { tooltip.classList.remove('visible'); }
+
+function positionTooltip(e) {
+  const padding = 14;
+  const rect = tooltip.getBoundingClientRect();
+  let x = e.clientX + 12;
+  let y = e.clientY + 14;
+  if (x + rect.width + padding > window.innerWidth) x = e.clientX - rect.width - 12;
+  if (y + rect.height + padding > window.innerHeight) y = e.clientY - rect.height - 14;
+  tooltip.style.left = Math.max(padding, x) + 'px';
+  tooltip.style.top  = Math.max(padding, y) + 'px';
+}
+
+function getRolName(rolId) { return ROLES.find(r => r.id === rolId)?.nombre || ''; }
+function getRolColor(rolId) { return ROLES.find(r => r.id === rolId)?.color || 'var(--text-secondary)'; }
+
+/* ============================================
+   MODAL EDIT
+   ============================================ */
+let editingId = null;
+
+function openEdit(id) {
+  const r = state.find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  $('#modal-title').textContent = id.startsWith('r_seed_') || state.find(x => x.id === id) ? 'Editar responsabilidad' : 'Nueva responsabilidad';
+  $('#f-titulo').value = r.titulo || '';
+  $('#f-explicacion').value = r.explicacion || '';
+  $('#f-tipo').value = r.tipo || 'construccion';
+  $('#f-area').value = r.area || '';
+  const rolSelect = $('#f-rol');
+  rolSelect.innerHTML = `<option value="">— Sin asignar —</option>` +
+    ROLES.map(rol => `<option value="${rol.id}" ${r.rol===rol.id?'selected':''}>${rol.nombre}</option>`).join('');
+  $('#modal').classList.add('visible');
+  setTimeout(() => $('#f-titulo').focus(), 100);
+}
+
+function closeEdit() {
+  $('#modal').classList.remove('visible');
+  editingId = null;
+}
+
+$('#modal-close').addEventListener('click', closeEdit);
+$('#btn-cancel').addEventListener('click', closeEdit);
+$('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeEdit(); });
+
+$('#btn-save').addEventListener('click', () => {
+  if (!editingId) return;
+  const r = state.find(x => x.id === editingId);
+  if (!r) return;
+  r.titulo = $('#f-titulo').value.trim();
+  r.explicacion = $('#f-explicacion').value.trim();
+  r.tipo = $('#f-tipo').value;
+  r.area = $('#f-area').value.trim();
+  r.rol = $('#f-rol').value || null;
+  if (!r.titulo) { alert('El título es obligatorio'); return; }
+  saveState();
+  closeEdit();
+  render();
+});
+
+$('#btn-delete').addEventListener('click', () => {
+  if (!editingId) return;
+  if (!confirm('¿Eliminar esta responsabilidad?')) return;
+  state = state.filter(x => x.id !== editingId);
+  saveState();
+  closeEdit();
+  render();
+});
+
+function onCardClick(e) {
+  // No abrir modal si veníamos de drag
+  if (e.currentTarget.classList.contains('dragging')) return;
+  openEdit(e.currentTarget.dataset.id);
+}
+
+/* ============================================
+   NUEVA RESPONSABILIDAD
+   ============================================ */
+$('#btn-nueva').addEventListener('click', () => {
+  const newItem = {
+    id: nextId(),
+    rol: null,
+    area: '',
+    tipo: 'construccion',
+    titulo: '',
+    explicacion: ''
+  };
+  state.unshift(newItem);
+  saveState();
+  render();
+  openEdit(newItem.id);
+});
+
+// + en cabecera de columna → crea pre-asignada al rol
+document.addEventListener('click', (e) => {
+  const action = e.target.closest('[data-action="new-in-col"]');
+  if (!action) return;
+  const rolId = action.dataset.rol;
+  const newItem = {
+    id: nextId(),
+    rol: rolId,
+    area: '',
+    tipo: 'construccion',
+    titulo: '',
+    explicacion: ''
+  };
+  state.unshift(newItem);
+  saveState();
+  render();
+  openEdit(newItem.id);
+});
+
+/* ============================================
+   RESET
+   ============================================ */
+$('#btn-reset').addEventListener('click', resetState);
+
+/* ============================================
+   KEYBOARD
+   ============================================ */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeEdit();
+});
+
+/* ============================================
+   INIT
+   ============================================ */
+state = loadState();
+render();
+
+/* ============================================
+   NAV USER — dropdown toggle
+   ============================================ */
+(function () {
+  var btn = document.getElementById('nav-user-btn');
+  var dd  = document.getElementById('nav-user-dropdown');
+  if (!btn || !dd) return;
+  function close() { dd.style.display = 'none'; btn.setAttribute('aria-expanded', 'false'); }
+  function open()  { dd.style.display = 'block'; btn.setAttribute('aria-expanded', 'true'); }
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    dd.style.display === 'block' ? close() : open();
+  });
+  document.addEventListener('click', function (e) {
+    if (!dd.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
+</script>
+</body>
+</html>
