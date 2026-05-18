@@ -33,8 +33,24 @@
   --font-ui:'NewBlack',sans-serif;
   --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px;
   --ease-out:cubic-bezier(0.16,1,0.3,1);
-  --duration-fast:150ms; --duration-base:200ms;
+  --duration-fast:150ms; --duration-base:200ms; --duration-slow:300ms;
 }
+
+[data-theme="light"] {
+  --bg-base:#f5f6f8; --bg-card:#ffffff; --bg-elevated:#ffffff;
+  --bg-hover:#eef0f4; --bg-active:#e4e6ec;
+  --border-subtle:#e4e6ec; --border-default:#d0d3dc; --border-strong:#a0a4b2;
+  --text-primary:#111827; --text-secondary:#4b5563; --text-tertiary:#9ca3af; --text-inverse:#ffffff;
+  --accent-primary:#16a34a; --accent-primary-hover:#15803d; --accent-primary-muted:rgba(22,163,74,0.10);
+  --accent-secondary:#2563eb; --accent-secondary-hover:#1d4ed8; --accent-secondary-muted:rgba(37,99,235,0.10);
+  --status-success:#16a34a; --status-success-bg:rgba(22,163,74,0.10);
+  --status-warning:#d97706; --status-warning-bg:rgba(217,119,6,0.10);
+  --status-error:#dc2626;   --status-error-bg:rgba(220,38,38,0.10);
+  --status-info:#2563eb;    --status-info-bg:rgba(37,99,235,0.10);
+  --status-violet:#7c3aed;  --status-violet-bg:rgba(124,58,237,0.10);
+  --tipo-aporte:#db2777;    --tipo-aporte-bg:rgba(219,39,119,0.10);
+}
+[data-theme="light"] body { color:var(--text-primary); }
 
 * { box-sizing:border-box; margin:0; padding:0; }
 
@@ -101,6 +117,42 @@ body {
 .nav-user-item.nav-active { color:var(--accent-primary); }
 .nav-user-item.nav-active svg { color:var(--accent-primary); }
 .nav-user-divider { height:1px; background:var(--border-subtle); margin:4px 0; }
+
+/* Theme switch (idéntico playbook) */
+.theme-switch {
+  display:inline-flex; align-items:center; gap:6px;
+  height:30px; padding:0 10px;
+  font-size:12px; font-weight:500;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:999px;
+  cursor:pointer; font-family:var(--font-ui);
+  transition:all 120ms;
+}
+.theme-switch:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.theme-switch svg { width:14px; height:14px; }
+[data-theme="light"] .theme-switch .icon-moon { display:none; }
+.theme-switch .icon-sun { display:none; }
+[data-theme="light"] .theme-switch .icon-sun { display:inline-block; }
+.theme-switch .icon-moon { display:inline-block; }
+
+/* Buttons clase .btn (idéntico playbook) */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  font-family:var(--font-ui); font-size:14px; font-weight:500;
+  border:none; border-radius:var(--radius-md); cursor:pointer;
+  transition:all var(--duration-fast) var(--ease-out);
+  height:40px; padding:0 20px;
+}
+.btn--primary { background:var(--accent-primary); color:var(--text-inverse); }
+.btn--primary:hover { background:var(--accent-primary-hover); }
+.btn--secondary { background:transparent; color:var(--text-primary); border:1px solid var(--border-default); }
+.btn--secondary:hover { background:var(--bg-hover); border-color:var(--border-strong); }
+.btn--sm { height:32px; font-size:13px; padding:0 12px; }
+
+@media (max-width:640px) {
+  .theme-switch .theme-label { display:none; }
+  .theme-switch { padding:0 8px; }
+}
 
 /* ============================================
    MAIN
@@ -700,8 +752,8 @@ body {
     </span>
   </div>
   <div class="auth-bar-actions">
-    <span class="auth-bar-meta">Mockup · localStorage</span>
-    <div class="nav-user-wrap" id="nav-user-wrap">
+    <span class="auth-bar-meta" id="auth-meta"></span>
+    <div class="nav-user-wrap" id="nav-user-wrap" style="display:none;">
       <button class="nav-user-btn" id="nav-user-btn" title="Navegación interna" aria-haspopup="true" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       </button>
@@ -729,6 +781,13 @@ body {
         </a>
       </div>
     </div>
+    <button class="theme-switch" id="btn-theme" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>
+      <span class="theme-label">Oscuro</span>
+    </button>
+    <button class="btn btn--secondary btn--sm" id="btn-login" type="button">Entrar como editor</button>
+    <button class="btn btn--secondary btn--sm" id="btn-logout" type="button" style="display:none;">Salir</button>
   </div>
 </div>
 
@@ -1455,6 +1514,63 @@ render();
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
 })();
+
+/* ============================================
+   THEME TOGGLE (dark/light) — idéntico playbook
+   ============================================ */
+const THEME_KEY = 'tn-dpt-theme';
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const lbl = document.querySelector('#btn-theme .theme-label');
+  if (lbl) lbl.textContent = theme === 'light' ? 'Claro' : 'Oscuro';
+  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+}
+(function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY); } catch {}
+  applyTheme(saved === 'light' ? 'light' : 'dark');
+})();
+document.getElementById('btn-theme').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(cur === 'light' ? 'dark' : 'light');
+});
+
+/* ============================================
+   LOGIN / LOGOUT (preview — sin auth real)
+   Toggle visual editor/viewer + nav-user-wrap
+   ============================================ */
+const AUTH_KEY = 'tn-dpt-auth';
+function applyAuth(isEditor) {
+  const pill   = document.querySelector('.auth-bar-mode');
+  const label  = document.querySelector('.auth-bar-mode span:last-child');
+  const meta   = document.getElementById('auth-meta');
+  const wrap   = document.getElementById('nav-user-wrap');
+  const bIn    = document.getElementById('btn-login');
+  const bOut   = document.getElementById('btn-logout');
+  if (isEditor) {
+    pill.classList.remove('viewer'); pill.classList.add('editor');
+    if (label) label.textContent = 'Modo editor';
+    if (meta) meta.textContent = 'preview · benjamin@thenucleo.com';
+    if (wrap) wrap.style.display = '';
+    if (bIn) bIn.style.display = 'none';
+    if (bOut) bOut.style.display = '';
+  } else {
+    pill.classList.remove('editor'); pill.classList.add('viewer');
+    if (label) label.textContent = 'Vista pública';
+    if (meta) meta.textContent = '';
+    if (wrap) wrap.style.display = 'none';
+    if (bIn) bIn.style.display = '';
+    if (bOut) bOut.style.display = 'none';
+  }
+  try { localStorage.setItem(AUTH_KEY, isEditor ? '1' : '0'); } catch {}
+}
+(function initAuth() {
+  let v = '0';
+  try { v = localStorage.getItem(AUTH_KEY) || '0'; } catch {}
+  applyAuth(v === '1');
+})();
+document.getElementById('btn-login').addEventListener('click', () => applyAuth(true));
+document.getElementById('btn-logout').addEventListener('click', () => applyAuth(false));
 </script>
 </body>
 </html>
