@@ -681,7 +681,7 @@ body {
   color:var(--text-primary);
 }
 .dpt-table .cell-tipo { width:130px; white-space:nowrap; }
-.dpt-table .cell-titulo { font-weight:500; max-width:480px; }
+.dpt-table .cell-titulo { font-weight:500; max-width:560px; }
 .dpt-table .cell-area {
   font-size:11px;
   color:var(--text-tertiary);
@@ -690,8 +690,41 @@ body {
   font-weight:500;
   white-space:nowrap;
 }
-.dpt-table .cell-rol { white-space:nowrap; }
 .dpt-table .cell-actions { width:80px; text-align:right; }
+
+/* Grupos por Rol (subheader rows) */
+.dpt-table tbody tr.rol-group-header { cursor:default; background:transparent !important; }
+.dpt-table tbody tr.rol-group-header:hover { background:transparent !important; }
+.dpt-table tbody tr.rol-group-header::before { display:none !important; }
+.dpt-table tbody tr.rol-group-header td {
+  padding:0; border-bottom:1px solid var(--border-default);
+  background:var(--bg-base);
+}
+.rol-group-title {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 18px 10px;
+}
+.rol-group-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:var(--rol-c, var(--accent-primary));
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--rol-c, var(--accent-primary)) 22%, transparent);
+}
+.rol-group-name {
+  font-size:13px; font-weight:700; color:var(--text-primary);
+  letter-spacing:0.2px;
+}
+.rol-group-count {
+  font-size:10px; font-weight:600;
+  background:var(--bg-active); color:var(--text-secondary);
+  padding:2px 8px; border-radius:20px;
+  margin-left:auto;
+}
+.rol-group-title-sin { }
+.rol-group-title-sin .rol-group-name { color:var(--accent-primary); }
+.rol-group-title-sin .rol-group-dot {
+  background:var(--accent-primary);
+  box-shadow:0 0 0 3px rgba(34,197,94,0.22);
+}
 
 .rol-tag {
   display:inline-flex; align-items:center; gap:6px;
@@ -874,7 +907,6 @@ body {
             <th class="cell-tipo">Tipo</th>
             <th>Título</th>
             <th>Área</th>
-            <th>Rol</th>
             <th class="cell-actions"></th>
           </tr>
         </thead>
@@ -1174,35 +1206,70 @@ function renderStats() {
 function renderTable() {
   const tbody = $('#table-body');
   const visibles = state.filter(r => activeFilter === 'all' || r.tipo === activeFilter);
-  const sorted = [...visibles].sort((a,b) => {
-    const ra = a.rol ? ROLES.findIndex(x => x.id === a.rol) : 999;
-    const rb = b.rol ? ROLES.findIndex(x => x.id === b.rol) : 999;
-    if (ra !== rb) return ra - rb;
-    return (a.titulo||'').localeCompare(b.titulo||'');
-  });
 
-  if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Sin coincidencias con el filtro</td></tr>';
+  if (visibles.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="table-empty">Sin coincidencias con el filtro</td></tr>';
     return;
   }
 
-  tbody.innerHTML = sorted.map(r => {
-    const rol = ROLES.find(x => x.id === r.rol);
-    const rolCell = rol
-      ? `<span class="rol-tag" style="--rol-c:${rol.color};"><span class="dot"></span> ${escapeHtml(rol.nombre)}</span>`
-      : `<span class="rol-sin">Sin asignar</span>`;
+  // Agrupar por Rol (manteniendo orden de ROLES; sin asignar al final)
+  const groups = new Map();
+  ROLES.forEach(rol => groups.set(rol.id, []));
+  groups.set(null, []);
+  visibles.forEach(r => {
+    const key = r.rol || null;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  });
+
+  function rowHtml(r) {
     return `
       <tr data-id="${r.id}">
         <td class="cell-tipo">${tipoChip(r.tipo)}</td>
         <td class="cell-titulo">${escapeHtml(r.titulo || '(sin título)')}</td>
         <td class="cell-area">${escapeHtml(r.area || '—')}</td>
-        <td class="cell-rol">${rolCell}</td>
         <td class="cell-actions"><button class="btn-row" type="button">Editar</button></td>
       </tr>
     `;
-  }).join('');
+  }
 
-  $$('#table-body tr').forEach(tr => {
+  let html = '';
+  ROLES.forEach(rol => {
+    const items = (groups.get(rol.id) || []).slice().sort((a,b) => (a.titulo||'').localeCompare(b.titulo||''));
+    if (items.length === 0) return;
+    html += `
+      <tr class="rol-group-header">
+        <td colspan="4">
+          <div class="rol-group-title" style="--rol-c:${rol.color};">
+            <span class="rol-group-dot"></span>
+            <span class="rol-group-name">${escapeHtml(rol.nombre)}</span>
+            <span class="rol-group-count">${items.length}</span>
+          </div>
+        </td>
+      </tr>
+    `;
+    html += items.map(rowHtml).join('');
+  });
+
+  const sinAsig = (groups.get(null) || []).slice().sort((a,b) => (a.titulo||'').localeCompare(b.titulo||''));
+  if (sinAsig.length > 0) {
+    html += `
+      <tr class="rol-group-header">
+        <td colspan="4">
+          <div class="rol-group-title rol-group-title-sin">
+            <span class="rol-group-dot"></span>
+            <span class="rol-group-name">Sin asignar</span>
+            <span class="rol-group-count">${sinAsig.length}</span>
+          </div>
+        </td>
+      </tr>
+    `;
+    html += sinAsig.map(rowHtml).join('');
+  }
+
+  tbody.innerHTML = html;
+
+  $$('#table-body tr[data-id]').forEach(tr => {
     tr.addEventListener('click', () => openEdit(tr.dataset.id));
   });
 }
