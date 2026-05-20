@@ -4124,17 +4124,15 @@ function renderServiciosList(servicios, bubbleId) {
   if (!servicios.length) {
     return '<div style="font-size:11px;color:var(--text-tertiary);padding:2px 0;">Sin servicios asignados aún.</div>';
   }
-  // Agrupar por categoría manteniendo orden de inserción.
-  const grouped = [];
+  // Agrupar por categoría y ordenar alfabéticamente (cats + items dentro).
   const byCat = {};
   servicios.forEach(s => {
     const key = s.categoria_nombre || '—';
-    if (!(key in byCat)) {
-      byCat[key] = { nombre: key, color: s.categoria_color || '#6b7280', items: [] };
-      grouped.push(byCat[key]);
-    }
+    if (!(key in byCat)) byCat[key] = { nombre: key, color: s.categoria_color || '#6b7280', items: [] };
     byCat[key].items.push(s);
   });
+  const grouped = Object.values(byCat).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  grouped.forEach(g => g.items.sort((a, b) => (a.ficha_titulo || '').localeCompare(b.ficha_titulo || '', 'es')));
   const onlyOne = grouped.length === 1;
   return grouped.map(g => `
     <div class="servicio-cat${onlyOne ? ' open' : ''}" data-cat="${escapeHtml(g.nombre)}">
