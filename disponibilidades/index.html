@@ -760,16 +760,13 @@ const EDITOR_EMAILS = new Set([
   "mel.dalmazo@thenucleo.com",
 ]);
 
-// Miembros canónicos — bubble_id verificados desde bub_user el 2026-05-20.
-const MIEMBROS = [
-  { id:'1772728038513x480671187100790300', nombre:'Benja',     color:'#0C29AB' },
-  { id:'1772798993384x712884450325125900', nombre:'Valentina', color:'#00FFFF' },
-  { id:'1773165777528x565611358129485950', nombre:'Camilo',    color:'#FF1493' },
-];
+// Miembros — carga dinámica vía RPC public.disponibilidad_miembros() (cualquiera con franja base aparece).
+// Para añadir un miembro: INSERT en disponibilidad_franjas_base. Para retirarlo: DELETE de sus franjas.
+let MIEMBROS = [];
 
-// Timeline window 08:00 → 20:00
+// Timeline window 08:00 → 21:00 (Joaquin trabaja hasta 21:00).
 const TL_START_H = 8;
-const TL_END_H   = 20;
+const TL_END_H   = 21;
 const TL_RANGE   = (TL_END_H - TL_START_H) * 60; // minutos
 
 const TIPO_LABEL = {
@@ -929,10 +926,18 @@ function fmtRange(desde, hasta) {
 // LOAD DATA
 // ============================================================
 async function bootData() {
+  // Miembros primero (las otras cargas dependen del set de miembros para renderizar).
+  await loadMiembros();
   await Promise.all([loadFranjas(), loadOverrides(), loadFestivos()]);
   renderAll();
   // Tick cada minuto
   setInterval(tick, 60_000);
+}
+
+async function loadMiembros() {
+  const { data, error } = await SUPABASE.rpc('disponibilidad_miembros');
+  if (error) { console.error(error); toast('Error cargando miembros'); return; }
+  MIEMBROS = (data || []).map(m => ({ id:m.bubble_id, nombre:m.nombre, color:m.color }));
 }
 
 async function loadFranjas() {
@@ -1027,9 +1032,16 @@ function computeEstadoAhora(miembro) {
 // ============================================================
 // RENDER — AHORA
 // ============================================================
+function initials(name) {
+  const parts = (name || '?').trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+}
 function avatarSvg(m, size) {
-  const initial = m.nombre.charAt(0).toUpperCase();
-  return `<div class="avatar" style="background:${m.color}; width:${size}px; height:${size}px; font-size:${size*0.4}px;">${initial}</div>`;
+  const ini = initials(m.nombre);
+  // Letra más pequeña si son 2 iniciales para que quepan.
+  const fontSize = ini.length > 1 ? size*0.36 : size*0.42;
+  return `<div class="avatar" style="background:${m.color}; width:${size}px; height:${size}px; font-size:${fontSize}px;">${ini}</div>`;
 }
 
 function renderAhora() {
@@ -1077,7 +1089,7 @@ function renderAhora() {
 
     card.innerHTML = `
       <div class="now-card-head">
-        <div class="avatar" style="background:${m.color};">${m.nombre.charAt(0)}<span class="avatar-dot ${dotClass}"></span></div>
+        <div class="avatar" style="background:${m.color}; font-size:${initials(m.nombre).length>1?13:15}px;">${initials(m.nombre)}<span class="avatar-dot ${dotClass}"></span></div>
         <span class="now-name">${m.nombre}</span>
         <span class="now-pill ${pillClass}">${st.kind === 'comiendo' ? 'comida' : st.kind}</span>
       </div>
@@ -1135,7 +1147,7 @@ function renderHoy() {
   for (const m of MIEMBROS) {
     const label = document.createElement('div');
     label.className = 'timeline-row-label';
-    label.innerHTML = `<div class="avatar" style="background:${m.color};">${m.nombre.charAt(0)}</div><span>${m.nombre}</span>`;
+    label.innerHTML = `<div class="avatar" style="background:${m.color}; font-size:${initials(m.nombre).length>1?9:11}px;">${initials(m.nombre)}</div><span>${m.nombre}</span>`;
     timeline.appendChild(label);
 
     const bands = document.createElement('div');
