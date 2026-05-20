@@ -1925,9 +1925,24 @@ html.anon-mode .ficha-panel { display:none !important; }
 .combo-results.open { display:block; }
 .combo-cat-header {
   font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-  color:var(--text-tertiary); padding:6px 8px 3px; position:sticky; top:0;
-  background:var(--bg-elevated);
+  color:var(--text-tertiary); padding:7px 8px; position:sticky; top:0;
+  background:var(--bg-elevated); cursor:pointer; user-select:none;
+  display:flex; align-items:center; gap:6px; border-top:1px solid var(--border-default);
 }
+.combo-cat:first-child .combo-cat-header { border-top:none; }
+.combo-cat-header:hover { color:var(--text-secondary); }
+.combo-cat-caret {
+  display:inline-block; width:8px; transition:transform 120ms;
+  color:var(--text-tertiary);
+}
+.combo-cat.open .combo-cat-caret { transform:rotate(90deg); }
+.combo-cat-name { flex:1; }
+.combo-cat-count {
+  font-size:9px; font-weight:600; color:var(--text-tertiary);
+  background:var(--bg-active); padding:1px 5px; border-radius:8px;
+}
+.combo-cat-items { display:none; }
+.combo-cat.open .combo-cat-items { display:block; }
 .combo-item {
   display:flex; align-items:center; gap:6px;
   padding:6px 8px; font-size:11px; color:var(--text-primary); cursor:pointer;
@@ -4244,23 +4259,41 @@ function setupServicioCombobox(catalog) {
       results.innerHTML = '<div class="combo-empty">Sin coincidencias. Prueba con otra palabra.</div>';
       return;
     }
-    let lastCat = null;
-    results.innerHTML = matches.map(f => {
-      const header = f.categoria_nombre !== lastCat
-        ? `<div class="combo-cat-header">${escapeHtml(f.categoria_nombre || '—')}</div>` : '';
-      lastCat = f.categoria_nombre;
-      const statusChip = f.estado && f.estado !== 'publicada'
-        ? `<span class="combo-status">${escapeHtml(f.estado)}</span>` : '';
-      return header + `
-        <div class="combo-item" data-id="${escapeHtml(f.id)}"
-             data-titulo="${escapeHtml(f.titulo)}"
-             data-cat-nombre="${escapeHtml(f.categoria_nombre || '')}"
-             data-cat-color="${escapeHtml(f.categoria_color || '')}">
-          <span class="combo-dot" style="background:${escapeHtml(f.categoria_color || '#6b7280')}"></span>
-          <span class="combo-title">${escapeHtml(f.titulo)}</span>
-          ${statusChip}
-        </div>`;
-    }).join('');
+    // Agrupar por categoría manteniendo el orden del catálogo.
+    const grouped = [];
+    const byCat = {};
+    matches.forEach(f => {
+      const key = f.categoria_nombre || '—';
+      if (!(key in byCat)) {
+        byCat[key] = { nombre: key, items: [] };
+        grouped.push(byCat[key]);
+      }
+      byCat[key].items.push(f);
+    });
+    const autoOpen = tokens.length > 0;  // con búsqueda → todas abiertas
+    results.innerHTML = grouped.map(g => `
+      <div class="combo-cat${autoOpen ? ' open' : ''}" data-cat="${escapeHtml(g.nombre)}">
+        <div class="combo-cat-header" data-action="toggle-cat">
+          <span class="combo-cat-caret">▶</span>
+          <span class="combo-cat-name">${escapeHtml(g.nombre)}</span>
+          <span class="combo-cat-count">${g.items.length}</span>
+        </div>
+        <div class="combo-cat-items">
+          ${g.items.map(f => {
+            const statusChip = f.estado && f.estado !== 'publicada'
+              ? `<span class="combo-status">${escapeHtml(f.estado)}</span>` : '';
+            return `
+              <div class="combo-item" data-id="${escapeHtml(f.id)}"
+                   data-titulo="${escapeHtml(f.titulo)}"
+                   data-cat-nombre="${escapeHtml(f.categoria_nombre || '')}"
+                   data-cat-color="${escapeHtml(f.categoria_color || '')}">
+                <span class="combo-dot" style="background:${escapeHtml(f.categoria_color || '#6b7280')}"></span>
+                <span class="combo-title">${escapeHtml(f.titulo)}</span>
+                ${statusChip}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('');
   }
 
   function selectItem(item) {
@@ -4296,6 +4329,12 @@ function setupServicioCombobox(catalog) {
     results.classList.add('open');
   });
   results.addEventListener('mousedown', e => {
+    const header = e.target.closest('[data-action="toggle-cat"]');
+    if (header) {
+      e.preventDefault();
+      header.closest('.combo-cat')?.classList.toggle('open');
+      return;
+    }
     const item = e.target.closest('.combo-item');
     if (!item) return;
     e.preventDefault();
