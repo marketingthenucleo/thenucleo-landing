@@ -374,6 +374,37 @@ button { font-family:inherit; }
 [data-theme="light"] .theme-switch .icon-sun { display:inline-block; }
 .theme-switch .icon-moon { display:inline-block; }
 
+/* Estado filter */
+.estado-filter {
+  display:inline-flex; align-items:center; gap:2px;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-sm); padding:3px;
+}
+.estado-filter button {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px; border:none; border-radius:4px;
+  font-size:11px; font-weight:500; font-family:var(--font-ui);
+  color:var(--text-tertiary); background:transparent; cursor:pointer;
+  transition:all var(--duration-fast);
+}
+.estado-filter button.active { background:var(--bg-active); color:var(--text-primary); }
+.estado-filter button:hover:not(.active) { color:var(--text-secondary); background:var(--bg-hover); }
+.estado-filter button .ef-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.estado-filter button[data-estado="all"] .ef-dot       { background:var(--text-tertiary); }
+.estado-filter button[data-estado="publicada"] .ef-dot { background:var(--status-success); }
+.estado-filter button[data-estado="borrador"] .ef-dot  { background:var(--status-warning); }
+.estado-filter button[data-estado="archivada"] .ef-dot { background:var(--text-tertiary); opacity:.5; }
+.estado-filter button .ef-count {
+  font-size:10px; font-weight:600;
+  padding:0 6px; border-radius:999px;
+  background:var(--bg-base); color:var(--text-tertiary);
+  min-width:16px; text-align:center;
+}
+.estado-filter button.active .ef-count { color:var(--text-primary); background:var(--bg-card); }
+@media (max-width:680px) {
+  .estado-filter button .ef-label { display:none; }
+}
+
 /* View toggle */
 .view-toggle {
   display:inline-flex; align-items:center; gap:2px;
@@ -500,6 +531,20 @@ button { font-family:inherit; }
     </div>
     <div class="topbar-right">
       <span class="save-indicator" id="save-indicator"><span class="dot"></span><span id="save-label">Guardado</span></span>
+      <div class="estado-filter" id="estado-filter" role="tablist" aria-label="Filtrar por estado">
+        <button type="button" data-estado="all" class="active" role="tab" aria-selected="true" title="Todas">
+          <span class="ef-dot"></span><span class="ef-label">Todas</span><span class="ef-count">0</span>
+        </button>
+        <button type="button" data-estado="publicada" role="tab" aria-selected="false" title="Publicadas">
+          <span class="ef-dot"></span><span class="ef-label">Publicadas</span><span class="ef-count">0</span>
+        </button>
+        <button type="button" data-estado="borrador" role="tab" aria-selected="false" title="Borrador">
+          <span class="ef-dot"></span><span class="ef-label">Borrador</span><span class="ef-count">0</span>
+        </button>
+        <button type="button" data-estado="archivada" role="tab" aria-selected="false" title="Archivadas">
+          <span class="ef-dot"></span><span class="ef-label">Archivadas</span><span class="ef-count">0</span>
+        </button>
+      </div>
       <div class="view-toggle" id="view-toggle">
         <button class="active" data-view="cards" title="Vista tarjetas">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -612,7 +657,22 @@ const STATE = {
   fichas: [],
   canEdit: false,
   view: 'cards',
+  estadoFilter: 'all',   // 'all' | 'publicada' | 'borrador' | 'archivada'
 };
+
+function getFilteredFichas() {
+  if (STATE.estadoFilter === 'all') return STATE.fichas;
+  return STATE.fichas.filter(f => f.estado === STATE.estadoFilter);
+}
+
+function updateEstadoFilterCounts() {
+  const counts = { all: STATE.fichas.length, publicada: 0, borrador: 0, archivada: 0 };
+  STATE.fichas.forEach(f => { if (counts[f.estado] !== undefined) counts[f.estado]++; });
+  document.querySelectorAll('#estado-filter button').forEach(btn => {
+    const c = btn.querySelector('.ef-count');
+    if (c) c.textContent = counts[btn.dataset.estado] ?? 0;
+  });
+}
 
 // ============================================================
 // GATE — anon o autenticado-no-admin
@@ -841,8 +901,11 @@ function escapeHtml(s) {
 
 function renderSidebar() {
   const list = document.getElementById('cat-list');
+  const fichasVisibles = getFilteredFichas();
+  const filtered = STATE.estadoFilter !== 'all';
   list.innerHTML = STATE.categorias.map(c => {
-    const count = STATE.fichas.filter(f => f.categoria_id === c.id).length;
+    const count = fichasVisibles.filter(f => f.categoria_id === c.id).length;
+    if (filtered && count === 0) return '';
     return `<div class="cat-link" data-cat="${c.id}">
       <span class="cat-dot" style="background:${c.color || '#888'}"></span>
       <span class="cat-name">${escapeHtml(c.nombre)}</span>
@@ -864,10 +927,13 @@ function renderMain() {
     main.innerHTML = '<div class="empty-cat">No hay categorías cargadas.</div>';
     return;
   }
+  const fichasVisibles = getFilteredFichas();
+  const filtered = STATE.estadoFilter !== 'all';
   const html = STATE.categorias.map(cat => {
-    const fichasCat = STATE.fichas
+    const fichasCat = fichasVisibles
       .filter(f => f.categoria_id === cat.id)
       .sort((a,b) => a.orden - b.orden);
+    if (filtered && fichasCat.length === 0) return '';
     const fichasHtml = fichasCat.length
       ? fichasCat.map(f => renderFicha(f)).join('')
       : '<div class="empty-cat">Sin fichas todavía. Pulsa "+ Nueva ficha" para crear la primera.</div>';
@@ -884,7 +950,9 @@ function renderMain() {
       </section>
     `;
   }).join('');
-  main.innerHTML = html;
+  main.innerHTML = html.trim()
+    ? html
+    : `<div class="empty-cat">No hay fichas en estado <strong>${escapeHtml(STATE.estadoFilter)}</strong>.</div>`;
   attachEditableHandlers();
   attachToolbarHandlers();
 }
@@ -906,9 +974,12 @@ function renderTable() {
     { key:'sop_url',      label:'SOP',                       placeholder:'https://…', isUrl:true },
   ];
   const editable = STATE.canEdit ? 'contenteditable="plaintext-only"' : '';
+  const fichasVisibles = getFilteredFichas();
+  const filtered = STATE.estadoFilter !== 'all';
   let rows = '';
   STATE.categorias.forEach(cat => {
-    const fichasCat = STATE.fichas.filter(f => f.categoria_id === cat.id).sort((a,b) => a.orden - b.orden);
+    const fichasCat = fichasVisibles.filter(f => f.categoria_id === cat.id).sort((a,b) => a.orden - b.orden);
+    if (filtered && fichasCat.length === 0) return;
     rows += `<tr class="cat-row"><td colspan="${cols.length}"><span class="cat-bar" style="background:${cat.color||'#888'}"></span>${escapeHtml(cat.nombre)} <span style="color:var(--text-tertiary);font-weight:400;">(${fichasCat.length})</span>${STATE.canEdit ? `&ensp;<button class="btn-add" style="padding:3px 10px;font-size:11px;" data-action="add-ficha" data-cat="${cat.id}">+ ficha</button>` : ''}</td></tr>`;
     if (!fichasCat.length) {
       rows += `<tr><td colspan="${cols.length}" style="padding:10px 12px;color:var(--text-tertiary);font-style:italic;font-size:12px;">Sin fichas todavía.</td></tr>`;
@@ -930,6 +1001,10 @@ function renderTable() {
       });
     }
   });
+  if (!rows.trim()) {
+    main.innerHTML = `<div class="empty-cat">No hay fichas en estado <strong>${escapeHtml(STATE.estadoFilter)}</strong>.</div>`;
+    return;
+  }
   main.innerHTML = `
     <div class="table-wrap">
       <table class="fichas-table">
@@ -1072,6 +1147,7 @@ function closeAllPopovers() {
 }
 
 function renderAll() {
+  updateEstadoFilterCounts();
   renderSidebar();
   renderMain();
   renderCatAddUI();
@@ -1204,6 +1280,21 @@ document.querySelectorAll('#view-toggle button').forEach(btn => {
     STATE.view = btn.dataset.view;
     document.querySelectorAll('#view-toggle button').forEach(b => b.classList.toggle('active', b === btn));
     renderMain();
+  });
+});
+
+// ============================================================
+// ESTADO FILTER
+// ============================================================
+document.querySelectorAll('#estado-filter button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    STATE.estadoFilter = btn.dataset.estado;
+    document.querySelectorAll('#estado-filter button').forEach(b => {
+      const active = b === btn;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', String(active));
+    });
+    renderAll();
   });
 });
 
