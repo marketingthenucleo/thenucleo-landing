@@ -1904,6 +1904,43 @@ html.anon-mode .ficha-panel { display:none !important; }
 .add-servicio-row { display:flex; gap:5px; }
 .add-servicio-row .add-servicio-input { flex:1; min-width:0; }
 .add-servicio-actions { display:flex; gap:5px; justify-content:flex-end; margin-top:2px; }
+
+/* Combobox de búsqueda en el catálogo */
+.combo-servicio { position:relative; }
+.combo-servicio .combo-clear {
+  position:absolute; top:50%; right:8px; transform:translateY(-50%);
+  width:18px; height:18px; display:none; align-items:center; justify-content:center;
+  border:none; background:transparent; color:var(--text-tertiary); cursor:pointer;
+  font-size:14px; line-height:1; border-radius:3px;
+}
+.combo-servicio .combo-clear:hover { background:var(--bg-hover); color:var(--text-primary); }
+.combo-servicio.has-value .combo-clear { display:inline-flex; }
+.combo-results {
+  position:absolute; top:calc(100% + 2px); left:0; right:0;
+  max-height:240px; overflow-y:auto;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-sm); box-shadow:0 8px 22px rgba(0,0,0,.35);
+  z-index:50; display:none;
+}
+.combo-results.open { display:block; }
+.combo-cat-header {
+  font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--text-tertiary); padding:6px 8px 3px; position:sticky; top:0;
+  background:var(--bg-elevated);
+}
+.combo-item {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 8px; font-size:11px; color:var(--text-primary); cursor:pointer;
+  border-top:1px solid transparent;
+}
+.combo-item:hover, .combo-item.active { background:var(--bg-hover); }
+.combo-item .combo-dot {
+  display:inline-block; width:7px; height:7px; border-radius:50%; flex-shrink:0;
+}
+.combo-item .combo-title { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.combo-empty {
+  padding:10px 8px; font-size:11px; color:var(--text-tertiary); font-style:italic;
+}
 .ficha-add-btn {
   display:flex; align-items:center; justify-content:center; gap:6px;
   width:100%; height:30px;
@@ -3962,7 +3999,7 @@ async function loadFichasCatalog() {
   if (!token) return [];
   try {
     const [fichasRes, catsRes] = await Promise.all([
-      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_de_producto?select=id,titulo,categoria_id,estado&order=categoria_id.asc,orden.asc`, {
+      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_de_producto?select=id,titulo,categoria_id,estado&estado=eq.publicada&order=categoria_id.asc,orden.asc`, {
         headers: { apikey: window.__SUPABASE_ANON_KEY__, Authorization: 'Bearer ' + token },
       }),
       fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_categorias?select=id,nombre,color&order=orden.asc`, {
@@ -4032,7 +4069,6 @@ function renderServiciosList(servicios, bubbleId) {
         ${escapeHtml(s.ficha_titulo)}
       </div>
       <div class="servicio-meta">
-        ${s.precio != null ? `<span class="servicio-meta-chip">${fichaEuro(s.precio)} / ${escapeHtml(s.periodo||'mes')}</span>` : ''}
         ${s.unidades ? `<span class="servicio-meta-chip">${escapeHtml(s.unidades)}</span>` : ''}
         ${s.notas ? `<span class="servicio-meta-chip" title="${escapeHtml(s.notas)}" style="color:var(--text-tertiary);">${escapeHtml(s.notas.length>28?s.notas.slice(0,28)+'…':s.notas)}</span>` : ''}
         ${s.categoria_nombre&&s.categoria_nombre!=='—' ? `<span class="servicio-meta-chip" style="color:var(--text-tertiary);">${escapeHtml(s.categoria_nombre)}</span>` : ''}
@@ -4114,22 +4150,22 @@ function renderFichaPanel(data, bubbleId) {
       </div>
       <div id="ficha-servicios-list">${renderServiciosList(servicios,bubbleId)}</div>
       <div class="add-servicio-form" id="add-servicio-form">
-        <select class="add-servicio-select" id="add-servicio-ficha-select">
-          <option value="">— Selecciona del catálogo —</option>
-        </select>
-        <div class="add-servicio-row">
-          <input type="number" class="add-servicio-input" id="add-servicio-precio" placeholder="€/mes" min="0" step="1" style="width:90px;min-width:0;flex-shrink:0;">
-          <input type="text" class="add-servicio-input" id="add-servicio-unidades" placeholder="Unidades (3 posts/mes…)">
+        <div class="combo-servicio" id="add-servicio-combo">
+          <input type="text" class="add-servicio-input" id="add-servicio-search" placeholder="Buscar servicio del catálogo…" autocomplete="off">
+          <button type="button" class="combo-clear" id="add-servicio-clear" title="Limpiar" tabindex="-1">×</button>
+          <input type="hidden" id="add-servicio-ficha-id">
+          <div class="combo-results" id="add-servicio-results"></div>
         </div>
         <div class="add-servicio-row">
+          <input type="text" class="add-servicio-input" id="add-servicio-unidades" placeholder="Unidades (3 posts/mes…)">
           <select class="add-servicio-select" id="add-servicio-periodo" style="width:120px;min-width:0;flex-shrink:0;">
             <option value="mensual">Mensual</option>
             <option value="trimestral">Trimestral</option>
             <option value="anual">Anual</option>
             <option value="único">Único</option>
           </select>
-          <input type="text" class="add-servicio-input" id="add-servicio-notas" placeholder="Notas…">
         </div>
+        <input type="text" class="add-servicio-input" id="add-servicio-notas" placeholder="Notas…">
         <div class="add-servicio-actions">
           <button class="btn btn--secondary btn--sm" id="add-servicio-cancel">Cancelar</button>
           <button class="btn btn--primary btn--sm" id="add-servicio-save">Añadir</button>
@@ -4145,26 +4181,90 @@ function renderFichaPanel(data, bubbleId) {
   `;
 
   bindServicioForm(bubbleId);
-  loadFichasCatalog().then(catalog => {
-    const sel = document.getElementById('add-servicio-ficha-select');
-    if (!sel) return;
+  loadFichasCatalog().then(catalog => setupServicioCombobox(catalog));
+}
+
+function fichaNormalize(s) {
+  return (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function setupServicioCombobox(catalog) {
+  const wrap    = document.getElementById('add-servicio-combo');
+  const search  = document.getElementById('add-servicio-search');
+  const hidden  = document.getElementById('add-servicio-ficha-id');
+  const results = document.getElementById('add-servicio-results');
+  const clear   = document.getElementById('add-servicio-clear');
+  if (!wrap || !search || !hidden || !results || !clear) return;
+
+  function renderResults(filter) {
+    const q = fichaNormalize(filter);
+    const matches = q
+      ? catalog.filter(f => fichaNormalize(f.titulo).includes(q) || fichaNormalize(f.categoria_nombre).includes(q))
+      : catalog;
+    if (!matches.length) {
+      results.innerHTML = '<div class="combo-empty">Sin resultados en el catálogo publicado.</div>';
+      return;
+    }
     let lastCat = null;
-    catalog.forEach(f => {
-      if (f.categoria_nombre !== lastCat) {
-        lastCat = f.categoria_nombre;
-        const og = document.createElement('optgroup');
-        og.label = f.categoria_nombre;
-        sel.appendChild(og);
-      }
-      const opt = document.createElement('option');
-      opt.value = f.id;
-      opt.textContent = f.titulo;
-      opt.dataset.catNombre = f.categoria_nombre;
-      opt.dataset.catColor  = f.categoria_color;
-      opt.dataset.titulo    = f.titulo;
-      sel.appendChild(opt);
-    });
+    results.innerHTML = matches.map(f => {
+      const header = f.categoria_nombre !== lastCat
+        ? `<div class="combo-cat-header">${escapeHtml(f.categoria_nombre || '—')}</div>` : '';
+      lastCat = f.categoria_nombre;
+      return header + `
+        <div class="combo-item" data-id="${escapeHtml(f.id)}"
+             data-titulo="${escapeHtml(f.titulo)}"
+             data-cat-nombre="${escapeHtml(f.categoria_nombre || '')}"
+             data-cat-color="${escapeHtml(f.categoria_color || '')}">
+          <span class="combo-dot" style="background:${escapeHtml(f.categoria_color || '#6b7280')}"></span>
+          <span class="combo-title">${escapeHtml(f.titulo)}</span>
+        </div>`;
+    }).join('');
+  }
+
+  function selectItem(item) {
+    hidden.value = item.dataset.id;
+    hidden.dataset.titulo    = item.dataset.titulo;
+    hidden.dataset.catNombre = item.dataset.catNombre;
+    hidden.dataset.catColor  = item.dataset.catColor;
+    search.value = item.dataset.titulo;
+    wrap.classList.add('has-value');
+    results.classList.remove('open');
+  }
+
+  function clearSelection() {
+    hidden.value = '';
+    delete hidden.dataset.titulo;
+    delete hidden.dataset.catNombre;
+    delete hidden.dataset.catColor;
+    search.value = '';
+    wrap.classList.remove('has-value');
+    renderResults('');
+  }
+
+  search.addEventListener('focus', () => {
+    renderResults(search.value);
+    results.classList.add('open');
   });
+  search.addEventListener('input', () => {
+    if (hidden.value) {
+      hidden.value = '';
+      wrap.classList.remove('has-value');
+    }
+    renderResults(search.value);
+    results.classList.add('open');
+  });
+  results.addEventListener('mousedown', e => {
+    const item = e.target.closest('.combo-item');
+    if (!item) return;
+    e.preventDefault();
+    selectItem(item);
+  });
+  clear.addEventListener('click', () => { clearSelection(); search.focus(); });
+  document.addEventListener('mousedown', e => {
+    if (!wrap.contains(e.target)) results.classList.remove('open');
+  });
+
+  renderResults('');
 }
 
 function bindServicioForm(bubbleId) {
@@ -4178,28 +4278,36 @@ function bindServicioForm(bubbleId) {
 }
 
 function fichaResetForm() {
-  ['add-servicio-ficha-select','add-servicio-precio','add-servicio-unidades','add-servicio-notas']
+  ['add-servicio-search','add-servicio-unidades','add-servicio-notas']
     .forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
+  const hidden = document.getElementById('add-servicio-ficha-id');
+  if (hidden) {
+    hidden.value = '';
+    delete hidden.dataset.titulo;
+    delete hidden.dataset.catNombre;
+    delete hidden.dataset.catColor;
+  }
+  const wrap = document.getElementById('add-servicio-combo');
+  if (wrap) wrap.classList.remove('has-value');
+  const results = document.getElementById('add-servicio-results');
+  if (results) results.classList.remove('open');
   const per = document.getElementById('add-servicio-periodo');
   if (per) per.value = 'mensual';
 }
 
 async function fichaDoAdd(bubbleId) {
-  const fichaEl    = document.getElementById('add-servicio-ficha-select');
-  const precioEl   = document.getElementById('add-servicio-precio');
+  const hidden     = document.getElementById('add-servicio-ficha-id');
   const unidadesEl = document.getElementById('add-servicio-unidades');
   const periodoEl  = document.getElementById('add-servicio-periodo');
   const notasEl    = document.getElementById('add-servicio-notas');
   const saveBtn    = document.getElementById('add-servicio-save');
-  if (!fichaEl?.value) { alert('Selecciona un servicio del catálogo.'); return; }
-  const opt  = fichaEl.options[fichaEl.selectedIndex];
+  if (!hidden?.value) { alert('Selecciona un servicio del catálogo.'); return; }
   const body = {
     cliente_bubble_id: bubbleId,
-    ficha_id:          fichaEl.value,
-    ficha_titulo:      opt.dataset.titulo || opt.textContent.trim(),
-    categoria_nombre:  opt.dataset.catNombre || null,
-    categoria_color:   opt.dataset.catColor  || null,
-    precio:    precioEl?.value !== '' ? Number(precioEl.value) : null,
+    ficha_id:          hidden.value,
+    ficha_titulo:      hidden.dataset.titulo || '',
+    categoria_nombre:  hidden.dataset.catNombre || null,
+    categoria_color:   hidden.dataset.catColor  || null,
     unidades:  unidadesEl?.value.trim() || null,
     periodo:   periodoEl?.value || 'mensual',
     notas:     notasEl?.value.trim() || null,
@@ -4269,15 +4377,12 @@ window.fichaEditServicio = async function(id) {
     <div style="display:flex;flex-direction:column;gap:6px;">
       <div style="font-size:10px;font-weight:600;color:var(--text-tertiary);">${escapeHtml(s.ficha_titulo)}</div>
       <div class="add-servicio-row">
-        <input type="number" class="add-servicio-input" id="edit-precio-${id}" placeholder="€/mes" value="${s.precio??''}" style="width:90px;min-width:0;flex-shrink:0;">
-        <input type="text"   class="add-servicio-input" id="edit-unidades-${id}" placeholder="Unidades" value="${escapeHtml(s.unidades||'')}">
-      </div>
-      <div class="add-servicio-row">
+        <input type="text" class="add-servicio-input" id="edit-unidades-${id}" placeholder="Unidades" value="${escapeHtml(s.unidades||'')}">
         <select class="add-servicio-select" id="edit-periodo-${id}" style="width:120px;min-width:0;flex-shrink:0;">
           ${['mensual','trimestral','anual','único'].map(p=>`<option value="${p}"${s.periodo===p?' selected':''}>${p.charAt(0).toUpperCase()+p.slice(1)}</option>`).join('')}
         </select>
-        <input type="text" class="add-servicio-input" id="edit-notas-${id}" placeholder="Notas…" value="${escapeHtml(s.notas||'')}">
       </div>
+      <input type="text" class="add-servicio-input" id="edit-notas-${id}" placeholder="Notas…" value="${escapeHtml(s.notas||'')}">
       <div class="add-servicio-actions">
         <button class="btn btn--secondary btn--sm" onclick="fichaCancelEdit('${escapeHtml(id)}')">Cancelar</button>
         <button class="btn btn--primary btn--sm" onclick="fichaSaveEdit('${escapeHtml(id)}','${escapeHtml(bubbleId)}')">Guardar</button>
@@ -4292,14 +4397,12 @@ window.fichaCancelEdit = function(id) {
 };
 
 window.fichaSaveEdit = async function(id, bubbleId) {
-  const precio    = document.getElementById(`edit-precio-${id}`)?.value;
   const unidades  = document.getElementById(`edit-unidades-${id}`)?.value.trim();
   const periodo   = document.getElementById(`edit-periodo-${id}`)?.value;
   const notas     = document.getElementById(`edit-notas-${id}`)?.value.trim();
   const token = getAccessToken();
   if (!token) return;
   const body = {
-    precio:   precio!=='' ? Number(precio) : null,
     unidades: unidades || null,
     periodo:  periodo  || 'mensual',
     notas:    notas    || null,
