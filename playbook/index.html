@@ -4019,7 +4019,7 @@ async function loadFichasCatalog() {
   if (!token) return [];
   try {
     const [fichasRes, catsRes] = await Promise.all([
-      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_de_producto?select=id,titulo,categoria_id,estado&order=categoria_id.asc,orden.asc`, {
+      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_de_producto?select=id,titulo,categoria_id,estado,unidad&order=categoria_id.asc,orden.asc`, {
         headers: { apikey: window.__SUPABASE_ANON_KEY__, Authorization: 'Bearer ' + token },
       }),
       fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_categorias?select=id,nombre,color&order=orden.asc`, {
@@ -4304,6 +4304,10 @@ function setupServicioCombobox(catalog) {
     search.value = item.dataset.titulo;
     wrap.classList.add('has-value');
     results.classList.remove('open');
+    // Autofill unidades con el estándar de la ficha del catálogo.
+    const f = catalog.find(x => x.id === item.dataset.id);
+    const unidadesEl = document.getElementById('add-servicio-unidades');
+    if (f && unidadesEl) unidadesEl.value = f.unidad || '';
   }
 
   function clearSelection() {
