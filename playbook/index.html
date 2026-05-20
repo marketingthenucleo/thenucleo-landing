@@ -1888,6 +1888,29 @@ html.anon-mode .ficha-panel { display:none !important; }
 .servicio-btn:hover { background:var(--bg-hover); color:var(--text-primary); }
 .servicio-btn.del:hover { background:var(--status-error-bg); color:var(--status-error); }
 
+/* Acordeón por categoría dentro de Servicios contratados */
+.servicio-cat { margin-bottom:6px; }
+.servicio-cat:last-child { margin-bottom:0; }
+.servicio-cat-header {
+  cursor:pointer; user-select:none;
+  display:flex; align-items:center; gap:6px;
+  padding:5px 8px; border-radius:var(--radius-sm);
+  background:var(--bg-hover); border:1px solid transparent;
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--text-secondary);
+}
+.servicio-cat-header:hover { background:var(--bg-active); border-color:var(--border-default); }
+.servicio-cat-caret { display:inline-block; width:8px; transition:transform 120ms; color:var(--text-tertiary); }
+.servicio-cat.open .servicio-cat-caret { transform:rotate(90deg); }
+.servicio-cat-dot-sm { display:inline-block; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.servicio-cat-name { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.servicio-cat-count {
+  font-size:9px; font-weight:600; color:var(--text-tertiary);
+  background:var(--bg-elevated); padding:1px 6px; border-radius:8px;
+}
+.servicio-cat-items { display:none; padding:6px 0 0 4px; }
+.servicio-cat.open .servicio-cat-items { display:block; }
+
 /* Add-servicio form */
 .add-servicio-form {
   border:1px dashed var(--border-default); border-radius:var(--radius-md);
@@ -4078,11 +4101,8 @@ function fichaEuro(n) {
   return Number(n).toLocaleString('es', { style:'currency', currency:'EUR', maximumFractionDigits:0 });
 }
 
-function renderServiciosList(servicios, bubbleId) {
-  if (!servicios.length) {
-    return '<div style="font-size:11px;color:var(--text-tertiary);padding:2px 0;">Sin servicios asignados aún.</div>';
-  }
-  return servicios.map(s => `
+function renderServicioCard(s, bubbleId) {
+  return `
     <div class="servicio-item" data-id="${escapeHtml(s.id)}">
       <div class="servicio-titulo">
         <span class="servicio-cat-dot" style="background:${escapeHtml(s.categoria_color||'#6b7280')}"></span>
@@ -4096,6 +4116,36 @@ function renderServiciosList(servicios, bubbleId) {
       <div class="servicio-actions">
         <button class="servicio-btn edit" title="Editar" onclick="fichaEditServicio('${escapeHtml(s.id)}')">✎</button>
         <button class="servicio-btn del" title="Eliminar" onclick="fichaDeleteServicio('${escapeHtml(s.id)}','${escapeHtml(bubbleId)}')">✕</button>
+      </div>
+    </div>`;
+}
+
+function renderServiciosList(servicios, bubbleId) {
+  if (!servicios.length) {
+    return '<div style="font-size:11px;color:var(--text-tertiary);padding:2px 0;">Sin servicios asignados aún.</div>';
+  }
+  // Agrupar por categoría manteniendo orden de inserción.
+  const grouped = [];
+  const byCat = {};
+  servicios.forEach(s => {
+    const key = s.categoria_nombre || '—';
+    if (!(key in byCat)) {
+      byCat[key] = { nombre: key, color: s.categoria_color || '#6b7280', items: [] };
+      grouped.push(byCat[key]);
+    }
+    byCat[key].items.push(s);
+  });
+  const onlyOne = grouped.length === 1;
+  return grouped.map(g => `
+    <div class="servicio-cat${onlyOne ? ' open' : ''}" data-cat="${escapeHtml(g.nombre)}">
+      <div class="servicio-cat-header" data-action="toggle-servicio-cat">
+        <span class="servicio-cat-caret">▶</span>
+        <span class="servicio-cat-dot-sm" style="background:${escapeHtml(g.color)}"></span>
+        <span class="servicio-cat-name">${escapeHtml(g.nombre)}</span>
+        <span class="servicio-cat-count">${g.items.length}</span>
+      </div>
+      <div class="servicio-cat-items">
+        ${g.items.map(s => renderServicioCard(s, bubbleId)).join('')}
       </div>
     </div>`).join('');
 }
@@ -4360,6 +4410,16 @@ function bindServicioForm(bubbleId) {
   if (btn)    btn.addEventListener('click', () => { form.classList.add('open'); btn.style.display='none'; });
   if (cancel) cancel.addEventListener('click', () => { form.classList.remove('open'); if(btn)btn.style.display=''; fichaResetForm(); });
   if (save)   save.addEventListener('click', () => fichaDoAdd(bubbleId));
+  // Toggle de cada categoría en la lista de servicios (delegado al contenedor,
+  // sobrevive a los re-render inline que hace fichaDoAdd/Delete/SaveEdit).
+  const list = document.getElementById('ficha-servicios-list');
+  if (list) {
+    list.addEventListener('click', e => {
+      const header = e.target.closest('[data-action="toggle-servicio-cat"]');
+      if (!header) return;
+      header.closest('.servicio-cat')?.classList.toggle('open');
+    });
+  }
 }
 
 function fichaResetForm() {
