@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disponibilidades · TheNucleo</title>
+<meta name="robots" content="noindex,nofollow">
+
+<script>
+(function () {
+  document.documentElement.classList.add('locked-mode');
+})();
+</script>
+
+<style>
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Light.woff2') format('woff2'); font-weight:300; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+
+:root {
+  --bg-base:#090a0f; --bg-card:#12141b; --bg-elevated:#1a1d27;
+  --bg-hover:#1e2130; --bg-active:#252836;
+  --border-subtle:#1e2130; --border-default:#2a2d3e; --border-strong:#363a4e;
+  --text-primary:#edeef3; --text-secondary:#8b8fa8; --text-tertiary:#5c6078; --text-inverse:#090a0f;
+  --accent-primary:#22c55e; --accent-primary-hover:#16a34a; --accent-primary-muted:rgba(34,197,94,0.12);
+  --accent-secondary:#3b82f6; --accent-secondary-hover:#2563eb; --accent-secondary-muted:rgba(59,130,246,0.12);
+  --status-success:#22c55e; --status-success-bg:rgba(34,197,94,0.10);
+  --status-warning:#f59e0b; --status-warning-bg:rgba(245,158,11,0.10);
+  --status-error:#ef4444;   --status-error-bg:rgba(239,68,68,0.10);
+  --status-info:#3b82f6;    --status-info-bg:rgba(59,130,246,0.10);
+  --status-neutral:#6b7280; --status-neutral-bg:rgba(107,114,128,0.10);
+  --status-violet:#8b5cf6;  --status-violet-bg:rgba(139,92,246,0.10);
+  --font-ui:'NewBlack',sans-serif;
+  --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px;
+  --ease-out:cubic-bezier(0.16,1,0.3,1); --duration-fast:150ms; --duration-base:200ms; --duration-slow:300ms;
+
+  --band-activo:    var(--accent-primary);
+  --band-comida:    var(--status-warning);
+  --band-fuera:     var(--status-neutral);
+  --band-medico:    var(--status-warning);
+  --band-enfermo:   var(--status-error);
+  --band-llegatarde:var(--accent-secondary);
+  --band-saleantes: var(--accent-secondary);
+  --band-vacaciones:var(--status-violet);
+  --band-otro:      var(--text-tertiary);
+}
+
+[data-theme="light"] {
+  --bg-base:#f5f6f8; --bg-card:#ffffff; --bg-elevated:#f0f2f6;
+  --bg-hover:#eef0f4; --bg-active:#e4e6ec;
+  --border-subtle:#e4e6ec; --border-default:#d0d3dc; --border-strong:#a0a4b2;
+  --text-primary:#111827; --text-secondary:#4b5563; --text-tertiary:#9ca3af; --text-inverse:#ffffff;
+  --accent-primary:#16a34a; --accent-primary-hover:#15803d; --accent-primary-muted:rgba(22,163,74,0.10);
+  --accent-secondary:#2563eb; --accent-secondary-hover:#1d4ed8; --accent-secondary-muted:rgba(37,99,235,0.10);
+  --status-success:#16a34a; --status-success-bg:rgba(22,163,74,0.10);
+  --status-warning:#d97706; --status-warning-bg:rgba(217,119,6,0.10);
+  --status-error:#dc2626;   --status-error-bg:rgba(220,38,38,0.10);
+  --status-info:#2563eb;    --status-info-bg:rgba(37,99,235,0.10);
+  --status-neutral:#6b7280; --status-neutral-bg:rgba(107,114,128,0.10);
+  --status-violet:#7c3aed;  --status-violet-bg:rgba(124,58,237,0.10);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+html.locked-mode .app { visibility:hidden; }
+html.locked-mode .gate { display:flex !important; }
+
+body {
+  font-family:var(--font-ui);
+  background:var(--bg-base);
+  color:var(--text-primary);
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+a { color:inherit; text-decoration:none; }
+button { font-family:inherit; cursor:pointer; }
+
+/* ============================================================
+   GATE
+   ============================================================ */
+.gate {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:var(--bg-base); align-items:center; justify-content:center;
+  flex-direction:column; gap:20px; padding:32px; text-align:center;
+}
+.gate-icon { font-size:56px; opacity:.5; }
+.gate h1 { font-size:22px; font-weight:600; }
+.gate p { color:var(--text-secondary); max-width:440px; line-height:1.55; }
+.gate-actions { display:flex; gap:10px; margin-top:10px; }
+.gate-btn-primary {
+  background:var(--accent-primary); color:var(--text-inverse);
+  border:none; padding:10px 18px; border-radius:var(--radius-md);
+  font-weight:600; font-size:13px; font-family:var(--font-ui);
+}
+.gate-btn-primary:hover { background:var(--accent-primary-hover); }
+.gate-btn-ghost {
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); padding:10px 18px;
+  border-radius:var(--radius-md); font-size:13px; font-family:var(--font-ui);
+}
+.gate-btn-ghost:hover { color:var(--text-primary); border-color:var(--border-strong); }
+
+/* ============================================================
+   AUTH BAR
+   ============================================================ */
+.auth-bar {
+  position:sticky; top:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px;
+  background:var(--bg-card);
+  border-bottom:1px solid var(--border-subtle);
+  font-size:12px;
+}
+.auth-bar-left { display:flex; align-items:center; gap:10px; }
+.auth-bar-title { font-size:13px; font-weight:600; }
+.auth-bar-mode {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px; border-radius:999px;
+  font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.6px;
+}
+.auth-bar-mode.editor { background:var(--status-success-bg); color:var(--status-success); }
+.auth-bar-mode .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+.auth-bar-actions { display:flex; align-items:center; gap:8px; }
+.auth-bar-meta { color:var(--text-tertiary); font-size:11px; }
+
+/* Nav user dropdown */
+.nav-user-wrap { position:relative; }
+.nav-user-btn {
+  width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:var(--radius-sm);
+  cursor:pointer; transition:all 120ms;
+}
+.nav-user-btn:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.nav-user-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0; z-index:300;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:var(--radius-md); padding:6px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.45);
+  min-width:200px;
+  animation:navPopIn 120ms var(--ease-out);
+}
+@keyframes navPopIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.nav-user-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:var(--radius-sm);
+  font-size:13px; font-weight:500; color:var(--text-primary);
+  text-decoration:none; transition:background 120ms;
+}
+.nav-user-item:hover { background:var(--bg-hover); }
+.nav-user-item svg { width:15px; height:15px; color:var(--text-tertiary); flex-shrink:0; }
+.nav-user-item.nav-active { color:var(--accent-primary); }
+.nav-user-item.nav-active svg { color:var(--accent-primary); }
+.nav-user-divider { height:1px; background:var(--border-subtle); margin:4px 0; }
+
+/* Theme + buttons */
+.theme-switch, .btn-sm {
+  display:inline-flex; align-items:center; gap:6px;
+  height:30px; padding:0 12px;
+  font-size:12px; font-weight:500;
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); border-radius:999px;
+  cursor:pointer; font-family:var(--font-ui);
+  transition:all 120ms;
+}
+.theme-switch { padding:0 10px; }
+.theme-switch:hover, .btn-sm:hover { color:var(--text-primary); border-color:var(--border-strong); background:var(--bg-hover); }
+.theme-switch svg { width:14px; height:14px; }
+[data-theme="light"] .theme-switch .icon-moon { display:none; }
+.theme-switch .icon-sun { display:none; }
+[data-theme="light"] .theme-switch .icon-sun { display:inline-block; }
+.theme-switch .icon-moon { display:inline-block; }
+
+/* ============================================================
+   APP LAYOUT
+   ============================================================ */
+.app { display:flex; flex-direction:column; min-height:100vh; }
+
+/* PAGE HEADER */
+.page-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px clamp(14px, 3vw, 32px);
+  border-bottom:1px solid var(--border-subtle);
+  flex-wrap:wrap; gap:10px;
+}
+.page-header-left { display:flex; align-items:center; gap:12px; }
+.page-header-icon {
+  width:36px; height:36px; border-radius:var(--radius-md);
+  background:var(--accent-primary-muted); color:var(--accent-primary);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.page-header-icon svg { width:18px; height:18px; }
+.page-header h1 { font-size:16px; font-weight:600; letter-spacing:-0.01em; }
+.page-header-sub { font-size:11px; color:var(--text-tertiary); margin-top:1px; }
+.page-header-actions { display:flex; align-items:center; gap:8px; }
+
+.save-state { font-size:11px; color:var(--text-tertiary); }
+.save-state.saving { color:var(--status-warning); }
+.save-state.saved  { color:var(--status-success); }
+.save-state.error  { color:var(--status-error); }
+.header-meta { display:flex; align-items:center; gap:12px; }
+.header-clock {
+  font-size:13px; font-weight:600; color:var(--text-primary);
+  background:var(--bg-elevated); border:1px solid var(--border-subtle);
+  border-radius:999px; padding:4px 12px;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ============================================================
+   SECTION SHELL
+   ============================================================ */
+.section {
+  padding:18px clamp(14px, 3vw, 32px);
+  border-bottom:1px solid var(--border-subtle);
+}
+.section-head {
+  display:flex; align-items:baseline; gap:10px; margin-bottom:14px;
+}
+.section-head h2 {
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em;
+  color:var(--text-tertiary);
+}
+.section-head .section-sub { font-size:11px; color:var(--text-tertiary); }
+
+/* ============================================================
+   CAPA 1 — AHORA (avatares en fila)
+   ============================================================ */
+.now-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:12px;
+}
+.now-card {
+  background:var(--bg-card); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg); padding:14px;
+  display:flex; flex-direction:column; gap:10px;
+  transition:border-color 120ms, transform 120ms;
+  cursor:pointer;
+}
+.now-card:hover { border-color:var(--border-default); transform:translateY(-1px); }
+.now-card.expanded { border-color:var(--border-strong); }
+
+.now-card-head {
+  display:flex; align-items:center; gap:10px;
+}
+.avatar {
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; color:#fff; font-size:14px;
+  flex-shrink:0; position:relative;
+  box-shadow:0 0 0 2px var(--bg-card);
+}
+.avatar-dot {
+  position:absolute; bottom:-1px; right:-1px;
+  width:12px; height:12px; border-radius:50%;
+  border:2px solid var(--bg-card);
+}
+.avatar-dot.activo    { background:var(--band-activo); }
+.avatar-dot.comiendo  { background:var(--band-comida); }
+.avatar-dot.fuera     { background:var(--band-fuera); }
+.avatar-dot.override  { background:var(--band-medico); }
+
+.now-name { font-size:13px; font-weight:600; flex:1; }
+.now-pill {
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+  padding:3px 8px; border-radius:999px;
+}
+.now-pill.activo    { background:var(--status-success-bg); color:var(--status-success); }
+.now-pill.comiendo  { background:var(--status-warning-bg); color:var(--status-warning); }
+.now-pill.fuera     { background:var(--status-neutral-bg); color:var(--status-neutral); }
+.now-pill.override  { background:var(--status-warning-bg); color:var(--status-warning); }
+
+.now-status {
+  font-size:12px; color:var(--text-secondary); line-height:1.4;
+}
+.now-status strong { color:var(--text-primary); font-weight:600; }
+
+.now-detail {
+  display:none;
+  margin-top:6px; padding-top:10px;
+  border-top:1px dashed var(--border-subtle);
+  font-size:11px; color:var(--text-tertiary); line-height:1.5;
+}
+.now-card.expanded .now-detail { display:block; }
+.now-detail-row { display:flex; justify-content:space-between; gap:8px; margin-bottom:3px; }
+.now-detail-row strong { color:var(--text-secondary); font-weight:500; }
+
+.now-card-actions {
+  display:flex; gap:6px; margin-top:4px;
+}
+.btn-add-override {
+  flex:1; height:30px; padding:0 10px;
+  background:var(--accent-primary-muted); color:var(--accent-primary);
+  border:1px solid transparent; border-radius:var(--radius-sm);
+  font-size:11px; font-weight:600; font-family:var(--font-ui);
+  transition:all 120ms;
+}
+.btn-add-override:hover { background:var(--accent-primary); color:var(--text-inverse); }
+
+/* ============================================================
+   CAPA 2 — HOY (timeline horizontal)
+   ============================================================ */
+.timeline-wrap {
+  background:var(--bg-card); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg); padding:14px;
+  overflow-x:auto;
+}
+.timeline {
+  display:grid;
+  grid-template-columns:90px 1fr;
+  gap:8px;
+  min-width:680px;
+  position:relative;
+}
+.timeline-axis {
+  grid-column:2;
+  position:relative;
+  height:24px;
+  border-bottom:1px solid var(--border-subtle);
+  font-size:10px; color:var(--text-tertiary);
+  font-variant-numeric:tabular-nums;
+}
+.tick {
+  position:absolute; top:0; bottom:0;
+  border-left:1px solid var(--border-subtle);
+  padding-left:4px;
+}
+.tick.major { color:var(--text-secondary); }
+
+.timeline-row-label {
+  display:flex; align-items:center; gap:8px;
+  font-size:12px; font-weight:600;
+  padding-right:6px;
+}
+.timeline-row-label .avatar { width:24px; height:24px; font-size:10px; }
+.timeline-row-label .avatar .avatar-dot { display:none; }
+.timeline-row-bands {
+  position:relative; height:36px; margin:6px 0;
+  background:var(--bg-elevated); border-radius:var(--radius-sm);
+  overflow:hidden;
+}
+.band {
+  position:absolute; top:0; bottom:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:600; color:var(--text-inverse);
+  text-transform:uppercase; letter-spacing:0.04em;
+  overflow:hidden; white-space:nowrap;
+}
+.band.activo    { background:var(--band-activo); }
+.band.comida    { background:var(--band-comida); color:var(--text-inverse); }
+.band.fuera     { background:transparent; }
+.band.override {
+  border:1.5px dashed var(--bg-card);
+  z-index:2;
+}
+.band.override.medico    { background:var(--band-medico); }
+.band.override.enfermo   { background:var(--band-enfermo); color:#fff; }
+.band.override.llega_tarde { background:var(--band-llegatarde); color:#fff; }
+.band.override.sale_antes  { background:var(--band-saleantes); color:#fff; }
+.band.override.vacaciones  { background:var(--band-vacaciones); color:#fff; }
+.band.override.otro        { background:var(--band-otro); color:#fff; }
+.band:hover { filter:brightness(1.15); cursor:pointer; }
+
+.now-line {
+  position:absolute; top:0; bottom:0; width:2px;
+  background:var(--status-error);
+  z-index:5;
+  pointer-events:none;
+}
+.now-line::after {
+  content:''; position:absolute; top:-3px; left:-3px;
+  width:8px; height:8px; border-radius:50%;
+  background:var(--status-error);
+}
+
+/* ============================================================
+   CAPA 3 — SEMANA (grid L-V × miembros)
+   ============================================================ */
+.week-table {
+  background:var(--bg-card); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-lg); padding:14px;
+  overflow-x:auto;
+}
+.week-grid {
+  display:grid;
+  grid-template-columns:80px repeat(5, minmax(110px, 1fr));
+  gap:6px;
+  min-width:600px;
+}
+.week-cell {
+  background:var(--bg-elevated); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-sm); padding:8px;
+  min-height:64px;
+  display:flex; flex-direction:column; gap:4px;
+  font-size:11px;
+}
+.week-cell.head {
+  background:transparent; border:none; padding:6px 8px;
+  font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-tertiary); font-size:10px;
+  min-height:auto;
+  display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+}
+.week-cell.head.today { color:var(--accent-primary); }
+.week-cell.head .date-num { font-size:14px; color:var(--text-primary); }
+.week-cell.row-label {
+  display:flex; align-items:center; gap:6px;
+  background:transparent; border:none;
+}
+.week-cell.row-label .avatar { width:22px; height:22px; font-size:9px; }
+.week-cell.row-label .avatar .avatar-dot { display:none; }
+.week-cell.festivo {
+  background:var(--bg-base); color:var(--text-tertiary);
+  text-align:center; justify-content:center; align-items:center;
+}
+.week-cell.fin-de-semana {
+  background:var(--bg-base); opacity:0.5;
+}
+.week-mini-bands {
+  height:10px; border-radius:2px; background:var(--bg-base);
+  position:relative; overflow:hidden;
+  margin-top:auto;
+}
+.week-mini-bands .mb {
+  position:absolute; top:0; bottom:0;
+}
+.week-cell-hours {
+  font-size:10px; color:var(--text-tertiary); font-weight:500;
+}
+.week-cell-override {
+  font-size:10px; color:var(--text-secondary);
+  display:flex; align-items:center; gap:4px;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  display:none;
+  position:fixed; inset:0; z-index:600;
+  background:rgba(9,10,15,0.72);
+  align-items:center; justify-content:center;
+  padding:16px;
+}
+.modal-overlay.is-open { display:flex; }
+.modal {
+  background:var(--bg-card); border:1px solid var(--border-default);
+  border-radius:var(--radius-lg);
+  width:100%; max-width:480px; max-height:90vh;
+  overflow-y:auto;
+  box-shadow:0 24px 64px rgba(0,0,0,0.6);
+  animation:modalIn 180ms var(--ease-out);
+}
+@keyframes modalIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.modal-head {
+  padding:16px 20px; border-bottom:1px solid var(--border-subtle);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.modal-head h2 { font-size:15px; font-weight:600; }
+.modal-close {
+  background:transparent; border:none; color:var(--text-tertiary);
+  font-size:20px; cursor:pointer; padding:4px 8px;
+}
+.modal-close:hover { color:var(--text-primary); }
+.modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.modal-foot {
+  padding:14px 20px; border-top:1px solid var(--border-subtle);
+  display:flex; gap:8px; justify-content:flex-end;
+}
+
+.field { display:flex; flex-direction:column; gap:6px; }
+.field label {
+  font-size:11px; font-weight:600; color:var(--text-secondary);
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.field input, .field textarea, .field select {
+  background:var(--bg-elevated); color:var(--text-primary);
+  border:1px solid var(--border-default);
+  border-radius:var(--radius-sm); padding:10px 12px;
+  font-size:13px; font-family:var(--font-ui);
+}
+.field textarea { resize:vertical; min-height:60px; font-family:var(--font-ui); }
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline:none; border-color:var(--accent-primary); box-shadow:0 0 0 3px var(--accent-primary-muted);
+}
+.field-row { display:flex; gap:10px; }
+.field-row .field { flex:1; }
+
+.chip-group { display:flex; gap:6px; flex-wrap:wrap; }
+.chip {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:6px 10px;
+  background:var(--bg-elevated); border:1px solid var(--border-default);
+  border-radius:999px;
+  font-size:11px; font-weight:500; color:var(--text-secondary);
+  cursor:pointer; transition:all 120ms;
+}
+.chip:hover { color:var(--text-primary); border-color:var(--border-strong); }
+.chip.is-active {
+  background:var(--accent-primary-muted); color:var(--accent-primary);
+  border-color:var(--accent-primary);
+}
+
+.btn-primary {
+  background:var(--accent-primary); color:var(--text-inverse);
+  border:none; padding:10px 18px; border-radius:var(--radius-sm);
+  font-weight:600; font-size:13px; font-family:var(--font-ui);
+  cursor:pointer;
+}
+.btn-primary:hover { background:var(--accent-primary-hover); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-ghost {
+  background:transparent; color:var(--text-secondary);
+  border:1px solid var(--border-default); padding:10px 18px;
+  border-radius:var(--radius-sm); font-size:13px; font-family:var(--font-ui);
+  cursor:pointer;
+}
+.btn-ghost:hover { color:var(--text-primary); border-color:var(--border-strong); }
+.btn-danger {
+  background:transparent; color:var(--status-error);
+  border:1px solid var(--status-error); padding:10px 14px;
+  border-radius:var(--radius-sm); font-size:12px; font-family:var(--font-ui);
+  cursor:pointer;
+}
+.btn-danger:hover { background:var(--status-error); color:#fff; }
+
+/* Override list inside detail */
+.override-list {
+  display:flex; flex-direction:column; gap:6px;
+  margin-top:8px;
+}
+.override-item {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 8px;
+  background:var(--bg-elevated); border:1px solid var(--border-subtle);
+  border-radius:var(--radius-sm);
+  font-size:11px;
+}
+.override-item-icon { font-size:14px; }
+.override-item-info { flex:1; line-height:1.3; }
+.override-item-info strong { color:var(--text-primary); font-weight:600; }
+.override-item-info .ovr-time { color:var(--text-tertiary); display:block; margin-top:1px; }
+.override-item-del {
+  background:transparent; border:none; color:var(--text-tertiary);
+  font-size:14px; cursor:pointer; padding:2px 6px;
+}
+.override-item-del:hover { color:var(--status-error); }
+
+/* TOAST */
+#toast {
+  position:fixed; bottom:20px; left:50%; transform:translate(-50%, 10px);
+  background:var(--accent-primary); color:var(--text-inverse);
+  font-size:12px; font-weight:600; padding:8px 16px; border-radius:var(--radius-md);
+  opacity:0; pointer-events:none;
+  transition:opacity 200ms, transform 200ms;
+  z-index:700;
+}
+#toast.show { opacity:1; transform:translate(-50%, 0); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:680px) {
+  .auth-bar-meta { display:none; }
+  .now-grid { grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px; }
+  .now-card { padding:10px; }
+  .timeline { grid-template-columns:64px 1fr; min-width:520px; }
+  .timeline-row-label { font-size:11px; }
+  .timeline-row-label .avatar { width:20px; height:20px; font-size:9px; }
+  .week-grid { grid-template-columns:56px repeat(5, minmax(80px, 1fr)); }
+  .week-cell.row-label .avatar { width:18px; height:18px; font-size:8px; }
+}
+@media (max-width:420px) {
+  .now-name { font-size:12px; }
+  .now-pill { font-size:9px; padding:2px 6px; }
+  .now-status { font-size:11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div class="gate" id="gate" style="display:none;">
+  <div class="gate-icon">🔒</div>
+  <h1 id="gate-title">Acceso restringido</h1>
+  <p id="gate-msg">Este calendario es interno del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.</p>
+  <div class="gate-actions">
+    <button class="gate-btn-primary" id="gate-login">Iniciar sesión</button>
+    <a class="gate-btn-ghost" href="/">Volver al inicio</a>
+  </div>
+</div>
+
+<div class="app" id="app">
+
+  <!-- AUTH BAR -->
+  <div class="auth-bar">
+    <div class="auth-bar-left">
+      <span class="auth-bar-title">Disponibilidades · TheNucleo</span>
+      <span class="auth-bar-mode editor" id="auth-mode-pill">
+        <span class="dot"></span>
+        <span>Editor</span>
+      </span>
+    </div>
+    <div class="auth-bar-actions">
+      <span class="auth-bar-meta" id="auth-meta"></span>
+      <div class="nav-user-wrap" id="nav-user-wrap" style="display:none;">
+        <button class="nav-user-btn" id="nav-user-btn" title="Navegación interna" aria-haspopup="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </button>
+        <div class="nav-user-dropdown" id="nav-user-dropdown" style="display:none;" role="menu">
+          <a class="nav-user-item" href="/playbook/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Playbook
+          </a>
+          <a class="nav-user-item" href="/ficha-cliente/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            Ficha de Cliente
+          </a>
+          <a class="nav-user-item" href="/fichas-de-producto/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Fichas de Producto
+          </a>
+          <a class="nav-user-item" href="/casuisticas/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+            Casuísticas
+          </a>
+          <div class="nav-user-divider"></div>
+          <a class="nav-user-item nav-active" href="/disponibilidades/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Disponibilidades
+          </a>
+        </div>
+      </div>
+      <button class="theme-switch" id="btn-theme" title="Cambiar tema" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="btn-sm" id="btn-logout" style="display:none;">Salir</button>
+    </div>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div>
+        <h1>Calendario disponibilidad equipo</h1>
+        <div class="page-header-sub" id="header-date">Cargando…</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <span class="save-state" id="save-state"></span>
+      <span class="header-clock" id="header-clock">--:--</span>
+    </div>
+  </div>
+
+  <!-- CAPA 1 — AHORA -->
+  <section class="section" id="section-now">
+    <div class="section-head">
+      <h2>Ahora</h2>
+      <span class="section-sub">Estado del equipo en tiempo real · tap para detalle</span>
+    </div>
+    <div class="now-grid" id="now-grid"></div>
+  </section>
+
+  <!-- CAPA 2 — HOY -->
+  <section class="section" id="section-today">
+    <div class="section-head">
+      <h2>Hoy</h2>
+      <span class="section-sub" id="today-label"></span>
+    </div>
+    <div class="timeline-wrap">
+      <div class="timeline" id="timeline">
+        <div></div>
+        <div class="timeline-axis" id="timeline-axis"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPA 3 — SEMANA -->
+  <section class="section" id="section-week">
+    <div class="section-head">
+      <h2>Esta semana</h2>
+      <span class="section-sub" id="week-label"></span>
+    </div>
+    <div class="week-table">
+      <div class="week-grid" id="week-grid"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- MODAL OVERRIDE -->
+<div class="modal-overlay" id="modal-override">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Marcar ausencia · <span id="modal-miembro"></span></h2>
+      <button class="modal-close" id="modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Tipo</label>
+        <div class="chip-group" id="chip-tipo">
+          <button class="chip" data-tipo="medico">🏥 Médico</button>
+          <button class="chip" data-tipo="enfermo">🤒 Enfermo</button>
+          <button class="chip" data-tipo="llega_tarde">⏰ Llega tarde</button>
+          <button class="chip" data-tipo="sale_antes">🚪 Sale antes</button>
+          <button class="chip" data-tipo="vacaciones">✈ Vacaciones</button>
+          <button class="chip" data-tipo="otro">📌 Otro</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Desde</label>
+          <input type="datetime-local" id="ovr-desde">
+        </div>
+        <div class="field">
+          <label>Hasta</label>
+          <input type="datetime-local" id="ovr-hasta">
+        </div>
+      </div>
+      <div class="field">
+        <label>Nota (opcional)</label>
+        <textarea id="ovr-nota" placeholder="Detalle visible al hover…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" id="modal-cancel">Cancelar</button>
+      <button class="btn-primary" id="modal-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  window.__SUPABASE_URL__ = "https://cbixhqjsnpuhcrcjppah.supabase.co";
+  window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaXhocWpzbnB1aGNyY2pwcGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzU0OTksImV4cCI6MjA4OTE1MTQ5OX0.vbls3tGYkbgUNDhOzgEMBTG7nTlKfLMyTWzlWTmWxTM";
+</script>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const SUPABASE_URL = window.__SUPABASE_URL__;
+const ANON         = window.__SUPABASE_ANON_KEY__;
+const AUTH_KEY     = "thenucleo-comunidad-auth";
+const THEME_KEY    = "nucleo_disp_theme";
+
+// Allowlist sincronizada con tabla canonical comunidad_admins (4 emails, verificada 2026-05-20).
+// Si añades aquí, añade también el user_id a comunidad_admins en Supabase — si no, gate pasa
+// pero RLS rechaza queries (todas las queries devolverán [], aspecto de "no hay datos").
+const EDITOR_EMAILS = new Set([
+  "benjamin.sanchis@thenucleo.com",
+  "alejandro.lopez@thenucleo.com",
+  "marketing.thenucleo@gmail.com",
+  "mel.dalmazo@thenucleo.com",
+]);
+
+// Miembros canónicos — bubble_id verificados desde bub_user el 2026-05-20.
+const MIEMBROS = [
+  { id:'1772728038513x480671187100790300', nombre:'Benja',     color:'#0C29AB' },
+  { id:'1772798993384x712884450325125900', nombre:'Valentina', color:'#00FFFF' },
+  { id:'1773165777528x565611358129485950', nombre:'Camilo',    color:'#FF1493' },
+];
+
+// Timeline window 08:00 → 20:00
+const TL_START_H = 8;
+const TL_END_H   = 20;
+const TL_RANGE   = (TL_END_H - TL_START_H) * 60; // minutos
+
+const TIPO_LABEL = {
+  medico:'🏥 Médico', enfermo:'🤒 Enfermo', llega_tarde:'⏰ Llega tarde',
+  sale_antes:'🚪 Sale antes', vacaciones:'✈ Vacaciones', otro:'📌 Otro',
+};
+const TIPO_ICON = {
+  medico:'🏥', enfermo:'🤒', llega_tarde:'⏰', sale_antes:'🚪', vacaciones:'✈', otro:'📌',
+};
+
+const SUPABASE = createClient(SUPABASE_URL, ANON, {
+  auth: {
+    persistSession:true, autoRefreshToken:true, detectSessionInUrl:true,
+    storageKey:AUTH_KEY,
+    lock: async (_n,_t,fn) => fn(),
+  }
+});
+
+// ============================================================
+// SESSION (bypass GoTrueClient hang)
+// ============================================================
+function readStoredSession() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s?.expires_at && s.expires_at * 1000 < Date.now()) return null;
+    return s ?? null;
+  } catch { return null; }
+}
+function currentUser() { return readStoredSession()?.user ?? null; }
+function isAdmin() {
+  const u = currentUser();
+  return !!(u && u.email && EDITOR_EMAILS.has(u.email.toLowerCase()));
+}
+
+// ============================================================
+// GATE
+// ============================================================
+function showGate(kind) {
+  const gate = document.getElementById('gate');
+  const title = document.getElementById('gate-title');
+  const msg = document.getElementById('gate-msg');
+  const btn = document.getElementById('gate-login');
+  if (kind === 'no-admin') {
+    title.textContent = 'Tu cuenta no tiene acceso';
+    msg.textContent = `${currentUser()?.email || 'Tu cuenta'} no está en la allowlist del equipo. Si crees que es un error, contacta con Ben.`;
+    btn.textContent = 'Cambiar de cuenta';
+  } else {
+    title.textContent = 'Acceso restringido';
+    msg.textContent = 'Este calendario es interno del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.';
+    btn.textContent = 'Iniciar sesión';
+  }
+  gate.style.display = 'flex';
+  document.documentElement.classList.add('locked-mode');
+}
+
+document.getElementById('gate-login').addEventListener('click', () => {
+  if (currentUser()) {
+    try { localStorage.removeItem(AUTH_KEY); } catch {}
+  }
+  location.assign('/comunidad/entrar/?next=' + encodeURIComponent('/disponibilidades/'));
+});
+
+// ============================================================
+// AUTH INIT
+// ============================================================
+async function initAuth() {
+  const hash = location.hash;
+  if (hash.includes('access_token')) {
+    await SUPABASE.auth.getSession();
+    history.replaceState(null, '', location.pathname);
+  }
+  const user = currentUser();
+  if (!user) { showGate('anon'); return; }
+  if (!isAdmin()) { showGate('no-admin'); return; }
+
+  document.documentElement.classList.remove('locked-mode');
+  document.getElementById('auth-meta').textContent = user.email;
+  document.getElementById('nav-user-wrap').style.display = '';
+  document.getElementById('btn-logout').style.display = '';
+
+  await bootData();
+}
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await SUPABASE.auth.signOut();
+  try { localStorage.removeItem(AUTH_KEY); } catch {}
+  location.reload();
+});
+
+// NAV DROPDOWN
+const navBtn = document.getElementById('nav-user-btn');
+const navDropdown = document.getElementById('nav-user-dropdown');
+navBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const isOpen = navDropdown.style.display !== 'none';
+  navDropdown.style.display = isOpen ? 'none' : 'block';
+});
+document.addEventListener('click', () => { navDropdown.style.display = 'none'; });
+
+// THEME
+let currentTheme = 'dark';
+try { currentTheme = localStorage.getItem(THEME_KEY) || 'dark'; } catch {}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem(THEME_KEY, t); } catch {}
+}
+applyTheme(currentTheme);
+document.getElementById('btn-theme').addEventListener('click', () => {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(currentTheme);
+});
+
+// ============================================================
+// DATA STATE
+// ============================================================
+let FRANJAS = []; // [{miembro_id, tramo, hora_inicio, hora_fin}]
+let OVERRIDES = []; // [{id, miembro_id, tipo, desde, hasta, nota}]
+let FESTIVOS = new Map(); // YYYY-MM-DD → nombre
+
+// ============================================================
+// HELPERS — fechas
+// ============================================================
+function pad(n) { return String(n).padStart(2,'0'); }
+function ymd(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function hm(t) { // 'HH:MM:SS' → minutos
+  const [H,M] = t.split(':');
+  return parseInt(H,10)*60 + parseInt(M,10);
+}
+function minutesOfDay(d) { return d.getHours()*60 + d.getMinutes(); }
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+function isWeekend(d) { const dow = d.getDay(); return dow === 0 || dow === 6; }
+function isFestivo(d) { return FESTIVOS.has(ymd(d)); }
+function isDayOff(d) { return isWeekend(d) || isFestivo(d); }
+function monday(d) {
+  const x = startOfDay(d);
+  const dow = x.getDay(); // 0=dom..6=sab
+  const shift = (dow === 0 ? -6 : 1 - dow); // ir al lunes
+  return addDays(x, shift);
+}
+function spanishDate(d) {
+  return d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+}
+function spanishDay(d) {
+  return d.toLocaleDateString('es-ES', { weekday:'short' });
+}
+function fmtHM(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function fmtRange(desde, hasta) {
+  const sameDay = ymd(desde) === ymd(hasta);
+  if (sameDay) return `${fmtHM(desde)}–${fmtHM(hasta)}`;
+  return `${ymd(desde)} ${fmtHM(desde)} → ${ymd(hasta)} ${fmtHM(hasta)}`;
+}
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+async function bootData() {
+  await Promise.all([loadFranjas(), loadOverrides(), loadFestivos()]);
+  renderAll();
+  // Tick cada minuto
+  setInterval(tick, 60_000);
+}
+
+async function loadFranjas() {
+  const { data, error } = await SUPABASE.from('disponibilidad_franjas_base').select('*');
+  if (error) { console.error(error); toast('Error cargando franjas'); return; }
+  FRANJAS = data || [];
+}
+
+async function loadOverrides() {
+  // Ventana: lunes de esta semana → lunes de la siguiente (8 días)
+  const wkStart = monday(new Date());
+  const wkEnd = addDays(wkStart, 8);
+  const { data, error } = await SUPABASE.from('disponibilidad_overrides')
+    .select('*')
+    .gte('hasta', wkStart.toISOString())
+    .lte('desde', wkEnd.toISOString())
+    .order('desde');
+  if (error) { console.error(error); toast('Error cargando overrides'); return; }
+  OVERRIDES = data || [];
+}
+
+async function loadFestivos() {
+  const yr = new Date().getFullYear();
+  const { data, error } = await SUPABASE.from('festivos_es')
+    .select('*')
+    .gte('fecha', `${yr}-01-01`)
+    .lte('fecha', `${yr+1}-12-31`);
+  if (error) { console.error(error); return; }
+  FESTIVOS = new Map((data||[]).map(f => [f.fecha, f.nombre]));
+}
+
+// ============================================================
+// STATE COMPUTATION
+// ============================================================
+function franjasOf(miembroId) {
+  return FRANJAS.filter(f => f.miembro_id === miembroId);
+}
+function overridesAt(miembroId, dt) {
+  const t = dt.getTime();
+  return OVERRIDES.filter(o => o.miembro_id === miembroId
+    && new Date(o.desde).getTime() <= t
+    && new Date(o.hasta).getTime() > t);
+}
+function overridesInDay(miembroId, day) {
+  const start = startOfDay(day).getTime();
+  const end = addDays(startOfDay(day), 1).getTime();
+  return OVERRIDES.filter(o => o.miembro_id === miembroId
+    && new Date(o.hasta).getTime() > start
+    && new Date(o.desde).getTime() < end);
+}
+
+// Estado AHORA de un miembro → {kind, label, until, override?}
+function computeEstadoAhora(miembro) {
+  const now = new Date();
+  // Override activo gana
+  const ovrs = overridesAt(miembro.id, now);
+  if (ovrs.length) {
+    const o = ovrs[0];
+    return {
+      kind:'override',
+      label:TIPO_LABEL[o.tipo],
+      until:new Date(o.hasta),
+      override:o,
+    };
+  }
+  // Fin de semana / festivo
+  if (isDayOff(now)) {
+    const fest = FESTIVOS.get(ymd(now));
+    return { kind:'fuera', label: fest ? `🇪🇸 ${fest}` : 'Fin de semana', until:null };
+  }
+  // Franjas base
+  const fs = franjasOf(miembro.id).sort((a,b) => hm(a.hora_inicio) - hm(b.hora_inicio));
+  const nowM = minutesOfDay(now);
+  for (const f of fs) {
+    const iniM = hm(f.hora_inicio), finM = hm(f.hora_fin);
+    if (nowM >= iniM && nowM < finM) {
+      const until = new Date(now); until.setHours(0,0,0,0);
+      until.setMinutes(finM);
+      return { kind: f.tramo === 'comida' ? 'comiendo' : 'activo', label: f.tramo === 'comida' ? 'Comiendo' : 'Activo', until };
+    }
+  }
+  // Fuera horario — calcular próxima ventana activa hoy
+  const proxima = fs.find(f => hm(f.hora_inicio) > nowM);
+  if (proxima) {
+    const next = new Date(now); next.setHours(0,0,0,0);
+    next.setMinutes(hm(proxima.hora_inicio));
+    return { kind:'fuera', label:'Fuera horario', until:null, nextStart: next, nextTramo: proxima.tramo };
+  }
+  return { kind:'fuera', label:'Jornada terminada', until:null };
+}
+
+// ============================================================
+// RENDER — AHORA
+// ============================================================
+function avatarSvg(m, size) {
+  const initial = m.nombre.charAt(0).toUpperCase();
+  return `<div class="avatar" style="background:${m.color}; width:${size}px; height:${size}px; font-size:${size*0.4}px;">${initial}</div>`;
+}
+
+function renderAhora() {
+  const grid = document.getElementById('now-grid');
+  grid.innerHTML = '';
+  for (const m of MIEMBROS) {
+    const st = computeEstadoAhora(m);
+    const card = document.createElement('div');
+    card.className = 'now-card';
+    card.dataset.miembroId = m.id;
+
+    const dotClass = st.kind;
+    const pillClass = st.kind;
+    const until = st.until ? fmtHM(st.until) : null;
+
+    let statusHtml = '';
+    if (st.kind === 'activo' || st.kind === 'comiendo') {
+      statusHtml = `<strong>${st.label}</strong> hasta las ${until}`;
+    } else if (st.kind === 'override') {
+      statusHtml = `<strong>${st.label}</strong>`;
+      if (until) statusHtml += ` hasta ${until}`;
+      if (st.override.nota) statusHtml += `<br><span style="color:var(--text-tertiary)">${escHtml(st.override.nota)}</span>`;
+    } else if (st.nextStart) {
+      statusHtml = `${st.label} · vuelve a las <strong>${fmtHM(st.nextStart)}</strong>`;
+    } else {
+      statusHtml = st.label;
+    }
+
+    // Detail — próximas ventanas + overrides hoy
+    const overridesHoy = overridesInDay(m.id, new Date());
+    const fs = franjasOf(m.id).sort((a,b)=>hm(a.hora_inicio)-hm(b.hora_inicio));
+    let detailRows = fs.map(f => `<div class="now-detail-row"><strong>${f.tramo==='activo_am'?'Mañana':f.tramo==='comida'?'Comida':'Tarde'}</strong><span>${f.hora_inicio.slice(0,5)} – ${f.hora_fin.slice(0,5)}</span></div>`).join('');
+    let overridesHtml = '';
+    if (overridesHoy.length) {
+      overridesHtml = '<div class="override-list">' + overridesHoy.map(o => `
+        <div class="override-item">
+          <span class="override-item-icon">${TIPO_ICON[o.tipo]}</span>
+          <div class="override-item-info">
+            <strong>${TIPO_LABEL[o.tipo].replace(/^\S+\s/,'')}</strong>
+            <span class="ovr-time">${fmtRange(new Date(o.desde), new Date(o.hasta))}${o.nota?' · '+escHtml(o.nota):''}</span>
+          </div>
+          <button class="override-item-del" data-id="${o.id}" title="Borrar">✕</button>
+        </div>`).join('') + '</div>';
+    }
+
+    card.innerHTML = `
+      <div class="now-card-head">
+        <div class="avatar" style="background:${m.color};">${m.nombre.charAt(0)}<span class="avatar-dot ${dotClass}"></span></div>
+        <span class="now-name">${m.nombre}</span>
+        <span class="now-pill ${pillClass}">${st.kind === 'comiendo' ? 'comida' : st.kind}</span>
+      </div>
+      <div class="now-status">${statusHtml}</div>
+      <div class="now-detail">
+        ${detailRows}
+        ${overridesHtml}
+      </div>
+      <div class="now-card-actions">
+        <button class="btn-add-override" data-miembro-id="${m.id}">+ Marcar ausencia</button>
+      </div>
+    `;
+    grid.appendChild(card);
+
+    // Click card → toggle expand
+    card.querySelector('.now-card-head').addEventListener('click', () => card.classList.toggle('expanded'));
+    card.querySelector('.now-status').addEventListener('click', () => card.classList.toggle('expanded'));
+
+    card.querySelector('.btn-add-override').addEventListener('click', e => {
+      e.stopPropagation();
+      openOverrideModal(m);
+    });
+    card.querySelectorAll('.override-item-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        deleteOverride(btn.dataset.id);
+      });
+    });
+  }
+}
+
+// ============================================================
+// RENDER — HOY (timeline)
+// ============================================================
+function renderHoy() {
+  const today = new Date();
+  document.getElementById('today-label').textContent = spanishDate(today);
+
+  const timeline = document.getElementById('timeline');
+  // Limpiar todo excepto axis
+  timeline.querySelectorAll('.timeline-row-label,.timeline-row-bands').forEach(el => el.remove());
+
+  // Render axis ticks (cada hora)
+  const axis = document.getElementById('timeline-axis');
+  axis.innerHTML = '';
+  for (let h = TL_START_H; h <= TL_END_H; h++) {
+    const tick = document.createElement('div');
+    tick.className = 'tick' + (h % 2 === 0 ? ' major' : '');
+    const pct = ((h - TL_START_H) * 60) / TL_RANGE * 100;
+    tick.style.left = pct + '%';
+    tick.textContent = pad(h);
+    axis.appendChild(tick);
+  }
+
+  for (const m of MIEMBROS) {
+    const label = document.createElement('div');
+    label.className = 'timeline-row-label';
+    label.innerHTML = `<div class="avatar" style="background:${m.color};">${m.nombre.charAt(0)}</div><span>${m.nombre}</span>`;
+    timeline.appendChild(label);
+
+    const bands = document.createElement('div');
+    bands.className = 'timeline-row-bands';
+
+    if (!isDayOff(today)) {
+      // Render franjas base activo/comida
+      const fs = franjasOf(m.id);
+      for (const f of fs) {
+        if (f.tramo === 'fuera') continue;
+        const startM = hm(f.hora_inicio) - TL_START_H * 60;
+        const endM   = hm(f.hora_fin)   - TL_START_H * 60;
+        const left   = Math.max(0, startM / TL_RANGE) * 100;
+        const width  = Math.max(0, (Math.min(endM, TL_RANGE) - Math.max(startM, 0)) / TL_RANGE) * 100;
+        if (width <= 0) continue;
+        const band = document.createElement('div');
+        band.className = 'band ' + (f.tramo === 'comida' ? 'comida' : 'activo');
+        band.style.left = left + '%';
+        band.style.width = width + '%';
+        band.textContent = f.tramo === 'comida' ? 'Comida' : 'Activo';
+        band.title = `${m.nombre} · ${f.hora_inicio.slice(0,5)}–${f.hora_fin.slice(0,5)}`;
+        bands.appendChild(band);
+      }
+    }
+
+    // Overrides hoy → pintar encima
+    const ovrs = overridesInDay(m.id, today);
+    const dayStart = startOfDay(today).getTime();
+    for (const o of ovrs) {
+      const ds = new Date(o.desde).getTime();
+      const de = new Date(o.hasta).getTime();
+      // recortar al día
+      const dayStartMs = dayStart + TL_START_H * 60 * 60_000;
+      const dayEndMs   = dayStart + TL_END_H * 60 * 60_000;
+      const oStart = Math.max(ds, dayStartMs);
+      const oEnd   = Math.min(de, dayEndMs);
+      if (oEnd <= oStart) continue;
+      const startM = (oStart - dayStartMs) / 60_000;
+      const endM   = (oEnd - dayStartMs) / 60_000;
+      const left   = startM / TL_RANGE * 100;
+      const width  = (endM - startM) / TL_RANGE * 100;
+      const band = document.createElement('div');
+      band.className = 'band override ' + o.tipo;
+      band.style.left = left + '%';
+      band.style.width = width + '%';
+      band.textContent = TIPO_ICON[o.tipo];
+      band.title = `${m.nombre} · ${TIPO_LABEL[o.tipo]} · ${fmtRange(new Date(o.desde), new Date(o.hasta))}${o.nota?'\n'+o.nota:''}`;
+      band.addEventListener('click', () => {
+        if (confirm(`¿Borrar override "${TIPO_LABEL[o.tipo]}"?`)) deleteOverride(o.id);
+      });
+      bands.appendChild(band);
+    }
+
+    timeline.appendChild(bands);
+  }
+
+  // Línea AHORA
+  let nowLine = timeline.querySelector('.now-line');
+  if (!nowLine) {
+    nowLine = document.createElement('div');
+    nowLine.className = 'now-line';
+    timeline.appendChild(nowLine);
+  }
+  positionNowLine(nowLine);
+}
+
+function positionNowLine(line) {
+  const now = new Date();
+  const nowM = minutesOfDay(now) - TL_START_H * 60;
+  if (nowM < 0 || nowM > TL_RANGE) { line.style.display = 'none'; return; }
+  line.style.display = 'block';
+  // Posición relativa al área de bandas (columna 2)
+  const pct = nowM / TL_RANGE * 100;
+  // Las bandas están en columna 2 que arranca a 90px + 8px gap del grid base.
+  // Para simplificar usamos calc sobre la columna de bandas.
+  line.style.left = `calc(90px + 8px + (100% - 90px - 8px) * ${pct/100})`;
+}
+
+// ============================================================
+// RENDER — SEMANA
+// ============================================================
+function renderSemana() {
+  const start = monday(new Date());
+  const end = addDays(start, 4);
+  document.getElementById('week-label').textContent = `${start.toLocaleDateString('es-ES', { day:'numeric', month:'short'})} → ${end.toLocaleDateString('es-ES', { day:'numeric', month:'short'})}`;
+
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+
+  // Header row
+  const corner = document.createElement('div');
+  corner.className = 'week-cell head';
+  corner.textContent = '';
+  grid.appendChild(corner);
+
+  const todayY = ymd(new Date());
+  for (let i = 0; i < 5; i++) {
+    const d = addDays(start, i);
+    const cell = document.createElement('div');
+    cell.className = 'week-cell head' + (ymd(d) === todayY ? ' today' : '');
+    cell.innerHTML = `<span>${spanishDay(d).replace('.','')}</span><span class="date-num">${d.getDate()}</span>`;
+    grid.appendChild(cell);
+  }
+
+  // Filas por miembro
+  for (const m of MIEMBROS) {
+    const label = document.createElement('div');
+    label.className = 'week-cell row-label';
+    label.innerHTML = `${avatarSvg(m, 22)}<span style="font-size:11px; font-weight:600;">${m.nombre}</span>`;
+    grid.appendChild(label);
+
+    for (let i = 0; i < 5; i++) {
+      const d = addDays(start, i);
+      const fest = FESTIVOS.get(ymd(d));
+      const cell = document.createElement('div');
+      cell.className = 'week-cell';
+      if (fest) {
+        cell.classList.add('festivo');
+        cell.innerHTML = `<span style="font-size:14px;">🇪🇸</span><span style="font-size:9px; text-align:center;">${fest}</span>`;
+      } else {
+        // Render mini bands
+        const fs = franjasOf(m.id);
+        const ovrs = overridesInDay(m.id, d);
+        const hasOverride = ovrs.length > 0;
+        let activeMin = 0;
+        fs.forEach(f => {
+          if (f.tramo === 'activo_am' || f.tramo === 'activo_pm') {
+            activeMin += hm(f.hora_fin) - hm(f.hora_inicio);
+          }
+        });
+        // Resta minutos por overrides "vacaciones/enfermo" del día
+        const dayStart = startOfDay(d).getTime();
+        const dayEnd = addDays(startOfDay(d), 1).getTime();
+        ovrs.forEach(o => {
+          if (['vacaciones','enfermo'].includes(o.tipo)) {
+            const ovStart = Math.max(new Date(o.desde).getTime(), dayStart);
+            const ovEnd   = Math.min(new Date(o.hasta).getTime(), dayEnd);
+            const overlapMin = Math.max(0, (ovEnd - ovStart) / 60_000);
+            activeMin = Math.max(0, activeMin - overlapMin);
+          }
+        });
+        const hours = (activeMin/60).toFixed(1).replace('.0','');
+        let bandHtml = '<div class="week-mini-bands">';
+        fs.forEach(f => {
+          if (f.tramo === 'comida') return;
+          const s = hm(f.hora_inicio) - TL_START_H * 60;
+          const e = hm(f.hora_fin) - TL_START_H * 60;
+          const left = s / TL_RANGE * 100;
+          const width = (e - s) / TL_RANGE * 100;
+          bandHtml += `<div class="mb" style="left:${left}%; width:${width}%; background:${m.color}; opacity:0.65;"></div>`;
+        });
+        // Overrides como bandas encima
+        ovrs.forEach(o => {
+          const dayStartMs = dayStart + TL_START_H * 60 * 60_000;
+          const dayEndMs   = dayStart + TL_END_H * 60 * 60_000;
+          const oStart = Math.max(new Date(o.desde).getTime(), dayStartMs);
+          const oEnd   = Math.min(new Date(o.hasta).getTime(), dayEndMs);
+          if (oEnd <= oStart) return;
+          const s = (oStart - dayStartMs) / 60_000;
+          const e = (oEnd - dayStartMs) / 60_000;
+          const left = s / TL_RANGE * 100;
+          const width = (e - s) / TL_RANGE * 100;
+          const colors = {medico:'var(--band-medico)', enfermo:'var(--band-enfermo)', llega_tarde:'var(--band-llegatarde)', sale_antes:'var(--band-saleantes)', vacaciones:'var(--band-vacaciones)', otro:'var(--band-otro)'};
+          bandHtml += `<div class="mb" style="left:${left}%; width:${width}%; background:${colors[o.tipo]};" title="${TIPO_LABEL[o.tipo]}"></div>`;
+        });
+        bandHtml += '</div>';
+        let ovrHtml = '';
+        if (hasOverride) {
+          ovrHtml = `<div class="week-cell-override">${ovrs.map(o => TIPO_ICON[o.tipo]).join(' ')}</div>`;
+        }
+        cell.innerHTML = `<div class="week-cell-hours">${hours}h</div>${ovrHtml}${bandHtml}`;
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+function renderAll() {
+  document.getElementById('header-date').textContent = spanishDate(new Date());
+  updateClock();
+  renderAhora();
+  renderHoy();
+  renderSemana();
+}
+function updateClock() {
+  const n = new Date();
+  document.getElementById('header-clock').textContent = fmtHM(n);
+}
+function tick() {
+  updateClock();
+  renderAhora();
+  positionNowLine(document.querySelector('#timeline .now-line'));
+}
+
+// ============================================================
+// MODAL OVERRIDE
+// ============================================================
+let currentMiembro = null;
+let currentTipo = null;
+const modal = document.getElementById('modal-override');
+const chipTipo = document.getElementById('chip-tipo');
+const ovrDesde = document.getElementById('ovr-desde');
+const ovrHasta = document.getElementById('ovr-hasta');
+const ovrNota  = document.getElementById('ovr-nota');
+
+function openOverrideModal(m) {
+  currentMiembro = m;
+  currentTipo = null;
+  document.getElementById('modal-miembro').textContent = m.nombre;
+  // Reset chips
+  chipTipo.querySelectorAll('.chip').forEach(c => c.classList.remove('is-active'));
+  // Defecto: ahora → fin de jornada
+  const now = new Date(); now.setSeconds(0,0); now.setMilliseconds(0);
+  const end = new Date(now); end.setHours(18,0,0,0);
+  if (end <= now) end.setTime(now.getTime() + 60*60_000);
+  ovrDesde.value = toLocalInput(now);
+  ovrHasta.value = toLocalInput(end);
+  ovrNota.value = '';
+  modal.classList.add('is-open');
+}
+function closeOverrideModal() {
+  modal.classList.remove('is-open');
+  currentMiembro = null; currentTipo = null;
+}
+function toLocalInput(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+chipTipo.addEventListener('click', e => {
+  const btn = e.target.closest('.chip'); if (!btn) return;
+  chipTipo.querySelectorAll('.chip').forEach(c => c.classList.remove('is-active'));
+  btn.classList.add('is-active');
+  currentTipo = btn.dataset.tipo;
+});
+document.getElementById('modal-close').addEventListener('click', closeOverrideModal);
+document.getElementById('modal-cancel').addEventListener('click', closeOverrideModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeOverrideModal(); });
+
+document.getElementById('modal-save').addEventListener('click', async () => {
+  if (!currentMiembro) return;
+  if (!currentTipo) { toast('Elige un tipo'); return; }
+  const desde = new Date(ovrDesde.value);
+  const hasta = new Date(ovrHasta.value);
+  if (!(hasta > desde)) { toast('"Hasta" debe ser posterior a "Desde"'); return; }
+
+  setSave('saving');
+  const payload = {
+    miembro_id: currentMiembro.id,
+    tipo: currentTipo,
+    desde: desde.toISOString(),
+    hasta: hasta.toISOString(),
+    nota: ovrNota.value.trim() || null,
+    creado_por: currentUser().email,
+  };
+  const { data, error } = await SUPABASE.from('disponibilidad_overrides').insert(payload).select().maybeSingle();
+  if (error) { console.error(error); setSave('error'); toast('Error al guardar'); return; }
+  OVERRIDES.push(data);
+  setSave('saved');
+  closeOverrideModal();
+  renderAll();
+});
+
+async function deleteOverride(id) {
+  if (!confirm('¿Borrar esta ausencia?')) return;
+  setSave('saving');
+  const { error } = await SUPABASE.from('disponibilidad_overrides').delete().eq('id', id);
+  if (error) { console.error(error); setSave('error'); toast('Error al borrar'); return; }
+  OVERRIDES = OVERRIDES.filter(o => o.id !== id);
+  setSave('saved');
+  renderAll();
+}
+
+function setSave(state) {
+  const el = document.getElementById('save-state');
+  if (state === 'saving') { el.textContent = 'Guardando…'; el.className = 'save-state saving'; }
+  else if (state === 'saved') { el.textContent = 'Guardado ✓'; el.className = 'save-state saved'; setTimeout(() => { el.textContent=''; el.className='save-state'; }, 2000); }
+  else if (state === 'error') { el.textContent = 'Error'; el.className = 'save-state error'; }
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ============================================================
+// GO
+// ============================================================
+initAuth();
+</script>
+
+</body>
+</html>
