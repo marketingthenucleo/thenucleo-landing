@@ -4307,17 +4307,15 @@ function setupServicioCombobox(catalog) {
       results.innerHTML = '<div class="combo-empty">Sin coincidencias. Prueba con otra palabra.</div>';
       return;
     }
-    // Agrupar por categoría manteniendo el orden del catálogo.
-    const grouped = [];
+    // Agrupar por categoría y ordenar alfabéticamente (cats + items dentro).
     const byCat = {};
     matches.forEach(f => {
       const key = f.categoria_nombre || '—';
-      if (!(key in byCat)) {
-        byCat[key] = { nombre: key, items: [] };
-        grouped.push(byCat[key]);
-      }
+      if (!(key in byCat)) byCat[key] = { nombre: key, items: [] };
       byCat[key].items.push(f);
     });
+    const grouped = Object.values(byCat).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    grouped.forEach(g => g.items.sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'es')));
     const autoOpen = tokens.length > 0;  // con búsqueda → todas abiertas
     results.innerHTML = grouped.map(g => `
       <div class="combo-cat${autoOpen ? ' open' : ''}" data-cat="${escapeHtml(g.nombre)}">
