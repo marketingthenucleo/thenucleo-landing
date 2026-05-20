@@ -1938,6 +1938,10 @@ html.anon-mode .ficha-panel { display:none !important; }
   display:inline-block; width:7px; height:7px; border-radius:50%; flex-shrink:0;
 }
 .combo-item .combo-title { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.combo-item .combo-status {
+  font-size:9px; padding:1px 5px; border-radius:3px; flex-shrink:0;
+  background:var(--bg-active); color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.04em;
+}
 .combo-empty {
   padding:10px 8px; font-size:11px; color:var(--text-tertiary); font-style:italic;
 }
@@ -4000,7 +4004,7 @@ async function loadFichasCatalog() {
   if (!token) return [];
   try {
     const [fichasRes, catsRes] = await Promise.all([
-      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_de_producto?select=id,titulo,categoria_id,estado&estado=eq.publicada&order=categoria_id.asc,orden.asc`, {
+      fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_de_producto?select=id,titulo,categoria_id,estado&order=categoria_id.asc,orden.asc`, {
         headers: { apikey: window.__SUPABASE_ANON_KEY__, Authorization: 'Bearer ' + token },
       }),
       fetch(`${window.__SUPABASE_URL__}/rest/v1/fichas_categorias?select=id,nombre,color&order=orden.asc`, {
@@ -4189,6 +4193,37 @@ function fichaNormalize(s) {
   return (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
+// Sinónimos comunes para que "fb" encuentre "facebook/meta", "ws" → whatsapp, etc.
+const FICHA_SYNONYMS = [
+  ['facebook', 'fb', 'meta'],
+  ['instagram', 'ig'],
+  ['google ads', 'gads', 'sem', 'adwords'],
+  ['google my business', 'gmb', 'mybusiness', 'maps'],
+  ['whatsapp', 'wa', 'wapp', 'ws'],
+  ['correo', 'correos', 'email', 'emails', 'mail'],
+  ['anuncios', 'ads', 'publicidad', 'anuncio'],
+  ['reels', 'reel', 'video', 'videos'],
+  ['carruseles', 'carrusel', 'post', 'posts', 'publicacion', 'publicaciones'],
+  ['crm', 'ghl', 'gohighlevel'],
+  ['web', 'website', 'pagina', 'sitio'],
+  ['onboarding', 'arranque', 'setup', 'kickoff'],
+  ['otas', 'ota', 'portales', 'terceros'],
+  ['leads', 'lead', 'contactos'],
+  ['campanas', 'campana', 'campania', 'campanias'],
+  ['estrategia', 'plan', 'planificacion'],
+  ['dossier', 'pdf', 'b2b'],
+];
+
+function fichaBuildSearchable(f) {
+  let s = ' ' + fichaNormalize((f.titulo || '') + ' ' + (f.categoria_nombre || '')) + ' ';
+  for (const group of FICHA_SYNONYMS) {
+    if (group.some(t => s.includes(' ' + t) || s.includes(t + ' ') || s.includes(t))) {
+      s += group.join(' ') + ' ';
+    }
+  }
+  return s;
+}
+
 function setupServicioCombobox(catalog) {
   const wrap    = document.getElementById('add-servicio-combo');
   const search  = document.getElementById('add-servicio-search');
@@ -4197,13 +4232,16 @@ function setupServicioCombobox(catalog) {
   const clear   = document.getElementById('add-servicio-clear');
   if (!wrap || !search || !hidden || !results || !clear) return;
 
+  // Precompute searchable strings (con sinónimos expandidos) una sola vez.
+  catalog.forEach(f => { if (!f._searchable) f._searchable = fichaBuildSearchable(f); });
+
   function renderResults(filter) {
-    const q = fichaNormalize(filter);
-    const matches = q
-      ? catalog.filter(f => fichaNormalize(f.titulo).includes(q) || fichaNormalize(f.categoria_nombre).includes(q))
-      : catalog;
+    const tokens = fichaNormalize(filter).split(/\s+/).filter(Boolean);
+    const matches = !tokens.length
+      ? catalog
+      : catalog.filter(f => tokens.every(t => f._searchable.includes(t)));
     if (!matches.length) {
-      results.innerHTML = '<div class="combo-empty">Sin resultados en el catálogo publicado.</div>';
+      results.innerHTML = '<div class="combo-empty">Sin coincidencias. Prueba con otra palabra.</div>';
       return;
     }
     let lastCat = null;
@@ -4211,6 +4249,8 @@ function setupServicioCombobox(catalog) {
       const header = f.categoria_nombre !== lastCat
         ? `<div class="combo-cat-header">${escapeHtml(f.categoria_nombre || '—')}</div>` : '';
       lastCat = f.categoria_nombre;
+      const statusChip = f.estado && f.estado !== 'publicada'
+        ? `<span class="combo-status">${escapeHtml(f.estado)}</span>` : '';
       return header + `
         <div class="combo-item" data-id="${escapeHtml(f.id)}"
              data-titulo="${escapeHtml(f.titulo)}"
@@ -4218,6 +4258,7 @@ function setupServicioCombobox(catalog) {
              data-cat-color="${escapeHtml(f.categoria_color || '')}">
           <span class="combo-dot" style="background:${escapeHtml(f.categoria_color || '#6b7280')}"></span>
           <span class="combo-title">${escapeHtml(f.titulo)}</span>
+          ${statusChip}
         </div>`;
     }).join('');
   }
