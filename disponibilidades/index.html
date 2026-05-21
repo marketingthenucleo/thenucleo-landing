@@ -44,6 +44,7 @@
   --band-llegatarde:var(--accent-secondary);
   --band-saleantes: var(--accent-secondary);
   --band-vacaciones:var(--status-violet);
+  --band-avatar:    #ec4899;
   --band-otro:      var(--text-tertiary);
 }
 
@@ -361,6 +362,7 @@ button { font-family:inherit; cursor:pointer; }
 .band.override.llega_tarde { background:var(--band-llegatarde); color:#fff; }
 .band.override.sale_antes  { background:var(--band-saleantes); color:#fff; }
 .band.override.vacaciones  { background:var(--band-vacaciones); color:#fff; }
+.band.override.avatar_no_responde { background:var(--band-avatar); color:#fff; }
 .band.override.otro        { background:var(--band-otro); color:#fff; }
 .band:hover { filter:brightness(1.15); cursor:pointer; }
 
@@ -711,6 +713,7 @@ button { font-family:inherit; cursor:pointer; }
           <button class="chip" data-tipo="llega_tarde">⏰ Llega tarde</button>
           <button class="chip" data-tipo="sale_antes">🚪 Sale antes</button>
           <button class="chip" data-tipo="vacaciones">✈ Vacaciones</button>
+          <button class="chip" data-tipo="avatar_no_responde">👻 Avatar no responde</button>
           <button class="chip" data-tipo="otro">📌 Otro</button>
         </div>
       </div>
@@ -771,10 +774,12 @@ const TL_RANGE   = (TL_END_H - TL_START_H) * 60; // minutos
 
 const TIPO_LABEL = {
   medico:'🏥 Médico', enfermo:'🤒 Enfermo', llega_tarde:'⏰ Llega tarde',
-  sale_antes:'🚪 Sale antes', vacaciones:'✈ Vacaciones', otro:'📌 Otro',
+  sale_antes:'🚪 Sale antes', vacaciones:'✈ Vacaciones',
+  avatar_no_responde:'👻 Avatar no responde', otro:'📌 Otro',
 };
 const TIPO_ICON = {
-  medico:'🏥', enfermo:'🤒', llega_tarde:'⏰', sale_antes:'🚪', vacaciones:'✈', otro:'📌',
+  medico:'🏥', enfermo:'🤒', llega_tarde:'⏰', sale_antes:'🚪', vacaciones:'✈',
+  avatar_no_responde:'👻', otro:'📌',
 };
 
 const SUPABASE = createClient(SUPABASE_URL, ANON, {
@@ -1310,7 +1315,7 @@ function renderSemana() {
           const e = (oEnd - dayStartMs) / 60_000;
           const left = s / TL_RANGE * 100;
           const width = (e - s) / TL_RANGE * 100;
-          const colors = {medico:'var(--band-medico)', enfermo:'var(--band-enfermo)', llega_tarde:'var(--band-llegatarde)', sale_antes:'var(--band-saleantes)', vacaciones:'var(--band-vacaciones)', otro:'var(--band-otro)'};
+          const colors = {medico:'var(--band-medico)', enfermo:'var(--band-enfermo)', llega_tarde:'var(--band-llegatarde)', sale_antes:'var(--band-saleantes)', vacaciones:'var(--band-vacaciones)', avatar_no_responde:'var(--band-avatar)', otro:'var(--band-otro)'};
           bandHtml += `<div class="mb" style="left:${left}%; width:${width}%; background:${colors[o.tipo]};" title="${TIPO_LABEL[o.tipo]}"></div>`;
         });
         bandHtml += '</div>';

@@ -42,6 +42,8 @@ comunidad/
   propuesta.njk             ← paginate por slug → /comunidad/{slug}/
   entrar.njk                ← /comunidad/entrar/ (login Google + "No soy un robot", noindex)
   admin.njk                 ← /comunidad/admin/ (panel moderación, noindex)
+disponibilidades/
+  index.html                ← /disponibilidades/ calendario laboral equipo (admin-only, noindex). Standalone HTML+CSS+JS inline. 3 capas (AHORA/HOY timeline/SEMANA grid). Carga miembros dinámicamente vía RPC `disponibilidad_miembros()`. Override modal con 7 tipos (medico, enfermo, llega_tarde, sale_antes, vacaciones, avatar_no_responde, otro).
 content/
   conocimiento-zenyx/
     conocimiento-zenyx.json ← data file (layout=blog, tags=blog, permalink)
