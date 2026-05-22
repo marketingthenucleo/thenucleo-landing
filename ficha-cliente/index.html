@@ -6,6 +6,11 @@
 <meta name="theme-color" content="#090a0f">
 <meta name="robots" content="noindex,nofollow">
 <title>Ficha Cliente — TheNucleo</title>
+
+<script>
+(function () { document.documentElement.classList.add('locked-mode'); })();
+</script>
+
 <style>
   @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
   @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
@@ -15,6 +20,7 @@
     --bg: #090a0f;
     --bg-2: #12141b;
     --bg-3: #1a1d27;
+    --bg-hover: #1e2130;
     --line: #1e2130;
     --line-2: #2a2d3e;
     --text: #edeef3;
@@ -29,8 +35,11 @@
     --bad-bg: rgba(239,68,68,0.10);
     --ok: #22c55e;
     --ok-bg: rgba(34,197,94,0.10);
+    --info: #3b82f6;
+    --info-bg: rgba(59,130,246,0.10);
     --header-bg-rgba: rgba(9,10,15,0.85);
     --bg-glow: rgba(34, 197, 94, 0.05);
+    --shadow-pop: 0 12px 32px rgba(0,0,0,0.5);
     --font: 'NewBlack', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
 
@@ -38,6 +47,7 @@
     --bg: #f5f6f8;
     --bg-2: #ffffff;
     --bg-3: #f5f6f8;
+    --bg-hover: #eef0f4;
     --line: #e4e6ec;
     --line-2: #d0d3dc;
     --text: #111827;
@@ -52,72 +62,79 @@
     --bad-bg: rgba(220,38,38,0.10);
     --ok: #16a34a;
     --ok-bg: rgba(22,163,74,0.10);
+    --info: #2563eb;
+    --info-bg: rgba(37,99,235,0.10);
     --header-bg-rgba: rgba(245,246,248,0.92);
     --bg-glow: rgba(22, 163, 74, 0.04);
+    --shadow-pop: 0 12px 32px rgba(0,0,0,0.12);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   html, body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-weight: 500;
-    -webkit-font-smoothing: antialiased;
-    line-height: 1.4;
-    overscroll-behavior: none;
+    background: var(--bg); color: var(--text); font-family: var(--font); font-weight: 500;
+    -webkit-font-smoothing: antialiased; line-height: 1.4; overscroll-behavior: none;
   }
+  html.locked-mode .app { visibility: hidden; }
+  html.locked-mode .gate { display: flex !important; }
 
   body {
-    min-height: 100vh;
-    padding-bottom: 80px;
+    min-height: 100vh; padding-bottom: 80px;
     background-image:
       radial-gradient(ellipse at top, var(--bg-glow) 0%, transparent 50%),
       linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
   }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+
+  /* ─── Gate ─────────────────────────────────────── */
+  .gate {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: var(--bg); align-items: center; justify-content: center;
+    flex-direction: column; gap: 18px; padding: 32px; text-align: center;
+  }
+  .gate-icon { font-size: 48px; opacity: 0.5; }
+  .gate h1 { font-size: 22px; font-weight: 600; }
+  .gate p { color: var(--text-2); max-width: 420px; line-height: 1.55; font-size: 14px; }
+  .gate-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+  .gate .btn-primary {
+    background: var(--accent); color: var(--bg); border: none;
+    padding: 11px 20px; border-radius: 10px; font-weight: 700;
+    cursor: pointer; font-size: 13px; font-family: inherit;
+  }
+  .gate .btn-primary:hover { background: var(--accent-dim); }
+  .gate .btn-ghost {
+    background: transparent; color: var(--text-2);
+    border: 1px solid var(--line-2); padding: 11px 20px;
+    border-radius: 10px; cursor: pointer; font-size: 13px; font-family: inherit;
+  }
 
   /* ─── Header ────────────────────────────────────── */
   .app-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: sticky; top: 0; z-index: 100;
     background: var(--header-bg-rgba);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--line);
     padding: 16px 20px 14px;
   }
 
   .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 14px;
   }
 
   .brand {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
+    font-size: 10px; font-weight: 600;
+    color: var(--text-3); text-transform: uppercase; letter-spacing: 0.18em;
   }
 
-  .actions { display: flex; gap: 8px; }
+  .actions { display: flex; gap: 6px; align-items: center; }
 
   .icon-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    color: var(--text-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 14px;
-    font-family: inherit;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg-2); border: 1px solid var(--line);
+    color: var(--text-2); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 13px; font-family: inherit;
   }
   .icon-btn:hover { color: var(--text); border-color: var(--line-2); }
   .icon-btn svg { width: 14px; height: 14px; }
@@ -128,96 +145,70 @@
   .client-row { display: flex; align-items: flex-end; gap: 14px; }
 
   .client-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
+    width: 56px; height: 56px; border-radius: 14px;
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
-    color: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: 700;
-    flex-shrink: 0;
+    color: var(--bg); display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; flex-shrink: 0;
+    background-size: cover; background-position: center;
   }
+  .client-avatar.has-image { background: var(--bg-3); }
+  .client-avatar.has-image span { display: none; }
 
+  .client-info { flex: 1; min-width: 0; }
   .client-name {
-    font-size: 26px;
-    font-weight: 600;
-    line-height: 1.05;
-    letter-spacing: -0.01em;
+    font-size: 26px; font-weight: 600; line-height: 1.05;
+    letter-spacing: -0.01em; word-break: break-word;
+  }
+  .client-sub {
+    font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.14em;
+    margin-top: 6px; font-weight: 600;
   }
 
-  .client-sub {
-    font-size: 10px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    margin-top: 6px;
-    font-weight: 600;
+  .client-switch {
+    flex-shrink: 0; background: var(--bg-2); border: 1px solid var(--line);
+    color: var(--text-2); border-radius: 8px; padding: 6px 10px;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    font-family: inherit; align-self: center;
+    text-transform: uppercase; letter-spacing: 0.05em;
   }
+  .client-switch:hover { color: var(--text); border-color: var(--line-2); }
 
   /* ─── Status strip ──────────────────────────────── */
   .status-strip {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--line);
-    background: var(--bg-2);
-    scrollbar-width: none;
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 12px 20px; border-bottom: 1px solid var(--line);
+    background: var(--bg-2); scrollbar-width: none;
   }
   .status-strip::-webkit-scrollbar { display: none; }
 
   .chip {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: var(--bg-3);
-    border: 1px solid var(--line);
-    font-size: 11px;
-    color: var(--text-2);
-    font-weight: 500;
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 999px;
+    background: var(--bg-3); border: 1px solid var(--line);
+    font-size: 11px; color: var(--text-2); font-weight: 500;
   }
   .chip.ok { color: var(--ok); border-color: rgba(34,197,94,0.3); }
   .chip.warn { color: var(--warn); border-color: rgba(245,158,11,0.3); }
   .chip.bad { color: var(--bad); border-color: rgba(239,68,68,0.3); }
-
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
   /* ─── Tabs ─────────────────────────────────────── */
   .tabs {
-    display: flex;
-    gap: 4px;
-    padding: 14px 20px 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    border-bottom: 1px solid var(--line);
-    background: var(--bg);
-    position: sticky;
-    top: 109px;
-    z-index: 90;
+    display: flex; gap: 4px; padding: 14px 20px 0;
+    overflow-x: auto; scrollbar-width: none;
+    border-bottom: 1px solid var(--line); background: var(--bg);
+    position: sticky; top: 109px; z-index: 90;
   }
   .tabs::-webkit-scrollbar { display: none; }
 
   .tab {
-    flex-shrink: 0;
-    padding: 10px 14px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-3);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: color 0.2s;
-    margin-bottom: -1px;
+    flex-shrink: 0; padding: 10px 14px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    color: var(--text-3); background: none; border: none;
+    border-bottom: 2px solid transparent; cursor: pointer;
+    transition: color 0.2s; margin-bottom: -1px;
   }
-
   .tab.active { color: var(--text); border-bottom-color: var(--accent); }
 
   /* ─── Content ──────────────────────────────────── */
@@ -225,639 +216,345 @@
 
   .panel { display: none; }
   .panel.active { display: block; animation: fadeIn 0.3s ease; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   .section-title {
-    font-size: 10px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-weight: 600;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.18em;
+    font-weight: 600; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center;
   }
-
   .section-title + .section-title { margin-top: 32px; }
 
   .add-link {
-    color: var(--accent);
-    background: none;
-    border: none;
-    font-family: inherit;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    text-transform: uppercase;
-    font-weight: 600;
+    color: var(--accent); background: none; border: none;
+    font-family: inherit; font-size: 10px; letter-spacing: 0.1em;
+    cursor: pointer; text-transform: uppercase; font-weight: 600;
   }
 
   /* ─── Field cards ──────────────────────────────── */
   .field-list {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    overflow: hidden;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 14px; overflow: hidden;
   }
-
   .field {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    cursor: pointer;
+    padding: 14px 16px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; cursor: pointer;
   }
   .field:last-child { border-bottom: none; }
   .field:active { background: var(--bg-3); }
-
   .field-label {
-    font-size: 10px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 4px;
-    font-weight: 600;
+    font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 4px; font-weight: 600;
   }
-
-  .field-value {
-    font-size: 14px;
-    color: var(--text);
-    word-break: break-word;
-  }
-
+  .field-value { font-size: 14px; color: var(--text); word-break: break-word; }
   .field-value.empty { color: var(--text-3); font-style: italic; }
-
-  .field-right {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-  }
+  .field-right { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 
   .status-pill {
-    font-size: 9px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 9px; font-weight: 700; padding: 3px 8px;
+    border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em;
   }
   .status-pill.ok { background: var(--ok-bg); color: var(--ok); }
   .status-pill.warn { background: var(--warn-bg); color: var(--warn); }
   .status-pill.bad { background: var(--bad-bg); color: var(--bad); }
-
+  .status-pill.mock { background: var(--bg-3); color: var(--text-3); }
   .chevron { color: var(--text-3); font-size: 18px; line-height: 1; }
 
   /* ─── Pipeline cards ───────────────────────────── */
   .pipeline-card {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 14px;
-    cursor: pointer;
-    transition: border-color 0.2s;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 16px; padding: 16px; margin-bottom: 14px;
+    cursor: pointer; transition: border-color 0.2s;
   }
   .pipeline-card:active { border-color: var(--line-2); }
-
-  .pip-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 14px;
-    gap: 10px;
-  }
-
+  .pip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 10px; }
   .pip-code {
-    font-size: 11px;
-    color: var(--accent);
-    background: var(--accent-muted);
-    padding: 4px 8px;
-    border-radius: 6px;
-    display: inline-block;
-    margin-bottom: 8px;
-    letter-spacing: 0.05em;
-    font-weight: 700;
+    font-size: 11px; color: var(--accent); background: var(--accent-muted);
+    padding: 4px 8px; border-radius: 6px; display: inline-block;
+    margin-bottom: 8px; letter-spacing: 0.05em; font-weight: 700;
   }
-
   .pip-type-badge {
-    font-size: 9px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: var(--bg-3);
-    margin-left: 6px;
-    display: inline-block;
-    vertical-align: middle;
-    font-weight: 600;
+    font-size: 9px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.12em; padding: 3px 8px; border-radius: 4px;
+    background: var(--bg-3); margin-left: 6px; display: inline-block;
+    vertical-align: middle; font-weight: 600;
   }
   .pip-type-badge.envio { color: var(--warn); background: var(--warn-bg); }
-
-  .pip-name {
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-  }
-
+  .pip-name { font-size: 20px; font-weight: 600; line-height: 1.15; letter-spacing: -0.01em; }
   .pip-meta {
-    display: flex;
-    gap: 16px;
-    margin-top: 14px;
-    padding-top: 14px;
+    display: flex; gap: 16px; margin-top: 14px; padding-top: 14px;
     border-top: 1px dashed var(--line);
   }
-
   .pip-metric { flex: 1; }
-
-  .pip-metric-value {
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
+  .pip-metric-value { font-size: 22px; font-weight: 700; line-height: 1; }
   .pip-metric-label {
-    font-size: 9px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-top: 4px;
-    font-weight: 600;
+    font-size: 9px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.12em; margin-top: 4px; font-weight: 600;
   }
 
-  /* ─── Campaign expandable ──────────────────────── */
-  .campaign {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    margin-bottom: 10px;
-    overflow: hidden;
-  }
-
-  .campaign-head {
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    gap: 12px;
-  }
-
-  .camp-info { flex: 1; min-width: 0; }
-
-  .camp-code {
-    font-size: 10px;
-    color: var(--accent);
-    letter-spacing: 0.05em;
-    margin-bottom: 3px;
-    font-weight: 700;
-  }
-
-  .camp-name {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.2;
-  }
-
-  .camp-toggle {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--bg-3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-2);
-    font-size: 12px;
-    transition: transform 0.3s;
-    flex-shrink: 0;
-  }
-
-  .campaign.open .camp-toggle { transform: rotate(180deg); }
-
-  .campaign-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease;
-  }
-  .campaign.open .campaign-body { max-height: 2000px; }
-
-  .camp-content {
-    padding: 16px;
-    border-top: 1px solid var(--line);
-  }
-
-  /* ─── Item rows (triggers / emails) ─────────────── */
-  .item-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px dashed var(--line);
-  }
-  .item-row:last-child { border-bottom: none; }
-
-  .item-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--bg-3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--accent);
-    flex-shrink: 0;
-  }
-
-  .item-content { flex: 1; min-width: 0; }
-
-  .item-code {
-    font-size: 11px;
-    color: var(--text-2);
-    letter-spacing: 0.03em;
-    font-weight: 600;
-  }
-
-  .item-desc {
-    font-size: 12px;
-    color: var(--text-3);
-    margin-top: 2px;
-  }
-
-  .item-status {
-    font-size: 9px;
-    padding: 3px 6px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    flex-shrink: 0;
-    font-weight: 700;
-  }
-
-  .sub-title {
-    font-size: 9px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin: 14px 0 8px;
-    font-weight: 600;
-  }
-  .sub-title:first-child { margin-top: 0; }
-
-  /* ─── Catalog (list catalogs) ──────────────────── */
+  /* ─── Catalog item ─────────────────────────────── */
   .catalog-item {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; cursor: pointer;
   }
   .catalog-item:active { background: var(--bg-3); }
-
   .cat-info { flex: 1; min-width: 0; }
-
   .cat-name {
-    font-size: 14px;
-    color: var(--text);
-    margin-bottom: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 14px; color: var(--text); margin-bottom: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-
-  .cat-meta {
-    font-size: 10px;
-    color: var(--text-3);
-    letter-spacing: 0.04em;
-  }
+  .cat-meta { font-size: 10px; color: var(--text-3); letter-spacing: 0.04em; }
 
   /* ─── Anomalies ─────────────────────────────────── */
   .anomaly {
     background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(239,68,68,0.04) 100%);
     border: 1px solid rgba(245,158,11,0.2);
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 10px;
+    border-radius: 12px; padding: 14px; margin-bottom: 10px;
   }
-
   .anomaly.critical {
     background: linear-gradient(135deg, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.04) 100%);
     border-color: rgba(239,68,68,0.3);
   }
-
-  .anomaly-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-
+  .anomaly-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .anomaly-tag {
-    font-size: 9px;
-    color: var(--warn);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 700;
+    font-size: 9px; color: var(--warn); text-transform: uppercase;
+    letter-spacing: 0.12em; font-weight: 700;
   }
   .anomaly.critical .anomaly-tag { color: var(--bad); }
-
-  .anomaly-msg {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.45;
-  }
-
+  .anomaly-msg { font-size: 13px; color: var(--text); line-height: 1.45; }
   .anomaly-context {
-    font-size: 10px;
-    color: var(--text-3);
-    margin-top: 6px;
-    letter-spacing: 0.03em;
+    font-size: 10px; color: var(--text-3); margin-top: 6px; letter-spacing: 0.03em;
   }
 
-  /* ─── Sheet / Modal ─────────────────────────────── */
+  /* ─── Sheet ─────────────────────────────────────── */
   .sheet-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 200;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s;
   }
   .sheet-backdrop.open { opacity: 1; pointer-events: all; }
-
   .sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--bg-2);
-    border-top: 1px solid var(--line-2);
-    border-radius: 24px 24px 0 0;
-    z-index: 201;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-2); border-top: 1px solid var(--line-2);
+    border-radius: 24px 24px 0 0; z-index: 201;
     transform: translateY(100%);
     transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-    max-height: 90vh;
-    overflow-y: auto;
+    max-height: 90vh; overflow-y: auto;
     padding-bottom: env(safe-area-inset-bottom, 20px);
   }
   .sheet.open { transform: translateY(0); }
-
-  .sheet-handle {
-    width: 40px;
-    height: 4px;
-    background: var(--line-2);
-    border-radius: 2px;
-    margin: 12px auto 8px;
-  }
-
+  .sheet-handle { width: 40px; height: 4px; background: var(--line-2); border-radius: 2px; margin: 12px auto 8px; }
   .sheet-header {
-    padding: 12px 20px 20px;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
+    padding: 12px 20px 20px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
   }
-
-  .sheet-title {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    line-height: 1.15;
-  }
-
+  .sheet-title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
   .sheet-subtitle {
-    font-size: 10px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-top: 6px;
-    font-weight: 600;
+    font-size: 10px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.12em; margin-top: 6px; font-weight: 600;
   }
-
   .close-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--bg-3);
-    border: none;
-    color: var(--text);
-    font-size: 18px;
-    cursor: pointer;
-    flex-shrink: 0;
-    font-family: inherit;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-3); border: none; color: var(--text);
+    font-size: 18px; cursor: pointer; flex-shrink: 0; font-family: inherit;
   }
-
   .sheet-body { padding: 20px; }
 
   /* ─── Form ─────────────────────────────────────── */
   .form-field { margin-bottom: 16px; }
-
   .form-label {
-    font-size: 10px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 6px;
-    display: block;
-    font-weight: 600;
+    font-size: 10px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 6px; display: block; font-weight: 600;
   }
-
   .form-input, .form-select, .form-textarea {
-    width: 100%;
-    background: var(--bg-3);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 12px 14px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 500;
+    width: 100%; background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px;
+    color: var(--text); font-family: inherit; font-size: 14px; font-weight: 500;
   }
   .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-muted);
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-muted);
   }
-
   .form-textarea { min-height: 80px; resize: vertical; }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .checkbox-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
   .check-pill {
-    padding: 8px 12px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--bg-3);
-    color: var(--text-2);
-    font-size: 11px;
-    cursor: pointer;
-    user-select: none;
-    font-weight: 600;
+    padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--bg-3); color: var(--text-2);
+    font-size: 11px; cursor: pointer; user-select: none; font-weight: 600;
   }
-  .check-pill.checked {
-    background: var(--accent);
-    color: var(--bg);
-    border-color: var(--accent);
-  }
+  .check-pill.checked { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
   .btn-primary {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    font-family: inherit;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: 12px;
-    letter-spacing: 0.02em;
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: var(--accent); color: var(--bg); border: none;
+    font-family: inherit; font-weight: 700; font-size: 14px;
+    cursor: pointer; margin-top: 12px; letter-spacing: 0.02em;
   }
   .btn-primary:hover { background: var(--accent-dim); }
-
   .btn-secondary {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    background: var(--bg-3);
-    color: var(--text);
-    border: 1px solid var(--line);
-    font-family: inherit;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: 8px;
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: var(--bg-3); color: var(--text); border: 1px solid var(--line);
+    font-family: inherit; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 8px;
   }
 
   /* ─── FAB ──────────────────────────────────────── */
   .fab {
-    position: fixed;
-    bottom: 24px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    font-size: 28px;
-    box-shadow: 0 6px 24px rgba(34, 197, 94, 0.35);
-    z-index: 50;
-    cursor: pointer;
-    font-weight: 300;
-    line-height: 1;
-    font-family: inherit;
+    position: fixed; bottom: 24px; right: 20px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: var(--bg); border: none;
+    font-size: 28px; box-shadow: 0 6px 24px rgba(34,197,94,0.35);
+    z-index: 50; cursor: pointer; font-weight: 300; line-height: 1; font-family: inherit;
   }
   .fab:hover { background: var(--accent-dim); }
+  .fab.hidden { display: none; }
 
   /* ─── Toast ────────────────────────────────────── */
   .toast {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
+    position: fixed; bottom: 100px; left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: var(--bg-3);
-    border: 1px solid var(--line-2);
-    color: var(--text);
-    padding: 12px 20px;
-    border-radius: 999px;
-    font-size: 12px;
-    letter-spacing: 0.03em;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s;
-    z-index: 300;
-    white-space: nowrap;
-    font-weight: 600;
+    background: var(--bg-3); border: 1px solid var(--line-2);
+    color: var(--text); padding: 12px 20px; border-radius: 999px;
+    font-size: 12px; letter-spacing: 0.03em;
+    opacity: 0; pointer-events: none; transition: all 0.3s;
+    z-index: 300; white-space: nowrap; font-weight: 600;
   }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── Picker (selector cliente) ────────────────── */
+  .picker-search {
+    width: 100%; background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px;
+    color: var(--text); font-family: inherit; font-size: 14px; font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .picker-search:focus { outline: none; border-color: var(--accent); }
+  .picker-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
+  .picker-item {
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+  }
+  .picker-item:hover { border-color: var(--line-2); background: var(--bg-hover); }
+  .picker-item.current { border-color: var(--accent); background: var(--accent-muted); }
+  .picker-item-avatar {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+    color: var(--bg); display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+  }
+  .picker-item-info { flex: 1; min-width: 0; }
+  .picker-item-name {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .picker-item-meta {
+    font-size: 10px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-top: 2px; font-weight: 600;
   }
 
-  /* ─── Tree view for pipeline detail ─────────────── */
+  /* ─── Empty / Loading ──────────────────────────── */
+  .empty-card {
+    padding: 28px 20px; text-align: center; color: var(--text-3);
+    font-size: 13px; font-style: italic;
+    background: var(--bg-2); border: 1px dashed var(--line-2); border-radius: 14px;
+    margin: 4px 0;
+  }
+  .loading-card {
+    padding: 28px 20px; text-align: center; color: var(--text-3); font-size: 13px;
+  }
+
+  /* ─── Nav dropdown ─────────────────────────────── */
+  .nav-wrap { position: relative; }
+  .nav-dropdown {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 300;
+    background: var(--bg-2); border: 1px solid var(--line-2);
+    border-radius: 10px; padding: 6px; min-width: 200px;
+    box-shadow: var(--shadow-pop); display: none;
+  }
+  .nav-dropdown.open { display: block; animation: popIn 120ms ease-out; }
+  @keyframes popIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg-hover); }
+  .nav-item.active { color: var(--accent); }
+  .nav-item svg { width: 14px; height: 14px; color: var(--text-3); flex-shrink: 0; }
+  .nav-item.active svg { color: var(--accent); }
+  .nav-divider { height: 1px; background: var(--line); margin: 4px 0; }
+
+  /* ─── Stages / Tree (pipeline detail) ──────────── */
   .stages-strip {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    padding: 12px;
-    margin: 0;
-    background: var(--bg-3);
-    border-radius: 10px;
-    scrollbar-width: none;
+    display: flex; gap: 4px; overflow-x: auto; padding: 12px;
+    background: var(--bg-3); border-radius: 10px; scrollbar-width: none;
   }
   .stages-strip::-webkit-scrollbar { display: none; }
-
   .stage-pill {
-    flex-shrink: 0;
-    font-size: 10px;
-    color: var(--text-2);
-    padding: 5px 10px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    letter-spacing: 0.03em;
-    font-weight: 600;
+    flex-shrink: 0; font-size: 10px; color: var(--text-2);
+    padding: 5px 10px; background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 6px; letter-spacing: 0.03em; font-weight: 600;
   }
-  .stage-pill.first {
-    color: var(--accent);
-    border-color: rgba(34,197,94,0.3);
-  }
-
-  .stage-arrow {
-    color: var(--text-3);
-    align-self: center;
-    font-size: 10px;
-    flex-shrink: 0;
-  }
-
+  .stage-pill.first { color: var(--accent); border-color: rgba(34,197,94,0.3); }
+  .stage-arrow { color: var(--text-3); align-self: center; font-size: 10px; flex-shrink: 0; }
   .tree {
-    font-size: 11px;
-    color: var(--text-2);
-    background: var(--bg-3);
-    padding: 14px;
-    border-radius: 10px;
-    line-height: 1.7;
-    overflow-x: auto;
-    white-space: pre;
+    font-size: 11px; color: var(--text-2); background: var(--bg-3);
+    padding: 14px; border-radius: 10px; line-height: 1.7;
+    overflow-x: auto; white-space: pre;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .tree .accent { color: var(--accent); }
 
-  /* ─── Desktop tablet enhancement ────────────────── */
+  .sub-title {
+    font-size: 9px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.15em; margin: 14px 0 8px; font-weight: 600;
+  }
+  .sub-title:first-child { margin-top: 0; }
+
+  /* ─── Campaign expandable ──────────────────────── */
+  .campaign {
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 14px; margin-bottom: 10px; overflow: hidden;
+  }
+  .campaign-head { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; gap: 12px; }
+  .camp-info { flex: 1; min-width: 0; }
+  .camp-code { font-size: 10px; color: var(--accent); letter-spacing: 0.05em; margin-bottom: 3px; font-weight: 700; }
+  .camp-name { font-size: 16px; font-weight: 600; line-height: 1.2; }
+  .camp-toggle {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--bg-3); display: flex; align-items: center; justify-content: center;
+    color: var(--text-2); font-size: 12px; transition: transform 0.3s; flex-shrink: 0;
+  }
+  .campaign.open .camp-toggle { transform: rotate(180deg); }
+  .campaign-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+  .campaign.open .campaign-body { max-height: 2000px; }
+  .camp-content { padding: 16px; border-top: 1px solid var(--line); }
+
+  .item-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px dashed var(--line);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg-3); display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0;
+  }
+  .item-content { flex: 1; min-width: 0; }
+  .item-code { font-size: 11px; color: var(--text-2); letter-spacing: 0.03em; font-weight: 600; }
+  .item-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+  .item-status {
+    font-size: 9px; padding: 3px 6px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; font-weight: 700;
+  }
+
+  /* ─── Desktop / tablet enhancement ─────────────── */
   @media (min-width: 768px) {
     body { padding-bottom: 100px; }
     .app-header { padding: 24px 40px 18px; }
@@ -870,16 +567,33 @@
     .pip-name { font-size: 24px; }
     .sheet { left: auto; right: auto; width: min(560px, 92vw); margin: 0 auto; border-radius: 24px; bottom: 5vh; max-height: 88vh; }
     .sheet.open { transform: translate(-50%, 0); left: 50%; }
-    .fab { right: calc(50vw - 460px + 20px); }
+    .fab { right: max(20px, calc(50vw - 460px + 20px)); }
   }
-
   @media (min-width: 1024px) {
     .content { max-width: 1080px; }
     .fab { right: max(20px, calc(50vw - 540px + 20px)); }
   }
+
+  /* Anti-zoom iOS */
+  @media (max-width: 720px) {
+    input[type="text"], input[type="search"], input[type="email"], textarea, select { font-size: 16px !important; }
+  }
 </style>
 </head>
 <body>
+
+<!-- ─────── Gate ─────── -->
+<div class="gate" id="gate">
+  <div class="gate-icon">🔒</div>
+  <h1 id="gate-title">Acceso restringido</h1>
+  <p id="gate-msg">La ficha de cliente es documentación interna del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.</p>
+  <div class="gate-actions">
+    <button class="btn-primary" id="gate-login">Iniciar sesión</button>
+    <a class="btn-ghost" href="/">Volver al inicio</a>
+  </div>
+</div>
+
+<div class="app" id="app">
 
 <!-- ─────── HEADER ─────── -->
 <header class="app-header">
@@ -890,30 +604,52 @@
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-      <button class="icon-btn" title="Buscar" aria-label="Buscar">⌕</button>
-      <button class="icon-btn" title="Más" aria-label="Más">⋯</button>
+      <div class="nav-wrap">
+        <button class="icon-btn" id="nav-btn" title="Navegación" aria-haspopup="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </button>
+        <div class="nav-dropdown" id="nav-dropdown" role="menu">
+          <a class="nav-item" href="/playbook/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+            Playbook
+          </a>
+          <a class="nav-item active" href="/ficha-cliente/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+            Ficha de Cliente
+          </a>
+          <a class="nav-item" href="/fichas-de-producto/" role="menuitem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Fichas de Producto
+          </a>
+          <div class="nav-divider"></div>
+          <a class="nav-item" href="/casuisticas/" role="menuitem">Casuísticas</a>
+          <a class="nav-item" href="/disponibilidades/" role="menuitem">Disponibilidades</a>
+          <div class="nav-divider"></div>
+          <button class="nav-item" id="logout-btn" role="menuitem" style="background:transparent;border:none;text-align:left;width:100%;cursor:pointer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span id="logout-label">Salir</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="client-row">
-    <div class="client-avatar">L</div>
-    <div>
-      <div class="client-name">Laser Space Alzira</div>
-      <div class="client-sub">Ocio · Activo · 8 meses</div>
+  <div class="client-row" id="client-row" style="display:none">
+    <div class="client-avatar" id="client-avatar"><span id="client-initial">?</span></div>
+    <div class="client-info">
+      <div class="client-name" id="client-name">—</div>
+      <div class="client-sub" id="client-sub">—</div>
     </div>
+    <button class="client-switch" id="client-switch" title="Cambiar de cliente">Cambiar</button>
   </div>
 </header>
 
-<!-- ─────── STATUS STRIP ─────── -->
-<div class="status-strip">
-  <span class="chip ok"><span class="dot"></span>Onboarding 87%</span>
-  <span class="chip warn"><span class="dot"></span>3 anomalías</span>
-  <span class="chip"><span class="dot"></span>4 Pipelines</span>
-  <span class="chip"><span class="dot"></span>10 Campañas</span>
-  <span class="chip ok"><span class="dot"></span>GHL activo</span>
+<!-- ─────── Status strip ─────── -->
+<div class="status-strip" id="status-strip" style="display:none">
+  <!-- inyectado por JS -->
 </div>
 
-<!-- ─────── TABS ─────── -->
-<nav class="tabs" id="tabs">
+<!-- ─────── Tabs ─────── -->
+<nav class="tabs" id="tabs" style="display:none">
   <button class="tab active" data-panel="datos">Datos</button>
   <button class="tab" data-panel="estrategia">Estrategia</button>
   <button class="tab" data-panel="catalogos">Catálogos</button>
@@ -923,424 +659,124 @@
 
 <main class="content">
 
-  <!-- ─── PANEL: DATOS ─── -->
-  <section class="panel active" id="panel-datos">
+  <!-- ─── Estado: cargando ─── -->
+  <div id="state-loading" class="loading-card">Cargando…</div>
 
-    <div class="section-title">
-      <span>Identificación</span>
-      <button class="add-link" onclick="openEditField('Identificación')">Editar</button>
+  <!-- ─── Estado: sin cliente seleccionado ─── -->
+  <div id="state-empty" style="display:none">
+    <div class="empty-card">
+      <div style="font-size:42px;margin-bottom:10px">👋</div>
+      <div style="font-size:15px;color:var(--text);font-style:normal;margin-bottom:10px">
+        Elige un cliente para empezar
+      </div>
+      <div style="margin-bottom:18px">Sus datos vienen de Bubble vía espejo Supabase.</div>
+      <button class="btn-primary" id="pick-client-btn" style="max-width:280px;margin:0 auto">Seleccionar cliente</button>
     </div>
-    <div class="field-list">
-      <div class="field" onclick="openEditField('Nombre legal')">
-        <div>
-          <div class="field-label">Nombre legal</div>
-          <div class="field-value">Laser Space Alzira S.L.</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('CIF')">
-        <div>
-          <div class="field-label">CIF</div>
-          <div class="field-value">B12345678</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('Dirección')">
-        <div>
-          <div class="field-label">Dirección</div>
-          <div class="field-value">Av. Hispanitat 24, 46600 Alzira, Valencia</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('Teléfono')">
-        <div>
-          <div class="field-label">Teléfono</div>
-          <div class="field-value">+34 962 12 34 56</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-    </div>
+  </div>
 
-    <div class="section-title"><span>Contacto principal</span></div>
-    <div class="field-list">
-      <div class="field" onclick="openEditField('Persona')">
-        <div>
-          <div class="field-label">Persona</div>
-          <div class="field-value">María Llorente</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('Email')">
-        <div>
-          <div class="field-label">Email</div>
-          <div class="field-value">maria@laserspacealzira.com</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('WhatsApp')">
-        <div>
-          <div class="field-label">WhatsApp</div>
-          <div class="field-value">+34 666 12 34 56</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-    </div>
+  <!-- ─── Estado: contenido (paneles) ─── -->
+  <div id="state-content" style="display:none">
 
-    <div class="section-title"><span>Presencia digital</span></div>
-    <div class="field-list">
-      <div class="field" onclick="openEditField('Web')">
-        <div>
-          <div class="field-label">Web</div>
-          <div class="field-value">alzira.laserspace.es</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('Dominio')">
-        <div>
-          <div class="field-label">Quién gestiona el dominio</div>
-          <div class="field-value empty">Pendiente cliente</div>
-        </div>
-        <div class="field-right"><span class="status-pill warn">PENDIENTE</span></div>
-      </div>
-      <div class="field" onclick="openEditField('Instagram')">
-        <div>
-          <div class="field-label">Instagram</div>
-          <div class="field-value">@laserspace.alzira</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('Facebook')">
-        <div>
-          <div class="field-label">Facebook</div>
-          <div class="field-value">Laser Space Alzira</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-    </div>
+    <!-- PANEL DATOS — cableado contra bub_clientes -->
+    <section class="panel active" id="panel-datos">
 
-    <div class="section-title"><span>Accesos y credenciales</span></div>
-    <div class="field-list">
-      <div class="field" onclick="openEditField('Meta Business')">
-        <div>
-          <div class="field-label">Meta Business Manager</div>
-          <div class="field-value">Asignado · Admin acceso</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('Google Ads')">
-        <div>
-          <div class="field-label">Google Ads</div>
-          <div class="field-value">MCC vinculado</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('GHL Subcuenta')">
-        <div>
-          <div class="field-label">GHL Subcuenta</div>
-          <div class="field-value">laserspace-alzira</div>
-        </div>
-        <div class="field-right"><span class="status-pill ok">OK</span></div>
-      </div>
-      <div class="field" onclick="openEditField('DNS')">
-        <div>
-          <div class="field-label">Acceso DNS</div>
-          <div class="field-value empty">Bloqueante para Meta Ads</div>
-        </div>
-        <div class="field-right"><span class="status-pill bad">BLOQUEA</span></div>
-      </div>
-    </div>
+      <div class="section-title"><span>Identificación</span></div>
+      <div class="field-list" id="ident-list"></div>
 
-  </section>
+      <div class="section-title"><span>Contacto principal</span></div>
+      <div class="field-list" id="contacto-list"></div>
 
-  <!-- ─── PANEL: ESTRATEGIA ─── -->
-  <section class="panel" id="panel-estrategia">
+      <div class="section-title"><span>Presencia digital</span></div>
+      <div class="field-list" id="presencia-list"></div>
 
-    <div class="section-title">
-      <span>Pipelines del cliente</span>
-      <button class="add-link" onclick="openAddPipeline()">+ Nuevo</button>
-    </div>
+      <div class="section-title"><span>Accesos y credenciales</span></div>
+      <div class="field-list" id="accesos-list"></div>
 
-    <div class="pipeline-card" onclick="openPipeline('P1')">
-      <div class="pip-header">
-        <div>
+      <div class="section-title"><span>Operaciones internas</span></div>
+      <div class="field-list" id="internos-list"></div>
+
+    </section>
+
+    <!-- PANEL ESTRATEGIA — mockup -->
+    <section class="panel" id="panel-estrategia">
+      <div class="section-title">
+        <span>Pipelines del cliente</span>
+        <button class="add-link" onclick="openAddPipeline()">+ Nuevo</button>
+      </div>
+
+      <div class="pipeline-card" onclick="openPipeline('P1')">
+        <div class="pip-header">
           <div>
-            <span class="pip-code">P1</span>
-            <span class="pip-type-badge">Con etapas</span>
+            <div><span class="pip-code">P1</span><span class="pip-type-badge">Con etapas</span></div>
+            <div class="pip-name">Captación cumpleaños</div>
           </div>
-          <div class="pip-name">Captación cumpleaños</div>
+          <span class="status-pill mock">MOCKUP</span>
         </div>
-        <span class="status-pill ok">ACTIVO</span>
-      </div>
-      <div class="pip-meta">
-        <div class="pip-metric">
-          <div class="pip-metric-value">3</div>
-          <div class="pip-metric-label">Campañas</div>
-        </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">3</div>
-          <div class="pip-metric-label">Triggers</div>
-        </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">7</div>
-          <div class="pip-metric-label">Emails</div>
+        <div class="pip-meta">
+          <div class="pip-metric"><div class="pip-metric-value">3</div><div class="pip-metric-label">Campañas</div></div>
+          <div class="pip-metric"><div class="pip-metric-value">3</div><div class="pip-metric-label">Triggers</div></div>
+          <div class="pip-metric"><div class="pip-metric-value">7</div><div class="pip-metric-label">Emails</div></div>
         </div>
       </div>
-    </div>
 
-    <div class="pipeline-card" onclick="openPipeline('P2')">
-      <div class="pip-header">
-        <div>
-          <div>
-            <span class="pip-code">P2</span>
-            <span class="pip-type-badge">Con etapas</span>
-          </div>
-          <div class="pip-name">Reactivación clientes</div>
+      <div class="empty-card" style="margin-top:14px">
+        Demo. La gestión real de pipelines y campañas no está implementada todavía.
+      </div>
+    </section>
+
+    <!-- PANEL CATÁLOGOS — mockup -->
+    <section class="panel" id="panel-catalogos">
+      <div class="section-title"><span>Emails remitentes</span></div>
+      <div class="catalog-item">
+        <div class="cat-info">
+          <div class="cat-name">hola@dominiocliente.com</div>
+          <div class="cat-meta">Principal · MOCKUP</div>
         </div>
-        <span class="status-pill ok">ACTIVO</span>
+        <span class="status-pill mock">MOCKUP</span>
       </div>
-      <div class="pip-meta">
-        <div class="pip-metric">
-          <div class="pip-metric-value">2</div>
-          <div class="pip-metric-label">Campañas</div>
+
+      <div class="section-title"><span>Etiquetas de segmentación</span></div>
+      <div class="catalog-item">
+        <div class="cat-info">
+          <div class="cat-name">lead-cumple-padres</div>
+          <div class="cat-meta">342 contactos · MOCKUP</div>
         </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">3</div>
-          <div class="pip-metric-label">Triggers</div>
-        </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">6</div>
-          <div class="pip-metric-label">Emails</div>
-        </div>
+        <span class="chevron">›</span>
       </div>
-    </div>
 
-    <div class="pipeline-card" onclick="openPipeline('P3')">
-      <div class="pip-header">
-        <div>
-          <div>
-            <span class="pip-code">P3</span>
-            <span class="pip-type-badge">Con etapas</span>
-          </div>
-          <div class="pip-name">Captación B2B colegios</div>
-        </div>
-        <span class="status-pill warn">EN DEFINICIÓN</span>
+      <div class="empty-card" style="margin-top:14px">
+        Demo. Los catálogos reales se cablearán cuando se decida el modelo de datos.
       </div>
-      <div class="pip-meta">
-        <div class="pip-metric">
-          <div class="pip-metric-value">2</div>
-          <div class="pip-metric-label">Campañas</div>
-        </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">1</div>
-          <div class="pip-metric-label">Triggers</div>
-        </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">4</div>
-          <div class="pip-metric-label">Emails</div>
-        </div>
-      </div>
-    </div>
+    </section>
 
-    <div class="pipeline-card" onclick="openPipeline('P4')">
-      <div class="pip-header">
-        <div>
-          <div>
-            <span class="pip-code">P4</span>
-            <span class="pip-type-badge envio">Envío directo</span>
-          </div>
-          <div class="pip-name">Black Friday</div>
-        </div>
-        <span class="status-pill ok">ACTIVO</span>
+    <!-- PANEL SERVICIOS — pendiente de bb_servicios_contratados -->
+    <section class="panel" id="panel-servicios">
+      <div class="section-title"><span>Servicios contratados</span></div>
+      <div id="servicios-list">
+        <div class="loading-card">—</div>
       </div>
-      <div class="pip-meta">
-        <div class="pip-metric">
-          <div class="pip-metric-value">2</div>
-          <div class="pip-metric-label">Campañas</div>
-        </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">2</div>
-          <div class="pip-metric-label">Triggers</div>
-        </div>
-        <div class="pip-metric">
-          <div class="pip-metric-value">5</div>
-          <div class="pip-metric-label">Emails</div>
-        </div>
-      </div>
-    </div>
+    </section>
 
-  </section>
+    <!-- PANEL ANOMALÍAS — mockup -->
+    <section class="panel" id="panel-anomalias">
+      <div class="section-title"><span>Detectadas automáticamente</span></div>
+      <div class="anomaly critical">
+        <div class="anomaly-head"><span class="anomaly-tag">⚠ MOCKUP</span></div>
+        <div class="anomaly-msg">Cuando se implemente la detección automática, aparecerán aquí los bloqueantes (accesos faltantes, huecos de entregables, bajo consumo de servicios contratados, etc.).</div>
+        <div class="anomaly-context">Demo · sin lógica real todavía</div>
+      </div>
+    </section>
 
-  <!-- ─── PANEL: CATÁLOGOS ─── -->
-  <section class="panel" id="panel-catalogos">
-
-    <div class="section-title">
-      <span>Emails remitentes</span>
-      <button class="add-link" onclick="showToast('Añadir remitente')">+ Añadir</button>
-    </div>
-    <div class="catalog-item" onclick="showToast('Editar remitente')">
-      <div class="cat-info">
-        <div class="cat-name">hola@laserspacealzira.com</div>
-        <div class="cat-meta">Principal · DKIM verificado</div>
-      </div>
-      <span class="status-pill ok">OK</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">cumple@laserspacealzira.com</div>
-        <div class="cat-meta">Cumpleaños · DKIM pendiente</div>
-      </div>
-      <span class="status-pill warn">PENDIENTE</span>
-    </div>
-
-    <div class="section-title">
-      <span>Etiquetas de segmentación</span>
-      <button class="add-link" onclick="showToast('Añadir etiqueta')">+ Añadir</button>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">lead-cumple-padres</div>
-        <div class="cat-meta">342 contactos · activa</div>
-      </div>
-      <span class="chevron">›</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">lead-cumple-jovenes</div>
-        <div class="cat-meta">189 contactos · activa</div>
-      </div>
-      <span class="chevron">›</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">cliente-reactivar</div>
-        <div class="cat-meta">1.247 contactos · activa</div>
-      </div>
-      <span class="chevron">›</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">b2b-colegios-valencia</div>
-        <div class="cat-meta">28 contactos · en construcción</div>
-      </div>
-      <span class="chevron">›</span>
-    </div>
-
-    <div class="section-title">
-      <span>Formularios activos</span>
-      <button class="add-link" onclick="showToast('Añadir formulario')">+ Añadir</button>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">P1C1FM1 — Meta cumpleaños padres</div>
-        <div class="cat-meta">Meta · ID 1234567890</div>
-      </div>
-      <span class="status-pill ok">OK</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">P1C2FM1 — Meta cumpleaños jóvenes</div>
-        <div class="cat-meta">Meta · ID 1234567891</div>
-      </div>
-      <span class="status-pill ok">OK</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">P2C1FW1 — Reactivación web</div>
-        <div class="cat-meta">Web · /vuelve</div>
-      </div>
-      <span class="status-pill ok">OK</span>
-    </div>
-
-  </section>
-
-  <!-- ─── PANEL: SERVICIOS ─── -->
-  <section class="panel" id="panel-servicios">
-
-    <div class="section-title"><span>Servicios contratados</span></div>
-
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">Gestión Meta Ads</div>
-        <div class="cat-meta">Recurrente · desde mes 1</div>
-      </div>
-      <span class="status-pill ok">ACTIVO</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">Anuncios nuevos Meta</div>
-        <div class="cat-meta">Hasta 2/mes · este mes 1/2</div>
-      </div>
-      <span class="status-pill warn">EN CURSO</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">Implementación CRM</div>
-        <div class="cat-meta">One-shot · completado mes 1</div>
-      </div>
-      <span class="status-pill ok">COMPLETADO</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">Reels Instagram</div>
-        <div class="cat-meta">1/mes desde mes 2 · este mes 0/1</div>
-      </div>
-      <span class="status-pill warn">PENDIENTE</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">Carruseles Instagram</div>
-        <div class="cat-meta">2/mes desde mes 2 · este mes 2/2</div>
-      </div>
-      <span class="status-pill ok">COMPLETADO</span>
-    </div>
-    <div class="catalog-item">
-      <div class="cat-info">
-        <div class="cat-name">Campañas WhatsApp</div>
-        <div class="cat-meta">4/mes desde mes 2 · este mes 1/4</div>
-      </div>
-      <span class="status-pill bad">BAJO RITMO</span>
-    </div>
-
-  </section>
-
-  <!-- ─── PANEL: ANOMALÍAS ─── -->
-  <section class="panel" id="panel-anomalias">
-
-    <div class="section-title"><span>Detectadas automáticamente</span></div>
-
-    <div class="anomaly critical">
-      <div class="anomaly-head">
-        <span class="anomaly-tag">⚠ BLOQUEANTE</span>
-      </div>
-      <div class="anomaly-msg">Falta acceso al DNS del cliente para verificar dominio en Meta Business.</div>
-      <div class="anomaly-context">Bloquea: P1C1FM1 · P1C2FM1 · P3C1FM1</div>
-    </div>
-
-    <div class="anomaly">
-      <div class="anomaly-head">
-        <span class="anomaly-tag">⚡ HUECO DE ENTREGABLE</span>
-      </div>
-      <div class="anomaly-msg">P1C1 declara 3 emails (E1, E2, E3) pero en Drive solo aparecen copies de E1 y E3. Falta P1C1E2.</div>
-      <div class="anomaly-context">Pipeline P1 · Campaña C1 · 2 días sin actualizar</div>
-    </div>
-
-    <div class="anomaly">
-      <div class="anomaly-head">
-        <span class="anomaly-tag">⚡ BAJO CONSUMO</span>
-      </div>
-      <div class="anomaly-msg">Servicio "Campañas WhatsApp" lleva 3 meses por debajo del 50% de lo contratado.</div>
-      <div class="anomaly-context">Contratado: 4/mes · Promedio últimos 3 meses: 1.7/mes</div>
-    </div>
-
-  </section>
-
+  </div>
 </main>
 
-<!-- ─────── FAB ─────── -->
-<button class="fab" onclick="openAddPipeline()" title="Añadir" aria-label="Añadir">+</button>
+</div>
 
-<!-- ─────── SHEET ─────── -->
-<div class="sheet-backdrop" id="backdrop" onclick="closeSheet()"></div>
+<!-- ─── FAB ─── -->
+<button class="fab hidden" id="fab" aria-label="Acciones">+</button>
+
+<!-- ─── Sheet ─── -->
+<div class="sheet-backdrop" id="backdrop"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
@@ -1348,378 +784,481 @@
       <div class="sheet-title" id="sheet-title">Detalle</div>
       <div class="sheet-subtitle" id="sheet-subtitle">—</div>
     </div>
-    <button class="close-btn" onclick="closeSheet()" aria-label="Cerrar">×</button>
+    <button class="close-btn" id="sheet-close" aria-label="Cerrar">×</button>
   </div>
   <div class="sheet-body" id="sheet-body"></div>
 </div>
 
-<!-- ─────── TOAST ─────── -->
-<div class="toast" id="toast">Acción simulada</div>
+<!-- ─── Toast ─── -->
+<div class="toast" id="toast">—</div>
 
 <script>
-  // ─── Tabs ───────────────────────────────────────
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  });
-
-  // ─── Sheet ──────────────────────────────────────
-  const sheet = document.getElementById('sheet');
-  const backdrop = document.getElementById('backdrop');
-
-  function openSheet(title, subtitle, html) {
-    document.getElementById('sheet-title').textContent = title;
-    document.getElementById('sheet-subtitle').textContent = subtitle;
-    document.getElementById('sheet-body').innerHTML = html;
-    sheet.classList.add('open');
-    backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeSheet() {
-    sheet.classList.remove('open');
-    backdrop.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  // ─── Toast ──────────────────────────────────────
-  function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 1800);
-  }
-
-  // ─── Pipeline detail ────────────────────────────
-  const pipelines = {
-    P1: {
-      name: 'Captación cumpleaños',
-      type: 'etapas',
-      stages: ['Registrado', 'Contactado', 'Reserva pedida', 'Cliente'],
-      campaigns: [
-        {
-          code: 'P1C1', name: 'Padres',
-          description: 'Captación de padres 35-50 interesados en cumpleaños infantiles',
-          triggers: [{ code: 'FM1', desc: 'Anuncio Meta dirigido a padres 35-50', status: 'ok' }],
-          emails: [
-            { code: 'E1', desc: 'Bienvenida + catálogo · día 0', status: 'ok' },
-            { code: 'E2', desc: 'Testimonios · día 1', status: 'warn' },
-            { code: 'E3', desc: 'Oferta · día 3', status: 'ok' }
-          ]
-        },
-        {
-          code: 'P1C2', name: 'Jóvenes',
-          description: 'Captación de jóvenes 18-25 para despedidas y grupos',
-          triggers: [{ code: 'FM1', desc: 'Anuncio Meta dirigido a jóvenes 18-25', status: 'ok' }],
-          emails: [
-            { code: 'E1', desc: 'Bienvenida + experiencias · día 0', status: 'ok' },
-            { code: 'E2', desc: 'Pack despedidas · día 2', status: 'ok' }
-          ]
-        },
-        {
-          code: 'P1C3', name: 'Reactivación leads fríos',
-          description: 'Recuperar leads de cumpleaños que no convirtieron',
-          triggers: [{ code: 'BD1', desc: 'BD leads no convertidos · lanzamiento 15/06', status: 'ok' }],
-          emails: [
-            { code: 'E1', desc: 'Reactivación con descuento · día 0', status: 'ok' },
-            { code: 'E2', desc: 'Last chance · día 5', status: 'ok' }
-          ]
-        }
-      ]
-    },
-    P2: {
-      name: 'Reactivación clientes',
-      type: 'etapas',
-      stages: ['Inactivo', 'Reactivado', 'Vuelve a comprar', 'Cliente recurrente'],
-      campaigns: [
-        {
-          code: 'P2C1', name: 'Clientes temporada baja',
-          description: 'Reactivar clientes que vinieron en temporada alta y no han vuelto',
-          triggers: [
-            { code: 'FW1', desc: 'Formulario web /vuelve', status: 'ok' },
-            { code: 'BD1', desc: 'BD clientes 2024 · lanzamiento 01/09', status: 'ok' }
-          ],
-          emails: [
-            { code: 'E1', desc: 'Te echamos de menos · día 0', status: 'ok' },
-            { code: 'E2', desc: 'Oferta vuelve · día 3', status: 'ok' },
-            { code: 'E3', desc: 'Last chance · día 7', status: 'ok' }
-          ]
-        },
-        {
-          code: 'P2C2', name: 'VIPs inactivos',
-          description: 'Clientes top que no han vuelto en 6 meses',
-          triggers: [{ code: 'BD1', desc: 'BD VIPs filtrados · lanzamiento 15/09', status: 'ok' }],
-          emails: [
-            { code: 'E1', desc: 'Trato preferente · día 0', status: 'ok' },
-            { code: 'E2', desc: 'Invitación privada · día 4', status: 'ok' },
-            { code: 'E3', desc: 'Regalo personal · día 8', status: 'ok' }
-          ]
-        }
-      ]
-    },
-    P3: {
-      name: 'Captación B2B colegios',
-      type: 'etapas',
-      stages: ['Identificado', 'Contactado', 'Reunión', 'Propuesta', 'Cerrado'],
-      campaigns: [
-        {
-          code: 'P3C1', name: 'Colegios Valencia',
-          description: 'Outreach a colegios de Valencia capital',
-          triggers: [{ code: 'BD1', desc: 'Lista colegios Valencia · pendiente fecha', status: 'warn' }],
-          emails: [
-            { code: 'E1', desc: 'Presentación + dossier · día 0', status: 'ok' },
-            { code: 'E2', desc: 'Seguimiento · día 5', status: 'warn' }
-          ]
-        },
-        {
-          code: 'P3C2', name: 'Colegios Alzira',
-          description: 'Outreach a colegios locales (más cercanía)',
-          triggers: [{ code: 'BD1', desc: 'Lista colegios Alzira · pendiente fecha', status: 'warn' }],
-          emails: [
-            { code: 'E1', desc: 'Presentación local · día 0', status: 'warn' },
-            { code: 'E2', desc: 'Propuesta visita · día 3', status: 'warn' }
-          ]
-        }
-      ]
-    },
-    P4: {
-      name: 'Black Friday',
-      type: 'envio',
-      stages: null,
-      campaigns: [
-        {
-          code: 'P4C1', name: 'Toda la BD',
-          description: 'Envío masivo de promoción Black Friday a toda la base de datos',
-          triggers: [{ code: 'BD1', desc: 'BD completa · lanzamiento 28/11', status: 'ok' }],
-          emails: [
-            { code: 'E1', desc: 'Anuncio Black Friday · 28/11 09:00', status: 'ok' },
-            { code: 'E2', desc: 'Recordatorio + urgencia · 29/11 18:00', status: 'ok' },
-            { code: 'E3', desc: 'Last chance · 30/11 20:00', status: 'ok' }
-          ]
-        },
-        {
-          code: 'P4C2', name: 'VIPs (early access)',
-          description: 'Acceso anticipado a VIPs antes del lanzamiento general',
-          triggers: [{ code: 'BD1', desc: 'BD VIPs · lanzamiento 27/11 (24h antes)', status: 'ok' }],
-          emails: [
-            { code: 'E1', desc: 'Acceso exclusivo VIP · 27/11 09:00', status: 'ok' },
-            { code: 'E2', desc: 'Tu descuento personal · 27/11 18:00', status: 'ok' }
-          ]
-        }
-      ]
-    }
-  };
-
-  function openPipeline(code) {
-    const pip = pipelines[code];
-    if (!pip) return;
-
-    const typeLabel = pip.type === 'etapas' ? 'Con etapas comerciales' : 'Envío directo (sin etapas)';
-    let html = '';
-
-    if (pip.type === 'etapas' && pip.stages) {
-      html += `<div class="sub-title">Etapas del Pipeline en GHL</div>`;
-      html += `<div class="stages-strip">`;
-      pip.stages.forEach((s, i) => {
-        html += `<div class="stage-pill ${i === 0 ? 'first' : ''}">${s}</div>`;
-        if (i < pip.stages.length - 1) html += `<span class="stage-arrow">→</span>`;
-      });
-      html += `</div>`;
-    } else {
-      html += `<div class="sub-title">Tipo</div>`;
-      html += `<div class="tree" style="color:var(--warn)">⚡ Envío directo · sin etapas comerciales\nSe ejecuta como broadcast / workflow en GHL</div>`;
-    }
-
-    html += `<div class="sub-title" style="margin-top:20px">Estructura completa</div>`;
-
-    let tree = `${code} — ${pip.name}\n`;
-    pip.campaigns.forEach((c, i) => {
-      const last = i === pip.campaigns.length - 1;
-      tree += `${last ? '└─' : '├─'} ${c.code} — ${c.name}\n`;
-      const pre = last ? '   ' : '│  ';
-      c.triggers.forEach(t => {
-        tree += `${pre}├─ ${t.code}: ${t.desc}\n`;
-      });
-      c.emails.forEach((e, j) => {
-        const elast = j === c.emails.length - 1;
-        tree += `${pre}${elast ? '└─' : '├─'} ${e.code}: ${e.desc}\n`;
-      });
-    });
-
-    html += `<div class="tree">${tree.replace(/(P\d+(C\d+)?(FM\d+|FW\d+|BD\d+|E\d+)?)/g, '<span class="accent">$1</span>')}</div>`;
-
-    html += `<div class="sub-title" style="margin-top:20px">Campañas</div>`;
-
-    pip.campaigns.forEach(c => {
-      html += `
-        <div class="campaign" onclick="this.classList.toggle('open')">
-          <div class="campaign-head">
-            <div class="camp-info">
-              <div class="camp-code">${c.code}</div>
-              <div class="camp-name">${c.name}</div>
-              <div class="item-desc" style="margin-top:4px">${c.description || ''}</div>
-            </div>
-            <div class="camp-toggle">⌃</div>
-          </div>
-          <div class="campaign-body">
-            <div class="camp-content">
-              <div class="sub-title">Triggers (canales de captación)</div>
-              ${c.triggers.map(t => `
-                <div class="item-row">
-                  <div class="item-icon">${t.code.replace(/\d+/g, '')}</div>
-                  <div class="item-content">
-                    <div class="item-code">${c.code}${t.code}</div>
-                    <div class="item-desc">${t.desc}</div>
-                  </div>
-                  <span class="item-status status-pill ${t.status}">${t.status.toUpperCase()}</span>
-                </div>
-              `).join('')}
-              <div class="sub-title">Emails (secuencia)</div>
-              ${c.emails.map(e => `
-                <div class="item-row">
-                  <div class="item-icon">E</div>
-                  <div class="item-content">
-                    <div class="item-code">${c.code}${e.code}</div>
-                    <div class="item-desc">${e.desc}</div>
-                  </div>
-                  <span class="item-status status-pill ${e.status}">${e.status.toUpperCase()}</span>
-                </div>
-              `).join('')}
-              <button class="btn-secondary" onclick="event.stopPropagation();showToast('Añadir email a ${c.code}')">+ Añadir email</button>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-
-    html += `<button class="btn-primary" onclick="openAddCampaign('${code}')">+ Nueva campaña en ${code}</button>`;
-
-    openSheet(pip.name, `${code} · ${typeLabel} · ${pip.campaigns.length} campañas`, html);
-  }
-
-  // ─── Add Pipeline ─────────────────────────────
-  function openAddPipeline() {
-    const html = `
-      <div class="form-field">
-        <label class="form-label">Código (automático)</label>
-        <input class="form-input" value="P5" disabled style="opacity:0.6">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Nombre del Pipeline</label>
-        <input class="form-input" placeholder="Ej: Captación bonos / Aniversario / etc.">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Tipo de Pipeline</label>
-        <div class="checkbox-group">
-          <span class="check-pill checked" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Con etapas comerciales</span>
-          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Envío directo</span>
-        </div>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Público o propósito</label>
-        <textarea class="form-textarea" placeholder="¿A qué público va dirigido o qué propósito tiene este Pipeline?"></textarea>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Etapas (solo si lleva etapas)</label>
-        <input class="form-input" placeholder="Ej: Registrado, Contactado, Reserva, Cliente">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Estado</label>
-        <select class="form-select">
-          <option>En definición</option>
-          <option>Activo</option>
-          <option>Archivado</option>
-        </select>
-      </div>
-      <button class="btn-primary" onclick="closeSheet();showToast('Pipeline P5 creado')">Crear Pipeline</button>
-    `;
-    openSheet('Nuevo Pipeline', 'Solo Account crea Pipelines', html);
-  }
-
-  // ─── Add Campaign ─────────────────────────────
-  function openAddCampaign(pipCode) {
-    const next = (pipelines[pipCode]?.campaigns.length || 0) + 1;
-    const html = `
-      <div class="form-field">
-        <label class="form-label">Código (automático)</label>
-        <input class="form-input" value="${pipCode}C${next}" disabled style="opacity:0.6">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Nombre de la Campaña (público o segmento)</label>
-        <input class="form-input" placeholder="Ej: Padres / Jóvenes / VIPs / Toda la BD">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Descripción del público objetivo</label>
-        <textarea class="form-textarea" placeholder="¿A qué sub-segmento atacamos y por qué?"></textarea>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Triggers (canales de captación)</label>
-        <div class="checkbox-group">
-          <span class="check-pill" onclick="this.classList.toggle('checked')">FM Formulario Meta</span>
-          <span class="check-pill" onclick="this.classList.toggle('checked')">FW Formulario Web</span>
-          <span class="check-pill" onclick="this.classList.toggle('checked')">BD Base de Datos</span>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label class="form-label">Nº de emails</label>
-          <input class="form-input" type="number" value="3" min="1" max="20">
-        </div>
-        <div class="form-field">
-          <label class="form-label">Fecha (solo si BD)</label>
-          <input class="form-input" type="date">
-        </div>
-      </div>
-      <button class="btn-primary" onclick="closeSheet();showToast('Campaña ${pipCode}C${next} creada')">Crear Campaña</button>
-      <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
-    `;
-    openSheet('Nueva Campaña', pipCode + ' · solo Account', html);
-  }
-
-  // ─── Edit field (genérico) ───────────────────
-  function openEditField(label) {
-    const html = `
-      <div class="form-field">
-        <label class="form-label">${label}</label>
-        <input class="form-input" placeholder="Nuevo valor...">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Estado</label>
-        <div class="checkbox-group">
-          <span class="check-pill checked" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Completo</span>
-          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Pendiente cliente</span>
-          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Pendiente nuestro</span>
-          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">No aplica</span>
-        </div>
-      </div>
-      <button class="btn-primary" onclick="closeSheet();showToast('${label} actualizado')">Guardar</button>
-    `;
-    openSheet('Editar campo', label, html);
-  }
-
-  // ─── Esc to close sheet ────────────────────────
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && sheet.classList.contains('open')) closeSheet();
-  });
-
-  // ─── Theme ─────────────────────────────────────
-  const THEME_KEY = 'thenucleo-ficha-cliente-theme';
-  (function initTheme() {
-    try { document.documentElement.dataset.theme = localStorage.getItem(THEME_KEY) || 'dark'; }
-    catch { document.documentElement.dataset.theme = 'dark'; }
-  })();
-  document.getElementById('theme-toggle').addEventListener('click', () => {
-    const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = t;
-    try { localStorage.setItem(THEME_KEY, t); } catch {}
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#090a0f' : '#f5f6f8');
-  });
+  window.__SUPABASE_URL__ = "https://cbixhqjsnpuhcrcjppah.supabase.co";
+  window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaXhocWpzbnB1aGNyY2pwcGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzU0OTksImV4cCI6MjA4OTE1MTQ5OX0.vbls3tGYkbgUNDhOzgEMBTG7nTlKfLMyTWzlWTmWxTM";
 </script>
+<script type="module">
+const SUPABASE_URL = window.__SUPABASE_URL__;
+const ANON = window.__SUPABASE_ANON_KEY__;
+const STORAGE_KEY = "thenucleo-comunidad-auth";
 
+const EDITOR_EMAILS = new Set([
+  "benjamin.sanchis@thenucleo.com",
+  "alejandro.lopez@thenucleo.com",
+  "marketing.thenucleo@gmail.com",
+  "mel.dalmazo@thenucleo.com",
+]);
+
+// ─── Session (mismo patrón que fichas-de-producto / playbook) ───
+function readStoredSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s?.expires_at && s.expires_at * 1000 < Date.now()) return null;
+    return s ?? null;
+  } catch { return null; }
+}
+function currentUser() { return readStoredSession()?.user ?? null; }
+function accessToken() { return readStoredSession()?.access_token ?? null; }
+function isAdmin() {
+  const u = currentUser();
+  return !!(u && u.email && EDITOR_EMAILS.has(u.email.toLowerCase()));
+}
+
+// ─── STATE ──────────────────────────────────────────
+const STATE = {
+  clientes: [],
+  cliente: null,
+};
+
+// ─── GATE ───────────────────────────────────────────
+function showGate(kind) {
+  const gate = document.getElementById('gate');
+  const title = document.getElementById('gate-title');
+  const msg = document.getElementById('gate-msg');
+  const btn = document.getElementById('gate-login');
+  if (kind === 'no-admin') {
+    title.textContent = 'Tu cuenta no tiene acceso';
+    msg.textContent = `${currentUser()?.email || 'Tu cuenta'} no está en la allowlist del equipo. Si crees que es un error, contacta con Ben.`;
+    btn.textContent = 'Cambiar de cuenta';
+  } else {
+    title.textContent = 'Acceso restringido';
+    msg.textContent = 'La ficha de cliente es documentación interna del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.';
+    btn.textContent = 'Iniciar sesión';
+  }
+  gate.style.display = 'flex';
+  document.documentElement.classList.add('locked-mode');
+}
+document.getElementById('gate-login').addEventListener('click', () => {
+  if (currentUser()) { try { localStorage.removeItem(STORAGE_KEY); } catch {} }
+  location.assign('/comunidad/entrar/?next=' + encodeURIComponent('/ficha-cliente/' + location.search));
+});
+
+// ─── Fetch helper ───────────────────────────────────
+async function rpc(fn, body = {}) {
+  const token = accessToken();
+  if (!token) throw new Error('no-session');
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: {
+      apikey: ANON,
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`RPC ${fn} HTTP ${res.status}: ${t || res.statusText}`);
+  }
+  return res.json();
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtDate(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  if (isNaN(d)) return null;
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function monthsSince(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  if (isNaN(d)) return null;
+  const now = new Date();
+  const months = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+  return Math.max(months, 0);
+}
+
+function isUrl(s) {
+  if (!s) return false;
+  try { const u = new URL(/^https?:\/\//.test(s) ? s : 'https://' + s); return !!u.protocol; } catch { return false; }
+}
+
+// ─── Status pill por valor ─────────────────────────
+function pillFor(val, mock = false) {
+  if (mock) return '<span class="status-pill mock">MOCKUP</span>';
+  if (val && String(val).trim()) return '<span class="status-pill ok">OK</span>';
+  return '<span class="status-pill warn">PENDIENTE</span>';
+}
+
+// ─── Render fields ─────────────────────────────────
+function fieldRow({ label, value, mock = false, isUrl: asUrl = false }) {
+  const val = value && String(value).trim() ? value : null;
+  let displayValue;
+  if (mock) {
+    displayValue = `<div class="field-value empty">${escapeHtml(val || 'Pendiente · mockup')}</div>`;
+  } else if (val) {
+    if (asUrl && isUrl(val)) {
+      const href = /^https?:\/\//.test(val) ? val : 'https://' + val;
+      displayValue = `<a class="field-value" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${escapeHtml(val)}</a>`;
+    } else {
+      displayValue = `<div class="field-value">${escapeHtml(val)}</div>`;
+    }
+  } else {
+    displayValue = `<div class="field-value empty">Pendiente</div>`;
+  }
+  return `
+    <div class="field" onclick="showToast('${escapeHtml(label).replace(/'/g, "\\'")}: edición pendiente')">
+      <div style="flex:1;min-width:0">
+        <div class="field-label">${escapeHtml(label)}</div>
+        ${displayValue}
+      </div>
+      <div class="field-right">${pillFor(val, mock)}</div>
+    </div>
+  `;
+}
+
+function renderCliente(c) {
+  if (!c) return;
+
+  // Header
+  const initial = (c.nombre_empresas || '?').slice(0, 1).toUpperCase();
+  document.getElementById('client-initial').textContent = initial;
+  document.getElementById('client-name').textContent = c.nombre_empresas || '—';
+
+  const avatar = document.getElementById('client-avatar');
+  if (c.logo_url && isUrl(c.logo_url)) {
+    avatar.classList.add('has-image');
+    avatar.style.backgroundImage = `url('${c.logo_url}')`;
+  } else if (c.logo_imagen && isUrl(c.logo_imagen)) {
+    avatar.classList.add('has-image');
+    avatar.style.backgroundImage = `url('${c.logo_imagen}')`;
+  } else {
+    avatar.classList.remove('has-image');
+    avatar.style.backgroundImage = '';
+  }
+
+  const subParts = [];
+  if (c.sector) subParts.push(c.sector);
+  if (c.estado) subParts.push(c.estado);
+  const m = monthsSince(c.fecha_onboarding);
+  if (m !== null) subParts.push(m === 0 ? 'Onboarding este mes' : `${m} ${m === 1 ? 'mes' : 'meses'}`);
+  document.getElementById('client-sub').textContent = subParts.join(' · ') || '—';
+
+  document.getElementById('client-row').style.display = '';
+
+  // Status strip
+  const strip = document.getElementById('status-strip');
+  const chips = [];
+  if (c.estado) {
+    const cls = c.estado.toLowerCase() === 'activo' ? 'ok' : (c.estado.toLowerCase().includes('no') ? 'bad' : 'warn');
+    chips.push(`<span class="chip ${cls}"><span class="dot"></span>${escapeHtml(c.estado)}</span>`);
+  }
+  if (c.sector) chips.push(`<span class="chip"><span class="dot"></span>${escapeHtml(c.sector)}</span>`);
+  if (c.plan_actual) chips.push(`<span class="chip"><span class="dot"></span>Plan: ${escapeHtml(c.plan_actual)}</span>`);
+  if (c.gchat_space_id) chips.push(`<span class="chip ok"><span class="dot"></span>Google Chat activo</span>`);
+  if (c.bb_estado_facturacion) {
+    const cls = /al dia|al día|ok|pagad/i.test(c.bb_estado_facturacion) ? 'ok' : 'warn';
+    chips.push(`<span class="chip ${cls}"><span class="dot"></span>Facturación: ${escapeHtml(c.bb_estado_facturacion)}</span>`);
+  }
+  chips.push(`<span class="chip"><span class="dot"></span>Pipelines · mockup</span>`);
+  chips.push(`<span class="chip"><span class="dot"></span>Anomalías · mockup</span>`);
+  strip.innerHTML = chips.join('');
+  strip.style.display = '';
+
+  // Panel datos — Identificación
+  const dirParts = [c.direccion_fiscal, c.codigo_postal, c.provincia, c.pais].filter(Boolean);
+  document.getElementById('ident-list').innerHTML = [
+    fieldRow({ label: 'Nombre comercial', value: c.nombre_empresas }),
+    fieldRow({ label: 'Razón social', value: c.nombre_sociedad }),
+    fieldRow({ label: 'CIF / NIF', value: c.dni_nif }),
+    fieldRow({ label: 'Dirección fiscal', value: dirParts.join(', ') }),
+    fieldRow({ label: 'Teléfono', value: c.telefono_principal }),
+  ].join('');
+
+  // Contacto
+  document.getElementById('contacto-list').innerHTML = [
+    fieldRow({ label: 'Persona de contacto', value: c.contacto_principal }),
+    fieldRow({ label: 'Email principal', value: c.correo_principal }),
+    fieldRow({ label: 'WhatsApp', value: null, mock: true }),
+  ].join('');
+
+  // Presencia digital
+  document.getElementById('presencia-list').innerHTML = [
+    fieldRow({ label: 'Web', value: c.pagina_web, isUrl: true }),
+    fieldRow({ label: 'Quién gestiona el dominio', value: null, mock: true }),
+    fieldRow({ label: 'Instagram', value: null, mock: true }),
+    fieldRow({ label: 'Facebook', value: null, mock: true }),
+  ].join('');
+
+  // Accesos (todos mock por ahora — bub_clientes no almacena estos)
+  document.getElementById('accesos-list').innerHTML = [
+    fieldRow({ label: 'Meta Business Manager', value: null, mock: true }),
+    fieldRow({ label: 'Google Ads', value: null, mock: true }),
+    fieldRow({ label: 'GHL Subcuenta', value: null, mock: true }),
+    fieldRow({ label: 'Acceso DNS', value: null, mock: true }),
+  ].join('');
+
+  // Operaciones internas — datos reales del espejo
+  document.getElementById('internos-list').innerHTML = [
+    fieldRow({ label: 'Drive del cliente', value: c.link_drive, isUrl: true }),
+    fieldRow({ label: 'Análisis estratégico', value: c.bb_link_drive_analisis, isUrl: true }),
+    fieldRow({ label: 'Notion ID', value: c.notion_id }),
+    fieldRow({ label: 'Google Chat Space', value: c.gchat_space_id }),
+    fieldRow({ label: 'Slug', value: c.slug }),
+    fieldRow({ label: 'Fecha onboarding', value: fmtDate(c.fecha_onboarding) }),
+    fieldRow({ label: 'Último seguimiento', value: fmtDate(c.ultimo_seguimiento) }),
+    fieldRow({ label: 'NPS', value: c.nps }),
+    fieldRow({ label: 'Facturación mensual', value: c.facturacion ? `${Number(c.facturacion).toLocaleString('es-ES')} €` : null }),
+  ].join('');
+
+  // Servicios
+  const serviciosNode = document.getElementById('servicios-list');
+  const servicios = Array.isArray(c.bb_servicios_contratados) ? c.bb_servicios_contratados : [];
+  if (!servicios.length) {
+    serviciosNode.innerHTML = '<div class="empty-card">Sin servicios contratados marcados en Bubble. Si el cliente tiene servicios, edita la ficha de Bubble.</div>';
+  } else {
+    serviciosNode.innerHTML = servicios.map(svc => `
+      <div class="catalog-item">
+        <div class="cat-info">
+          <div class="cat-name">${escapeHtml(typeof svc === 'string' ? svc : (svc?.nombre || JSON.stringify(svc)))}</div>
+          <div class="cat-meta">ID Bubble</div>
+        </div>
+        <span class="status-pill ok">ACTIVO</span>
+      </div>
+    `).join('');
+  }
+
+  // Mostrar tabs + content
+  document.getElementById('tabs').style.display = '';
+  document.getElementById('state-content').style.display = '';
+  document.getElementById('state-empty').style.display = 'none';
+  document.getElementById('state-loading').style.display = 'none';
+}
+
+// ─── Picker (selector cliente) ──────────────────────
+function openClientPicker() {
+  const list = STATE.clientes;
+  const current = STATE.cliente?.bubble_id;
+  const html = `
+    <input class="picker-search" id="picker-search" type="search" placeholder="Buscar cliente…" autocomplete="off">
+    <div class="picker-list" id="picker-list">
+      ${list.length ? list.map(c => renderPickerItem(c, current)).join('') : '<div class="empty-card">No hay clientes activos en bub_clientes.</div>'}
+    </div>
+  `;
+  openSheet('Cambiar de cliente', `${list.length} ${list.length === 1 ? 'cliente activo' : 'clientes activos'}`, html);
+
+  const search = document.getElementById('picker-search');
+  search?.addEventListener('input', () => {
+    const q = search.value.toLowerCase().trim();
+    const filtered = !q ? list : list.filter(c =>
+      (c.nombre_empresas || '').toLowerCase().includes(q) ||
+      (c.sector || '').toLowerCase().includes(q)
+    );
+    document.getElementById('picker-list').innerHTML = filtered.length
+      ? filtered.map(c => renderPickerItem(c, current)).join('')
+      : '<div class="empty-card">Sin resultados.</div>';
+    attachPickerHandlers();
+  });
+  attachPickerHandlers();
+  setTimeout(() => search?.focus(), 50);
+}
+
+function renderPickerItem(c, currentId) {
+  const initial = (c.nombre_empresas || '?').slice(0, 1).toUpperCase();
+  const meta = [c.sector, c.estado].filter(Boolean).join(' · ');
+  const isCurrent = c.bubble_id === currentId ? ' current' : '';
+  return `
+    <div class="picker-item${isCurrent}" data-id="${escapeHtml(c.bubble_id)}">
+      <div class="picker-item-avatar">${escapeHtml(initial)}</div>
+      <div class="picker-item-info">
+        <div class="picker-item-name">${escapeHtml(c.nombre_empresas || '—')}</div>
+        <div class="picker-item-meta">${escapeHtml(meta || 'Sin metadatos')}</div>
+      </div>
+    </div>
+  `;
+}
+
+function attachPickerHandlers() {
+  document.querySelectorAll('.picker-item').forEach(node => {
+    node.addEventListener('click', () => {
+      const id = node.dataset.id;
+      const url = new URL(location.href);
+      url.searchParams.set('id', id);
+      location.assign(url.toString());
+    });
+  });
+}
+
+// ─── Sheet ─────────────────────────────────────────
+const sheet = document.getElementById('sheet');
+const backdrop = document.getElementById('backdrop');
+
+function openSheet(title, subtitle, html) {
+  document.getElementById('sheet-title').textContent = title;
+  document.getElementById('sheet-subtitle').textContent = subtitle;
+  document.getElementById('sheet-body').innerHTML = html;
+  sheet.classList.add('open');
+  backdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() {
+  sheet.classList.remove('open');
+  backdrop.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('sheet-close').addEventListener('click', closeSheet);
+backdrop.addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+// ─── Tabs ──────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// ─── Toast ─────────────────────────────────────────
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1800);
+}
+window.showToast = showToast;
+
+// ─── Pipeline detail (mockup intacto) ───────────────
+const pipelines = {
+  P1: {
+    name: 'Captación cumpleaños',
+    type: 'etapas',
+    stages: ['Registrado', 'Contactado', 'Reserva pedida', 'Cliente'],
+    campaigns: [
+      { code: 'P1C1', name: 'Padres', description: 'Captación de padres 35-50',
+        triggers: [{ code: 'FM1', desc: 'Anuncio Meta padres 35-50', status: 'mock' }],
+        emails: [{ code: 'E1', desc: 'Bienvenida · día 0', status: 'mock' }] }
+    ]
+  }
+};
+
+function openPipeline(code) {
+  const pip = pipelines[code];
+  if (!pip) return;
+  let html = `<div class="sub-title">Etapas (mockup)</div><div class="stages-strip">`;
+  pip.stages.forEach((s, i) => {
+    html += `<div class="stage-pill ${i === 0 ? 'first' : ''}">${escapeHtml(s)}</div>`;
+    if (i < pip.stages.length - 1) html += `<span class="stage-arrow">→</span>`;
+  });
+  html += `</div><div class="empty-card" style="margin-top:14px">Los pipelines reales se cablearán cuando el sistema esté implementado.</div>`;
+  openSheet(pip.name, `${code} · mockup`, html);
+}
+window.openPipeline = openPipeline;
+
+function openAddPipeline() {
+  openSheet('Nuevo Pipeline', 'Mockup', '<div class="empty-card">La creación de pipelines no está implementada todavía.</div>');
+}
+window.openAddPipeline = openAddPipeline;
+
+// ─── Nav dropdown ──────────────────────────────────
+(function initNavDropdown() {
+  const navBtn = document.getElementById('nav-btn');
+  const navDropdown = document.getElementById('nav-dropdown');
+  if (!navBtn || !navDropdown) return;
+  navBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    navDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', () => navDropdown.classList.remove('open'));
+  navDropdown.addEventListener('click', e => e.stopPropagation());
+})();
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  location.assign('/comunidad/entrar/?next=' + encodeURIComponent('/ficha-cliente/'));
+});
+
+// ─── Theme ─────────────────────────────────────────
+const THEME_KEY = 'thenucleo-ficha-cliente-theme';
+(function initTheme() {
+  try { document.documentElement.dataset.theme = localStorage.getItem(THEME_KEY) || 'dark'; }
+  catch { document.documentElement.dataset.theme = 'dark'; }
+})();
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem(THEME_KEY, t); } catch {}
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#090a0f' : '#f5f6f8');
+});
+
+// ─── Switch client triggers ────────────────────────
+document.getElementById('client-switch').addEventListener('click', openClientPicker);
+document.getElementById('pick-client-btn').addEventListener('click', openClientPicker);
+
+// ─── BOOTSTRAP ─────────────────────────────────────
+function getUrlClientId() {
+  const params = new URLSearchParams(location.search);
+  return params.get('id');
+}
+
+(async function init() {
+  const u = currentUser();
+  if (!u) { showGate('anon'); return; }
+  if (!isAdmin()) { showGate('no-admin'); return; }
+  document.documentElement.classList.remove('locked-mode');
+
+  try {
+    STATE.clientes = await rpc('ficha_cliente_listar');
+  } catch (e) {
+    console.error('[ficha-cliente] listar failed', e);
+    document.getElementById('state-loading').innerHTML =
+      `<div class="empty-card">Error cargando lista de clientes: ${escapeHtml(e.message)}</div>`;
+    return;
+  }
+
+  const wantId = getUrlClientId();
+  if (!wantId) {
+    document.getElementById('state-loading').style.display = 'none';
+    document.getElementById('state-empty').style.display = '';
+    return;
+  }
+
+  try {
+    const c = await rpc('ficha_cliente_get', { p_bubble_id: wantId });
+    if (!c) {
+      document.getElementById('state-loading').style.display = 'none';
+      document.getElementById('state-empty').style.display = '';
+      document.querySelector('#state-empty .empty-card div:nth-of-type(2)').textContent =
+        'Cliente no encontrado. Elige otro.';
+      return;
+    }
+    STATE.cliente = c;
+    renderCliente(c);
+  } catch (e) {
+    console.error('[ficha-cliente] get failed', e);
+    document.getElementById('state-loading').innerHTML =
+      `<div class="empty-card">Error cargando ficha: ${escapeHtml(e.message)}</div>`;
+  }
+})();
+</script>
 </body>
 </html>
