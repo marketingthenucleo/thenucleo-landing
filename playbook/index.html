@@ -1749,9 +1749,21 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
   .auth-bar { padding: 8px 12px; gap: 6px; }
   .auth-bar-meta, .theme-label { display: none; }
 
-  /* Header band compacta */
-  .playbook-header { padding: 10px 0 12px; gap: 10px; }
-  .playbook-header h1 { font-size: 16px; }
+  /* Header band compacta. El subtitle "Operaciones · escaleta cliente desde cierre
+     de venta hasta Mes 4" (62 chars) es contexto descriptivo, no esencial → ocultar
+     en móvil. El título h1 wrap libre si no cabe en una línea. */
+  .playbook-header { padding: 10px 0 12px; gap: 10px; flex-wrap: wrap; }
+  .playbook-header h1 {
+    font-size: 16px;
+    line-height: 1.2;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .playbook-header-sub { display: none; }
+  .playbook-header-left { gap: 10px; min-width: 0; flex: 1 1 auto; }
+  .playbook-header-text { min-width: 0; flex: 1; }
+  .playbook-header-icon { width: 32px; height: 32px; flex-shrink: 0; }
+  .playbook-header-icon svg { width: 16px; height: 16px; }
 
   /* Filter bar — scroll horizontal en una línea */
   .filter-bar {
