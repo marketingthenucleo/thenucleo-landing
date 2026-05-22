@@ -1813,10 +1813,38 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
      Apilarlos vertical con flex es más predecible que un grid con 3 filas. */
   .day-row {
     grid-template-columns: 56px 1fr;
-    gap: 10px;
+    gap: 12px;
     padding: 10px 0;
   }
-  .day-bubble { width: 48px; height: 48px; font-size: 11px; line-height: 1.15; }
+  .day-marker { align-items: center; padding-top: 6px; }
+  /* day-bubble como círculo perfecto centrado (best practice skill responsive-design):
+     aspect-ratio 1 garantiza el círculo, padding 0 + flex centering centran el texto. */
+  .day-bubble {
+    width: 48px;
+    height: 48px;
+    aspect-ratio: 1;
+    padding: 0 !important;
+    gap: 0;
+    font-size: 11px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  /* Ocultar rayita conectora horizontal — en móvil el grid gap es pequeño y solapa con la card */
+  .day-bubble::after { display: none !important; }
+  /* day-sublabel: limitar al ancho de la columna 56px y centrar bajo el bubble */
+  .day-sublabel {
+    max-width: 56px;
+    text-align: center;
+    font-size: 9px;
+    line-height: 1.25;
+    margin-top: 6px;
+    word-break: break-word;
+  }
 
   .task-card {
     display: flex !important;
@@ -1831,6 +1859,12 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
   .task-card > * { grid-row: auto !important; grid-column: auto !important; }
 
   .task-card .task-body { width: 100%; min-width: 0; }
+  .task-card .task-title,
+  .task-card .task-sub {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
   .task-card .task-meta { flex-wrap: wrap; row-gap: 6px; }
   .task-card .task-side {
     width: 100%;
