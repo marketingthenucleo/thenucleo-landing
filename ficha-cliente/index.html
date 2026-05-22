@@ -310,6 +310,57 @@
   }
   .cat-meta { font-size: 10px; color: var(--text-3); letter-spacing: 0.04em; }
 
+  /* ─── Servicios: buscador + grupos colapsables ─── */
+  .svc-toolbar {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 12px;
+  }
+  .svc-search {
+    flex: 1; min-width: 0; background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px;
+    color: var(--text); font-family: inherit; font-size: 14px; font-weight: 500;
+  }
+  .svc-search:focus { outline: none; border-color: var(--accent); }
+  .svc-expand-btn {
+    flex-shrink: 0; background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; color: var(--text-2);
+    font-family: inherit; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    cursor: pointer; transition: border-color 120ms, color 120ms;
+  }
+  .svc-expand-btn:hover { color: var(--text); border-color: var(--line-2); }
+
+  .svc-group { margin-bottom: 10px; }
+  .svc-group:last-child { margin-bottom: 0; }
+  .svc-group-header {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+  }
+  .svc-group-header:hover { background: var(--bg-hover); border-color: var(--line-2); }
+  .svc-group-caret {
+    width: 10px; flex-shrink: 0; color: var(--text-3);
+    transition: transform 120ms; line-height: 1;
+  }
+  .svc-group.open .svc-group-caret { transform: rotate(90deg); }
+  .svc-group-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: var(--accent);
+  }
+  .svc-group-name {
+    flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .svc-group-count {
+    flex-shrink: 0; font-size: 10px; font-weight: 600;
+    color: var(--text-3); background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 8px; letter-spacing: 0.04em;
+  }
+  .svc-group-items { display: none; padding: 8px 0 0 4px; }
+  .svc-group.open .svc-group-items { display: block; }
+  .svc-group.open .svc-group-items > .catalog-item:last-child { margin-bottom: 0; }
+
   /* ─── Anomalies ─────────────────────────────────── */
   .anomaly {
     background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(239,68,68,0.04) 100%);
@@ -752,6 +803,10 @@
     <!-- PANEL SERVICIOS — desde playbook_cliente_servicios -->
     <section class="panel" id="panel-servicios">
       <div class="section-title"><span>Servicios contratados</span><span id="servicios-count"></span></div>
+      <div id="servicios-toolbar" class="svc-toolbar" style="display:none;">
+        <input id="servicios-search" class="svc-search" type="search" placeholder="Buscar servicio o categoría…" autocomplete="off">
+        <button id="servicios-expand" class="svc-expand-btn" type="button">Expandir</button>
+      </div>
       <div id="servicios-list">
         <div class="loading-card">—</div>
       </div>
@@ -1029,31 +1084,120 @@ function renderCliente(c) {
   ].join('');
 
   // Servicios — desde playbook_cliente_servicios (vía RPC ficha_cliente_get)
-  const serviciosNode = document.getElementById('servicios-list');
-  const serviciosCount = document.getElementById('servicios-count');
   const servicios = Array.isArray(c.servicios) ? c.servicios : [];
-  serviciosCount.textContent = servicios.length ? `${servicios.length} ${servicios.length === 1 ? 'servicio' : 'servicios'}` : '';
-  if (!servicios.length) {
-    serviciosNode.innerHTML = '<div class="empty-card">Sin servicios contratados. Añádelos desde el playbook del cliente.</div>';
-  } else {
-    serviciosNode.innerHTML = servicios.map(svc => {
-      const meta = [svc.categoria_nombre, svc.unidades, svc.periodo].filter(Boolean).map(escapeHtml).join(' · ');
-      return `
-      <div class="catalog-item">
-        <div class="cat-info">
-          <div class="cat-name">${escapeHtml(svc.ficha_titulo || '—')}</div>
-          <div class="cat-meta">${meta || '—'}</div>
-        </div>
-        <span class="status-pill ok">ACTIVO</span>
-      </div>`;
-    }).join('');
-  }
+  renderServiciosPanel(servicios);
 
   // Mostrar tabs + content
   document.getElementById('tabs').style.display = '';
   document.getElementById('state-content').style.display = '';
   document.getElementById('state-empty').style.display = 'none';
   document.getElementById('state-loading').style.display = 'none';
+}
+
+// ─── Servicios contratados — agrupado por categoría + buscador ───
+function renderServiciosPanel(servicios) {
+  const listNode = document.getElementById('servicios-list');
+  const countNode = document.getElementById('servicios-count');
+  const toolbar = document.getElementById('servicios-toolbar');
+  const searchInput = document.getElementById('servicios-search');
+  const expandBtn = document.getElementById('servicios-expand');
+
+  countNode.textContent = servicios.length
+    ? `${servicios.length} ${servicios.length === 1 ? 'servicio' : 'servicios'}`
+    : '';
+
+  if (!servicios.length) {
+    toolbar.style.display = 'none';
+    listNode.innerHTML = '<div class="empty-card">Sin servicios contratados. Añádelos desde el playbook del cliente.</div>';
+    return;
+  }
+
+  // Mostrar buscador sólo si hay suficiente material para filtrar
+  toolbar.style.display = servicios.length > 4 ? '' : 'none';
+
+  const state = { servicios, query: '', allOpen: false, openCats: new Set() };
+
+  function renderGroups() {
+    const q = state.query.trim().toLowerCase();
+    const filtered = !q ? state.servicios : state.servicios.filter(s => {
+      const haystack = [s.ficha_titulo, s.categoria_nombre, s.unidades, s.periodo, s.notas]
+        .filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+
+    if (!filtered.length) {
+      listNode.innerHTML = '<div class="empty-card">Sin resultados para esta búsqueda.</div>';
+      return;
+    }
+
+    const byCat = {};
+    filtered.forEach(s => {
+      const key = s.categoria_nombre || '—';
+      if (!(key in byCat)) byCat[key] = { nombre: key, color: s.categoria_color || null, items: [] };
+      byCat[key].items.push(s);
+    });
+    const grouped = Object.values(byCat).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    grouped.forEach(g => g.items.sort((a, b) => (a.orden ?? 9e9) - (b.orden ?? 9e9) || (a.ficha_titulo || '').localeCompare(b.ficha_titulo || '', 'es')));
+
+    // Si hay una sola categoría visible, abrirla siempre
+    const onlyOne = grouped.length === 1;
+    // Si hay búsqueda activa, abrir todas las que tengan match
+    const forceOpenAll = state.allOpen || !!q;
+
+    listNode.innerHTML = grouped.map(g => {
+      const isOpen = onlyOne || forceOpenAll || state.openCats.has(g.nombre);
+      const dotStyle = g.color ? `style="background:${escapeHtml(g.color)}"` : '';
+      return `
+      <div class="svc-group${isOpen ? ' open' : ''}" data-cat="${escapeHtml(g.nombre)}">
+        <div class="svc-group-header" data-toggle="${escapeHtml(g.nombre)}">
+          <span class="svc-group-caret">▶</span>
+          <span class="svc-group-dot" ${dotStyle}></span>
+          <span class="svc-group-name">${escapeHtml(g.nombre)}</span>
+          <span class="svc-group-count">${g.items.length}</span>
+        </div>
+        <div class="svc-group-items">
+          ${g.items.map(s => {
+            const meta = [s.unidades, s.periodo].filter(Boolean).map(escapeHtml).join(' · ');
+            return `
+            <div class="catalog-item">
+              <div class="cat-info">
+                <div class="cat-name">${escapeHtml(s.ficha_titulo || '—')}</div>
+                <div class="cat-meta">${meta || '—'}</div>
+              </div>
+              <span class="status-pill ok">ACTIVO</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+
+    // Toggle handlers por header
+    listNode.querySelectorAll('[data-toggle]').forEach(el => {
+      el.addEventListener('click', () => {
+        const cat = el.getAttribute('data-toggle');
+        if (state.openCats.has(cat)) state.openCats.delete(cat);
+        else state.openCats.add(cat);
+        // Salir del "allOpen" si se toca una categoría manualmente
+        state.allOpen = false;
+        renderGroups();
+      });
+    });
+
+    expandBtn.textContent = (state.allOpen || (!!q)) ? 'Colapsar' : 'Expandir';
+  }
+
+  searchInput.value = '';
+  searchInput.oninput = () => {
+    state.query = searchInput.value;
+    renderGroups();
+  };
+  expandBtn.onclick = () => {
+    state.allOpen = !state.allOpen;
+    if (!state.allOpen) state.openCats.clear();
+    renderGroups();
+  };
+
+  renderGroups();
 }
 
 // ─── Picker (selector cliente) ──────────────────────
