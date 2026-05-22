@@ -1680,6 +1680,7 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
   /* Auth bar: 2 filas + iconos sin label */
   .auth-bar { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
   .auth-bar-meta { display: none; }
+  .auth-bar-title-suffix { display: none; }
   .theme-switch .theme-label { display: none; }
   .theme-switch { padding: 0 8px; }
 
@@ -2312,7 +2313,7 @@ html.anon-mode .task-nota-area { display: none !important; }
   <!-- AUTH BAR -->
   <div class="auth-bar">
     <div class="auth-bar-left">
-      <strong style="font-size:13px;font-weight:600;">Playbook de onboarding · TheNucleo</strong>
+      <strong class="auth-bar-title" style="font-size:13px;font-weight:600;">Playbook<span class="auth-bar-title-suffix"> de onboarding · TheNucleo</span></strong>
       <span class="auth-bar-mode viewer" id="auth-mode-pill">
         <span class="dot"></span>
         <span class="auth-mode-label">Vista pública</span>
