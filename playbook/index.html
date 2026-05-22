@@ -1789,11 +1789,28 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
   .sector-bar::-webkit-scrollbar { display: none; }
   .sector-bar > * { flex-shrink: 0; }
 
-  /* Cliente bar: hint visible en una nueva fila */
-  .cliente-bar { flex-wrap: wrap; row-gap: 6px; }
-  .cliente-bar-hint { font-size: 11px; }
+  /* Cliente bar: nombre cliente full-width, controles wrap a fila siguiente */
+  .cliente-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    align-items: stretch;
+    padding: 10px 12px;
+  }
+  #cliente-selector { width: 100% !important; flex: 1 1 100% !important; min-width: 0; }
+  .cliente-day-pill { flex: 0 0 auto; margin: 0; }
+  .cliente-bar-share { flex: 0 0 auto; margin-left: auto; }
+  .cliente-bar-hint {
+    display: block !important;
+    flex: 1 1 100%;
+    font-size: 11px;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: break-word;
+  }
 
-  /* Day row + task card: layout vertical-compacto */
+  /* Day row + task card: flex column en lugar de grid forzado.
+     La card tiene 6 hijos (check, avatar, body, side, feedback, nota-area).
+     Apilarlos vertical con flex es más predecible que un grid con 3 filas. */
   .day-row {
     grid-template-columns: 56px 1fr;
     gap: 10px;
@@ -1802,24 +1819,44 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
   .day-bubble { width: 48px; height: 48px; font-size: 11px; line-height: 1.15; }
 
   .task-card {
-    padding: 12px 14px;
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto auto auto;
-    gap: 8px;
-    align-items: stretch;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px;
+    padding: 14px;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
   }
+  /* Reset overrides previos de grid-row/grid-column que aplicaban en versión anterior */
+  .task-card > * { grid-row: auto !important; grid-column: auto !important; }
+
+  .task-card .task-body { width: 100%; min-width: 0; }
+  .task-card .task-meta { flex-wrap: wrap; row-gap: 6px; }
   .task-card .task-side {
-    grid-row: 3;
-    grid-column: 1;
+    width: 100%;
+    flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-start;
     gap: 6px;
   }
-  .task-card .task-meta {
-    grid-row: 2;
+  .task-card .task-feedback-actions {
+    width: 100%;
     flex-wrap: wrap;
-    row-gap: 6px;
+    gap: 6px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border-default);
   }
+  .task-card .task-feedback-actions button {
+    flex: 1 1 calc(50% - 3px);
+    min-height: 40px;
+    font-size: 12px;
+  }
+  .task-card .task-nota-area { width: 100%; }
+  .task-card .task-nota-area.open { display: block !important; }
+
+  /* En cliente-mode el check va al inicio inline con el body */
+  body.cliente-mode .task-card { padding-left: 14px; }
+  body.cliente-mode .task-card .task-progreso-check { align-self: flex-start; }
 
   /* Pickers (owner, day, auto, phase) como bottom-sheet */
   .owner-picker,
