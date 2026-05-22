@@ -749,9 +749,9 @@
       </div>
     </section>
 
-    <!-- PANEL SERVICIOS — pendiente de bb_servicios_contratados -->
+    <!-- PANEL SERVICIOS — desde playbook_cliente_servicios -->
     <section class="panel" id="panel-servicios">
-      <div class="section-title"><span>Servicios contratados</span></div>
+      <div class="section-title"><span>Servicios contratados</span><span id="servicios-count"></span></div>
       <div id="servicios-list">
         <div class="loading-card">—</div>
       </div>
@@ -1028,21 +1028,25 @@ function renderCliente(c) {
     fieldRow({ label: 'Facturación mensual', value: c.facturacion ? `${Number(c.facturacion).toLocaleString('es-ES')} €` : null }),
   ].join('');
 
-  // Servicios
+  // Servicios — desde playbook_cliente_servicios (vía RPC ficha_cliente_get)
   const serviciosNode = document.getElementById('servicios-list');
-  const servicios = Array.isArray(c.bb_servicios_contratados) ? c.bb_servicios_contratados : [];
+  const serviciosCount = document.getElementById('servicios-count');
+  const servicios = Array.isArray(c.servicios) ? c.servicios : [];
+  serviciosCount.textContent = servicios.length ? `${servicios.length} ${servicios.length === 1 ? 'servicio' : 'servicios'}` : '';
   if (!servicios.length) {
-    serviciosNode.innerHTML = '<div class="empty-card">Sin servicios contratados marcados en Bubble. Si el cliente tiene servicios, edita la ficha de Bubble.</div>';
+    serviciosNode.innerHTML = '<div class="empty-card">Sin servicios contratados. Añádelos desde el playbook del cliente.</div>';
   } else {
-    serviciosNode.innerHTML = servicios.map(svc => `
+    serviciosNode.innerHTML = servicios.map(svc => {
+      const meta = [svc.categoria_nombre, svc.unidades, svc.periodo].filter(Boolean).map(escapeHtml).join(' · ');
+      return `
       <div class="catalog-item">
         <div class="cat-info">
-          <div class="cat-name">${escapeHtml(typeof svc === 'string' ? svc : (svc?.nombre || JSON.stringify(svc)))}</div>
-          <div class="cat-meta">ID Bubble</div>
+          <div class="cat-name">${escapeHtml(svc.ficha_titulo || '—')}</div>
+          <div class="cat-meta">${meta || '—'}</div>
         </div>
         <span class="status-pill ok">ACTIVO</span>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   // Mostrar tabs + content
