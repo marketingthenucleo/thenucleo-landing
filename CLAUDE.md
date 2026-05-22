@@ -14,7 +14,7 @@ Repo: `marketingthenucleo/thenucleo-landing`
 - **Páginas admin internas (allowlist 4 emails TheNucleo, noindex):**
   - `/playbook/` y `/playbook/<bubble_id>` — onboarding cuarentena (anon-mode para cliente final)
   - `/fichas-de-producto/` — catálogo de servicios editable (rewrite mobile-first 2026-05-22)
-  - `/ficha-cliente/` y `/ficha-cliente/?id=<bubble_id>` — ficha cliente cableada con `bub_clientes` vía RPCs `ficha_cliente_listar` + `ficha_cliente_get` (desde 2026-05-22)
+  - `/ficha-cliente/` y `/ficha-cliente/?id=<bubble_id>` — ficha cliente cableada con `bub_clientes` vía RPCs `ficha_cliente_listar` + `ficha_cliente_get` (desde 2026-05-22). Servicios contratados leídos desde `playbook_cliente_servicios` agrupados por categoría + buscador (fix 2026-05-22)
   - `/casuisticas/` — tablero kanban admin
   - `/disponibilidades/` — calendario laboral equipo
 - **Vercel fallback:** https://app-landing-thenucleo.vercel.app/
@@ -51,7 +51,7 @@ comunidad/
 disponibilidades/
   index.html                ← /disponibilidades/ calendario laboral equipo (admin-only, noindex). Standalone HTML+CSS+JS inline. 3 capas (AHORA/HOY timeline/SEMANA grid). Carga miembros dinámicamente vía RPC `disponibilidad_miembros()`. Override modal con 7 tipos (medico, enfermo, llega_tarde, sale_antes, vacaciones, avatar_no_responde, otro).
 ficha-cliente/
-  index.html                ← /ficha-cliente/ (admin allowlist, noindex). Standalone HTML+CSS+JS inline, mobile-first dark+verde (paleta TheNucleo, NewBlack, theme switch). Gate auth idéntico a /playbook y /fichas-de-producto. Selector cliente con buscador (sheet bottom). URL deep-link `?id=<bubble_id>`. Lee `bub_clientes` vía RPCs `ficha_cliente_listar()` y `ficha_cliente_get(p_bubble_id)`. Panel "Datos" mapea campos reales (identificación, contacto, web, dirección fiscal) + bloque "Operaciones internas" (Drive, análisis, gchat_space_id, NPS, facturación). Estrategia / Catálogos / Anomalías quedan visiblemente como MOCKUP (no se inventan datos).
+  index.html                ← /ficha-cliente/ (admin allowlist, noindex). Standalone HTML+CSS+JS inline, mobile-first dark+verde (paleta TheNucleo, NewBlack, theme switch). Gate auth idéntico a /playbook y /fichas-de-producto. Selector cliente con buscador (sheet bottom). URL deep-link `?id=<bubble_id>`. Lee `bub_clientes` vía RPCs `ficha_cliente_listar()` y `ficha_cliente_get(p_bubble_id)`. Panel "Datos" mapea campos reales (identificación, contacto, web, dirección fiscal) + bloque "Operaciones internas" (Drive, análisis, gchat_space_id, NPS, facturación). Panel "Servicios contratados" lee `playbook_cliente_servicios` vía `ficha_cliente_get` (la RPC agrega un array `servicios` al JSON con jsonb_agg ordenado por orden), renderiza agrupado por `categoria_nombre` con headers colapsables (dot color · nombre · count pill) + buscador (titulo/cat/unidades/periodo/notas, aparece si >4 items, auto-expande matches) + botón Expandir/Colapsar todo. Estrategia / Catálogos / Anomalías quedan visiblemente como MOCKUP (no se inventan datos).
 fichas-de-producto/
   index.html                ← /fichas-de-producto/ (admin allowlist, noindex). Rewrite mobile-first 2026-05-22 (tabs por categoría en vez de sidebar, FAB, sheet bottom para nueva categoría, popover estado). Preserva: debounce save 500ms (id,field), CRUD `fichas_categorias` + `fichas_de_producto`.
 playbook/
