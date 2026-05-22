@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#090a0f">
+<meta name="robots" content="noindex,nofollow">
+<title>Ficha Cliente — TheNucleo</title>
+<style>
+  @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
+  @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+  @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+
+  :root {
+    --bg: #090a0f;
+    --bg-2: #12141b;
+    --bg-3: #1a1d27;
+    --line: #1e2130;
+    --line-2: #2a2d3e;
+    --text: #edeef3;
+    --text-2: #8b8fa8;
+    --text-3: #5c6078;
+    --accent: #22c55e;
+    --accent-dim: #16a34a;
+    --accent-muted: rgba(34,197,94,0.12);
+    --warn: #f59e0b;
+    --warn-bg: rgba(245,158,11,0.10);
+    --bad: #ef4444;
+    --bad-bg: rgba(239,68,68,0.10);
+    --ok: #22c55e;
+    --ok-bg: rgba(34,197,94,0.10);
+    --header-bg-rgba: rgba(9,10,15,0.85);
+    --bg-glow: rgba(34, 197, 94, 0.05);
+    --font: 'NewBlack', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  [data-theme="light"] {
+    --bg: #f5f6f8;
+    --bg-2: #ffffff;
+    --bg-3: #f5f6f8;
+    --line: #e4e6ec;
+    --line-2: #d0d3dc;
+    --text: #111827;
+    --text-2: #4b5563;
+    --text-3: #9ca3af;
+    --accent: #16a34a;
+    --accent-dim: #15803d;
+    --accent-muted: rgba(22,163,74,0.10);
+    --warn: #d97706;
+    --warn-bg: rgba(217,119,6,0.10);
+    --bad: #dc2626;
+    --bad-bg: rgba(220,38,38,0.10);
+    --ok: #16a34a;
+    --ok-bg: rgba(22,163,74,0.10);
+    --header-bg-rgba: rgba(245,246,248,0.92);
+    --bg-glow: rgba(22, 163, 74, 0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.4;
+    overscroll-behavior: none;
+  }
+
+  body {
+    min-height: 100vh;
+    padding-bottom: 80px;
+    background-image:
+      radial-gradient(ellipse at top, var(--bg-glow) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
+  }
+
+  /* ─── Header ────────────────────────────────────── */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--header-bg-rgba);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+    padding: 16px 20px 14px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .brand {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+
+  .actions { display: flex; gap: 8px; }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--line-2); }
+  .icon-btn svg { width: 14px; height: 14px; }
+  #theme-toggle .icon-sun { display: none; }
+  [data-theme="light"] #theme-toggle .icon-moon { display: none; }
+  [data-theme="light"] #theme-toggle .icon-sun { display: block; }
+
+  .client-row { display: flex; align-items: flex-end; gap: 14px; }
+
+  .client-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .client-name {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+
+  .client-sub {
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  /* ─── Status strip ──────────────────────────────── */
+  .status-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-2);
+    scrollbar-width: none;
+  }
+  .status-strip::-webkit-scrollbar { display: none; }
+
+  .chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: 500;
+  }
+  .chip.ok { color: var(--ok); border-color: rgba(34,197,94,0.3); }
+  .chip.warn { color: var(--warn); border-color: rgba(245,158,11,0.3); }
+  .chip.bad { color: var(--bad); border-color: rgba(239,68,68,0.3); }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ─── Tabs ─────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 14px 20px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 109px;
+    z-index: 90;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-3);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* ─── Content ──────────────────────────────────── */
+  .content { padding: 24px 20px 40px; }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .section-title + .section-title { margin-top: 32px; }
+
+  .add-link {
+    color: var(--accent);
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* ─── Field cards ──────────────────────────────── */
+  .field-list {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .field {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .field:last-child { border-bottom: none; }
+  .field:active { background: var(--bg-3); }
+
+  .field-label {
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .field-value {
+    font-size: 14px;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .field-value.empty { color: var(--text-3); font-style: italic; }
+
+  .field-right {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .status-pill {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .status-pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .status-pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .status-pill.bad { background: var(--bad-bg); color: var(--bad); }
+
+  .chevron { color: var(--text-3); font-size: 18px; line-height: 1; }
+
+  /* ─── Pipeline cards ───────────────────────────── */
+  .pipeline-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .pipeline-card:active { border-color: var(--line-2); }
+
+  .pip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+
+  .pip-code {
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-muted);
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+
+  .pip-type-badge {
+    font-size: 9px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--bg-3);
+    margin-left: 6px;
+    display: inline-block;
+    vertical-align: middle;
+    font-weight: 600;
+  }
+  .pip-type-badge.envio { color: var(--warn); background: var(--warn-bg); }
+
+  .pip-name {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .pip-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .pip-metric { flex: 1; }
+
+  .pip-metric-value {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .pip-metric-label {
+    font-size: 9px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  /* ─── Campaign expandable ──────────────────────── */
+  .campaign {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .campaign-head {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    gap: 12px;
+  }
+
+  .camp-info { flex: 1; min-width: 0; }
+
+  .camp-code {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+    font-weight: 700;
+  }
+
+  .camp-name {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .camp-toggle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-2);
+    font-size: 12px;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+  }
+
+  .campaign.open .camp-toggle { transform: rotate(180deg); }
+
+  .campaign-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .campaign.open .campaign-body { max-height: 2000px; }
+
+  .camp-content {
+    padding: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  /* ─── Item rows (triggers / emails) ─────────────── */
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .item-row:last-child { border-bottom: none; }
+
+  .item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .item-content { flex: 1; min-width: 0; }
+
+  .item-code {
+    font-size: 11px;
+    color: var(--text-2);
+    letter-spacing: 0.03em;
+    font-weight: 600;
+  }
+
+  .item-desc {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 2px;
+  }
+
+  .item-status {
+    font-size: 9px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .sub-title {
+    font-size: 9px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 14px 0 8px;
+    font-weight: 600;
+  }
+  .sub-title:first-child { margin-top: 0; }
+
+  /* ─── Catalog (list catalogs) ──────────────────── */
+  .catalog-item {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .catalog-item:active { background: var(--bg-3); }
+
+  .cat-info { flex: 1; min-width: 0; }
+
+  .cat-name {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cat-meta {
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── Anomalies ─────────────────────────────────── */
+  .anomaly {
+    background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(239,68,68,0.04) 100%);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .anomaly.critical {
+    background: linear-gradient(135deg, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.04) 100%);
+    border-color: rgba(239,68,68,0.3);
+  }
+
+  .anomaly-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .anomaly-tag {
+    font-size: 9px;
+    color: var(--warn);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .anomaly.critical .anomaly-tag { color: var(--bad); }
+
+  .anomaly-msg {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.45;
+  }
+
+  .anomaly-context {
+    font-size: 10px;
+    color: var(--text-3);
+    margin-top: 6px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ─── Sheet / Modal ─────────────────────────────── */
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .sheet-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-2);
+    border-top: 1px solid var(--line-2);
+    border-radius: 24px 24px 0 0;
+    z-index: 201;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  .sheet.open { transform: translateY(0); }
+
+  .sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--line-2);
+    border-radius: 2px;
+    margin: 12px auto 8px;
+  }
+
+  .sheet-header {
+    padding: 12px 20px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .sheet-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+
+  .sheet-subtitle {
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  .close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-3);
+    border: none;
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+
+  .sheet-body { padding: 20px; }
+
+  /* ─── Form ─────────────────────────────────────── */
+  .form-field { margin-bottom: 16px; }
+
+  .form-label {
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+    display: block;
+    font-weight: 600;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+
+  .form-textarea { min-height: 80px; resize: vertical; }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .check-pill {
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg-3);
+    color: var(--text-2);
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+  }
+  .check-pill.checked {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 12px;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--accent-dim); }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--bg-3);
+    color: var(--text);
+    border: 1px solid var(--line);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* ─── FAB ──────────────────────────────────────── */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-size: 28px;
+    box-shadow: 0 6px 24px rgba(34, 197, 94, 0.35);
+    z-index: 50;
+    cursor: pointer;
+    font-weight: 300;
+    line-height: 1;
+    font-family: inherit;
+  }
+  .fab:hover { background: var(--accent-dim); }
+
+  /* ─── Toast ────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-3);
+    border: 1px solid var(--line-2);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 300;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ─── Tree view for pipeline detail ─────────────── */
+  .stages-strip {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 12px;
+    margin: 0;
+    background: var(--bg-3);
+    border-radius: 10px;
+    scrollbar-width: none;
+  }
+  .stages-strip::-webkit-scrollbar { display: none; }
+
+  .stage-pill {
+    flex-shrink: 0;
+    font-size: 10px;
+    color: var(--text-2);
+    padding: 5px 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+  }
+  .stage-pill.first {
+    color: var(--accent);
+    border-color: rgba(34,197,94,0.3);
+  }
+
+  .stage-arrow {
+    color: var(--text-3);
+    align-self: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .tree {
+    font-size: 11px;
+    color: var(--text-2);
+    background: var(--bg-3);
+    padding: 14px;
+    border-radius: 10px;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .tree .accent { color: var(--accent); }
+
+  /* ─── Desktop tablet enhancement ────────────────── */
+  @media (min-width: 768px) {
+    body { padding-bottom: 100px; }
+    .app-header { padding: 24px 40px 18px; }
+    .header-top { margin-bottom: 18px; }
+    .client-name { font-size: 32px; }
+    .client-avatar { width: 64px; height: 64px; font-size: 28px; border-radius: 16px; }
+    .status-strip { padding: 14px 40px; }
+    .tabs { padding: 16px 40px 0; top: 134px; }
+    .content { padding: 32px 40px 60px; max-width: 920px; margin: 0 auto; }
+    .pip-name { font-size: 24px; }
+    .sheet { left: auto; right: auto; width: min(560px, 92vw); margin: 0 auto; border-radius: 24px; bottom: 5vh; max-height: 88vh; }
+    .sheet.open { transform: translate(-50%, 0); left: 50%; }
+    .fab { right: calc(50vw - 460px + 20px); }
+  }
+
+  @media (min-width: 1024px) {
+    .content { max-width: 1080px; }
+    .fab { right: max(20px, calc(50vw - 540px + 20px)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─────── HEADER ─────── -->
+<header class="app-header">
+  <div class="header-top">
+    <div class="brand">TheNucleo · Ficha</div>
+    <div class="actions">
+      <button class="icon-btn" id="theme-toggle" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="icon-btn" title="Buscar" aria-label="Buscar">⌕</button>
+      <button class="icon-btn" title="Más" aria-label="Más">⋯</button>
+    </div>
+  </div>
+  <div class="client-row">
+    <div class="client-avatar">L</div>
+    <div>
+      <div class="client-name">Laser Space Alzira</div>
+      <div class="client-sub">Ocio · Activo · 8 meses</div>
+    </div>
+  </div>
+</header>
+
+<!-- ─────── STATUS STRIP ─────── -->
+<div class="status-strip">
+  <span class="chip ok"><span class="dot"></span>Onboarding 87%</span>
+  <span class="chip warn"><span class="dot"></span>3 anomalías</span>
+  <span class="chip"><span class="dot"></span>4 Pipelines</span>
+  <span class="chip"><span class="dot"></span>10 Campañas</span>
+  <span class="chip ok"><span class="dot"></span>GHL activo</span>
+</div>
+
+<!-- ─────── TABS ─────── -->
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-panel="datos">Datos</button>
+  <button class="tab" data-panel="estrategia">Estrategia</button>
+  <button class="tab" data-panel="catalogos">Catálogos</button>
+  <button class="tab" data-panel="servicios">Servicios</button>
+  <button class="tab" data-panel="anomalias">Anomalías</button>
+</nav>
+
+<main class="content">
+
+  <!-- ─── PANEL: DATOS ─── -->
+  <section class="panel active" id="panel-datos">
+
+    <div class="section-title">
+      <span>Identificación</span>
+      <button class="add-link" onclick="openEditField('Identificación')">Editar</button>
+    </div>
+    <div class="field-list">
+      <div class="field" onclick="openEditField('Nombre legal')">
+        <div>
+          <div class="field-label">Nombre legal</div>
+          <div class="field-value">Laser Space Alzira S.L.</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('CIF')">
+        <div>
+          <div class="field-label">CIF</div>
+          <div class="field-value">B12345678</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('Dirección')">
+        <div>
+          <div class="field-label">Dirección</div>
+          <div class="field-value">Av. Hispanitat 24, 46600 Alzira, Valencia</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('Teléfono')">
+        <div>
+          <div class="field-label">Teléfono</div>
+          <div class="field-value">+34 962 12 34 56</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span>Contacto principal</span></div>
+    <div class="field-list">
+      <div class="field" onclick="openEditField('Persona')">
+        <div>
+          <div class="field-label">Persona</div>
+          <div class="field-value">María Llorente</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('Email')">
+        <div>
+          <div class="field-label">Email</div>
+          <div class="field-value">maria@laserspacealzira.com</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('WhatsApp')">
+        <div>
+          <div class="field-label">WhatsApp</div>
+          <div class="field-value">+34 666 12 34 56</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span>Presencia digital</span></div>
+    <div class="field-list">
+      <div class="field" onclick="openEditField('Web')">
+        <div>
+          <div class="field-label">Web</div>
+          <div class="field-value">alzira.laserspace.es</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('Dominio')">
+        <div>
+          <div class="field-label">Quién gestiona el dominio</div>
+          <div class="field-value empty">Pendiente cliente</div>
+        </div>
+        <div class="field-right"><span class="status-pill warn">PENDIENTE</span></div>
+      </div>
+      <div class="field" onclick="openEditField('Instagram')">
+        <div>
+          <div class="field-label">Instagram</div>
+          <div class="field-value">@laserspace.alzira</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('Facebook')">
+        <div>
+          <div class="field-label">Facebook</div>
+          <div class="field-value">Laser Space Alzira</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+    </div>
+
+    <div class="section-title"><span>Accesos y credenciales</span></div>
+    <div class="field-list">
+      <div class="field" onclick="openEditField('Meta Business')">
+        <div>
+          <div class="field-label">Meta Business Manager</div>
+          <div class="field-value">Asignado · Admin acceso</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('Google Ads')">
+        <div>
+          <div class="field-label">Google Ads</div>
+          <div class="field-value">MCC vinculado</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('GHL Subcuenta')">
+        <div>
+          <div class="field-label">GHL Subcuenta</div>
+          <div class="field-value">laserspace-alzira</div>
+        </div>
+        <div class="field-right"><span class="status-pill ok">OK</span></div>
+      </div>
+      <div class="field" onclick="openEditField('DNS')">
+        <div>
+          <div class="field-label">Acceso DNS</div>
+          <div class="field-value empty">Bloqueante para Meta Ads</div>
+        </div>
+        <div class="field-right"><span class="status-pill bad">BLOQUEA</span></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ─── PANEL: ESTRATEGIA ─── -->
+  <section class="panel" id="panel-estrategia">
+
+    <div class="section-title">
+      <span>Pipelines del cliente</span>
+      <button class="add-link" onclick="openAddPipeline()">+ Nuevo</button>
+    </div>
+
+    <div class="pipeline-card" onclick="openPipeline('P1')">
+      <div class="pip-header">
+        <div>
+          <div>
+            <span class="pip-code">P1</span>
+            <span class="pip-type-badge">Con etapas</span>
+          </div>
+          <div class="pip-name">Captación cumpleaños</div>
+        </div>
+        <span class="status-pill ok">ACTIVO</span>
+      </div>
+      <div class="pip-meta">
+        <div class="pip-metric">
+          <div class="pip-metric-value">3</div>
+          <div class="pip-metric-label">Campañas</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">3</div>
+          <div class="pip-metric-label">Triggers</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">7</div>
+          <div class="pip-metric-label">Emails</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-card" onclick="openPipeline('P2')">
+      <div class="pip-header">
+        <div>
+          <div>
+            <span class="pip-code">P2</span>
+            <span class="pip-type-badge">Con etapas</span>
+          </div>
+          <div class="pip-name">Reactivación clientes</div>
+        </div>
+        <span class="status-pill ok">ACTIVO</span>
+      </div>
+      <div class="pip-meta">
+        <div class="pip-metric">
+          <div class="pip-metric-value">2</div>
+          <div class="pip-metric-label">Campañas</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">3</div>
+          <div class="pip-metric-label">Triggers</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">6</div>
+          <div class="pip-metric-label">Emails</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-card" onclick="openPipeline('P3')">
+      <div class="pip-header">
+        <div>
+          <div>
+            <span class="pip-code">P3</span>
+            <span class="pip-type-badge">Con etapas</span>
+          </div>
+          <div class="pip-name">Captación B2B colegios</div>
+        </div>
+        <span class="status-pill warn">EN DEFINICIÓN</span>
+      </div>
+      <div class="pip-meta">
+        <div class="pip-metric">
+          <div class="pip-metric-value">2</div>
+          <div class="pip-metric-label">Campañas</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">1</div>
+          <div class="pip-metric-label">Triggers</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">4</div>
+          <div class="pip-metric-label">Emails</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-card" onclick="openPipeline('P4')">
+      <div class="pip-header">
+        <div>
+          <div>
+            <span class="pip-code">P4</span>
+            <span class="pip-type-badge envio">Envío directo</span>
+          </div>
+          <div class="pip-name">Black Friday</div>
+        </div>
+        <span class="status-pill ok">ACTIVO</span>
+      </div>
+      <div class="pip-meta">
+        <div class="pip-metric">
+          <div class="pip-metric-value">2</div>
+          <div class="pip-metric-label">Campañas</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">2</div>
+          <div class="pip-metric-label">Triggers</div>
+        </div>
+        <div class="pip-metric">
+          <div class="pip-metric-value">5</div>
+          <div class="pip-metric-label">Emails</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ─── PANEL: CATÁLOGOS ─── -->
+  <section class="panel" id="panel-catalogos">
+
+    <div class="section-title">
+      <span>Emails remitentes</span>
+      <button class="add-link" onclick="showToast('Añadir remitente')">+ Añadir</button>
+    </div>
+    <div class="catalog-item" onclick="showToast('Editar remitente')">
+      <div class="cat-info">
+        <div class="cat-name">hola@laserspacealzira.com</div>
+        <div class="cat-meta">Principal · DKIM verificado</div>
+      </div>
+      <span class="status-pill ok">OK</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">cumple@laserspacealzira.com</div>
+        <div class="cat-meta">Cumpleaños · DKIM pendiente</div>
+      </div>
+      <span class="status-pill warn">PENDIENTE</span>
+    </div>
+
+    <div class="section-title">
+      <span>Etiquetas de segmentación</span>
+      <button class="add-link" onclick="showToast('Añadir etiqueta')">+ Añadir</button>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">lead-cumple-padres</div>
+        <div class="cat-meta">342 contactos · activa</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">lead-cumple-jovenes</div>
+        <div class="cat-meta">189 contactos · activa</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">cliente-reactivar</div>
+        <div class="cat-meta">1.247 contactos · activa</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">b2b-colegios-valencia</div>
+        <div class="cat-meta">28 contactos · en construcción</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="section-title">
+      <span>Formularios activos</span>
+      <button class="add-link" onclick="showToast('Añadir formulario')">+ Añadir</button>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">P1C1FM1 — Meta cumpleaños padres</div>
+        <div class="cat-meta">Meta · ID 1234567890</div>
+      </div>
+      <span class="status-pill ok">OK</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">P1C2FM1 — Meta cumpleaños jóvenes</div>
+        <div class="cat-meta">Meta · ID 1234567891</div>
+      </div>
+      <span class="status-pill ok">OK</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">P2C1FW1 — Reactivación web</div>
+        <div class="cat-meta">Web · /vuelve</div>
+      </div>
+      <span class="status-pill ok">OK</span>
+    </div>
+
+  </section>
+
+  <!-- ─── PANEL: SERVICIOS ─── -->
+  <section class="panel" id="panel-servicios">
+
+    <div class="section-title"><span>Servicios contratados</span></div>
+
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">Gestión Meta Ads</div>
+        <div class="cat-meta">Recurrente · desde mes 1</div>
+      </div>
+      <span class="status-pill ok">ACTIVO</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">Anuncios nuevos Meta</div>
+        <div class="cat-meta">Hasta 2/mes · este mes 1/2</div>
+      </div>
+      <span class="status-pill warn">EN CURSO</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">Implementación CRM</div>
+        <div class="cat-meta">One-shot · completado mes 1</div>
+      </div>
+      <span class="status-pill ok">COMPLETADO</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">Reels Instagram</div>
+        <div class="cat-meta">1/mes desde mes 2 · este mes 0/1</div>
+      </div>
+      <span class="status-pill warn">PENDIENTE</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">Carruseles Instagram</div>
+        <div class="cat-meta">2/mes desde mes 2 · este mes 2/2</div>
+      </div>
+      <span class="status-pill ok">COMPLETADO</span>
+    </div>
+    <div class="catalog-item">
+      <div class="cat-info">
+        <div class="cat-name">Campañas WhatsApp</div>
+        <div class="cat-meta">4/mes desde mes 2 · este mes 1/4</div>
+      </div>
+      <span class="status-pill bad">BAJO RITMO</span>
+    </div>
+
+  </section>
+
+  <!-- ─── PANEL: ANOMALÍAS ─── -->
+  <section class="panel" id="panel-anomalias">
+
+    <div class="section-title"><span>Detectadas automáticamente</span></div>
+
+    <div class="anomaly critical">
+      <div class="anomaly-head">
+        <span class="anomaly-tag">⚠ BLOQUEANTE</span>
+      </div>
+      <div class="anomaly-msg">Falta acceso al DNS del cliente para verificar dominio en Meta Business.</div>
+      <div class="anomaly-context">Bloquea: P1C1FM1 · P1C2FM1 · P3C1FM1</div>
+    </div>
+
+    <div class="anomaly">
+      <div class="anomaly-head">
+        <span class="anomaly-tag">⚡ HUECO DE ENTREGABLE</span>
+      </div>
+      <div class="anomaly-msg">P1C1 declara 3 emails (E1, E2, E3) pero en Drive solo aparecen copies de E1 y E3. Falta P1C1E2.</div>
+      <div class="anomaly-context">Pipeline P1 · Campaña C1 · 2 días sin actualizar</div>
+    </div>
+
+    <div class="anomaly">
+      <div class="anomaly-head">
+        <span class="anomaly-tag">⚡ BAJO CONSUMO</span>
+      </div>
+      <div class="anomaly-msg">Servicio "Campañas WhatsApp" lleva 3 meses por debajo del 50% de lo contratado.</div>
+      <div class="anomaly-context">Contratado: 4/mes · Promedio últimos 3 meses: 1.7/mes</div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ─────── FAB ─────── -->
+<button class="fab" onclick="openAddPipeline()" title="Añadir" aria-label="Añadir">+</button>
+
+<!-- ─────── SHEET ─────── -->
+<div class="sheet-backdrop" id="backdrop" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div>
+      <div class="sheet-title" id="sheet-title">Detalle</div>
+      <div class="sheet-subtitle" id="sheet-subtitle">—</div>
+    </div>
+    <button class="close-btn" onclick="closeSheet()" aria-label="Cerrar">×</button>
+  </div>
+  <div class="sheet-body" id="sheet-body"></div>
+</div>
+
+<!-- ─────── TOAST ─────── -->
+<div class="toast" id="toast">Acción simulada</div>
+
+<script>
+  // ─── Tabs ───────────────────────────────────────
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // ─── Sheet ──────────────────────────────────────
+  const sheet = document.getElementById('sheet');
+  const backdrop = document.getElementById('backdrop');
+
+  function openSheet(title, subtitle, html) {
+    document.getElementById('sheet-title').textContent = title;
+    document.getElementById('sheet-subtitle').textContent = subtitle;
+    document.getElementById('sheet-body').innerHTML = html;
+    sheet.classList.add('open');
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSheet() {
+    sheet.classList.remove('open');
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ─── Toast ──────────────────────────────────────
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  // ─── Pipeline detail ────────────────────────────
+  const pipelines = {
+    P1: {
+      name: 'Captación cumpleaños',
+      type: 'etapas',
+      stages: ['Registrado', 'Contactado', 'Reserva pedida', 'Cliente'],
+      campaigns: [
+        {
+          code: 'P1C1', name: 'Padres',
+          description: 'Captación de padres 35-50 interesados en cumpleaños infantiles',
+          triggers: [{ code: 'FM1', desc: 'Anuncio Meta dirigido a padres 35-50', status: 'ok' }],
+          emails: [
+            { code: 'E1', desc: 'Bienvenida + catálogo · día 0', status: 'ok' },
+            { code: 'E2', desc: 'Testimonios · día 1', status: 'warn' },
+            { code: 'E3', desc: 'Oferta · día 3', status: 'ok' }
+          ]
+        },
+        {
+          code: 'P1C2', name: 'Jóvenes',
+          description: 'Captación de jóvenes 18-25 para despedidas y grupos',
+          triggers: [{ code: 'FM1', desc: 'Anuncio Meta dirigido a jóvenes 18-25', status: 'ok' }],
+          emails: [
+            { code: 'E1', desc: 'Bienvenida + experiencias · día 0', status: 'ok' },
+            { code: 'E2', desc: 'Pack despedidas · día 2', status: 'ok' }
+          ]
+        },
+        {
+          code: 'P1C3', name: 'Reactivación leads fríos',
+          description: 'Recuperar leads de cumpleaños que no convirtieron',
+          triggers: [{ code: 'BD1', desc: 'BD leads no convertidos · lanzamiento 15/06', status: 'ok' }],
+          emails: [
+            { code: 'E1', desc: 'Reactivación con descuento · día 0', status: 'ok' },
+            { code: 'E2', desc: 'Last chance · día 5', status: 'ok' }
+          ]
+        }
+      ]
+    },
+    P2: {
+      name: 'Reactivación clientes',
+      type: 'etapas',
+      stages: ['Inactivo', 'Reactivado', 'Vuelve a comprar', 'Cliente recurrente'],
+      campaigns: [
+        {
+          code: 'P2C1', name: 'Clientes temporada baja',
+          description: 'Reactivar clientes que vinieron en temporada alta y no han vuelto',
+          triggers: [
+            { code: 'FW1', desc: 'Formulario web /vuelve', status: 'ok' },
+            { code: 'BD1', desc: 'BD clientes 2024 · lanzamiento 01/09', status: 'ok' }
+          ],
+          emails: [
+            { code: 'E1', desc: 'Te echamos de menos · día 0', status: 'ok' },
+            { code: 'E2', desc: 'Oferta vuelve · día 3', status: 'ok' },
+            { code: 'E3', desc: 'Last chance · día 7', status: 'ok' }
+          ]
+        },
+        {
+          code: 'P2C2', name: 'VIPs inactivos',
+          description: 'Clientes top que no han vuelto en 6 meses',
+          triggers: [{ code: 'BD1', desc: 'BD VIPs filtrados · lanzamiento 15/09', status: 'ok' }],
+          emails: [
+            { code: 'E1', desc: 'Trato preferente · día 0', status: 'ok' },
+            { code: 'E2', desc: 'Invitación privada · día 4', status: 'ok' },
+            { code: 'E3', desc: 'Regalo personal · día 8', status: 'ok' }
+          ]
+        }
+      ]
+    },
+    P3: {
+      name: 'Captación B2B colegios',
+      type: 'etapas',
+      stages: ['Identificado', 'Contactado', 'Reunión', 'Propuesta', 'Cerrado'],
+      campaigns: [
+        {
+          code: 'P3C1', name: 'Colegios Valencia',
+          description: 'Outreach a colegios de Valencia capital',
+          triggers: [{ code: 'BD1', desc: 'Lista colegios Valencia · pendiente fecha', status: 'warn' }],
+          emails: [
+            { code: 'E1', desc: 'Presentación + dossier · día 0', status: 'ok' },
+            { code: 'E2', desc: 'Seguimiento · día 5', status: 'warn' }
+          ]
+        },
+        {
+          code: 'P3C2', name: 'Colegios Alzira',
+          description: 'Outreach a colegios locales (más cercanía)',
+          triggers: [{ code: 'BD1', desc: 'Lista colegios Alzira · pendiente fecha', status: 'warn' }],
+          emails: [
+            { code: 'E1', desc: 'Presentación local · día 0', status: 'warn' },
+            { code: 'E2', desc: 'Propuesta visita · día 3', status: 'warn' }
+          ]
+        }
+      ]
+    },
+    P4: {
+      name: 'Black Friday',
+      type: 'envio',
+      stages: null,
+      campaigns: [
+        {
+          code: 'P4C1', name: 'Toda la BD',
+          description: 'Envío masivo de promoción Black Friday a toda la base de datos',
+          triggers: [{ code: 'BD1', desc: 'BD completa · lanzamiento 28/11', status: 'ok' }],
+          emails: [
+            { code: 'E1', desc: 'Anuncio Black Friday · 28/11 09:00', status: 'ok' },
+            { code: 'E2', desc: 'Recordatorio + urgencia · 29/11 18:00', status: 'ok' },
+            { code: 'E3', desc: 'Last chance · 30/11 20:00', status: 'ok' }
+          ]
+        },
+        {
+          code: 'P4C2', name: 'VIPs (early access)',
+          description: 'Acceso anticipado a VIPs antes del lanzamiento general',
+          triggers: [{ code: 'BD1', desc: 'BD VIPs · lanzamiento 27/11 (24h antes)', status: 'ok' }],
+          emails: [
+            { code: 'E1', desc: 'Acceso exclusivo VIP · 27/11 09:00', status: 'ok' },
+            { code: 'E2', desc: 'Tu descuento personal · 27/11 18:00', status: 'ok' }
+          ]
+        }
+      ]
+    }
+  };
+
+  function openPipeline(code) {
+    const pip = pipelines[code];
+    if (!pip) return;
+
+    const typeLabel = pip.type === 'etapas' ? 'Con etapas comerciales' : 'Envío directo (sin etapas)';
+    let html = '';
+
+    if (pip.type === 'etapas' && pip.stages) {
+      html += `<div class="sub-title">Etapas del Pipeline en GHL</div>`;
+      html += `<div class="stages-strip">`;
+      pip.stages.forEach((s, i) => {
+        html += `<div class="stage-pill ${i === 0 ? 'first' : ''}">${s}</div>`;
+        if (i < pip.stages.length - 1) html += `<span class="stage-arrow">→</span>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div class="sub-title">Tipo</div>`;
+      html += `<div class="tree" style="color:var(--warn)">⚡ Envío directo · sin etapas comerciales\nSe ejecuta como broadcast / workflow en GHL</div>`;
+    }
+
+    html += `<div class="sub-title" style="margin-top:20px">Estructura completa</div>`;
+
+    let tree = `${code} — ${pip.name}\n`;
+    pip.campaigns.forEach((c, i) => {
+      const last = i === pip.campaigns.length - 1;
+      tree += `${last ? '└─' : '├─'} ${c.code} — ${c.name}\n`;
+      const pre = last ? '   ' : '│  ';
+      c.triggers.forEach(t => {
+        tree += `${pre}├─ ${t.code}: ${t.desc}\n`;
+      });
+      c.emails.forEach((e, j) => {
+        const elast = j === c.emails.length - 1;
+        tree += `${pre}${elast ? '└─' : '├─'} ${e.code}: ${e.desc}\n`;
+      });
+    });
+
+    html += `<div class="tree">${tree.replace(/(P\d+(C\d+)?(FM\d+|FW\d+|BD\d+|E\d+)?)/g, '<span class="accent">$1</span>')}</div>`;
+
+    html += `<div class="sub-title" style="margin-top:20px">Campañas</div>`;
+
+    pip.campaigns.forEach(c => {
+      html += `
+        <div class="campaign" onclick="this.classList.toggle('open')">
+          <div class="campaign-head">
+            <div class="camp-info">
+              <div class="camp-code">${c.code}</div>
+              <div class="camp-name">${c.name}</div>
+              <div class="item-desc" style="margin-top:4px">${c.description || ''}</div>
+            </div>
+            <div class="camp-toggle">⌃</div>
+          </div>
+          <div class="campaign-body">
+            <div class="camp-content">
+              <div class="sub-title">Triggers (canales de captación)</div>
+              ${c.triggers.map(t => `
+                <div class="item-row">
+                  <div class="item-icon">${t.code.replace(/\d+/g, '')}</div>
+                  <div class="item-content">
+                    <div class="item-code">${c.code}${t.code}</div>
+                    <div class="item-desc">${t.desc}</div>
+                  </div>
+                  <span class="item-status status-pill ${t.status}">${t.status.toUpperCase()}</span>
+                </div>
+              `).join('')}
+              <div class="sub-title">Emails (secuencia)</div>
+              ${c.emails.map(e => `
+                <div class="item-row">
+                  <div class="item-icon">E</div>
+                  <div class="item-content">
+                    <div class="item-code">${c.code}${e.code}</div>
+                    <div class="item-desc">${e.desc}</div>
+                  </div>
+                  <span class="item-status status-pill ${e.status}">${e.status.toUpperCase()}</span>
+                </div>
+              `).join('')}
+              <button class="btn-secondary" onclick="event.stopPropagation();showToast('Añadir email a ${c.code}')">+ Añadir email</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `<button class="btn-primary" onclick="openAddCampaign('${code}')">+ Nueva campaña en ${code}</button>`;
+
+    openSheet(pip.name, `${code} · ${typeLabel} · ${pip.campaigns.length} campañas`, html);
+  }
+
+  // ─── Add Pipeline ─────────────────────────────
+  function openAddPipeline() {
+    const html = `
+      <div class="form-field">
+        <label class="form-label">Código (automático)</label>
+        <input class="form-input" value="P5" disabled style="opacity:0.6">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Nombre del Pipeline</label>
+        <input class="form-input" placeholder="Ej: Captación bonos / Aniversario / etc.">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Tipo de Pipeline</label>
+        <div class="checkbox-group">
+          <span class="check-pill checked" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Con etapas comerciales</span>
+          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Envío directo</span>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Público o propósito</label>
+        <textarea class="form-textarea" placeholder="¿A qué público va dirigido o qué propósito tiene este Pipeline?"></textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Etapas (solo si lleva etapas)</label>
+        <input class="form-input" placeholder="Ej: Registrado, Contactado, Reserva, Cliente">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Estado</label>
+        <select class="form-select">
+          <option>En definición</option>
+          <option>Activo</option>
+          <option>Archivado</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="closeSheet();showToast('Pipeline P5 creado')">Crear Pipeline</button>
+    `;
+    openSheet('Nuevo Pipeline', 'Solo Account crea Pipelines', html);
+  }
+
+  // ─── Add Campaign ─────────────────────────────
+  function openAddCampaign(pipCode) {
+    const next = (pipelines[pipCode]?.campaigns.length || 0) + 1;
+    const html = `
+      <div class="form-field">
+        <label class="form-label">Código (automático)</label>
+        <input class="form-input" value="${pipCode}C${next}" disabled style="opacity:0.6">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Nombre de la Campaña (público o segmento)</label>
+        <input class="form-input" placeholder="Ej: Padres / Jóvenes / VIPs / Toda la BD">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Descripción del público objetivo</label>
+        <textarea class="form-textarea" placeholder="¿A qué sub-segmento atacamos y por qué?"></textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Triggers (canales de captación)</label>
+        <div class="checkbox-group">
+          <span class="check-pill" onclick="this.classList.toggle('checked')">FM Formulario Meta</span>
+          <span class="check-pill" onclick="this.classList.toggle('checked')">FW Formulario Web</span>
+          <span class="check-pill" onclick="this.classList.toggle('checked')">BD Base de Datos</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Nº de emails</label>
+          <input class="form-input" type="number" value="3" min="1" max="20">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Fecha (solo si BD)</label>
+          <input class="form-input" type="date">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="closeSheet();showToast('Campaña ${pipCode}C${next} creada')">Crear Campaña</button>
+      <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+    `;
+    openSheet('Nueva Campaña', pipCode + ' · solo Account', html);
+  }
+
+  // ─── Edit field (genérico) ───────────────────
+  function openEditField(label) {
+    const html = `
+      <div class="form-field">
+        <label class="form-label">${label}</label>
+        <input class="form-input" placeholder="Nuevo valor...">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Estado</label>
+        <div class="checkbox-group">
+          <span class="check-pill checked" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Completo</span>
+          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Pendiente cliente</span>
+          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">Pendiente nuestro</span>
+          <span class="check-pill" onclick="this.parentElement.querySelectorAll('.check-pill').forEach(p=>p.classList.remove('checked'));this.classList.add('checked')">No aplica</span>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="closeSheet();showToast('${label} actualizado')">Guardar</button>
+    `;
+    openSheet('Editar campo', label, html);
+  }
+
+  // ─── Esc to close sheet ────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && sheet.classList.contains('open')) closeSheet();
+  });
+
+  // ─── Theme ─────────────────────────────────────
+  const THEME_KEY = 'thenucleo-ficha-cliente-theme';
+  (function initTheme() {
+    try { document.documentElement.dataset.theme = localStorage.getItem(THEME_KEY) || 'dark'; }
+    catch { document.documentElement.dataset.theme = 'dark'; }
+  })();
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch {}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#090a0f' : '#f5f6f8');
+  });
+</script>
+
+</body>
+</html>

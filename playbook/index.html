@@ -1731,6 +1731,174 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
 }
 
 /* ============================================
+   MOBILE — refuerzo responsive (capa 2)
+   En ≤720px: timeline es la única vista,
+   filtros con scroll-x, pickers como bottom-sheet.
+   ============================================ */
+@media (max-width: 720px) {
+  /* Vistas: forzar timeline, ocultar switcher y panes tabla/kanban */
+  .view-switcher { display: none !important; }
+  [data-pane="timeline"] { display: block !important; }
+  [data-pane="tabla"],
+  [data-pane="kanban"] { display: none !important; }
+
+  /* Auth bar más compacta */
+  .auth-bar { padding: 8px 12px; gap: 6px; }
+  .auth-bar-meta, .theme-label { display: none; }
+
+  /* Header band compacta */
+  .playbook-header { padding: 10px 0 12px; gap: 10px; }
+  .playbook-header h1 { font-size: 16px; }
+
+  /* Filter bar — scroll horizontal en una línea */
+  .filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 0;
+    gap: 6px;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-bar .filter-label { display: none; }
+  .filter-bar .filter-divider { display: none; }
+  .member-chip, .toggle-pill { flex-shrink: 0; }
+  .search-input-wrap { flex-shrink: 0; width: auto; min-width: 200px; }
+
+  /* Stats: scroll horizontal */
+  .playbook-stats {
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    padding: 6px 0;
+    gap: 8px;
+  }
+  .playbook-stats::-webkit-scrollbar { display: none; }
+  .playbook-stats > * { flex-shrink: 0; }
+
+  /* Sector bar: scroll horizontal */
+  .sector-bar {
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .sector-bar::-webkit-scrollbar { display: none; }
+  .sector-bar > * { flex-shrink: 0; }
+
+  /* Cliente bar: hint visible en una nueva fila */
+  .cliente-bar { flex-wrap: wrap; row-gap: 6px; }
+  .cliente-bar-hint { font-size: 11px; }
+
+  /* Day row + task card: layout vertical-compacto */
+  .day-row {
+    grid-template-columns: 56px 1fr;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  .day-bubble { width: 48px; height: 48px; font-size: 11px; line-height: 1.15; }
+
+  .task-card {
+    padding: 12px 14px;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .task-card .task-side {
+    grid-row: 3;
+    grid-column: 1;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+  .task-card .task-meta {
+    grid-row: 2;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  /* Pickers (owner, day, auto, phase) como bottom-sheet */
+  .owner-picker,
+  .day-picker,
+  .auto-picker,
+  .phase-picker {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 18px 18px 0 0 !important;
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 1500 !important;
+    box-shadow: 0 -12px 32px rgba(0,0,0,0.5);
+    padding-bottom: env(safe-area-inset-bottom, 16px) !important;
+    animation: slideUpMob 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  @keyframes slideUpMob { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  /* Picker rows con padding generoso para touch */
+  .owner-picker .opt,
+  .day-picker .opt,
+  .auto-picker .toggle-row,
+  .phase-picker .opt { min-height: 44px; padding: 12px 14px; }
+
+  /* Ficha-panel responsive */
+  .ficha-panel { padding: 12px; }
+
+  /* Add-task-row más cómodo */
+  .add-task-row { padding: 12px 14px; min-height: 44px; }
+
+  /* Bulk bar pinned al fondo */
+  .bulk-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    border-radius: 14px 14px 0 0;
+    margin: 0;
+    z-index: 60;
+    padding: 12px 14px env(safe-area-inset-bottom, 12px) !important;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.4);
+  }
+
+  /* Touch targets WCAG 2.5.5 */
+  .row-delete-button,
+  .icon-btn,
+  .btn--sm,
+  .toggle-pill,
+  .member-chip,
+  .view-tab,
+  .sector-pill { min-height: 40px; }
+
+  /* Delete button siempre visible en móvil (no hover) */
+  .row-delete-button { opacity: 1 !important; }
+
+  /* Feedback area cliente — full width */
+  .task-feedback-actions { flex-wrap: wrap; gap: 6px; }
+  .task-feedback-actions button { flex: 1 1 auto; min-height: 40px; }
+  .task-nota-area textarea { min-height: 80px; font-size: 14px; }
+}
+
+/* Tablet 721-1024 — ajustes intermedios */
+@media (min-width: 721px) and (max-width: 1024px) {
+  .day-row { grid-template-columns: 80px 1fr; }
+  .filter-bar { gap: 10px; }
+}
+
+/* Anti-zoom iOS en inputs (font-size ≥16px previene zoom automático) */
+@media (max-width: 720px) {
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="number"],
+  input[type="date"],
+  textarea,
+  select { font-size: 16px !important; }
+}
+
+/* ============================================
    ANON MODE — /playbook/<bubble_id> sin sesión admin
    ============================================ */
 html.anon-mode .filter-bar,
