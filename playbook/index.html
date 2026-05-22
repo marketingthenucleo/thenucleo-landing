@@ -1736,11 +1736,14 @@ body.cliente-mode .kanban-card.done .k-title { text-decoration: line-through; co
    filtros con scroll-x, pickers como bottom-sheet.
    ============================================ */
 @media (max-width: 720px) {
-  /* Vistas: forzar timeline, ocultar switcher y panes tabla/kanban */
+  /* Vistas: forzar timeline, ocultar switcher y panes tabla/kanban.
+     Sube especificidad a (0,1,2) para ganar a `.view-pane[hidden] { display: none !important }`
+     de línea ~579 que aplica el JS via `p.hidden = ...` al cambiar STATE.view. */
   .view-switcher { display: none !important; }
-  [data-pane="timeline"] { display: block !important; }
-  [data-pane="tabla"],
-  [data-pane="kanban"] { display: none !important; }
+  .view-pane[data-pane="timeline"],
+  .view-pane[data-pane="timeline"][hidden] { display: block !important; }
+  .view-pane[data-pane="tabla"],
+  .view-pane[data-pane="kanban"] { display: none !important; }
 
   /* Auth bar más compacta */
   .auth-bar { padding: 8px 12px; gap: 6px; }
