@@ -147,7 +147,6 @@ assets/js/
 fonts/                      ← NewBlack Typeface (woff2)
 icons/                      ← logos integraciones
 Media/                      ← logo circular PNG (favicon + OG) + macbook_laptop.glb + videonuevo_dashboard.mp4
-docs/archive/               ← FULL-AUDIT-REPORT.md, ACTION-PLAN.md (auditoría 2026-04-11) + capture_sections.js (script Playwright legacy)
 ```
 
 ## Arquitectura de la landing
@@ -185,13 +184,13 @@ Indexa en Bing + Yandex (no Google). El archivo de la key **NO se borra** — si
 
 Backlog inicial: 75 vídeos del canal de Miguel Villamil (@soymiguelvillamil), orden cronológico (EP01 primero).
 
-**Documentación completa del blog:** [`../docs/publico/blog-zenyx-workflow.md`](../docs/publico/blog-zenyx-workflow.md)
+**Documentación completa del blog:** [`docs/work/blog-zenyx.md`](./docs/work/blog-zenyx.md)
 
 ## Comunidad pública — `/comunidad/`
 Comunidad pública de propuestas (ideas, servicios, herramientas) con votación, comentarios y crowdfunding. Migrada del portal Bubble el 2026-04-28.
 
 **Stack:**
-- **Datos:** tablas nativas en Supabase cbi (`comunidad_propuestas`, `comunidad_comentarios`, `comunidad_votos_*`, `comunidad_admins`). Detalle en `../docs/infra/supabase-schema.md` sección "Comunidad pública".
+- **Datos:** tablas nativas en Supabase cbi (`comunidad_propuestas`, `comunidad_comentarios`, `comunidad_votos_*`, `comunidad_admins`). Detalle en `docs/infra/supabase-schema.md` sección "Comunidad pública".
 - **Auth:** Supabase Auth Google OAuth. Login centralizado en `/comunidad/entrar/` (pantalla estilo Google + widget "No soy un robot" — local, gesto humano antes de OAuth). `goToLogin()` redirige cualquier flujo a `/entrar/?next=<retorno>`. Logout desde menú avatar en nav (dropdown con nombre/email + "Cerrar sesión").
 - **SSG:** Eleventy lee `v_comunidad_propuestas_publicas` en build-time (`_data/comunidad.js`) y pre-renderiza listado y fichas. Webhook Supabase → Vercel Deploy Hook al aprobar propuesta (regenera SSG).
 - **Cliente:** `@supabase/supabase-js` vía CDN jsdelivr (sin bundler). Globals inyectados en `<head>` por `_includes/comunidad-base.njk` desde `_data/site.js`.
@@ -212,7 +211,7 @@ Comunidad pública de propuestas (ideas, servicios, herramientas) con votación,
 - **Reparto de campos usuario vs admin** (2026-04-29):
   - Usuario en el modal solo envía: `titulo`, `descripcion`, `problema`, `beneficio`, `modo`. La nota en el modal lo aclara.
   - Admin en `/comunidad/admin/` fija los numéricos: `cotizacion_precio` + `umbral_financiacion_pool` (pool) o `precio_adhoc` (referidos). También puede corregir los textos del usuario (ortografía, reformular) antes de aprobar.
-  - Panel admin con dos secciones: **Pendientes** (Aprobar/Rechazar) y **Aprobadas** (Guardar cambios). Aprobar guarda ediciones + dispara Edge Function + rebuild Vercel. Guardar en aprobadas hace UPDATE directo vía RLS admin (NO rebuild — ver troubleshooting en `docs/publico/comunidad-publica.md`).
+  - Panel admin con dos secciones: **Pendientes** (Aprobar/Rechazar) y **Aprobadas** (Guardar cambios). Aprobar guarda ediciones + dispara Edge Function + rebuild Vercel. Guardar en aprobadas hace UPDATE directo vía RLS admin (NO rebuild — ver troubleshooting en `docs/work/comunidad.md`).
 
 **Bootstrap admin:**
 Tras el primer login Google de Ben en `/comunidad/admin/`, ejecutar en Supabase:
@@ -222,9 +221,7 @@ INSERT INTO comunidad_admins (user_id) VALUES ('<uid de auth.users>');
 
 ## SEO — Estado actual landing
 **Score:** 42/100 (auditado 2026-04-11)
-Documentos de referencia (archivados en `docs/archive/`):
-- `docs/archive/FULL-AUDIT-REPORT.md` — análisis completo por categoría
-- `docs/archive/ACTION-PLAN.md` — plan priorizado con código listo para aplicar
+Documentos de referencia: `FULL-AUDIT-REPORT.md` (análisis completo por categoría) y `ACTION-PLAN.md` (plan priorizado con código listo para aplicar) vivieron en `docs/archive/` hasta 2026-05-23. Borrados antes de la migración del vault (commit `0e81519`) — recuperables desde git history si vuelven a hacer falta. Items críticos vivos hoy → `docs/work/deuda-tecnica.md`.
 
 ## Rendimiento — Estado tras sesión 2026-04-19
 
@@ -265,7 +262,7 @@ Métricas: FCP 0.7s ✅ · LCP 0.8s ✅ · CLS 0.003 ✅ · TBT **980ms** ⚠️
 ## Auditoría 2026-04-29 — fixes aplicados
 - **Nav header click handler**: enlaces `data-phase="N"` aterrizaban en `phaseEdges[idx]` (boundary inicial) y las cards de Funcionalidades/Resultados animaban a partir de localT 0.10+ → la fase aparecía vacía. Ahora aterrizan a `phaseEdges[idx] + 0.55 * span` para que el smooth-scroll recorra la animación durante el viaje. (`index.html:2331-2346`)
 - **Botones "Empezar ahora"**: hero (línea 1515) + CTA final (línea 1766) pasan de `data-phase="4"` (scroll a Precios) a `https://portal.thenucleo.com/` con `target="_blank" rel="noopener noreferrer"`, mismo patrón que "Acceder" del nav.
-- Auditoría triple completa (UX / seguridad / responsive) consolidada en `C:\Users\Benjamin\.claude\plans\pusea-y-hazme-una-noble-ullman.md` — 3 críticas, 5 altas, 8 medias, 7 bajas. Reusable como referencia para próximas iteraciones.
+- Auditoría triple completa (UX / seguridad / responsive) consolidada en plan local de Ben (`.claude/plans/pusea-y-hazme-una-noble-ullman.md` en su máquina) — 3 críticas, 5 altas, 8 medias, 7 bajas. Si hace falta para próximas iteraciones, pedir a Ben que lo migre a `docs/work/auditoria-2026-04-29.md`.
 
 ## Fix 2026-04-30 — Header móvil + hamburguesa en los 4 navs
 - **Bug A (header desbordaba con sesión iniciada en `/comunidad/*`):** a `≤600px` el nav mostraba isotipo + logotipo SVG (~110px) + auth-menu + "Acceder →". Logueado se sumaba avatar/caret y el conjunto excedía el ancho útil (≈315px en iPhone 375).

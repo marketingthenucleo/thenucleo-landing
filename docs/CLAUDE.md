@@ -316,13 +316,15 @@ Estructura `docs/` reorganizada por dominio (revisada 2026-05-20):
   - `control-de-campanias.md` — Meta Ads + Google Ads
 
 **`docs/work/`** — Cara pública (work.thenucleo.com):
-- `README.md` — Hub del dominio + Landing/Pricing/Blog/Comunidad/Playbook/Fichas/Casuísticas/Disponibilidades
+- `README.md` — Hub del dominio + Landing/Pricing/Blog/Comunidad/Playbook/Fichas/Ficha de Cliente/Casuísticas/Disponibilidades
 - `blog-zenyx.md` — Blog SEO `/conocimiento-zenyx`
 - `comunidad.md` — Comunidad pública (Eleventy + Supabase)
 - `playbook.md` — Playbook onboarding cuarentena
 - `fichas-de-producto.md` — Editor admin fichas de servicios
+- `ficha-cliente.md` — Ficha de cliente admin-only (cableada a `bub_clientes` + módulo Pipelines F1)
 - `casuisticas.md` — Tablero kanban clasificación peticiones cliente
 - `disponibilidades.md` — Calendario disponibilidad laboral equipo (AHORA/HOY/SEMANA, admin-only)
+- `deuda-tecnica.md` — Items abiertos del landing y admin (críticos + no críticos + cerrados)
 
 **`docs/addons/`** — Sistema de addons (cross-domain Portal + Work signup):
 - `README.md` — Plan maestro + estado por fase (F1 ✅, F2/F3 pendientes)
