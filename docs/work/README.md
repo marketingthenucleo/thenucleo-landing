@@ -2,7 +2,7 @@
 title: work/ — Cara pública (work.thenucleo.com)
 dominio: work
 estado: vivo
-actualizado: 2026-05-22
+actualizado: 2026-05-23
 tags: [hub, work, publico]
 ---
 
@@ -20,7 +20,7 @@ Todo lo que vive en `work.thenucleo.com`. Repo independiente en `thenucleo-landi
 | **Comunidad** (`/comunidad`) | Vivo desde 2026-04-28 | [[comunidad]] | Tablas `comunidad_*`, Edge Function `comunidad_admin_action`, Auth Google |
 | **Playbook** (`/playbook/<bubble_id>`) | Vivo (cuarentena) | [[playbook]] | Tabla `playbook_onboarding`, allowlist editores, modo viewer/editor |
 | **Fichas de Producto** (`/fichas-de-producto/`) | Vivo desde 2026-05-13 (admin-only) · rewrite mobile-first 2026-05-22 | [[fichas-de-producto]] | Tablas `fichas_categorias` + `fichas_de_producto`, editor inline tipo Playbook, gate `is_comunidad_admin()` en lectura y edición. Mobile-first 2026-05-22: tabs por categoría (en vez de sidebar), FAB, sheet bottom para nueva cat. |
-| **Ficha de Cliente** (`/ficha-cliente/`) | Vivo desde 2026-05-22 (admin-only). **Módulo Pipelines y Campañas** vivo desde 2026-05-23 con seed | [[secciones-app#ficha-cliente]] | Vista mobile-first cableada a `bub_clientes` vía RPCs `ficha_cliente_listar()` + `ficha_cliente_get(p_bubble_id)`. Selector con buscador (sheet bottom). URL deep-link `?id=<bubble_id>`. Allowlist 4 emails TheNucleo. **Pipelines/Campañas** con nomenclatura PxCx, datos seed hasta backend F2. Catálogos/Anomalías siguen MOCKUP. |
+| **Ficha de Cliente** (`/ficha-cliente/`) | Vivo desde 2026-05-22 (admin-only). **Módulo Pipelines y Campañas** vivo desde 2026-05-23 con seed F1 | [[secciones-app#ficha-cliente]] | Vista mobile-first cableada a `bub_clientes` vía RPCs `ficha_cliente_listar()` + `ficha_cliente_get(p_bubble_id)`. Selector con buscador (sheet bottom). URL deep-link `?id=<bubble_id>`. Allowlist 4 emails TheNucleo. **Pipelines/Campañas** con nomenclatura PxCx, seed F1 hardcoded de Dra. Neuss hasta backend F2. Chip "Pipelines · mockup" retirado 2026-05-23 (el módulo ya no es mockup). Catálogos y Anomalías siguen MOCKUP. |
 | **Casuísticas** (`/casuisticas/`) | Vivo desde 2026-05-14 (admin-only) | [[casuisticas]] | Tablero kanban 4 columnas (Bolsa de Horas / Newsletter / Híbrido / Servicios contratados). Persistencia `localStorage`. Sin backend Supabase |
 | **Disponibilidades** (`/disponibilidades/`) | Vivo desde 2026-05-20 (admin-only) | [[disponibilidades]] | Calendario disponibilidad laboral del equipo (3 capas: AHORA + HOY + SEMANA). Tablas `disponibilidad_franjas_base` + `disponibilidad_overrides` + `festivos_es`. RLS vía `is_comunidad_admin()`. Pendientes v2: enlace Notion/Google Calendar + self-service con push al PM |
 
@@ -50,3 +50,4 @@ Cualquier página admin-only nueva debe replicar este dropdown (CSS `.nav-user-*
 
 - **Infraestructura técnica que alimenta Work:** [[supabase-schema]] (tablas `comunidad_*`, `playbook_onboarding`, `blog_videos`), [[n8n-workflows]] (workflow `CNlBtiFCwY69I6Wl` Blog Zenyx).
 - **SEO/GEO:** [[ids-referencias]] → Google Search Console + sitemap.
+- **Deuda técnica abierta del landing:** [[deuda-tecnica]] — items pendientes (Stripe TEST→PROD, prefers-reduced-motion en Three.js, touch targets, OG image v2, etc.).

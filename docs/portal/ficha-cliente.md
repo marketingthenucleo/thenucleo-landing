@@ -462,7 +462,7 @@ Para evitar scope creep, este documento deja **fuera** explícitamente:
 1. **Validar este doc con Melina (PM).** Que lo lea en 15 min y diga si entiende cómo se rellena la ficha de Neus sin tener que preguntar.
 2. **Piloto Neus.** Ben + Melina sentados 30 min declaran los 4 Pipelines de Neus en un mockup de papel/HTML. Validan si el modelo aguanta.
 3. **Diseñar el modelo de datos Supabase.** Tablas, RPCs, RLS. Sesión técnica aparte.
-4. **Refactor del bloque MOCKUP de Pipelines** en `work.thenucleo.com/ficha-cliente/` para que sea funcional.
+4. ~~**Refactor del bloque MOCKUP de Pipelines** en `work.thenucleo.com/ficha-cliente/` para que sea funcional.~~ ✅ **Hecho 2026-05-23** — frontend del módulo vivo con seed F1 hardcoded (4 pipelines de Dra. Neuss). Falta cablear backend Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + RPCs) = F2.
 5. **Modificar formulario "Crear tarea" en Bubble** para forzar dropdown de código del catálogo del cliente.
 6. **Catálogo seed de Plantillas** — crear las 7 plantillas del seed inicial (§4) con sus briefings master en Drive.
 7. **Migrar 5 clientes más activos** al modelo en sesiones acompañadas con Account.
@@ -472,6 +472,6 @@ Para evitar scope creep, este documento deja **fuera** explícitamente:
 - `TheNucleoNomenclatura2.docx` — fuente original de la nomenclatura PxCx (Ben, 2026-05-23). Este documento la incorpora alineada con la implementación.
 - `Campaña de ventas - Curso suplementación.pdf` — briefing real cargado por Ben como ejemplo de lo que hoy es un doc Drive suelto. En la visión v2 es el `link_briefing_drive` de la Campaña `P1C1` de Neus.
 - [[secciones-app#Ficha Cliente (`/clientes/{empresa_id}`)]] — ficha interna Bubble actual.
-- [[secciones-app#Ficha Cliente — `work.thenucleo.com/ficha-cliente/` (admin allowlist, desde 2026-05-22)]] — ficha pública actual con los placeholders MOCKUP que esta visión rellena.
+- [[secciones-app#Ficha Cliente — `work.thenucleo.com/ficha-cliente/` (admin allowlist, desde 2026-05-22)]] — ficha pública actual: módulo Pipelines vivo con seed F1 de Dra. Neuss (2026-05-23); Catálogos y Anomalías siguen MOCKUP a la espera de cableado F2.
 - [[../infra/supabase-schema|supabase-schema]] sección `bub_clientes` + `playbook_cliente_servicios`.
 - [[../infra/n8n-workflows|n8n-workflows]] — workflow `wvHcgVqqjkWJcJDu` (crea carpetas Drive) y `eHyXBETcaGSNXqLk` (crear tarea Notion desde Bubble).
