@@ -330,36 +330,44 @@
   }
   .svc-expand-btn:hover { color: var(--text); border-color: var(--line-2); }
 
-  .svc-group { margin-bottom: 10px; }
-  .svc-group:last-child { margin-bottom: 0; }
-  .svc-group-header {
+  /* Collapsible group (Datos · Catálogos · Servicios) */
+  .coll-group { margin-bottom: 10px; }
+  .coll-group:last-child { margin-bottom: 0; }
+  .coll-group-header {
     display: flex; align-items: center; gap: 10px;
     background: var(--bg-2); border: 1px solid var(--line);
     border-radius: 12px; padding: 12px 14px; cursor: pointer;
     transition: background 120ms, border-color 120ms;
+    user-select: none; -webkit-user-select: none; outline: none;
+    min-height: 44px;
   }
-  .svc-group-header:hover { background: var(--bg-hover); border-color: var(--line-2); }
-  .svc-group-caret {
+  .coll-group-header:hover { background: var(--bg-hover); border-color: var(--line-2); }
+  .coll-group-header:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-muted); }
+  .coll-group-caret {
     width: 10px; flex-shrink: 0; color: var(--text-3);
-    transition: transform 120ms; line-height: 1;
+    transition: transform 120ms; line-height: 1; font-size: 11px;
   }
-  .svc-group.open .svc-group-caret { transform: rotate(90deg); }
-  .svc-group-dot {
+  .coll-group.open .coll-group-caret { transform: rotate(90deg); color: var(--text-2); }
+  .coll-group-dot {
     width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
     background: var(--accent);
   }
-  .svc-group-name {
+  .coll-group-name {
     flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .svc-group-count {
-    flex-shrink: 0; font-size: 10px; font-weight: 600;
+  .coll-group-count {
+    flex-shrink: 0; font-size: 10px; font-weight: 700;
     color: var(--text-3); background: var(--bg-3); border: 1px solid var(--line);
-    border-radius: 999px; padding: 2px 8px; letter-spacing: 0.04em;
+    border-radius: 999px; padding: 3px 9px; letter-spacing: 0.04em;
   }
-  .svc-group-items { display: none; padding: 8px 0 0 4px; }
-  .svc-group.open .svc-group-items { display: block; }
-  .svc-group.open .svc-group-items > .catalog-item:last-child { margin-bottom: 0; }
+  .coll-group-count.ok { color: var(--ok); background: var(--ok-bg); border-color: rgba(34,197,94,0.25); }
+  .coll-group-count.warn { color: var(--warn); background: var(--warn-bg); border-color: rgba(245,158,11,0.25); }
+  .coll-group-count.mock { color: var(--text-3); background: var(--bg-3); border-color: var(--line); }
+  .coll-group-body { display: none; padding: 10px 0 0; }
+  .coll-group.open .coll-group-body { display: block; animation: collOpen 0.18s ease; }
+  .coll-group.open .coll-group-body > .catalog-item:last-child { margin-bottom: 0; }
+  @keyframes collOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
   /* ─── Anomalies ─────────────────────────────────── */
   .anomaly {
@@ -1012,20 +1020,65 @@
     <!-- PANEL DATOS — cableado contra bub_clientes -->
     <section class="panel active" id="panel-datos">
 
-      <div class="section-title"><span>Identificación</span></div>
-      <div class="field-list" id="ident-list"></div>
+      <div class="coll-group open" data-coll="ident">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="true">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot"></span>
+          <span class="coll-group-name">Identificación</span>
+          <span class="coll-group-count" id="ident-count">—</span>
+        </div>
+        <div class="coll-group-body">
+          <div class="field-list" id="ident-list"></div>
+        </div>
+      </div>
 
-      <div class="section-title"><span>Contacto principal</span></div>
-      <div class="field-list" id="contacto-list"></div>
+      <div class="coll-group" data-coll="contacto">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot"></span>
+          <span class="coll-group-name">Contacto principal</span>
+          <span class="coll-group-count" id="contacto-count">—</span>
+        </div>
+        <div class="coll-group-body">
+          <div class="field-list" id="contacto-list"></div>
+        </div>
+      </div>
 
-      <div class="section-title"><span>Presencia digital</span></div>
-      <div class="field-list" id="presencia-list"></div>
+      <div class="coll-group" data-coll="presencia">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot"></span>
+          <span class="coll-group-name">Presencia digital</span>
+          <span class="coll-group-count" id="presencia-count">—</span>
+        </div>
+        <div class="coll-group-body">
+          <div class="field-list" id="presencia-list"></div>
+        </div>
+      </div>
 
-      <div class="section-title"><span>Accesos y credenciales</span></div>
-      <div class="field-list" id="accesos-list"></div>
+      <div class="coll-group" data-coll="accesos">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot"></span>
+          <span class="coll-group-name">Accesos y credenciales</span>
+          <span class="coll-group-count" id="accesos-count">—</span>
+        </div>
+        <div class="coll-group-body">
+          <div class="field-list" id="accesos-list"></div>
+        </div>
+      </div>
 
-      <div class="section-title"><span>Operaciones internas</span></div>
-      <div class="field-list" id="internos-list"></div>
+      <div class="coll-group" data-coll="internos">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot"></span>
+          <span class="coll-group-name">Operaciones internas</span>
+          <span class="coll-group-count" id="internos-count">—</span>
+        </div>
+        <div class="coll-group-body">
+          <div class="field-list" id="internos-list"></div>
+        </div>
+      </div>
 
     </section>
 
@@ -1038,22 +1091,41 @@
 
     <!-- PANEL CATÁLOGOS — mockup -->
     <section class="panel" id="panel-catalogos">
-      <div class="section-title"><span>Emails remitentes</span></div>
-      <div class="catalog-item">
-        <div class="cat-info">
-          <div class="cat-name">hola@dominiocliente.com</div>
-          <div class="cat-meta">Principal · MOCKUP</div>
+
+      <div class="coll-group" data-coll="cat-emails">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot" style="background:var(--info)"></span>
+          <span class="coll-group-name">Emails remitentes</span>
+          <span class="coll-group-count mock">MOCKUP · 1</span>
         </div>
-        <span class="status-pill mock">MOCKUP</span>
+        <div class="coll-group-body">
+          <div class="catalog-item">
+            <div class="cat-info">
+              <div class="cat-name">hola@dominiocliente.com</div>
+              <div class="cat-meta">Principal · MOCKUP</div>
+            </div>
+            <span class="status-pill mock">MOCKUP</span>
+          </div>
+        </div>
       </div>
 
-      <div class="section-title"><span>Etiquetas de segmentación</span></div>
-      <div class="catalog-item">
-        <div class="cat-info">
-          <div class="cat-name">lead-cumple-padres</div>
-          <div class="cat-meta">342 contactos · MOCKUP</div>
+      <div class="coll-group" data-coll="cat-etiquetas">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot" style="background:#a78bfa"></span>
+          <span class="coll-group-name">Etiquetas de segmentación</span>
+          <span class="coll-group-count mock">MOCKUP · 1</span>
         </div>
-        <span class="chevron">›</span>
+        <div class="coll-group-body">
+          <div class="catalog-item">
+            <div class="cat-info">
+              <div class="cat-name">lead-cumple-padres</div>
+              <div class="cat-meta">342 contactos · MOCKUP</div>
+            </div>
+            <span class="chevron">›</span>
+          </div>
+        </div>
       </div>
 
       <div class="empty-card" style="margin-top:14px">
@@ -1250,6 +1322,30 @@ function fieldRow({ label, value, mock = false, isUrl: asUrl = false }) {
   `;
 }
 
+// Renderiza una sección de Datos (lista de campos + badge con rellenos/total).
+// Pinta el badge verde si todo está completo, ámbar si faltan datos reales y
+// neutro (mock) si todos los campos son placeholders.
+function renderDatosSection(listId, countId, fields) {
+  const listEl = document.getElementById(listId);
+  if (listEl) listEl.innerHTML = fields.map(fieldRow).join('');
+
+  const countEl = document.getElementById(countId);
+  if (!countEl) return;
+
+  const total = fields.length;
+  const realFields = fields.filter(f => !f.mock);
+  const filled = realFields.filter(f => f.value && String(f.value).trim()).length;
+
+  countEl.classList.remove('ok', 'warn', 'mock');
+  if (realFields.length === 0) {
+    countEl.classList.add('mock');
+    countEl.textContent = `MOCKUP · ${total}`;
+  } else {
+    countEl.textContent = `${filled}/${realFields.length}`;
+    countEl.classList.add(filled === realFields.length ? 'ok' : 'warn');
+  }
+}
+
 function renderCliente(c) {
   if (!c) return;
 
@@ -1300,49 +1396,49 @@ function renderCliente(c) {
 
   // Panel datos — Identificación
   const dirParts = [c.direccion_fiscal, c.codigo_postal, c.provincia, c.pais].filter(Boolean);
-  document.getElementById('ident-list').innerHTML = [
-    fieldRow({ label: 'Nombre comercial', value: c.nombre_empresas }),
-    fieldRow({ label: 'Razón social', value: c.nombre_sociedad }),
-    fieldRow({ label: 'CIF / NIF', value: c.dni_nif }),
-    fieldRow({ label: 'Dirección fiscal', value: dirParts.join(', ') }),
-    fieldRow({ label: 'Teléfono', value: c.telefono_principal }),
-  ].join('');
+  renderDatosSection('ident-list', 'ident-count', [
+    { label: 'Nombre comercial', value: c.nombre_empresas },
+    { label: 'Razón social', value: c.nombre_sociedad },
+    { label: 'CIF / NIF', value: c.dni_nif },
+    { label: 'Dirección fiscal', value: dirParts.join(', ') },
+    { label: 'Teléfono', value: c.telefono_principal },
+  ]);
 
   // Contacto
-  document.getElementById('contacto-list').innerHTML = [
-    fieldRow({ label: 'Persona de contacto', value: c.contacto_principal }),
-    fieldRow({ label: 'Email principal', value: c.correo_principal }),
-    fieldRow({ label: 'WhatsApp', value: null, mock: true }),
-  ].join('');
+  renderDatosSection('contacto-list', 'contacto-count', [
+    { label: 'Persona de contacto', value: c.contacto_principal },
+    { label: 'Email principal', value: c.correo_principal },
+    { label: 'WhatsApp', value: null, mock: true },
+  ]);
 
   // Presencia digital
-  document.getElementById('presencia-list').innerHTML = [
-    fieldRow({ label: 'Web', value: c.pagina_web, isUrl: true }),
-    fieldRow({ label: 'Quién gestiona el dominio', value: null, mock: true }),
-    fieldRow({ label: 'Instagram', value: null, mock: true }),
-    fieldRow({ label: 'Facebook', value: null, mock: true }),
-  ].join('');
+  renderDatosSection('presencia-list', 'presencia-count', [
+    { label: 'Web', value: c.pagina_web, isUrl: true },
+    { label: 'Quién gestiona el dominio', value: null, mock: true },
+    { label: 'Instagram', value: null, mock: true },
+    { label: 'Facebook', value: null, mock: true },
+  ]);
 
   // Accesos (todos mock por ahora — bub_clientes no almacena estos)
-  document.getElementById('accesos-list').innerHTML = [
-    fieldRow({ label: 'Meta Business Manager', value: null, mock: true }),
-    fieldRow({ label: 'Google Ads', value: null, mock: true }),
-    fieldRow({ label: 'GHL Subcuenta', value: null, mock: true }),
-    fieldRow({ label: 'Acceso DNS', value: null, mock: true }),
-  ].join('');
+  renderDatosSection('accesos-list', 'accesos-count', [
+    { label: 'Meta Business Manager', value: null, mock: true },
+    { label: 'Google Ads', value: null, mock: true },
+    { label: 'GHL Subcuenta', value: null, mock: true },
+    { label: 'Acceso DNS', value: null, mock: true },
+  ]);
 
   // Operaciones internas — datos reales del espejo
-  document.getElementById('internos-list').innerHTML = [
-    fieldRow({ label: 'Drive del cliente', value: c.link_drive, isUrl: true }),
-    fieldRow({ label: 'Análisis estratégico', value: c.bb_link_drive_analisis, isUrl: true }),
-    fieldRow({ label: 'Notion ID', value: c.notion_id }),
-    fieldRow({ label: 'Google Chat Space', value: c.gchat_space_id }),
-    fieldRow({ label: 'Slug', value: c.slug }),
-    fieldRow({ label: 'Fecha onboarding', value: fmtDate(c.fecha_onboarding) }),
-    fieldRow({ label: 'Último seguimiento', value: fmtDate(c.ultimo_seguimiento) }),
-    fieldRow({ label: 'NPS', value: c.nps }),
-    fieldRow({ label: 'Facturación mensual', value: c.facturacion ? `${Number(c.facturacion).toLocaleString('es-ES')} €` : null }),
-  ].join('');
+  renderDatosSection('internos-list', 'internos-count', [
+    { label: 'Drive del cliente', value: c.link_drive, isUrl: true },
+    { label: 'Análisis estratégico', value: c.bb_link_drive_analisis, isUrl: true },
+    { label: 'Notion ID', value: c.notion_id },
+    { label: 'Google Chat Space', value: c.gchat_space_id },
+    { label: 'Slug', value: c.slug },
+    { label: 'Fecha onboarding', value: fmtDate(c.fecha_onboarding) },
+    { label: 'Último seguimiento', value: fmtDate(c.ultimo_seguimiento) },
+    { label: 'NPS', value: c.nps },
+    { label: 'Facturación mensual', value: c.facturacion ? `${Number(c.facturacion).toLocaleString('es-ES')} €` : null },
+  ]);
 
   // Servicios — desde playbook_cliente_servicios (vía RPC ficha_cliente_get)
   const servicios = Array.isArray(c.servicios) ? c.servicios : [];
@@ -1412,14 +1508,14 @@ function renderServiciosPanel(servicios) {
       const isOpen = onlyOne || forceOpenAll || state.openCats.has(g.nombre);
       const dotStyle = g.color ? `style="background:${escapeHtml(g.color)}"` : '';
       return `
-      <div class="svc-group${isOpen ? ' open' : ''}" data-cat="${escapeHtml(g.nombre)}">
-        <div class="svc-group-header" data-toggle="${escapeHtml(g.nombre)}">
-          <span class="svc-group-caret">▶</span>
-          <span class="svc-group-dot" ${dotStyle}></span>
-          <span class="svc-group-name">${escapeHtml(g.nombre)}</span>
-          <span class="svc-group-count">${g.items.length}</span>
+      <div class="coll-group${isOpen ? ' open' : ''}" data-cat="${escapeHtml(g.nombre)}">
+        <div class="coll-group-header" data-toggle="${escapeHtml(g.nombre)}" role="button" tabindex="0" aria-expanded="${isOpen ? 'true' : 'false'}">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot" ${dotStyle}></span>
+          <span class="coll-group-name">${escapeHtml(g.nombre)}</span>
+          <span class="coll-group-count">${g.items.length}</span>
         </div>
-        <div class="svc-group-items">
+        <div class="coll-group-body">
           ${g.items.map(s => {
             const meta = [s.unidades, s.periodo].filter(Boolean).map(escapeHtml).join(' · ');
             return `
@@ -1548,6 +1644,26 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+});
+
+// ─── Collapsible groups (Datos · Catálogos) ────────
+// Servicios usa su propio toggle via [data-toggle] porque mantiene estado.
+function toggleCollGroup(header) {
+  const group = header.closest('.coll-group');
+  if (!group) return;
+  group.classList.toggle('open');
+  header.setAttribute('aria-expanded', group.classList.contains('open') ? 'true' : 'false');
+}
+document.addEventListener('click', (e) => {
+  const header = e.target.closest('[data-coll-toggle]');
+  if (header) toggleCollGroup(header);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const header = e.target.closest('[data-coll-toggle]');
+  if (!header) return;
+  e.preventDefault();
+  toggleCollGroup(header);
 });
 
 // ─── Toast ─────────────────────────────────────────
