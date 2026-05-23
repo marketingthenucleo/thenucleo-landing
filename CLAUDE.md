@@ -8,6 +8,47 @@
 
 ## Layout del repo (post-migración 2026-05-23)
 
+~~~
+thenucleo-landing/
+├── CLAUDE.md                    ← este archivo (landing + páginas admin)
+├── index.html                   ← landing pública (Three.js)
+├── aviso-legal.html / privacidad.html
+├── ficha-cliente/index.html     ← admin allowlist
+├── fichas-de-producto/index.html
+├── playbook/index.html
+├── disponibilidades/index.html
+├── casuisticas/index.html
+├── comunidad/                   ← públicas + admin moderación
+├── conocimiento-zenyx/          ← blog
+├── arquetipo/                   ← test público leadgen
+├── _data/, _includes/           ← Eleventy
+├── content/conocimiento-zenyx/  ← posts blog (los genera n8n)
+├── assets/, fonts/, icons/, Media/
+├── _site/                       ← build Eleventy (gitignored)
+├── docs/                        ← ex thenucleo-vault (gitignored por Eleventy)
+│   ├── CLAUDE.md                ← contexto Portal Bubble / Supabase / n8n
+│   ├── MOC.md                   ← Map of Content (Obsidian)
+│   ├── README.md
+│   ├── log-cambios.md           ← histórico cronológico
+│   ├── addons/                  ← sistema de addons (Stripe, F1/F2/F3)
+│   ├── infra/                   ← supabase-schema, n8n-workflows, IDs
+│   ├── portal/                  ← visión operacional portal.thenucleo.com
+│   │   ├── ficha-cliente.md     ← visión Pipelines + nomenclatura PxCx
+│   │   ├── account-manual-pipelines.md
+│   │   ├── pm-manual-pipelines.md
+│   │   ├── equipo-manual-pipelines.md
+│   │   ├── pipelines-presentacion.md
+│   │   ├── secciones-app.md     ← detalle 9 secciones del portal
+│   │   ├── integraciones/       ← ClickUp, GChat, Meta Ads, etc.
+│   │   └── sectores/
+│   └── work/                    ← documentación pages admin de este repo
+├── Design/                      ← assets mockups (gitignored)
+├── vercel.json
+├── .eleventy.js
+├── .eleventyignore              ← incluye docs/, Design/
+└── package.json
+~~~
+
 ## Cuándo mirar qué
 
 | Trabajas en… | Doc principal |
