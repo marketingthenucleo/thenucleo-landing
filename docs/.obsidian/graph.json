@@ -1,0 +1,72 @@
+{
+  "collapse-filter": true,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "path:\"MOC\" OR path:\"CLAUDE\" OR path:\"docs/README\" OR path:\"docs/log-cambios\"",
+      "color": {
+        "a": 1,
+        "rgb": 15067115
+      }
+    },
+    {
+      "query": "path:\"docs/work/README\" OR path:\"docs/portal/README\" OR path:\"docs/infra/README\" OR path:\"docs/integraciones/README\"",
+      "color": {
+        "a": 1,
+        "rgb": 16569165
+      }
+    },
+    {
+      "query": "path:docs/portal/sectores/",
+      "color": {
+        "a": 1,
+        "rgb": 15485081
+      }
+    },
+    {
+      "query": "path:docs/work/",
+      "color": {
+        "a": 1,
+        "rgb": 2278750
+      }
+    },
+    {
+      "query": "path:docs/portal/",
+      "color": {
+        "a": 1,
+        "rgb": 9133302
+      }
+    },
+    {
+      "query": "path:docs/infra/",
+      "color": {
+        "a": 1,
+        "rgb": 16347926
+      }
+    },
+    {
+      "query": "path:docs/integraciones/",
+      "color": {
+        "a": 1,
+        "rgb": 440020
+      }
+    }
+  ],
+  "collapse-display": true,
+  "showArrow": false,
+  "textFadeMultiplier": -3,
+  "nodeSizeMultiplier": 2.14166666666667,
+  "lineSizeMultiplier": 0.763541666666667,
+  "collapse-forces": false,
+  "centerStrength": 0,
+  "repelStrength": 14.7916666666667,
+  "linkStrength": 0.385416666666667,
+  "linkDistance": 348,
+  "scale": 0.2592752046452593,
+  "close": true
+}

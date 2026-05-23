@@ -1,0 +1,27 @@
+# Proyectos con git propio (no se anidan)
+my-video/
+thenucleo-landing/
+Design/Mockups/
+
+# Assets pesados / binarios (no son notas Obsidian)
+Design/
+downloads/
+*.docx
+*.blend
+*.blend1
+
+# Config local (no debe sincronizarse entre dispositivos)
+.claude/
+.vscode/
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache/
+
+# Build / lock artifacts
+node_modules/
+skills-lock.json
+*.log
+.blender-toolkit/logs/
+.DS_Store
+Thumbs.db
+.trash/
