@@ -1389,7 +1389,6 @@ function renderCliente(c) {
     const cls = /al dia|al día|ok|pagad/i.test(c.bb_estado_facturacion) ? 'ok' : 'warn';
     chips.push(`<span class="chip ${cls}"><span class="dot"></span>Facturación: ${escapeHtml(c.bb_estado_facturacion)}</span>`);
   }
-  chips.push(`<span class="chip"><span class="dot"></span>Pipelines · mockup</span>`);
   chips.push(`<span class="chip"><span class="dot"></span>Anomalías · mockup</span>`);
   strip.innerHTML = chips.join('');
   strip.style.display = '';
