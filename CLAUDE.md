@@ -1,5 +1,37 @@
 # TheNucleo Landing — work.thenucleo.com
 
+> 📦 **Repo unificado desde 2026-05-23.** Antes existían dos repos:
+> - `marketingthenucleo/thenucleo-landing` (este) — código de la cara pública + páginas admin.
+> - `marketingthenucleo/thenucleo-vault` — documentación operacional Portal Bubble + infra Supabase/n8n.
+>
+> El vault se importó bajo `docs/` (squashed) y se archivará una vez validado el deploy. **Este `CLAUDE.md` raíz cubre frontend (landing + páginas admin).** Para Portal Bubble / Supabase / n8n / workflows operacionales, abre [`docs/CLAUDE.md`](./docs/CLAUDE.md) — Claude Code lo carga automáticamente cuando trabajas dentro de `docs/`.
+
+## Layout del repo (post-migración 2026-05-23)
+
+## Cuándo mirar qué
+
+| Trabajas en… | Doc principal |
+|---|---|
+| Landing pública, hero, pricing, copy | este CLAUDE.md (raíz) |
+| Páginas admin (ficha-cliente, playbook, fichas-de-producto, casuisticas, disponibilidades) | este CLAUDE.md + `docs/portal/secciones-app.md` |
+| Comunidad, blog Zenyx | este CLAUDE.md |
+| Schema Supabase, RPCs, tablas | `docs/infra/supabase-schema.md` |
+| Workflows n8n | `docs/infra/n8n-workflows.md` |
+| Portal Bubble (no-code app interna) | `docs/portal/secciones-app.md` + `docs/portal/*` |
+| Nomenclatura PxCx, Pipelines, Campañas | `docs/portal/ficha-cliente.md` + manuales |
+| IDs, credenciales, tokens | `docs/infra/ids-referencias.md` |
+
+## Convención para evitar drift
+
+**Doc junto a código.** Cualquier cambio funcional en un archivo de este repo se propaga en el mismo PR a su `.md` de referencia:
+
+- Cambio en `ficha-cliente/index.html` → revisar `docs/portal/secciones-app.md` sección Ficha Cliente.
+- Cambio en RPC Supabase → actualizar `docs/infra/supabase-schema.md`.
+- Cambio en workflow n8n → actualizar `docs/infra/n8n-workflows.md`.
+- Cambio en `playbook/index.html` → revisar `docs/work/playbook.md`.
+
+Antes esta convención requería cross-PR entre 2 repos (y se rompía: por eso unificamos). Ahora todo es en 1 sola sesión.
+
 ## Qué es
 Landing page de captación para TheNucleo + blog público SEO `/conocimiento-zenyx/`.
 Stack: HTML + CSS + Three.js (SPA) para la landing + **Eleventy v3** como static site generator para procesar los markdown del blog.
