@@ -629,6 +629,287 @@
   @media (max-width: 720px) {
     input[type="text"], input[type="search"], input[type="email"], textarea, select { font-size: 16px !important; }
   }
+
+  /* ─── Pipelines & Campañas module ──────────────────────── */
+  .pip-mod-header {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-bottom: 18px;
+  }
+  .pip-role-switch {
+    display: inline-flex; gap: 2px; background: var(--bg-2);
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px;
+  }
+  .pip-role-switch button {
+    font-family: inherit; font-size: 11px; font-weight: 700;
+    padding: 7px 14px; border-radius: 999px;
+    background: transparent; color: var(--text-3); border: none; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.06em; min-height: 32px;
+  }
+  .pip-role-switch button.active { background: var(--accent); color: var(--bg); }
+  .pip-archived-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-2); cursor: pointer;
+    font-weight: 600; min-height: 40px; padding: 0 4px;
+  }
+  .pip-archived-toggle input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+  .pip-new-btn {
+    margin-left: auto; background: var(--bg-2); border: 1px solid var(--line-2);
+    color: var(--text); border-radius: 10px; padding: 8px 14px;
+    font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+    min-height: 40px;
+  }
+  .pip-new-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .pip-back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--text-2);
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 8px 4px; margin-bottom: 10px;
+    min-height: 40px;
+  }
+  .pip-back-btn:hover { color: var(--accent); }
+
+  .pip-breadcrumb {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 14px; font-weight: 600;
+  }
+  .pip-breadcrumb a { color: var(--accent); cursor: pointer; }
+  .pip-breadcrumb a:hover { text-decoration: underline; }
+  .pip-breadcrumb .sep { opacity: 0.5; }
+
+  .code-tag {
+    display: inline-flex; align-items: center; font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-weight: 700; font-size: 11px; line-height: 1;
+    padding: 4px 7px; border-radius: 6px;
+    background: var(--bg-3); border: 1px solid var(--line-2);
+    color: var(--accent); letter-spacing: 0.02em;
+  }
+  .code-tag.lg { font-size: 13px; padding: 6px 10px; }
+  .code-tag.tag-camp { color: var(--info); }
+  .code-tag.tag-trig { color: var(--warn); }
+  .code-tag.tag-email { color: #a78bfa; }
+  [data-theme="light"] .code-tag.tag-email { color: #7c3aed; }
+
+  .state-badge {
+    display: inline-flex; align-items: center; font-size: 9px; font-weight: 700;
+    padding: 4px 8px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    border: 1px solid; line-height: 1;
+  }
+  .state-badge.declarada { color: var(--warn); background: var(--warn-bg); border-color: rgba(245,158,11,0.3); }
+  .state-badge.en-produccion { color: var(--info); background: var(--info-bg); border-color: rgba(59,130,246,0.3); }
+  .state-badge.archivada { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
+  .state-badge.plantilla { color: #a78bfa; background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.3); }
+  [data-theme="light"] .state-badge.plantilla { color: #7c3aed; background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.3); }
+  .state-badge.custom { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
+
+  .pip-detail-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+  .pip-detail-title { font-size: 22px; font-weight: 600; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; word-break: break-word; }
+  .pip-detail-sub { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-bottom: 20px; word-break: break-word; }
+  .pip-detail-sub.empty { color: var(--text-3); font-style: italic; }
+
+  .pip-card {
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    cursor: pointer; transition: border-color 120ms;
+  }
+  .pip-card:hover { border-color: var(--line-2); }
+  .pip-card:active { background: var(--bg-3); }
+  .pip-card.archived { opacity: 0.55; }
+  .pip-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .pip-card-head .code-tag { flex-shrink: 0; }
+  .pip-card-name {
+    font-size: 16px; font-weight: 600; line-height: 1.25;
+    flex: 1 1 100%; word-break: break-word; margin-top: 4px;
+  }
+  @media (min-width: 480px) { .pip-card-name { flex: 1; min-width: 140px; margin-top: 0; } }
+  .pip-card-meta {
+    display: flex; flex-wrap: wrap; gap: 4px 10px;
+    font-size: 11px; color: var(--text-3); font-weight: 500;
+  }
+
+  .pip-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.18em;
+    font-weight: 600; margin: 28px 0 12px;
+  }
+  .pip-section-head:first-child { margin-top: 0; }
+
+  .pip-pm-card {
+    background: linear-gradient(135deg, var(--accent-muted) 0%, rgba(34,197,94,0.04) 100%);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 14px; padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .pip-pm-card-text { flex: 1; min-width: 160px; }
+  .pip-pm-card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .pip-pm-card-sub { font-size: 12px; color: var(--text-2); margin-top: 2px; line-height: 1.4; }
+  .pip-pm-card-btn {
+    background: var(--accent); color: var(--bg); border: none;
+    border-radius: 10px; padding: 10px 16px;
+    font-family: inherit; font-size: 12px; font-weight: 700;
+    cursor: pointer; flex-shrink: 0; min-height: 40px;
+    letter-spacing: 0.02em;
+  }
+  .pip-pm-card-btn:hover { background: var(--accent-dim); }
+
+  .pip-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px; margin-bottom: 6px;
+    cursor: pointer; min-height: 56px;
+    transition: border-color 120ms;
+  }
+  .pip-row:hover { border-color: var(--line-2); }
+  .pip-row:active { background: var(--bg-3); }
+  .pip-row.archived { opacity: 0.55; }
+  .pip-row-main { flex: 1; min-width: 0; }
+  .pip-row-name { font-size: 13px; color: var(--text); line-height: 1.3; word-break: break-word; }
+  .pip-row-sub {
+    font-size: 11px; color: var(--text-3); margin-top: 2px;
+    font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pip-row-meta { font-size: 11px; color: var(--text-3); flex-shrink: 0; display: none; }
+  @media (min-width: 600px) { .pip-row-meta { display: inline-block; } }
+  .pip-row-order {
+    font-size: 11px; color: var(--text-3);
+    font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+    width: 18px; text-align: center; flex-shrink: 0;
+  }
+
+  .pip-mode-note {
+    font-size: 11px; color: var(--text-3); margin-bottom: 10px; line-height: 1.5;
+  }
+  .pip-mode-note strong { color: var(--text-2); font-weight: 700; }
+
+  .pip-warn-note {
+    font-size: 11px; color: var(--warn);
+    margin-top: 8px; display: flex; align-items: center; gap: 6px;
+    background: var(--warn-bg); border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 8px; padding: 8px 10px; line-height: 1.4;
+  }
+
+  .pip-creatividades-note {
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px;
+    font-size: 12px; color: var(--text-2); line-height: 1.5;
+    margin-top: 20px;
+  }
+  .pip-creatividades-note strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 12px; font-weight: 700; }
+  .pip-creatividades-note code {
+    font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+    background: var(--bg-3); color: #a78bfa;
+    padding: 2px 5px; border-radius: 4px; font-size: 11px;
+  }
+  [data-theme="light"] .pip-creatividades-note code { color: #7c3aed; }
+
+  .pip-archive-btn {
+    margin-top: 28px; padding: 12px;
+    background: var(--bg-2); border: 1px solid var(--line-2);
+    color: var(--text-2); border-radius: 10px;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; width: 100%; min-height: 44px;
+    transition: color 120ms, border-color 120ms;
+  }
+  .pip-archive-btn:hover { color: var(--bad); border-color: rgba(239,68,68,0.4); }
+
+  .pip-seed-note {
+    background: rgba(167,139,250,0.06); border: 1px dashed rgba(167,139,250,0.3);
+    color: var(--text-2); font-size: 11px; font-weight: 500;
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .pip-seed-note strong { color: var(--text); font-weight: 700; }
+  [data-theme="light"] .pip-seed-note { background: rgba(124,58,237,0.06); border-color: rgba(124,58,237,0.3); }
+
+  .pip-pill-trigger {
+    font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size: 11px; font-weight: 600;
+    padding: 5px 10px; border-radius: 6px;
+    border: 1px solid var(--line-2); color: var(--text-3);
+    background: var(--bg-3); display: inline-block; min-height: 28px;
+    line-height: 1.4;
+  }
+  .pip-pill-trigger.selected {
+    color: #a78bfa; border-color: rgba(167,139,250,0.4);
+    background: rgba(167,139,250,0.1);
+  }
+  [data-theme="light"] .pip-pill-trigger.selected { color: #7c3aed; }
+
+  .pip-plantilla-card {
+    text-align: left; background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px;
+    cursor: pointer; font-family: inherit; color: var(--text);
+    display: block; width: 100%; margin-bottom: 6px;
+    transition: border-color 120ms, background 120ms;
+  }
+  .pip-plantilla-card:hover { border-color: var(--line-2); background: var(--bg-3); }
+  .pip-plantilla-card.selected { border-color: var(--accent); background: var(--accent-muted); }
+  .pip-plantilla-card .pp-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .pip-plantilla-card .pp-meta {
+    font-size: 10px; color: var(--text-3); margin-top: 4px;
+    font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  .pip-plantilla-card.custom { border-style: dashed; }
+  .pip-plantilla-card.custom .pp-name { color: var(--text-2); font-style: italic; }
+
+  .pip-tasks-task {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 6px;
+    cursor: pointer; flex-wrap: wrap; min-height: 48px;
+  }
+  .pip-tasks-task.checked { border-color: rgba(34,197,94,0.3); background: var(--accent-muted); }
+  .pip-tasks-task input { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; }
+  .pip-tasks-task .tt-desc { flex: 1 1 60%; font-size: 13px; color: var(--text); min-width: 0; word-break: break-word; }
+  .pip-tasks-task .tt-who { font-size: 11px; color: var(--text-2); flex-shrink: 0; }
+  .pip-tasks-task .tt-area {
+    font-size: 9px; padding: 3px 7px; border-radius: 4px;
+    background: var(--bg-3); color: var(--text-3); flex-shrink: 0;
+    text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;
+  }
+
+  .pip-inherits {
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px; margin-top: 12px;
+  }
+  .pip-inherits-title {
+    font-size: 9px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px;
+  }
+  .pip-inherits-row {
+    display: flex; align-items: center; gap: 8px; font-size: 12px;
+    padding: 5px 0; flex-wrap: wrap;
+  }
+  .pip-inherits-row .pip-meta-min { color: var(--text-3); font-size: 11px; }
+  .pip-inherits-roles {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line);
+    font-size: 11px; color: var(--text-3); line-height: 1.5;
+  }
+
+  .pip-info-callout {
+    background: var(--info-bg); border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 10px; padding: 12px;
+    font-size: 12px; color: var(--text-2); line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .pip-info-callout strong { color: var(--text); }
+
+  .pip-sheet-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .pip-sheet-actions .btn-primary,
+  .pip-sheet-actions .btn-secondary { flex: 1; margin-top: 0; }
+
+  @media (min-width: 768px) { .pip-detail-title { font-size: 26px; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pip-card, .pip-row, .pip-plantilla-card, .pip-archive-btn,
+    .pip-back-btn, .pip-new-btn, .pip-pm-card-btn { transition: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -702,7 +983,7 @@
 <!-- ─────── Tabs ─────── -->
 <nav class="tabs" id="tabs" style="display:none">
   <button class="tab active" data-panel="datos">Datos</button>
-  <button class="tab" data-panel="estrategia">Estrategia</button>
+  <button class="tab" data-panel="pipelines">Pipelines</button>
   <button class="tab" data-panel="catalogos">Catálogos</button>
   <button class="tab" data-panel="servicios">Servicios</button>
   <button class="tab" data-panel="anomalias">Anomalías</button>
@@ -748,30 +1029,10 @@
 
     </section>
 
-    <!-- PANEL ESTRATEGIA — mockup -->
-    <section class="panel" id="panel-estrategia">
-      <div class="section-title">
-        <span>Pipelines del cliente</span>
-        <button class="add-link" onclick="openAddPipeline()">+ Nuevo</button>
-      </div>
-
-      <div class="pipeline-card" onclick="openPipeline('P1')">
-        <div class="pip-header">
-          <div>
-            <div><span class="pip-code">P1</span><span class="pip-type-badge">Con etapas</span></div>
-            <div class="pip-name">Captación cumpleaños</div>
-          </div>
-          <span class="status-pill mock">MOCKUP</span>
-        </div>
-        <div class="pip-meta">
-          <div class="pip-metric"><div class="pip-metric-value">3</div><div class="pip-metric-label">Campañas</div></div>
-          <div class="pip-metric"><div class="pip-metric-value">3</div><div class="pip-metric-label">Triggers</div></div>
-          <div class="pip-metric"><div class="pip-metric-value">7</div><div class="pip-metric-label">Emails</div></div>
-        </div>
-      </div>
-
-      <div class="empty-card" style="margin-top:14px">
-        Demo. La gestión real de pipelines y campañas no está implementada todavía.
+    <!-- PANEL PIPELINES — datos seed F1 (mockup → real con seed hardcoded) -->
+    <section class="panel" id="panel-pipelines">
+      <div id="pipelines-module">
+        <div class="loading-card">—</div>
       </div>
     </section>
 
@@ -1087,6 +1348,9 @@ function renderCliente(c) {
   const servicios = Array.isArray(c.servicios) ? c.servicios : [];
   renderServiciosPanel(servicios);
 
+  // Pipelines — módulo F1 con SEED hardcoded Dra. Neuss
+  PIPELINES_MODULE.init();
+
   // Mostrar tabs + content
   document.getElementById('tabs').style.display = '';
   document.getElementById('state-content').style.display = '';
@@ -1295,37 +1559,715 @@ function showToast(msg) {
 }
 window.showToast = showToast;
 
-// ─── Pipeline detail (mockup intacto) ───────────────
-const pipelines = {
-  P1: {
-    name: 'Captación cumpleaños',
-    type: 'etapas',
-    stages: ['Registrado', 'Contactado', 'Reserva pedida', 'Cliente'],
-    campaigns: [
-      { code: 'P1C1', name: 'Padres', description: 'Captación de padres 35-50',
-        triggers: [{ code: 'FM1', desc: 'Anuncio Meta padres 35-50', status: 'mock' }],
-        emails: [{ code: 'E1', desc: 'Bienvenida · día 0', status: 'mock' }] }
-    ]
+// ─── Pipelines & Campañas module (F1: SEED hardcoded Dra. Neuss) ───────
+// Porteo a vanilla del mockup React (index-integrado.html). Reglas operacionales
+// del .docx de nomenclatura: estados declarada/en-produccion/archivada, regla caso 5
+// para emailCode, BD requiere fechaLanzamiento, creatividades viven en Drive.
+const PIPELINES_MODULE = (() => {
+
+  // Catálogo abierto de plantillas (plan v2 §4)
+  const PLANTILLAS = [
+    { slug:'venta-meta', nombre:'Venta Directa con anuncio Meta', triggers:[{tipo:'FM',name:'Anuncio Meta → checkout'}], emails:[], briefingMaster:'drive://templates/briefing-venta-directa.docx', defaults:{presup:500,kpi:'Ventas'}, roles:{estaticos:'Valentin Arias',video:'Joaquin Rojo',meta:'Damian'} },
+    { slug:'capt-fm', nombre:'Captación de leads vía formulario Meta', triggers:[{tipo:'FM',name:'Formulario Meta'}], emails:[{name:'Bienvenida',espera:'Día 0'},{name:'Valor',espera:'Día +2'},{name:'Oferta',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-captacion-fm.docx', defaults:{presup:300,kpi:'Leads · CPL'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',formulario:'Damian',ghl:'Camilo Balanta'} },
+    { slug:'capt-fw', nombre:'Captación de leads vía formulario Web', triggers:[{tipo:'FW',name:'Form en web'}], emails:[{name:'Bienvenida',espera:'Día 0'},{name:'Valor',espera:'Día +2'},{name:'Oferta',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-captacion-fw.docx', defaults:{presup:200,kpi:'Leads · CPL'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',form:'Dev/CRM',ghl:'Camilo Balanta'} },
+    { slug:'react-bd', nombre:'Reactivación BBDD (con fecha)', triggers:[{tipo:'BD',name:'Segmento BBDD'}], emails:[{name:'Reactivación',espera:'Día 0'},{name:'Oferta',espera:'Día +2'},{name:'Cierre',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-react-bd.docx', defaults:{presup:0,kpi:'Conversiones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
+    { slug:'news', nombre:'Newsletter recurrente', triggers:[{tipo:'BD',name:'BBDD activa'}], emails:[{name:'Edición única',espera:'cadencia'}], briefingMaster:'drive://templates/briefing-newsletter.docx', defaults:{presup:0,kpi:'Apertura · Clicks'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
+    { slug:'lanz', nombre:'Lanzamiento multicanal (FM + FW + BD)', triggers:[{tipo:'FM',name:'Anuncio Meta'},{tipo:'FW',name:'Form web'},{tipo:'BD',name:'BBDD'}], emails:[{name:'Pre-aviso',espera:'-3d'},{name:'Anuncio',espera:'D0'},{name:'Recordatorio',espera:'+2d'},{name:'Última llamada',espera:'+5d'},{name:'Cierre',espera:'+7d'}], briefingMaster:'drive://templates/briefing-lanzamiento.docx', defaults:{presup:1500,kpi:'Ventas'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',meta:'Damian',ghl:'Camilo Balanta'} },
+    { slug:'evento', nombre:'Evento (formulario + recordatorios)', triggers:[{tipo:'FW',name:'Inscripción evento'}], emails:[{name:'Confirmación',espera:'Día 0'},{name:'Recordatorio',espera:'-1d'}], briefingMaster:'drive://templates/briefing-evento.docx', defaults:{presup:100,kpi:'Inscripciones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
+  ];
+
+  // SEED Dra. Neuss (4 pipelines, snapshot del mockup v3)
+  const SEED = [
+    {
+      id:'p1', code:'P1', name:'Venta directa Curso Suplementación',
+      obj:'Monetizar el infoproducto Curso Suplementación 75€ a tráfico frío.',
+      estado:'declarada', account:'Melina Dalmazo',
+      camps:[{
+        id:'p1c1', code:'P1C1', name:'Curso Suplementación 75€',
+        plantillaSlug:'venta-meta', estado:'en-produccion',
+        desde:'2026-05-15', hasta:'recurrente', presup:500, kpi:'30 ventas/mes',
+        briefingUrl:'drive://Dra-Neuss/CRM/P1C1/briefing.pdf', briefingName:'Briefing Curso Suplementación.pdf',
+        notas:'Producto en GHL · vincular píxel ahí · funnel.neusmunozgost.com',
+        triggers:[{ id:'t1', code:'P1C1FM1', tipo:'FM', name:'Anuncio Meta → checkout', estado:'en-produccion', ext:'funnel.neusmunozgost.com/curso-suplementacion-clinica-40' }],
+        emails:[]
+      }]
+    },
+    {
+      id:'p2', code:'P2', name:'Captación de clientes potenciales',
+      obj:'Nutrir BBDD con leads cualificados para futuras ofertas.',
+      estado:'declarada', account:'Melina Dalmazo',
+      camps:[{
+        id:'p2c1', code:'P2C1', name:'Captación leads',
+        plantillaSlug:'capt-fm', estado:'en-produccion',
+        desde:'2026-05-20', hasta:'recurrente', presup:300, kpi:'50 leads/mes',
+        briefingUrl:'drive://Dra-Neuss/CRM/P2C1/briefing-mayo.docx', briefingName:'Briefing captación mayo.docx',
+        notas:'',
+        triggers:[{ id:'t2', code:'P2C1FM1', tipo:'FM', name:'Formulario Meta clientes potenciales', estado:'en-produccion', ext:'Form ID Meta 12345' }],
+        emails:[
+          { id:'e1', name:'Bienvenida + valor', orden:1, espera:'Día 0', estado:'en-produccion', objetivo:'Romper el hielo, dar contexto del problema.', triggersAplicables:[] },
+          { id:'e2', name:'Educación / hábitos', orden:2, espera:'Día +2', estado:'declarada', objetivo:'Educar sobre suplementación con evidencia.', triggersAplicables:[] },
+          { id:'e3', name:'Oferta curso', orden:3, espera:'Día +5', estado:'declarada', objetivo:'Presentar curso 75€ con urgencia controlada.', triggersAplicables:[] }
+        ]
+      }]
+    },
+    {
+      id:'p3', code:'P3', name:'Reactivación de leads',
+      obj:'Recuperar leads sin conversión >60d.',
+      estado:'declarada', account:'Melina Dalmazo',
+      camps:[{
+        id:'p3c1', code:'P3C1', name:'Relanzamiento clientes potenciales',
+        plantillaSlug:'react-bd', estado:'declarada',
+        desde:'2026-05-25', hasta:'2026-05-31', presup:0, kpi:'5% reactivación',
+        briefingUrl:'', briefingName:'Sin briefing — Account pendiente de duplicar template',
+        notas:'Segmento: leads que no convirtieron en 60 días.',
+        triggers:[{ id:'t3', code:'P3C1BD1', tipo:'BD', name:'Segmento leads sin conversión >60d', estado:'declarada', ext:'GHL segment ID 88', fechaLanzamiento:'2026-05-25' }],
+        emails:[{ id:'e4', name:'Reactivación', orden:1, espera:'Día 0', estado:'declarada', objetivo:'Recordar valor + oferta de gancho.', triggersAplicables:[] }]
+      }]
+    },
+    {
+      id:'p4', code:'P4', name:'Newsletter mensual',
+      obj:'Mantener relación con BBDD activa.',
+      estado:'declarada', account:'Melina Dalmazo',
+      camps:[{
+        id:'p4c1', code:'P4C1', name:'Newsletter mayo',
+        plantillaSlug:'news', estado:'en-produccion',
+        desde:'2026-05-20', hasta:'mensual', presup:0, kpi:'25% apertura',
+        briefingUrl:'drive://Dra-Neuss/CRM/P4C1/briefing-mayo.docx', briefingName:'Briefing Mayo.docx',
+        notas:'',
+        triggers:[{ id:'t4', code:'P4C1BD1', tipo:'BD', name:'BBDD activa', estado:'en-produccion', ext:'Tag GHL activo', fechaLanzamiento:'2026-05-20' }],
+        emails:[{ id:'e5', name:'Edición mayo', orden:1, espera:'mensual', estado:'en-produccion', objetivo:'Edición mensual: hábito + recurso clínico.', triggersAplicables:[] }]
+      }]
+    }
+  ];
+
+  const S = {
+    data: JSON.parse(JSON.stringify(SEED)),
+    role: 'account',
+    showArchived: false,
+    view: { kind: 'list' },
+    stack: [],
+  };
+
+  // Regla .docx caso 5: emails compartidos → código sin trigger;
+  // emails por subset → código con triggers concatenados ordenados FM→FW→BD.
+  function orderTriggersInCode(codes) {
+    return [...codes].sort((a, b) => {
+      const w = c => c.includes('FM') ? 1 : c.includes('FW') ? 2 : c.includes('BD') ? 3 : 9;
+      return w(a) - w(b);
+    }).join('');
   }
-};
+  function emailCode(camp, email) {
+    const all = camp.triggers.map(t => t.code.replace(camp.code, ''));
+    const apl = email.triggersAplicables || [];
+    const isShared = apl.length === 0 || apl.length === all.length;
+    if (isShared || camp.triggers.length === 0) return `${camp.code}E${email.orden}`;
+    return `${camp.code}${orderTriggersInCode(apl)}E${email.orden}`;
+  }
 
-function openPipeline(code) {
-  const pip = pipelines[code];
-  if (!pip) return;
-  let html = `<div class="sub-title">Etapas (mockup)</div><div class="stages-strip">`;
-  pip.stages.forEach((s, i) => {
-    html += `<div class="stage-pill ${i === 0 ? 'first' : ''}">${escapeHtml(s)}</div>`;
-    if (i < pip.stages.length - 1) html += `<span class="stage-arrow">→</span>`;
-  });
-  html += `</div><div class="empty-card" style="margin-top:14px">Los pipelines reales se cablearán cuando el sistema esté implementado.</div>`;
-  openSheet(pip.name, `${code} · mockup`, html);
-}
-window.openPipeline = openPipeline;
+  function tagClass(code) {
+    if (/^P\d+$/.test(code)) return '';
+    if (/^P\d+C\d+$/.test(code)) return 'tag-camp';
+    if (/E\d+$/.test(code)) return 'tag-email';
+    if (/FM\d+|FW\d+|BD\d+/.test(code)) return 'tag-trig';
+    return '';
+  }
+  function codeTag(code, sz) {
+    return `<span class="code-tag ${sz==='lg'?'lg':''} ${tagClass(code)}">${escapeHtml(code)}</span>`;
+  }
+  function stateBadge(s) {
+    const label = { 'declarada':'Declarada', 'en-produccion':'En producción', 'archivada':'Archivada' }[s] || s;
+    return `<span class="state-badge ${s}">${label}</span>`;
+  }
+  function findPlantilla(slug) { return PLANTILLAS.find(p => p.slug === slug); }
 
-function openAddPipeline() {
-  openSheet('Nuevo Pipeline', 'Mockup', '<div class="empty-card">La creación de pipelines no está implementada todavía.</div>');
-}
-window.openAddPipeline = openAddPipeline;
+  const visible = item => S.showArchived || item.estado !== 'archivada';
+  const root = () => document.getElementById('pipelines-module');
+
+  function render() {
+    const r = root();
+    if (!r) return;
+    r.innerHTML = renderHeader() + renderCurrentView();
+    attachAllHandlers();
+  }
+
+  function renderHeader() {
+    return `
+      <div class="pip-mod-header">
+        <div class="pip-role-switch" role="tablist" aria-label="Rol">
+          <button data-role="account" class="${S.role==='account'?'active':''}" role="tab" aria-selected="${S.role==='account'}">Account</button>
+          <button data-role="pm" class="${S.role==='pm'?'active':''}" role="tab" aria-selected="${S.role==='pm'}">PM</button>
+        </div>
+        <label class="pip-archived-toggle">
+          <input type="checkbox" data-toggle="archived" ${S.showArchived?'checked':''}/>
+          <span>Mostrar archivados</span>
+        </label>
+        ${S.role==='account' && S.view.kind==='list' ? `<button class="pip-new-btn" data-action="new-pipeline">+ Pipeline</button>` : ''}
+      </div>
+    `;
+  }
+
+  function renderCurrentView() {
+    const v = S.view;
+    if (v.kind === 'list') return renderList();
+    if (v.kind === 'pipeline') return renderPipelineView(v.pId);
+    if (v.kind === 'campaign') return renderCampaignView(v.pId, v.cId);
+    if (v.kind === 'trigger') return renderTriggerView(v.pId, v.cId, v.tId);
+    if (v.kind === 'email') return renderEmailView(v.pId, v.cId, v.eId);
+    return '';
+  }
+
+  function renderList() {
+    const ps = S.data.filter(visible);
+    const seedNote = `<div class="pip-seed-note">📌 <strong>Datos seed F1</strong> · Los 4 pipelines de Dra. Neuss vienen hardcoded para validar UI. En F2 esto se cablea a Supabase por cliente.</div>`;
+    if (ps.length === 0) {
+      return seedNote + `<div class="empty-card">${S.showArchived ? 'Sin pipelines.' : 'Sin pipelines activos. Activa "Mostrar archivados" para ver los archivados.'}</div>`;
+    }
+    return seedNote + ps.map(p => `
+      <div class="pip-card ${p.estado==='archivada'?'archived':''}" data-action="open-pipeline" data-id="${p.id}" role="button" tabindex="0">
+        <div class="pip-card-head">
+          ${codeTag(p.code)}
+          ${stateBadge(p.estado)}
+          <div class="pip-card-name">${escapeHtml(p.name)}</div>
+        </div>
+        <div class="pip-card-meta">
+          <span>${p.camps.length} ${p.camps.length===1?'campaña':'campañas'}</span>
+          <span>Account: ${escapeHtml(p.account)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function backBtn() {
+    return `<button class="pip-back-btn" data-action="back" aria-label="Volver">← Volver</button>`;
+  }
+
+  function crumb(parts) {
+    return `<div class="pip-breadcrumb">${parts.map((p, i) => {
+      const sep = i > 0 ? `<span class="sep">›</span>` : '';
+      if (p.action) return `${sep}<a data-action="${p.action}"${p.pid?` data-id="${p.pid}"`:''}${p.cid?` data-cid="${p.cid}"`:''}>${escapeHtml(p.label)}</a>`;
+      return `${sep}<span>${escapeHtml(p.label)}</span>`;
+    }).join('')}</div>`;
+  }
+
+  function fieldStatic(label, value, opts) {
+    opts = opts || {};
+    const color = opts.warn ? 'color:var(--warn)' : '';
+    const font = opts.mono ? 'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px' : '';
+    return `
+      <div class="field" style="cursor:default">
+        <div style="flex:1;min-width:0">
+          <div class="field-label">${escapeHtml(label)}</div>
+          <div class="field-value" style="${color};${font}">${escapeHtml(value)}</div>
+          ${opts.hint ? `<div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">${escapeHtml(opts.hint)}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function fieldBriefing(c) {
+    if (c.briefingUrl) {
+      return `
+        <div class="field" data-action="briefing" data-name="${escapeHtml(c.briefingName)}">
+          <div style="flex:1;min-width:0">
+            <div class="field-label">Link briefing Drive</div>
+            <div class="field-value" style="color:var(--info);text-decoration:underline">📄 ${escapeHtml(c.briefingName)}</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">Account duplica el template del briefing al Drive del cliente.</div>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div class="field" style="cursor:default">
+        <div style="flex:1;min-width:0">
+          <div class="field-label">Link briefing Drive</div>
+          <div class="field-value" style="color:var(--warn)">⚠ ${escapeHtml(c.briefingName)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPipelineView(pId) {
+    const p = S.data.find(x => x.id === pId);
+    if (!p) return backBtn() + `<div class="empty-card">Pipeline no encontrado.</div>`;
+    const visibleCamps = p.camps.filter(visible);
+    return `
+      ${backBtn()}
+      ${crumb([{ label:'Pipelines', action:'goto-list' }, { label: p.code }])}
+      <div class="pip-detail-head">${codeTag(p.code, 'lg')} ${stateBadge(p.estado)}</div>
+      <h2 class="pip-detail-title">${escapeHtml(p.name)}</h2>
+      <p class="pip-detail-sub ${!p.obj?'empty':''}">${escapeHtml(p.obj || 'Sin objetivo de negocio.')}</p>
+
+      <div class="field-list">
+        ${fieldStatic('Responsable account', p.account)}
+        ${fieldStatic('Campañas', String(p.camps.length))}
+        <div class="field" style="cursor:default">
+          <div style="flex:1;min-width:0">
+            <div class="field-label">Estado</div>
+            <div>${stateBadge(p.estado)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pip-section-head">
+        <span>Campañas dentro de ${escapeHtml(p.code)}</span>
+        ${S.role==='account' ? `<button class="add-link" data-action="new-campaign" data-pid="${p.id}">+ NUEVA</button>` : ''}
+      </div>
+      ${visibleCamps.length === 0
+        ? `<div class="empty-card">Sin campañas activas.</div>`
+        : visibleCamps.map(c => `
+          <div class="pip-card ${c.estado==='archivada'?'archived':''}" data-action="open-campaign" data-pid="${p.id}" data-cid="${c.id}" role="button" tabindex="0">
+            <div class="pip-card-head">
+              ${codeTag(c.code)}
+              ${stateBadge(c.estado)}
+              <div class="pip-card-name">${escapeHtml(c.name)}</div>
+            </div>
+            <div class="pip-card-meta">
+              <span>${escapeHtml(c.desde)} → ${escapeHtml(c.hasta)}</span>
+              <span>${c.presup}€</span>
+              <span>${escapeHtml(c.kpi)}</span>
+              <span>${c.triggers.length}T · ${c.emails.length}E</span>
+            </div>
+          </div>
+        `).join('')}
+
+      ${S.role==='account' && p.estado!=='archivada' ? `
+        <button class="pip-archive-btn" data-action="archive" data-id="${p.id}" data-code="${p.code}">Archivar pipeline ${p.code}</button>
+      ` : ''}
+    `;
+  }
+
+  function renderCampaignView(pId, cId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return backBtn() + `<div class="empty-card">Campaña no encontrada.</div>`;
+    const plantilla = findPlantilla(c.plantillaSlug);
+    const hasTriggers = c.triggers.length > 0;
+    const allShared = c.emails.every(e => !e.triggersAplicables || e.triggersAplicables.length === 0 || e.triggersAplicables.length === c.triggers.length);
+    const hasMissingBD = c.triggers.some(t => t.tipo === 'BD' && !t.fechaLanzamiento);
+
+    return `
+      ${backBtn()}
+      ${crumb([
+        { label:'Pipelines', action:'goto-list' },
+        { label: p.code, action:'open-pipeline', pid: p.id },
+        { label: c.code }
+      ])}
+      <div class="pip-detail-head">
+        ${codeTag(c.code, 'lg')}
+        ${stateBadge(c.estado)}
+        ${plantilla
+          ? `<span class="state-badge plantilla">Plantilla · ${escapeHtml(plantilla.nombre)}</span>`
+          : `<span class="state-badge custom">Sin plantilla · custom</span>`}
+      </div>
+      <h2 class="pip-detail-title">${escapeHtml(c.name)}</h2>
+      <p class="pip-detail-sub ${!c.notas?'empty':''}">${escapeHtml(c.notas || 'Notas de Account (opcional)')}</p>
+
+      ${S.role==='pm' ? `
+        <div class="pip-pm-card">
+          <div class="pip-pm-card-text">
+            <div class="pip-pm-card-title">Crear tareas en Notion</div>
+            <div class="pip-pm-card-sub">Genera todas las tareas del equipo para esta campaña con código forzado.</div>
+          </div>
+          <button class="pip-pm-card-btn" data-action="create-tasks" data-pid="${p.id}" data-cid="${c.id}">Crear</button>
+        </div>
+      ` : ''}
+
+      <div class="pip-section-head"><span>Datos básicos</span></div>
+      <div class="field-list">
+        ${fieldStatic('Fechas', `${c.desde} → ${c.hasta}`)}
+        ${fieldStatic('Presupuesto', `${c.presup} €`)}
+        ${fieldStatic('KPI objetivo', c.kpi)}
+        ${fieldBriefing(c)}
+      </div>
+
+      <div class="pip-section-head">
+        <span>Triggers · ${c.triggers.length}</span>
+        ${S.role==='account' ? `<button class="add-link" data-action="new-trigger">+ TRIGGER</button>` : ''}
+      </div>
+      ${c.triggers.length === 0
+        ? `<div class="empty-card">Sin triggers declarados.</div>`
+        : c.triggers.map(t => `
+          <div class="pip-row ${t.estado==='archivada'?'archived':''}" data-action="open-trigger" data-pid="${p.id}" data-cid="${c.id}" data-tid="${t.id}" role="button" tabindex="0">
+            ${codeTag(t.code)}
+            <div class="pip-row-main">
+              <div class="pip-row-name">${escapeHtml(t.name)}</div>
+              <div class="pip-row-sub">${escapeHtml(t.ext)}</div>
+            </div>
+            ${t.tipo==='BD' && t.fechaLanzamiento ? `<span class="pip-row-meta">📅 ${escapeHtml(t.fechaLanzamiento)}</span>` : ''}
+            ${stateBadge(t.estado)}
+          </div>
+        `).join('')}
+      ${hasMissingBD ? `<div class="pip-warn-note">⚠ Algún trigger BD no tiene fecha de lanzamiento (obligatoria, regla .docx).</div>` : ''}
+
+      <div class="pip-section-head">
+        <span>Emails · ${c.emails.length}</span>
+        ${S.role==='account' ? `<button class="add-link" data-action="new-email">+ EMAIL</button>` : ''}
+      </div>
+      ${hasTriggers && c.emails.length > 0 ? `
+        <div class="pip-mode-note">
+          ${allShared
+            ? 'Modo <strong>compartido</strong>: todos los emails aplican a todos los triggers, el código del email omite el trigger (regla .docx caso 5).'
+            : 'Modo <strong>por trigger</strong>: hay emails con triggers específicos, el código incluye los triggers concatenados (regla .docx casos 3 y 5).'}
+        </div>
+      ` : ''}
+      ${c.emails.length === 0
+        ? `<div class="empty-card">Esta campaña no tiene secuencia de emails todavía.</div>`
+        : c.emails.map(e => {
+          const code = emailCode(c, e);
+          return `
+            <div class="pip-row ${e.estado==='archivada'?'archived':''}" data-action="open-email" data-pid="${p.id}" data-cid="${c.id}" data-eid="${e.id}" role="button" tabindex="0">
+              <span class="pip-row-order">${e.orden}</span>
+              ${codeTag(code)}
+              <div class="pip-row-main">
+                <div class="pip-row-name">${escapeHtml(e.name)}</div>
+                <div class="pip-row-sub">${escapeHtml(e.objetivo)}</div>
+              </div>
+              <span class="pip-row-meta">${escapeHtml(e.espera)}</span>
+              ${stateBadge(e.estado)}
+            </div>
+          `;
+        }).join('')}
+
+      <div class="pip-creatividades-note">
+        <strong>🎨 Creatividades de esta Campaña</strong>
+        Estáticos, reels, carruseles, copies RRSS, vídeos: viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;tipo&gt;_v&lt;n&gt;.&lt;ext&gt;</code> (regla .docx caso 10). No se listan aquí — abre la subcarpeta Drive de la campaña.
+      </div>
+
+      ${S.role==='account' && c.estado!=='archivada' ? `
+        <button class="pip-archive-btn" data-action="archive" data-id="${c.id}" data-code="${c.code}">Archivar campaña ${c.code}</button>
+      ` : ''}
+    `;
+  }
+
+  function renderTriggerView(pId, cId, tId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    const t = c && c.triggers.find(x => x.id === tId);
+    if (!t) return backBtn() + `<div class="empty-card">Trigger no encontrado.</div>`;
+    const tipoFull = t.tipo==='FM' ? 'FM (Formulario Meta)' : t.tipo==='FW' ? 'FW (Formulario Web)' : 'BD (Base de datos)';
+    return `
+      ${backBtn()}
+      ${crumb([
+        { label:'Pipelines', action:'goto-list' },
+        { label: p.code, action:'open-pipeline', pid: p.id },
+        { label: c.code, action:'open-campaign', pid: p.id, cid: c.id },
+        { label: t.code }
+      ])}
+      <div class="pip-detail-head">${codeTag(t.code, 'lg')} ${stateBadge(t.estado)}</div>
+      <h2 class="pip-detail-title">${escapeHtml(t.name)}</h2>
+      <div class="field-list">
+        ${fieldStatic('Tipo', tipoFull)}
+        ${fieldStatic('Link externo / referencia', t.ext, { mono: true })}
+        ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', t.fechaLanzamiento || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
+      </div>
+    `;
+  }
+
+  function renderEmailView(pId, cId, eId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    const e = c && c.emails.find(x => x.id === eId);
+    if (!e) return backBtn() + `<div class="empty-card">Email no encontrado.</div>`;
+    const code = emailCode(c, e);
+    const allCodes = c.triggers.map(t => t.code.replace(c.code, ''));
+    const aplSet = new Set(e.triggersAplicables || []);
+    return `
+      ${backBtn()}
+      ${crumb([
+        { label:'Pipelines', action:'goto-list' },
+        { label: p.code, action:'open-pipeline', pid: p.id },
+        { label: c.code, action:'open-campaign', pid: p.id, cid: c.id },
+        { label: code }
+      ])}
+      <div class="pip-detail-head">${codeTag(code, 'lg')} ${stateBadge(e.estado)}</div>
+      <h2 class="pip-detail-title">${escapeHtml(e.name)}</h2>
+      <p class="pip-detail-sub ${!e.objetivo?'empty':''}">${escapeHtml(e.objetivo || 'Sin objetivo.')}</p>
+      <div class="field-list">
+        ${fieldStatic('Orden / Espera', `${e.orden} · ${e.espera}`)}
+        <div class="field" style="cursor:default">
+          <div style="flex:1;min-width:0">
+            <div class="field-label">Triggers aplicables</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+              ${allCodes.length === 0
+                ? `<span class="field-value empty">La campaña no tiene triggers.</span>`
+                : allCodes.map(tc => `<span class="pip-pill-trigger ${aplSet.has(tc)?'selected':''}">${escapeHtml(tc)}</span>`).join('')}
+            </div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Vacío = aplica a todos los triggers (regla .docx caso 5, código sin trigger).</div>
+          </div>
+        </div>
+        ${fieldStatic('Versionado', 'v1 — original · sin revisiones registradas', { hint: 'Regla .docx caso 7: el código no cambia al modificar; se versiona en Drive (P1C1E2_v2_copy.docx).' })}
+      </div>
+    `;
+  }
+
+  function go(view) {
+    S.stack.push(S.view);
+    S.view = view;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function back() {
+    if (S.stack.length > 0) S.view = S.stack.pop();
+    else S.view = { kind: 'list' };
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function gotoList() {
+    S.stack = [];
+    S.view = { kind: 'list' };
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function archiveItem(id) {
+    for (const p of S.data) {
+      if (p.id === id) { p.estado = 'archivada'; return true; }
+      for (const c of p.camps) {
+        if (c.id === id) { c.estado = 'archivada'; return true; }
+      }
+    }
+    return false;
+  }
+
+  function attachAllHandlers() {
+    const r = root();
+    if (!r) return;
+    // role switch
+    r.querySelectorAll('.pip-role-switch button').forEach(b => {
+      b.addEventListener('click', () => { S.role = b.dataset.role; render(); });
+    });
+    // archived toggle
+    const chk = r.querySelector('[data-toggle="archived"]');
+    if (chk) chk.addEventListener('change', () => { S.showArchived = chk.checked; render(); });
+
+    // actions
+    r.querySelectorAll('[data-action]').forEach(el => {
+      const a = el.dataset.action;
+      if (!a) return;
+      const handler = (ev) => {
+        ev.stopPropagation();
+        if (a === 'open-pipeline') go({ kind:'pipeline', pId: el.dataset.id });
+        else if (a === 'open-campaign') go({ kind:'campaign', pId: el.dataset.pid, cId: el.dataset.cid });
+        else if (a === 'open-trigger') go({ kind:'trigger', pId: el.dataset.pid, cId: el.dataset.cid, tId: el.dataset.tid });
+        else if (a === 'open-email') go({ kind:'email', pId: el.dataset.pid, cId: el.dataset.cid, eId: el.dataset.eid });
+        else if (a === 'goto-list') gotoList();
+        else if (a === 'back') back();
+        else if (a === 'new-pipeline') openNewPipelineSheet();
+        else if (a === 'new-campaign') openNewCampaignSheet(el.dataset.pid);
+        else if (a === 'new-trigger') showToast('Modal Nuevo Trigger (mockup)');
+        else if (a === 'new-email') showToast('Modal Nuevo Email (mockup)');
+        else if (a === 'create-tasks') openTasksSheet(el.dataset.pid, el.dataset.cid);
+        else if (a === 'archive') {
+          const code = el.dataset.code;
+          if (confirm(`¿Archivar ${code}? Los códigos no caducan (regla .docx caso 9); podrás verlo con "Mostrar archivados".`)) {
+            archiveItem(el.dataset.id);
+            // Si archivamos lo que estamos viendo, volver atrás
+            if ((S.view.pId === el.dataset.id) || (S.view.cId === el.dataset.id)) back();
+            else render();
+            showToast(`${code} archivado`);
+          }
+        }
+        else if (a === 'briefing') showToast('Abrir: ' + (el.dataset.name || '—'));
+      };
+      el.addEventListener('click', handler);
+      // Keyboard activation para tarjetas con role=button
+      if (el.getAttribute('role') === 'button') {
+        el.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); handler(ev); }
+        });
+      }
+    });
+  }
+
+  // ── Drawers (reutilizan el sheet bottom global) ──
+  function openNewPipelineSheet() {
+    const next = 'P' + (S.data.length + 1);
+    openSheet(`Nuevo pipeline · ${next}`, 'Línea estratégica del cliente', `
+      <div class="pip-info-callout">
+        ℹ Un Pipeline es una <strong>línea estratégica de negocio</strong> del cliente, estable en el tiempo. Si tiene fecha de fin concreta, es una Campaña, no un Pipeline (.docx §3).
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="np-name">Nombre operativo</label>
+        <input class="form-input" id="np-name" placeholder="Ej: Captación B2B colegios" autocomplete="off"/>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="np-obj">Objetivo de negocio</label>
+        <textarea class="form-textarea" id="np-obj" placeholder="Qué problema del cliente resuelve este Pipeline."></textarea>
+      </div>
+      <div class="pip-sheet-actions">
+        <button class="btn-secondary" data-pip-close>Cancelar</button>
+        <button class="btn-primary" id="np-save">Crear ${next}</button>
+      </div>
+    `);
+    setTimeout(() => {
+      document.getElementById('np-save')?.addEventListener('click', () => {
+        const name = document.getElementById('np-name')?.value.trim();
+        if (!name) { showToast('Falta el nombre del pipeline'); return; }
+        closeSheet();
+        showToast(`${next} creado (mockup)`);
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+      document.getElementById('np-name')?.focus();
+    }, 40);
+  }
+
+  function openNewCampaignSheet(pId) {
+    const p = S.data.find(x => x.id === pId);
+    if (!p) return;
+    const next = p.code + 'C' + (p.camps.length + 1);
+    const state = { pickedSlug: null, custom: false };
+
+    const renderForm = () => {
+      const plantilla = state.pickedSlug ? findPlantilla(state.pickedSlug) : null;
+      const showForm = plantilla || state.custom;
+      return `
+        <div class="pip-info-callout">
+          Nueva campaña en <strong>${escapeHtml(p.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.
+        </div>
+        <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Plantilla del catálogo</div>
+        <div style="margin-bottom:16px">
+          ${PLANTILLAS.map(pp => `
+            <button class="pip-plantilla-card ${state.pickedSlug===pp.slug?'selected':''}" data-pick="${pp.slug}" type="button">
+              <div class="pp-name">${escapeHtml(pp.nombre)}</div>
+              <div class="pp-meta">${pp.triggers.length}T · ${pp.emails.length}E · KPI ${escapeHtml(pp.defaults.kpi)}</div>
+            </button>
+          `).join('')}
+          <button class="pip-plantilla-card custom ${state.custom?'selected':''}" data-pick="__custom" type="button">
+            <div class="pp-name">Sin plantilla · campaña custom</div>
+            <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">No hereda triggers ni emails. Los declaras tú a mano.</div>
+          </button>
+        </div>
+        ${showForm ? `
+          <div class="form-field">
+            <label class="form-label" for="nc-name">Nombre operativo</label>
+            <input class="form-input" id="nc-name" value="${plantilla ? escapeHtml(plantilla.nombre) : ''}" placeholder="Ej: Captación leads junio" autocomplete="off"/>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label class="form-label" for="nc-desde">Desde</label><input class="form-input" type="date" id="nc-desde"/></div>
+            <div class="form-field"><label class="form-label" for="nc-hasta">Hasta</label><input class="form-input" type="date" id="nc-hasta"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label class="form-label" for="nc-presup">Presupuesto (€)</label><input class="form-input" type="number" id="nc-presup" value="${plantilla ? (plantilla.defaults.presup || '') : ''}"/></div>
+            <div class="form-field"><label class="form-label" for="nc-kpi">KPI objetivo</label><input class="form-input" id="nc-kpi" value="${plantilla ? escapeHtml(plantilla.defaults.kpi) : ''}"/></div>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="nc-brief">Link briefing Drive</label>
+            <input class="form-input" id="nc-brief" placeholder="${plantilla ? escapeHtml(plantilla.briefingMaster) : 'https://drive.google.com/…'}" autocomplete="off"/>
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">${plantilla ? 'Duplica el template master al Drive del cliente y pega el link aquí.' : 'Pega el link al briefing que vivirá en Drive.'}</div>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="nc-notas">Notas Account</label>
+            <textarea class="form-textarea" id="nc-notas" placeholder="Contexto corto que no encaja en el briefing largo."></textarea>
+          </div>
+          ${plantilla ? `
+            <div class="pip-inherits">
+              <div class="pip-inherits-title">Lo que se hereda de la plantilla</div>
+              ${plantilla.triggers.map((t, i) => `<div class="pip-inherits-row">${codeTag(`${next}${t.tipo}${i+1}`)}<span>${escapeHtml(t.name)}</span>${stateBadge('declarada')}</div>`).join('')}
+              ${plantilla.emails.length === 0
+                ? '<div class="pip-meta-min" style="padding:5px 0">Sin emails</div>'
+                : plantilla.emails.map((e, i) => `<div class="pip-inherits-row">${codeTag(`${next}E${i+1}`)}<span>${escapeHtml(e.name)}</span><span class="pip-meta-min">${escapeHtml(e.espera)}</span></div>`).join('')}
+              <div class="pip-inherits-roles">Roles sugeridos: ${Object.entries(plantilla.roles).map(([k,v]) => `${escapeHtml(k)}→${escapeHtml(v)}`).join(' · ')}</div>
+            </div>
+          ` : ''}
+        ` : ''}
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cancelar</button>
+          <button class="btn-primary" id="nc-save" ${showForm ? '' : 'disabled style="opacity:.4;cursor:not-allowed"'}>Crear ${next}</button>
+        </div>
+      `;
+    };
+
+    openSheet(`Nueva campaña → ${next}`, `dentro de ${p.code}`, renderForm());
+
+    const rebind = () => {
+      document.querySelectorAll('[data-pick]').forEach(b => {
+        b.addEventListener('click', () => {
+          const v = b.dataset.pick;
+          if (v === '__custom') { state.pickedSlug = null; state.custom = true; }
+          else { state.pickedSlug = v; state.custom = false; }
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          rebind();
+        });
+      });
+      document.getElementById('nc-save')?.addEventListener('click', () => {
+        if (document.getElementById('nc-save').disabled) return;
+        const name = document.getElementById('nc-name')?.value.trim();
+        if (!name) { showToast('Falta el nombre de la campaña'); return; }
+        closeSheet();
+        showToast(`Campaña ${next} creada (mockup)`);
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    };
+    setTimeout(rebind, 40);
+  }
+
+  function openTasksSheet(pId, cId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    const plantilla = findPlantilla(c.plantillaSlug);
+    const tasks = [];
+    if (plantilla) {
+      plantilla.triggers.forEach((t, i) => {
+        const code = c.code + t.tipo + (i + 1);
+        if (t.tipo === 'FM') tasks.push({ c: code+'_form', d: 'Crear formulario Meta', a: 'Meta Ads', who: plantilla.roles.meta || plantilla.roles.formulario || 'Equipo' });
+        if (t.tipo === 'FW') tasks.push({ c: code+'_form', d: 'Montar form en web', a: 'CRM', who: plantilla.roles.form || plantilla.roles.ghl || 'Equipo' });
+        if (t.tipo === 'BD') tasks.push({ c: code+'_segmento', d: 'Crear segmento BBDD', a: 'CRM', who: plantilla.roles.ghl || 'Equipo' });
+      });
+      plantilla.emails.forEach((e, i) => {
+        const ec = `${c.code}E${i+1}`;
+        if (plantilla.roles.copy) tasks.push({ c: ec+'_copy', d: `Copy ${e.name}`, a: 'Copy', who: plantilla.roles.copy });
+        if (plantilla.roles.diseno) tasks.push({ c: ec+'_diseno', d: `Diseño ${e.name}`, a: 'Diseño', who: plantilla.roles.diseno });
+      });
+      if (plantilla.roles.ghl) tasks.push({ c: c.code+'_ghl', d: 'Montar flujo en GHL', a: 'CRM', who: plantilla.roles.ghl });
+    }
+    const checked = tasks.map(() => true);
+
+    const renderBody = () => `
+      <div class="pip-info-callout">
+        ℹ Tareas derivadas de <strong>${escapeHtml(plantilla ? plantilla.nombre : '— campaña custom')}</strong>. Cada tarea lleva el código en el título y va al responsable sugerido. Sin plantilla → PM crea a mano en Bubble eligiendo código del catálogo.
+      </div>
+      ${tasks.length === 0
+        ? `<div class="empty-card">Sin plantilla no hay tareas pre-generadas.</div>`
+        : tasks.map((t, i) => `
+          <label class="pip-tasks-task ${checked[i]?'checked':''}" data-task-idx="${i}">
+            <input type="checkbox" ${checked[i]?'checked':''}/>
+            ${codeTag(t.c)}
+            <span class="tt-desc">${escapeHtml(t.d)}</span>
+            <span class="tt-area">${escapeHtml(t.a)}</span>
+            <span class="tt-who">${escapeHtml(t.who)}</span>
+          </label>
+        `).join('')}
+      <div class="pip-sheet-actions">
+        <button class="btn-secondary" data-pip-close>Cancelar</button>
+        <button class="btn-primary" id="tasks-send" ${tasks.length===0 ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>Crear <span id="tasks-count">${tasks.length}</span></button>
+      </div>
+    `;
+
+    openSheet(`Crear tareas Notion → ${c.code}`, `${tasks.length} ${tasks.length===1?'tarea':'tareas'} sugeridas`, renderBody());
+    setTimeout(() => {
+      document.querySelectorAll('[data-task-idx]').forEach(el => {
+        const cb = el.querySelector('input');
+        cb.addEventListener('change', () => {
+          const i = +el.dataset.taskIdx;
+          checked[i] = cb.checked;
+          el.classList.toggle('checked', checked[i]);
+          const cnt = document.getElementById('tasks-count');
+          if (cnt) cnt.textContent = checked.filter(Boolean).length;
+        });
+      });
+      document.getElementById('tasks-send')?.addEventListener('click', () => {
+        if (document.getElementById('tasks-send').disabled) return;
+        const n = checked.filter(Boolean).length;
+        closeSheet();
+        showToast(`${n} ${n===1?'tarea creada':'tareas creadas'} en Notion (mockup)`);
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    }, 40);
+  }
+
+  return { render, init: render };
+})();
 
 // ─── Nav dropdown ──────────────────────────────────
 (function initNavDropdown() {
