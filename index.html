@@ -1140,10 +1140,17 @@
       display: flex; flex-direction: column; gap: 10px;
     }
     .pdot {
+      position: relative; /* requerido para ::after de hit area */
       width: 8px; height: 8px; border-radius: 50%;
       background: var(--border);
       transition: background .3s, transform .3s, box-shadow .3s;
       cursor: pointer;
+    }
+    .pdot::after {
+      /* extiende hit area a 44×44 sin tocar el visual (WCAG 2.5.5 AA) */
+      content: '';
+      position: absolute;
+      inset: -18px;
     }
     .pdot.active {
       background: var(--yellow);
@@ -1355,7 +1362,7 @@
       .nav-burger { display: inline-flex; align-items: center; justify-content: center; }
       .nav-mobile-menu { display: block; }
       .nav-logotipo { display: none; }
-      .btn-sm { padding: 8px 12px; font-size: 12px; }
+      .btn-sm { padding: 8px 12px; font-size: 12px; min-height: 44px; } /* WCAG 2.5.5 AA touch target */
       .phase { padding: 0 24px; }
       .cap-grid { grid-template-columns: 1fr 1fr; }
       .metrics-grid { grid-template-columns: 1fr 1fr; }
@@ -2773,16 +2780,18 @@
     }
     bindHover('button, a, .glass-card, .metric-card, .pricing-card, .pdot');
 
-    /* ── MAGNETIC BUTTONS ────────────────────────────── */
-    document.querySelectorAll('.btn-primary, .btn-ghost, .btn-sm, .pricing-cta').forEach(btn => {
-      btn.addEventListener('mousemove', e => {
-        const r = btn.getBoundingClientRect();
-        const dx = (e.clientX - r.left - r.width / 2) * .2;
-        const dy = (e.clientY - r.top - r.height / 2) * .2;
-        btn.style.transform = 'translate(' + dx + 'px,' + (dy - 2) + 'px)';
+    /* ── MAGNETIC BUTTONS (solo hover real + pointer fine, no touch) ─── */
+    if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      document.querySelectorAll('.btn-primary, .btn-ghost, .btn-sm, .pricing-cta').forEach(btn => {
+        btn.addEventListener('mousemove', e => {
+          const r = btn.getBoundingClientRect();
+          const dx = (e.clientX - r.left - r.width / 2) * .2;
+          const dy = (e.clientY - r.top - r.height / 2) * .2;
+          btn.style.transform = 'translate(' + dx + 'px,' + (dy - 2) + 'px)';
+        });
+        btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
       });
-      btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
-    });
+    }
 
     /* ── CARD GLOW ───────────────────────────────────── */
     document.querySelectorAll('.glass-card, .pricing-card').forEach(card => {

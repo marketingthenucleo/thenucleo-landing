@@ -1,8 +1,15 @@
+# Templates HTML servidos via passthrough copy en .eleventy.js
+# (no se procesan con el template engine)
 index.html
 aviso-legal.html
 privacidad.html
-CLAUDE.md
-README.md
+
+# Markdown en raíz (CLAUDE.md, README.md, futuros ROADMAP.md/CONTRIBUTING.md/etc.)
+# Posts del blog viven en content/conocimiento-zenyx/ y NO se ven afectados
+# por esta regla (el leading slash limita a raíz).
+/*.md
+
+# Carpetas no-build
 docs/
 node_modules/
 _site/

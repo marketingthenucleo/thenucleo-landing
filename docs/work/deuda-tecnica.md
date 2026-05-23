@@ -20,8 +20,8 @@ Inventario de items pendientes del landing y páginas admin (`/playbook/`, `/fic
 ## No críticos abiertos
 
 - **OG image v2.** `Media/og-image.png` (1200×630) usa el logo con fondo blanco. Choca con la identidad dark del site y no lleva tagline. Rehacer con fondo `#171717` + logotipo dark theme + hook textual.
-- **Magnetic buttons en touch.** Activos en `mousemove` para `.btn-primary/.btn-ghost/.btn-sm/.pricing-cta`. Gate con `(hover: hover) and (pointer: fine)` (mismo patrón que el cursor custom).
-- **Touch targets < 44 px** en `.btn--sm` (32 px) y `.pdot` (8 px). Incumple WCAG 2.5.5 AA. Subir a 44px mínimo en móvil.
+- ~~**Magnetic buttons en touch.**~~ ✅ **Cerrado 2026-05-23** — el bloque `MAGNETIC BUTTONS` en `index.html` (líneas ~2776) ahora va envuelto en `if (matchMedia('(hover: hover) and (pointer: fine)').matches)`. En touch no se registran handlers `mousemove`/`mouseleave`.
+- ~~**Touch targets < 44 px** en `.btn-sm` (32 px) y `.pdot` (8 px).~~ ✅ **Cerrado 2026-05-23** — `.btn-sm` mobile (≤600px) lleva `min-height: 44px`. `.pdot` mantiene su visual de 8px pero extiende hit area a 44×44 vía pseudo-elemento `::after` con `inset: -18px`. WCAG 2.5.5 AA cumplido.
 - **CSP sin `report-to` / `report-uri`.** Violaciones inline pasan silenciosas. Añadir endpoint de reporte en `vercel.json` para telemetría.
 - **RLS de tablas `comunidad_*` no auditada** en pase 2026-04-29 (solo lectura cliente verificada). Verificar en Supabase Dashboard que UPDATE/DELETE estén restringidos a `comunidad_admins` o a filas propias en estado `pendiente`.
 - **Bundle Three.js + addons localmente** con esbuild/rollup en un solo archivo. Hoy hay cadena de 12 requests en cascada a jsDelivr (3119 ms critical path). Medio riesgo (cambio de build). Alternativa más simple: self-host individual, mismo dominio.

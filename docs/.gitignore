@@ -1,27 +1,14 @@
-# Proyectos con git propio (no se anidan)
-my-video/
-thenucleo-landing/
-Design/Mockups/
+# docs/ — Vault Obsidian del repo unificado. Reglas heredadas del antiguo
+# repo `thenucleo-vault` (my-video/, thenucleo-landing/, Design/Mockups/,
+# *.docx, *.blend, .claude/, .vscode/, node_modules/, skills-lock.json, etc.)
+# eliminadas 2026-05-23 en la unificación — no aplicaban al scope actual de docs/.
 
-# Assets pesados / binarios (no son notas Obsidian)
-Design/
-downloads/
-*.docx
-*.blend
-*.blend1
-
-# Config local (no debe sincronizarse entre dispositivos)
-.claude/
-.vscode/
+# Config local Obsidian (no debe sincronizarse entre dispositivos)
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 .obsidian/cache/
 
-# Build / lock artifacts
-node_modules/
-skills-lock.json
-*.log
-.blender-toolkit/logs/
+# Sistema (redundantes con el .gitignore raíz pero explícitos por docs-local)
 .DS_Store
 Thumbs.db
 .trash/
