@@ -2370,10 +2370,11 @@ const PIPELINES_MODULE = (() => {
             <div class="form-field">
               <label class="form-label" for="nc-estado">Estado</label>
               <select class="form-input" id="nc-estado">
-                <option value="declarada"     ${editing.estado==='declarada'?'selected':''}>Declarada</option>
-                <option value="en-produccion" ${editing.estado==='en-produccion'?'selected':''}>En producción</option>
-                <option value="archivada"     ${editing.estado==='archivada'?'selected':''}>Archivada</option>
+                <option value="declarada" ${editing.estado==='declarada'?'selected':''}>Declarada</option>
+                <option value="archivada" ${editing.estado==='archivada'?'selected':''}>Archivada</option>
+                ${editing.estado === 'en-produccion' ? `<option value="en-produccion" selected disabled>En producción (derivado)</option>` : ''}
               </select>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">"En producción" se asigna automáticamente cuando un trigger de la campaña pasa a creado/monitorizando (sync Notion → ficha, pendiente).</div>
             </div>
           ` : ''}
           ${plantilla ? `
@@ -2583,11 +2584,12 @@ const PIPELINES_MODULE = (() => {
             <div class="form-field">
               <label class="form-label" for="nt-estado">Estado</label>
               <select class="form-input" id="nt-estado">
-                <option value="declarado"     ${editing.estado==='declarado'?'selected':''}>Declarado</option>
-                <option value="creado"        ${editing.estado==='creado'?'selected':''}>Creado</option>
-                <option value="monitorizando" ${editing.estado==='monitorizando'?'selected':''}>Monitorizando</option>
-                <option value="archivado"     ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+                <option value="declarado" ${editing.estado==='declarado'?'selected':''}>Declarado</option>
+                <option value="archivado" ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+                ${editing.estado === 'creado'        ? `<option value="creado" selected disabled>Creado (derivado)</option>` : ''}
+                ${editing.estado === 'monitorizando' ? `<option value="monitorizando" selected disabled>Monitorizando (derivado)</option>` : ''}
               </select>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">"Creado" y "Monitorizando" se asignan automáticamente desde el lifecycle de tareas Notion (crear form, primer lead) cuando ese sync esté operativo.</div>
             </div>
           ` : ''}
         ` : ''}
@@ -2718,13 +2720,14 @@ const PIPELINES_MODULE = (() => {
           <div class="form-field">
             <label class="form-label" for="ne-estado">Estado</label>
             <select class="form-input" id="ne-estado">
-              <option value="declarado"    ${editing.estado==='declarado'?'selected':''}>Declarado</option>
-              <option value="copy-listo"   ${editing.estado==='copy-listo'?'selected':''}>Copy listo</option>
-              <option value="diseno-listo" ${editing.estado==='diseno-listo'?'selected':''}>Diseño listo</option>
-              <option value="montado-ghl"  ${editing.estado==='montado-ghl'?'selected':''}>Montado GHL</option>
-              <option value="activo"       ${editing.estado==='activo'?'selected':''}>Activo</option>
-              <option value="archivado"    ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+              <option value="declarado" ${editing.estado==='declarado'?'selected':''}>Declarado</option>
+              <option value="archivado" ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+              ${editing.estado === 'copy-listo'   ? `<option value="copy-listo" selected disabled>Copy listo (derivado)</option>` : ''}
+              ${editing.estado === 'diseno-listo' ? `<option value="diseno-listo" selected disabled>Diseño listo (derivado)</option>` : ''}
+              ${editing.estado === 'montado-ghl'  ? `<option value="montado-ghl" selected disabled>Montado GHL (derivado)</option>` : ''}
+              ${editing.estado === 'activo'       ? `<option value="activo" selected disabled>Activo (derivado)</option>` : ''}
             </select>
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">"Copy listo", "Diseño listo", "Montado GHL" y "Activo" se asignan automáticamente desde el lifecycle de tareas Notion cuando ese sync esté operativo. Aquí solo declaras o archivas.</div>
           </div>
         ` : ''}
         <div class="pip-sheet-actions">
