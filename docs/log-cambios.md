@@ -71,6 +71,45 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [INFRA][BUGFIX] — Rotación Gemini API key + migración secretos a env vars + memory bump n8n runner
+
+- **Área:** n8n workflows IA Cerebro + IA Newsletter, env vars Easypanel, GCP project `app-thenucleo`.
+- **Qué:**
+  - **Gemini API key revocada y rotada.** La key vieja `AIzaSyBWk-...` (hardcoded en 4 Code nodes de Cerebro/Newsletter desde marzo) fue revocada automáticamente por el secret scanner de Google entre 14-may y 24-may. Diagnóstico: workflow `IA Newsletter — KB Fetch [SUB]` empezó a fallar con 403 el 24-may 01:30 UTC. Body literal del error de Google: `"Your API key was reported as leaked. Please use another API key."` (status `PERMISSION_DENIED`).
+  - **Key nueva generada en GCP** (proyecto `app-thenucleo`, mismo donde están los OAuth Clients y Service Accounts existentes). Vinculada a Service Account nueva `gemini-rag` (Google ahora obliga a binding con SA para Generative Language API — formato distinto, empieza `AQ.Ab8...` con 53 chars en vez de `AIzaSy...` con 39). Restringida en GCP a Generative Language API. Guardada en Easypanel env var `GEMINI_API_KEY`.
+  - **Env vars añadidas a Easypanel n8n** (servicio reiniciado tras cada cambio):
+    - `GEMINI_API_KEY` — key nueva
+    - `SUPABASE_SERVICE_ROLE_KEY` — JWT 219 chars (Ben ya lo tenía pre-existente)
+    - `BUBBLE_API_TOKEN` — `088a20b5...` (mismo token de toda la vida, movido de hardcoded en workflow a env)
+    - `TZ=Europe/Madrid` + `GENERIC_TIMEZONE=Europe/Madrid` — para que CRONs no desfasen
+    - `N8N_RUNNERS_MAX_OLD_SPACE_SIZE` subido de 512 → 1536 MB tras OOM en cliente con >50 PDFs
+  - **6 workflows patcheados** (5 via MCP SDK + 1 UI paste por riesgo de complejidad):
+    1. `w6Gqo8B6Sqp6Mq9x` (`IA Newsletter — KB Fetch [SUB]`) — Code `Crear Store e Indexar`: `$env.GEMINI_API_KEY` + helper `geminiCall` con header `x-goog-api-key` + captura body del 403 de Google con `this.helpers.request` (`simple:false + resolveWithFullResponse:true`). Aplicado por Ben en UI tras validación E2E con cliente test Rock & Climb.
+    2. `ZnJSkoWlSusmEjhO` (`CRON IA Cerebro — Reindexar RAG (3:00)`) — fix bug silencioso preexistente del filtro `agencia_id`: usaba UUID `e748c7d4-...` pero `bub_clientes.agencia_id` tiene formato Bubble UID `1769513105728x...` → el filtro nunca matcheaba → la CRON nocturna **nunca había reindexado nada desde 2026-05-06**. Cambio: filtro a Bubble UID. Test manual confirmó 20 clientes activos detectados.
+    3. `NI1oUwIY99TGk496` (`IA Cerebro — Indexar Drive [SUB]`) — Code `Crear Store e Indexar` rewrite + HTTP `Query Resumen Gemini` migrado a header `x-goog-api-key` + HTTP `PATCH Bubble RAG Cerebro` migrado a `$env.BUBBLE_API_TOKEN`. Segunda iteración del patch (la primera dejó `httpRequestWithAuthentication` que falla en sub-workflow runtime).
+    4. `7yjLwl4cEJa7XAYY` (`IA Cerebro — Tool Loop [SUB]`) — Code `Process Tools`: misma migración.
+    5. `JI5Tr7IogqXgaI7a` (`IA Cerebro — Chat por Cliente`) — Code `Preparar Indexacion`: misma migración. **Aplicado por Ben en UI** (workflow muy complejo con webhook + 20 nodos + fan-outs → riesgo de translation error en SDK demasiado alto).
+    6. `4d411087` (incidencia, no workflow) — OOM en cliente grande tras patch. Fix: memoria 1536 MB.
+  - **17 incidencias Gemini cerradas** + **4 incidencias transient cerradas** (2 SYNC CLIENTES Notion→Bubble timeout + 2 OPS ADS Humanizar IA HTTP fail). Quedan 0 incidencias Gemini abiertas. 1 incidencia abierta sin relación: **CRON ADS — Meta token expirado** (`02f91d05`, 24-may 06:30) — esperando que Ben refresque credencial Meta.
+  - **Pattern canónico para Code nodes que necesitan Supabase**: helper `sb` con `this.helpers.request` (legacy request-promise, NO `httpRequestWithAuthentication` que no está en task runner sub-workflow) + headers manuales `apikey` + `Authorization: Bearer $env.SUPABASE_SERVICE_ROLE_KEY`. Documentado en `n8n-workflows.md` lección 15 ampliada con caso 2026-05-24.
+- **Por qué:** restaurar funcionamiento RAG + eliminar la causa raíz (secrets hardcoded) que detonó el incidente. Aprendizaje meta: cualquier API key viva en código exportable es una bomba de tiempo — el secret scanner de Google la encuentra tarde o temprano.
+- **Impacto:**
+  - ✅ Newsletter RAG operativo (validado E2E con Rock & Climb — 7 archivos indexados).
+  - ✅ Cerebro RAG operativo (CRON 3:00 procesó 6 clientes antes del restart por memory bump: Yucalcari, Guías de Torla, Rock & Climb, Zenyx, THE NUCLEO, Sexualidad Ancestral).
+  - ✅ Mañana 25-may 3:00 AM el CRON nocturno procesará los 14 clientes Cerebro restantes automáticamente con 1536 MB de heap.
+  - ❌ ~40 workflows restantes del Portal NO auditados — pueden seguir teniendo otros secretos hardcoded (Anthropic, Notion, Supadata, Meta tokens, etc.). Deuda explícita para próxima sesión.
+- **Refs:**
+  - n8n workflows: `w6Gqo8B6Sqp6Mq9x`, `ZnJSkoWlSusmEjhO`, `NI1oUwIY99TGk496`, `7yjLwl4cEJa7XAYY`, `JI5Tr7IogqXgaI7a`
+  - n8n incidencias: ids `61647896`, `6521daa0`, `9a7355f1`, `cd270ae3`, `dd431626`, `1b27c7a1`, `8b463900`, `cd320845`, `ece67ca8`, `6316385f`, `08606083`, `6b10cbcc`, `076ffb2b`, `c67c7a35`, `b3e50897`, `5edd9c60`, `4d411087`, `56133eb5`, `bdc70a00`, `c402c86a`, `72da210f`, `23d5cb5f` (todas resolved)
+  - Tablas Supabase afectadas: `rag_stores` (6 entradas nuevas `tipo='cerebro'` + 1 nueva `tipo='newsletter'`), `n8n_incidencias` (17+4 resolved)
+  - Docs tocadas: `docs/log-cambios.md` (esta entrada), `docs/infra/ids-referencias.md` (nueva sección "Variables de entorno"), `docs/infra/n8n-workflows.md` (lección 15 ampliada con caso Cerebro)
+- **Deuda explícita para próxima sesión:**
+  1. **Audit de los ~40 workflows Portal restantes** buscando patrones `AIzaSy*`, `sk-ant-*`, `sk-proj-*`, `Bearer [a-f0-9]{32,}`, `ntn_*`, `secret_*`. Candidatos prioritarios: Blog Zenyx (Anthropic + Supadata), WhatsApp Intake (Gemini + Claude), OPS ADS Humanizar (Claude), SYNCs Notion/Bubble, CRON Ads, Holded, Clockify, GHL, ClickUp.
+  2. **Refrescar credencial Meta Ads** en n8n (1 incidencia open pendiente).
+  3. **Refactor `cargar_contexto_cliente`** duplicado entre `JI5Tr7IogqXgaI7a` Code `Preparar Indexacion` y `7yjLwl4cEJa7XAYY` Code `Process Tools` → extraer a sub-workflow propio.
+  4. **`Build Claude Body`** en `JI5Tr7IogqXgaI7a` todavía usa `httpRequestWithAuthentication` para lookup de `nombre_cliente` (try/catch silencioso, no crashea pero el prompt pierde el nombre del cliente). Migrar al patrón sb helper.
+  5. **Si vuelve a haber OOM** en algún cliente con muchos PDFs: refactorizar el Code node `Crear Store e Indexar` para procesar archivos en chunks (liberar `pdfBuffer = null` explícitamente tras cada upload, partir el for loop en sub-workflows con SplitInBatches).
+
 ### 2026-05-24 [OPS] — Hook `dirty-tree-reminder-stop.sh` (nudge cada 5 turnos con working tree sucio)
 
 - **Área:** `.claude/scripts/` + `.claude/settings.json`. No toca código del landing ni docs portal.

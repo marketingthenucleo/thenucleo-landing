@@ -1731,6 +1731,29 @@ const cliente_nombre = (n.cliente_notion_id && map[n.cliente_notion_id]) || null
 **Dónde ocurrió:**
 - `8snJvdNsmRM2yI2y` (2026-05-08). 4 iteraciones de patches al jsCode fallidas (`this.getWorkflowStaticData` → `$getWorkflowStaticData` → `fetch` → `require('https').get` → `require('crypto')`) antes de aceptar que la verificación JWT no se puede hacer dentro del Code y refactorizar a tokeninfo via HTTP Request.
 - `BqNTrwoQ2iJIcAB4` (2026-05-12). Code `Preparar Payload` usaba `this.helpers.httpRequestWithAuthentication.call(this, 'supabaseApi', opts)` para leer `bub_clientes`. Fallaba con `helpers.httpRequestWithAuthentication is not supported in the Code Node`. Fix: dividir en `Validar Input` (Code) + `GET Cliente` (Supabase node nativo, op `getAll`, filter `notion_id eq`) + `Preparar Payload` (Code, solo armado de payload).
+- `NI1oUwIY99TGk496` + `7yjLwl4cEJa7XAYY` + `JI5Tr7IogqXgaI7a` (2026-05-24). 3 workflows Cerebro con Code nodes haciendo `httpRequestWithAuthentication` para Supabase. Cuando el Code corre en sub-workflow vía `executeWorkflow` la restricción se vuelve dura (en ejecución manual del workflow padre a veces parecía pasar — falso positivo). Fix aplicado: helper `sb` manual usando `this.helpers.request` (legacy request-promise, NO httpRequest) + headers `apikey` + `Authorization: Bearer $env.SUPABASE_SERVICE_ROLE_KEY`. Patrón canónico:
+  ```javascript
+  const SUPABASE_KEY = $env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPABASE_KEY) throw new Error('[X] $env.SUPABASE_SERVICE_ROLE_KEY no esta definido');
+  const sb = async (opts) => {
+    const headers = Object.assign({}, opts.headers || {}, {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    });
+    if (opts.body !== undefined && opts.json && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+    const reqOpts = { method: opts.method, uri: opts.url, headers, simple: false, resolveWithFullResponse: true };
+    if (opts.json) reqOpts.json = true;
+    if (opts.body !== undefined) reqOpts.body = opts.body;
+    const resp = await this.helpers.request(reqOpts);
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw new Error('Supabase HTTP ' + resp.statusCode + ': ' + JSON.stringify(resp.body).slice(0,300));
+    }
+    return resp.body;
+  };
+  ```
+  **Nota importante:** `this.helpers.request` (lowercase) SÍ está expuesto en el sandbox del task runner; `this.helpers.httpRequest` y `this.helpers.httpRequestWithAuthentication` NO. Es una API distinta (legacy request-promise vs nuevo axios) que sobrevive porque retorna `simple:false + resolveWithFullResponse:true` desde fuera del flujo n8n. Confirmado el 2026-05-24 — todos los workflows Cerebro patcheados con este patrón funcionan en runtime sub-workflow.
 
 **Aplica a:** cualquier Code node nuevo o legacy con `this.*` o HTTP interno. Si revisas Code legacy con esos patrones, marcar para refactor — funcionarán en n8n viejo pero romperán cuando la instancia migre a task runner. Ver memoria `feedback_n8n_task_runner_this.md`.
 

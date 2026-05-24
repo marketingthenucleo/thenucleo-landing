@@ -54,6 +54,21 @@ tags: [ids, credenciales, tokens]
 | Clockify | `GFyjrb81bcVHERhP` | |
 | **Bot Log Actividad - Service Acount** | `nJOGize9nY0rINy4` | googleApi (Service Account `chat-token-thenucleo@app-thenucleo.iam.gserviceaccount.com`). Scopes `chat.app.messages.readonly`, `chat.app.memberships.readonly`, `chat.app.spaces.readonly`. Toggle "Set up for use in HTTP Request node" ON. Creada 2026-05-08 para `NMZA404s1agKcHau` (CRON LOG — Renovar Subscriptions). Reutilizada por `gJfDb3Gwrf7fJ8Li` (OPS LOG — Crear Subscription por Cliente). Reutilizable para futuros workflows Workspace Events / Chat API. ⚠️ El nombre tiene un typo ("Acount") pero es lo que existe live; el ID es lo canónico. |
 
+### Variables de entorno (Easypanel — servicio n8n)
+
+Definidas en **Easypanel → servicio n8n → Environment**. Tras añadir/cambiar, **Deploy/Restart** del contenedor para que las recoja. Accesibles desde Code nodes como `$env.NOMBRE` (NO `process.env.NOMBRE` — el task runner no expone `process`).
+
+| Variable | Para qué | Notas |
+|---|---|---|
+| `GEMINI_API_KEY` | RAG Cerebro + Newsletter + Análisis (fileSearchStores + generateContent) | Vinculada a service account TheNucleo (formato `AQ.Ab8...` 53 chars, NO `AIzaSy...`). Restringida en GCP a Generative Language API. Rotada 2026-05-24 tras revocación automática del scanner de Google (la vieja `AIzaSyBWk-...` se filtró por estar hardcoded en JS). Header preferido: `x-goog-api-key`. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Auth Supabase desde Code nodes (sustituye `httpRequestWithAuthentication` que no funciona en task runner sub-workflow) | JWT 219 chars. Usar como `apikey` + `Authorization: Bearer ...` headers. Patrón canónico en `n8n-workflows.md` lección 15. |
+| `BUBBLE_API_TOKEN` | Auth Bubble Data API desde nodos HTTP Request con header explícito (alternativa a la credential `i8UMJM5KZOGBRf5z`) | Mismo token que `088a20b5...` arriba — está repetido en env var como fuente unificada para evitar hardcoded en parameters de HTTP nodes. Usar como `Authorization: ={{ "Bearer " + $env.BUBBLE_API_TOKEN }}`. |
+| `AIC_KEY` | Clave de cifrado pgcrypto para `agencia_integraciones_config` (`aic_set` / `aic_get` RPCs) | 32 chars. Set por sesión n8n vía `SET LOCAL app.aic_key = $env.AIC_KEY;`. |
+| `TZ` + `GENERIC_TIMEZONE` | Timezone del contenedor + scheduler n8n | `Europe/Madrid` ambos. Sin esto los CRON triggers usan UTC y desfasan 2h en verano. |
+| `WEBHOOK_URL` | URL base que n8n usa al construir URLs públicas de webhooks | `https://n8n-n8n.irzhad.easypanel.host` |
+| `N8N_BLOCK_ENV_ACCESS_IN_NODE` | Permite que Code nodes lean `$env.*` | `false` (= permitido). Por defecto en versiones nuevas viene `true` y `$env` queda vacío en Code nodes. **CRÍTICO** — sin esta variable a `false`, todos los patches con `$env.GEMINI_API_KEY` etc. fallarían con error de undefined. |
+| `N8N_RUNNERS_MAX_OLD_SPACE_SIZE` | Heap V8 por Task Runner process en MB | `1536`. Subido desde 512 el 2026-05-24 tras OOM en `IA Cerebro — Indexar Drive [SUB]` procesando clientes con >50 PDFs. Si vuelve a haber OOM con clientes muy grandes, subir a 2048 o refactor a chunks. |
+
 ### Carpetas n8n (project `cehv5Dib1J6eKwYQ` — Personal de Ben)
 ```
 The Nucleo Agency
