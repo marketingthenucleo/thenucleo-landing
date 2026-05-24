@@ -83,6 +83,28 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 - **Por qué:** unificar el sync móvil ↔ desktop sobre el mismo repo (`thenucleo-landing`). Antes requería cross-PR entre 2 repos y se rompía. Ahora un solo `git pull`/`git push` cierra el ciclo. Cierre operacional de la unificación 2026-05-23.
 - **Refs:** vault móvil en `/storage/emulated/0/Documents/thenucleo-landing/`. Aliases en `~/.bashrc` Termux. Config plugin en `docs/.obsidian/plugins/obsidian-git/data.json` (incluye `Custom base path = ../`). Repo viejo `thenucleo-vault` queda archivado en GitHub (safety net read-only).
 
+### 2026-05-24 [WORK][OPS] — Lado desktop del plugin Obsidian Git: autocommit pisaba commits PC1, desactivado
+
+> Complementa la entrada anterior "Migración vault Obsidian móvil" — esta cubre el lado **desktop** del mismo plugin.
+
+- **Área:** Obsidian Git plugin desktop (`docs/.obsidian/plugins/obsidian-git/data.json`). NO toca código del landing.
+- **Síntoma vivido:** durante esta sesión, `git commit -m "chore(claude): bump hook timeout..."` devolvió `nothing to commit` — los 3 archivos editados acababan de ser absorbidos en `020b764 vault backup (mobile): 2026-05-24 11:38:28`. Mensaje descriptivo perdido. Patrón: 4 commits con mismo formato cada 15 min exactos durante la sesión (11:01, 11:08, 11:23, 11:38).
+- **Diagnóstico:**
+  - **Descartado:** routine remoto de Claude Code. `RemoteTrigger list` confirma 3 routines existentes (verificación descripcion form n8n + auditoría nocturna 03:00 Madrid + verificación fixes n8n SYNC Cliente) — ninguno commitea al repo.
+  - **Causa real:** plugin Obsidian Git lado **desktop** tenía `autoSaveInterval: 15` + `autoCommitOnlyStaged: false`. El plugin opera desde repo root (no vault root) → absorbía cualquier cambio uncommitted del trabajo en PC1, no solo cambios dentro de `docs/`.
+  - **El label `(mobile)` engaña:** el config desktop tenía `autoCommitMessage: "vault backup (mobile): {{date}}"` igual que el móvil (probablemente copiado del setup móvil). Termux `tnpush` (lado móvil, documentado en entry anterior) usa exactamente el mismo formato pero **manualmente**, no en cadencia 15 min. Distinguir en `git log` por horario regular (desktop autocommit) vs horario aleatorio (móvil manual).
+- **Fix:** Ben puso `autoSaveInterval: 0` desde Obsidian Settings desktop → Obsidian Git → Backup. Cambio en `data.json` se autocommiteó solo (último autocommit antes de desactivarse). `autoCommitOnlyStaged` queda en `false` — innecesario sin autocommit, pero **si se reactiva** debe ir a `true` para limitar el scope al vault.
+- **Impacto:**
+  - Futuras sesiones PC1: commits propios sobreviven, ya no se absorben.
+  - Móvil sigue funcionando vía Termux `tnpush` manual (sin cambios).
+  - Documentado en `CLAUDE.md` raíz (sección nueva "Obsidian Git en `docs/.obsidian/`") para que próximas sesiones de cualquier entorno entiendan el patrón si se reactiva.
+- **Refs:**
+  - Archivo tocado vía Obsidian UI: `docs/.obsidian/plugins/obsidian-git/data.json`.
+  - Editados aquí: `CLAUDE.md` raíz, `docs/log-cambios.md` (esta entrada).
+  - Complementa: entrada 2026-05-24 [OPS] "Migración vault Obsidian móvil".
+
+---
+
 ### 2026-05-24 [WORK][OPS] — Hygiene Claude Code: de-dupe skill, bump hook timeout, cleanup `additionalDirectories`
 
 - **Área:** Workspace local Ben (`~/.claude/`) + repo `.claude/settings.json`. NO toca código del landing ni docs portal.
