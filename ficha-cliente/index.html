@@ -2201,11 +2201,27 @@ const PIPELINES_MODULE = (() => {
       </div>
     `);
     setTimeout(() => {
-      document.getElementById('np-save')?.addEventListener('click', () => {
+      document.getElementById('np-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('np-save');
         const name = document.getElementById('np-name')?.value.trim();
+        const obj  = document.getElementById('np-obj')?.value.trim();
         if (!name) { showToast('Falta el nombre del pipeline'); return; }
-        closeSheet();
-        showToast(`${next} creado (mockup)`);
+        if (!S.bubbleId) { showToast('No hay cliente seleccionado'); return; }
+        btn.disabled = true;
+        try {
+          const row = await rpc('ficha_pipeline_upsert', {
+            p_id:                  null,
+            p_cliente_bubble_id:   S.bubbleId,
+            p_nombre:              name,
+            p_objetivo_negocio:    obj || null,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast(`${row?.codigo || 'Pipeline'} creado`);
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
       });
       document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
       document.getElementById('np-name')?.focus();
