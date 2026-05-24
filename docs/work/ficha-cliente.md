@@ -3,7 +3,7 @@ title: Ficha de Cliente (admin-only)
 dominio: ficha-cliente
 estado: vivo
 actualizado: 2026-05-24
-version_dataset: F2.2 completo — read RPC + 6 write RPCs + 4 drawers cableados + archivar + 11 estados finos. Deuda menor: archivar trigger/email + link plantilla→campaña.
+version_dataset: F2.2 + iteración piloto Mel (tarde 2026-05-24) — edit inline, archivar trigger/email, ⓘ explicativos (12 cuelgues), catálogo plantillas live desde DB con × archivar, auto-create plantilla desde custom, preserveView en saves, fechas dd/mm/yy, emails desde trigger en su detail view. Deuda menor: link plantilla→campaña en flujo "picker eligió existente".
 tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 ---
 

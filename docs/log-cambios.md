@@ -71,6 +71,71 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [WORK][INFRA][BUGFIX] — Ficha de Cliente: RPCs plantillas a SECURITY DEFINER (fix RLS bub_clientes)
+
+- **Commit:** `78c7276`. Migration `ficha_cliente_plantillas_rpcs_security_definer_fix_bub_clientes_rls`. SQL en `supabase/migrations/`.
+- **Bug:** picker de plantillas en producción salía vacío aunque DB tenía 5 plantillas. `ficha_plantillas_listar` y `ficha_plantilla_create_from_campania` eran `SECURITY INVOKER` pero internamente leen `bub_clientes` (para derivar `agencia_id` desde `cliente_bubble_id`). `bub_clientes` tiene RLS activo con 0 policies para `authenticated` → la SELECT desde INVOKER devuelve NULL → `agencia_id` queda NULL → listar devuelve `'[]'` (picker vacío); create lanzaría "no se pudo derivar agencia_id". Verificado en sesión: `service_role` SÍ veía las 5 (smoke con execute_sql), `authenticated` NO.
+- **Fix:** las 2 RPCs pasan a `SECURITY DEFINER` con gate por `is_comunidad_admin()` al inicio. Mismo patrón que `ficha_cliente_listar/get`. No suma al contador "allowlist hardcoded" porque el gate lee de `comunidad_admins` (tabla), no es string literal en body. `ficha_plantilla_archivar` queda como INVOKER (no toca bub_clientes — solo `cliente_campania_plantillas` cuyas policies cubren admin).
+- **Bonus en el mismo commit:** copy del ⓘ `'plantilla'` actualizado — decía "Las 7 plantillas..." (quedaban 5 tras DELETE) y mencionaba "deuda menor: no se asocia plantilla a campaña" que ya no aplica (auto-create + link funcionan en flujo custom). Texto nuevo describe precarga, auto-add desde custom y cómo eliminar con la × en cada card.
+
+### 2026-05-24 [WORK][INFRA][FEATURE] — Ficha de Cliente: catálogo plantillas vive en DB + × para archivar (opción A piloto Mel)
+
+- **Commit:** `cb4eccb`. Migration `ficha_cliente_plantillas_backfill_y_rpcs_listar_archivar`. SQL en `supabase/migrations/`.
+- **Qué cierra:** dos deudas a la vez —
+  1. Picker leía `const PLANTILLAS` hardcoded en JS, por lo que las plantillas auto-creadas (flujo custom de campaña) no aparecían y editar el catálogo requería tocar JS+DB en paralelo.
+  2. No había UI para eliminar plantillas del catálogo (las 2 que limpiamos antes fue por SQL directo).
+- **Backend:**
+  - **UPDATE backfill** las 5 plantillas existentes en `cliente_campania_plantillas` con todo el detalle que vivía en el JS const: `triggers_tipicos jsonb` (array `{tipo, nombre}`), `emails_tipicos jsonb` (array `{nombre, espera}`), `kpi_default`, `presupuesto_default`, `briefing_master_url`, `roles_default jsonb`. Tras esto, DB es la fuente de verdad completa del catálogo.
+  - **RPC `ficha_plantillas_listar(p_bubble_id text)` → jsonb.** Devuelve plantillas `estado='activa'` para la agencia del cliente, derivando `agencia_id` desde `bub_clientes`. Inicialmente `SECURITY INVOKER` — fix posterior en commit `78c7276` la pasa a DEFINER por RLS bug. `GRANT EXECUTE` a `authenticated`.
+  - **RPC `ficha_plantilla_archivar(p_id uuid)` → jsonb.** Soft delete via `UPDATE … SET estado='archivada' WHERE id = p_id`. La plantilla queda en DB (compatibilidad con campañas que la referencien via `cliente_campanias.plantilla_id`) pero deja de aparecer en el picker. SECURITY INVOKER (solo toca `cliente_campania_plantillas` — RLS cubre admin).
+- **Frontend:**
+  - `const PLANTILLAS` retirado entero (74 líneas legacy quitadas). `S.plantillas[]` como nuevo estado del módulo, cargado en `loadFor()` via `Promise.all` junto a `ficha_pipelines_get`.
+  - Helper `adaptPlantilla(p)` mapea shape DB (snake_case + `triggers_tipicos:[{tipo,nombre}]`) → shape JS que el módulo ya esperaba (`defaults.kpi/presup`, `briefingMaster`, `triggers:[{tipo,name}]`, `emails:[{name,espera}]`, `roles`). Sin tocar call-sites externos.
+  - `findPlantilla(slug)` ahora busca en `S.plantillas`.
+  - Picker itera `S.plantillas`. Cada card envuelta en `.pip-plantilla-card-wrap` (relative + margin-bottom 6px) con la card normal + una **`×` absoluta en top-right** (`.pip-plantilla-x` 22×22 round, hover `--bad`).
+  - Handler `×`: `confirm()` con mensaje claro ("Dejará de aparecer en el picker. Las campañas existentes no se ven afectadas, queda archivada en histórico.") → `ficha_plantilla_archivar` → reload solo plantillas (no pipelines) → re-render picker. Si la archivada era la seleccionada, deseleccionar. `stopPropagation` para no disparar el pick del card por evento bubbling.
+  - Auto-create plantilla en custom save ahora aparece **live** en el picker (porque `loadFor` recarga `S.plantillas`).
+
+### 2026-05-24 [WORK][INFRA][FEATURE] — Ficha de Cliente: DELETE 2 plantillas + auto-create desde custom + preserveView en saves
+
+- **Commits:** `95b4215` (frontend + DELETE en BD + auto-create RPC) + `4c10a0b` (SQL al repo). Migration `ficha_cliente_plantillas_delete_2_y_rpc_auto_create_from_campania`.
+- **Qué:**
+  - **DELETE 2 plantillas** que no encajan con el workflow TheNucleo: `'lanz'` (Lanzamiento multicanal) y `'evento'` (Evento). Quedan 5: `venta-meta`, `capt-fm`, `capt-fw`, `react-bd`, `news`. Aplicado en DB + retirados del `const PLANTILLAS` para sincronizar el picker (este JS const desaparece después en el commit cb4eccb).
+  - **RPC `ficha_plantilla_create_from_campania(p_campania_id uuid)`** — auto-crea plantilla SHELL en `cliente_campania_plantillas` a partir de una campaña custom recién creada. Captura metadata (nombre, kpi_default, presupuesto_default, briefing_master_url). NO snapshotea `triggers_tipicos` ni `emails_tipicos` (la campaña aún no los tiene). Genera slug (lowercase + translate acentos + `-` + collision handling `-N`). Linka la campaña a la nueva plantilla via `UPDATE cliente_campanias.plantilla_id`. Inicialmente INVOKER, después pasa a DEFINER en commit `78c7276`.
+  - **Frontend cableo auto-create** en el save handler del campaign drawer: si `!isEdit && state.custom && row?.id`, tras `ficha_campania_upsert` llama a la nueva RPC. Toast diferenciado: "`Pxx` creada · plantilla 'slug-x' añadida al catálogo".
+  - **`preserveView` en setData y loadFor** — tras crear/editar email/trigger/campaña/pipeline, el usuario YA NO vuelve a la lista raíz. Los 5 callsites post-save (los 4 `_upsert` + `ficha_archivar_codigo`) pasan `{ preserveView: true }`. Cambio de cliente desde el selector sigue reseteando (default). El `back()` tras archivar lo que estabas viendo sigue funcionando porque actualiza `S.view` antes del `loadFor`.
+- **Decisión sobre cuándo crear plantilla** (vía AskUserQuestion): "Auto al crear (shell vacío)" en vez de "Botón manual 'Guardar como plantilla'" o "Híbrido". Eligió la opción más automática.
+
+### 2026-05-24 [WORK][BUGFIX] — Ficha de Cliente: 7 fixes post-piloto Mel + retiro campo Orden de email
+
+- **Commits:** `19d70b8` (los 7 fixes) + `3b7ce6e` (orden retirado).
+- **Bug report en piloto. 7 issues, todos en el módulo Pipelines, fix consolidado en un commit:**
+  1. **z-index info-pop**: tooltips ⓘ se abrían detrás del drawer (info-pop z-index 120, sheet z-index 201). Bump info-pop-backdrop a 1100 e info-pop a 1101 — siempre encima del drawer activo.
+  2. **`visible()` filtrado de archivados** solo cubría `'archivada'` (fem) → pipelines/triggers/emails con `'archivado'` (masc) no se ocultaban con el check. Cambiado a `!(item.estado || '').startsWith('archiv')` para cubrir ambos géneros. Bonus: gender bug en línea 1948 (`p.estado !== 'archivada'` para pipeline → debía ser masc) también arreglado.
+  3. **Fechas en formato ISO** (YYYY-MM-DD) → nuevo helper `dmy(s)` que convierte a `dd/mm/yy`. Aplicado a las 4 displays: cards de campaña, fieldStatic 'Fechas' en detail, meta de trigger BD, fieldStatic 'Fecha lanzamiento'. Inputs `type=date` siguen con browser-locale (no se puede cambiar sin custom widget).
+  4. **Notas del pipeline** no se veían en ningún sitio salvo drawer Editar. Añadido `fieldStatic('Notas', p.notas)` condicional al final del field-list en `renderPipelineView`.
+  5. **Trigger view no mostraba emails que dispara**. Nueva sección "Emails que se disparan desde X · N" tras los campos, con cards clickables. Filtra `c.emails.filter(e => apl.length === 0 || apl.includes(sub))`.
+  6. **Field "Orden" en email drawer confuso** (commit `19d70b8`): añadido ⓘ con entry `INFO_CONTENT.email-orden` explicando que es posición en secuencia. **Después (commit `3b7ce6e`)**, Mel preguntó "¿pero no lo marca ya el código E1/E2/E3?" — tenía razón, retirado el field entero (input + label + ⓘ). `p_orden` siempre se pasa como null al upsert (servidor asigna max+1 en INSERT, conserva en UPDATE). La posición sigue viva como `E${orden}` al final del código.
+  7. **Visual debt "P1C1E1"** (emails con `triggersAplicables` vacío en campaña con triggers — orphans/legacy). Normalización en `setData`: para cada email con aplicables vacío + campaña con ≥1 trigger, se rellena en memoria con TODOS los subcodes. Así `emailCode` nunca renderiza el código orphan. La DB se sincroniza la primera vez que se edita el email (no hacemos write silencioso en load).
+
+### 2026-05-24 [WORK][BUGFIX] — Ficha de Cliente: drawers no pisan inputs al togglear chips/pickers
+
+- **Commit:** `e15e878`.
+- **Bug reportado por Mel en piloto:** en el drawer Nuevo Email, escribir título → tap chip de trigger → el título se borraba.
+- **Causa:** 3 drawers tienen pickers que re-renderizaban TODO el sheet-body con `innerHTML = renderForm()` en cada click. Eso destruye el DOM existente y reconstruye desde defaults, perdiendo lo que el usuario había escrito en cualquier input.
+- **Tres fixes, uno por naturaleza del cambio:**
+  1. **Email — toggle chip 'Triggers aplicables'** (bug original): update in-place. El único cambio cuando toggleas un chip es el `.selected` del chip y el código preview. No hace falta re-renderizar. Marker `<strong data-preview-code>` añadido al callout. Handler: `b.classList.toggle('selected')` + reescritura del `.textContent` del preview. Resto del form intacto.
+  2. **Trigger — cambiar tipo FM/FW/BD**: hace falta re-render porque la estructura cambia (placeholder/label distintos por tipo, campo fecha aparece solo en BD). Snapshot+restore alrededor del `innerHTML`: lee `nt-desc/nt-ext/nt-fecha` antes, restaura después. Guard: si pulsas la misma card que ya estaba seleccionada, no-op.
+  3. **Campaña — re-pulsar la misma plantilla**: cambiar a otra plantilla reset es intencional (nuevos defaults). Re-pulsar la misma era no-op visualmente pero re-renderizaba y borraba. Guard: si pick coincide con `state.pickedSlug` (o `'__custom'` y `state.custom`), return.
+
+### 2026-05-24 [WORK][FEATURE] — Ficha de Cliente F2.2.2.B+: edit inline en 4 detail views + archivar trigger/email + ajuste código email (caso 5 retirado)
+
+- **Commits del lote:** `156f0b9` (bloque 2: archivar trigger+email + cleanup), `389d21d` (bloque 1: edit inline en 4 detail views), `52fd8e1` (intento restringir estados editables → revertido), `15deb89` (revert del anterior), `bc7c192` (código email siempre con triggers explícitos), todos antes del lote de fixes y plantillas.
+- **Bloque 2 — archivar trigger/email** (`156f0b9`): botón "Archivar trigger/email {code}" añadido al final de `renderTriggerView` y `renderEmailView`. Reusa handler existente de archive (lee `data-kind`, `data-id`, `data-code` y llama `ficha_archivar_codigo`). Handler de archive ampliado: el chequeo "si archivamos lo que estamos viendo, back()" antes sólo cubría `pId/cId` — ahora también `tId/eId`. Cleanup paralelo: en `renderEmailView` quedaba la nota "Vacío = aplica a todos los triggers (regla .docx caso 5)" — caduca con el commit `bc7c192`. Sustituida por "El código del email refleja los triggers marcados (orden FM→FW→BD)".
+- **Bloque 1 — edit inline** (`389d21d`): los 4 drawers (`openNewPipelineSheet`, `openNewCampaignSheet`, `openNewTriggerSheet`, `openNewEmailSheet`) ahora aceptan un parámetro opcional `editing`. Si está, prellena el form, cambia título a "Editar X.code", añade select de estado, y al guardar pasa `p_id = editing.id` (UPDATE). Campos inmutables (codigo siempre, tipo en trigger) se muestran como display read-only en vez de input editable. Toast diferenciado "actualizado" vs "creado". Botones "Editar X" añadidos en las 4 detail views encima del Archivar existente (nueva clase CSS `.pip-edit-btn` similar a archive pero con hover en `--accent` verde). Bug de género en chequeo del botón archive de pipeline corregido de paso (`'archivada'` → `'archivado'`). Dispatcher con 4 nuevas acciones `edit-pipeline/campaign/trigger/email`.
+- **Estados restringidos → revertido** (`52fd8e1` → `15deb89`): primero intento limitar dropdown a declarado+archivado (resto son derivados de tareas Notion). Mel pidió reversión: "déjalo con elección libre ahora y cuando hagamos el Sync ya desaparecerá". Revertido en el siguiente commit.
+- **Código de email siempre con triggers explícitos** (`bc7c192`): bug del piloto Mel — en campaña con 1 trigger único, el código del email resultaba `P1C1E1` (parecía orphan). La regla `.docx` caso 5 ("compartido → sin trigger en código") tácitamente asumía contexto multi-trigger; con 1 solo, la "compartición" no comunica nada útil. Nuevo modelo: el código del email SIEMPRE incluye los subcódigos de triggers que lo disparan, concatenados en orden FM→FW→BD (P1C1FM1E1, P1C1FM1FW1E1...). Sin atajo de "vacío implica todos". Drawer ahora: si la campaña tiene 1 trigger, chip preseleccionado + nota informativa; si tiene 2+, chips vacíos, usuario elige ≥1; validación obliga ≥1 chip marcado. `emailCode()` simplificada (sin `isShared` logic, solo concatenación).
+
 ### 2026-05-24 [WORK][FEATURE] — Ficha de Cliente: sistema de iconos ⓘ explicativos en módulo Pipelines (12 cuelgues en 3 commits)
 
 - **Área:** `ficha-cliente/index.html` (~300 líneas nuevas: helper, mapa de 12 entradas con copy completo, CSS de overlay/icono, markup estático y handlers globales + 21 inserciones de la ⓘ en labels/headers/dropdowns/botones del módulo Pipelines).
