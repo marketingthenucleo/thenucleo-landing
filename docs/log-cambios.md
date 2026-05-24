@@ -71,6 +71,17 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [OPS] — Hook `dirty-tree-reminder-stop.sh` (nudge cada 5 turnos con working tree sucio)
+
+- **Área:** `.claude/scripts/` + `.claude/settings.json`. No toca código del landing ni docs portal.
+- **Qué:**
+  - **Nuevo hook Stop** `.claude/scripts/dirty-tree-reminder-stop.sh`. Soft nudge (no commitea, no bloquea): tras 5 turnos consecutivos con `git status --porcelain` no-vacío, emite `systemMessage` recordando guardar progreso. Counter en `${TMPDIR:-/tmp}/claude-thenucleo-dirty-counter`. Se resetea automáticamente cuando el working tree queda limpio (= acabas de commitear).
+  - **Independiente del `log-reminder-stop.sh` existente.** Aquel vigila la documentación (`docs/log-cambios.md`); este vigila el código en general. Pueden disparar a la vez si llevas muchos turnos sin commitear y sin tocar el log.
+  - **Registrado en `.claude/settings.json`** como segundo entry del array `hooks.Stop[0].hooks`, mismo `timeout: 10` que el existente.
+  - **Emisión JSON vía python** (no `jq`). Patch lateral importante: el `log-reminder-stop.sh` actual usa `jq -n`, pero `jq` no está instalado en el PATH de Cursor + Git Bash en el PC1 de Ben → ese hook está silenciosamente roto en local desde que se commiteó (los counters incrementan, pero al llegar al threshold el `jq` no encontrado hace exit con error vía `set -e` y nunca se ve el `systemMessage`). En contenedores cloud (Claude Code web / mobile) sí funciona porque traen `jq` por defecto. El nuevo hook usa `python` (verificado en PATH local + presente en cualquier contenedor Linux) para emitir el JSON, así funciona en los 2 entornos sin instalar nada. Pendiente decidir si reescribir `log-reminder-stop.sh` con el mismo patrón python.
+- **Por qué:** evitar perder progreso entre sesiones de Claude Code cuando se acumulan cambios sin commitear. Disciplina aprendida de los reminders del log: nudge soft cada N turnos > automatismo agresivo (auto-commit con mensajes inútiles + riesgo de commitear código a medio refactorizar + push automático a `main` que dispara Vercel auto-deploy).
+- **Refs:** `.claude/scripts/dirty-tree-reminder-stop.sh`, `.claude/settings.json` (sección `hooks.Stop`), `CLAUDE.md` raíz (sección "Hooks de Claude Code" — actualizar manualmente si quieres mencionar el nuevo hook).
+
 ### 2026-05-24 [OPS] — Migración vault Obsidian móvil a `thenucleo-landing/docs/`
 
 - **Área:** Workspace Ben (Termux Android + Obsidian Android). No toca código del landing ni contenido de `docs/`.
