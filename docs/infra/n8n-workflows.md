@@ -1707,53 +1707,65 @@ const cliente_nombre = (n.cliente_notion_id && map[n.cliente_notion_id]) || null
 
 ---
 
-### 15. Code node con `this.*`, `fetch` o `require('https')`/`require('crypto')` → bloqueado por task runner
+### 15. Code node bajo Task Runner: allow-list selectiva (no es "todo `this.*` bloqueado")
 
-**Síntoma:** El Code falla con uno de estos en cadena (depende de qué API se intenta):
+**Síntoma:** El Code falla con uno de estos errores específicos según qué API se intenta:
 - `TypeError: this.getWorkflowStaticData is not a function`
-- `TypeError: this.helpers.httpRequest is not a function`
+- `Error: The function "helpers.httpRequestWithAuthentication" is not supported in the Code Node`
 - `ReferenceError: fetch is not defined`
 - `Error: Module 'https' is disallowed`
 - `Error: Module 'crypto' is disallowed`
 
-**Causa:** n8n moderno ejecuta los Code nodes en `JsTaskRunner` (VM aislado en proceso separado). Allow-list muy restrictiva: NO se puede hacer HTTP desde dentro del Code, NO existen los helpers de `this.*`, NO está `fetch` global, y `crypto`/`https` están bloqueados como módulos.
+**Causa:** n8n moderno ejecuta los Code nodes en `JsTaskRunner` (VM aislado en proceso separado). La allow-list es restrictiva PERO **selectiva** — no todos los `this.*` están bloqueados. Verificado con smoke tests directos el 2026-05-24.
 
-**Lo que SÍ funciona:**
+**Lo que NO funciona (bloqueado):**
+- `this.getWorkflowStaticData(...)` — usar `$getWorkflowStaticData('global')` sin `this.`.
+- `this.helpers.httpRequestWithAuthentication(...)` — bloqueado especialmente en runtime sub-workflow (`executeWorkflow` invoke). Puede parecer que funciona en ejecución manual del workflow padre (falso positivo).
+- `this.helpers.requestWithAuthentication(...)` — bloqueado por el mismo motivo (no confirmado por test, asumir bloqueado).
+- `fetch` global — no existe.
+- `require('https')`, `require('crypto')` — módulos bloqueados.
+
+**Lo que SÍ funciona (verificado):**
+- `this.helpers.request(opts)` — helper legacy (request-promise). Acepta `simple: false + resolveWithFullResponse: true` y NO lanza en 4xx/5xx.
+- `this.helpers.httpRequest(opts)` — helper moderno (axios). Lanza AxiosError en 4xx/5xx pero hace HTTP correctamente.
 - `$getWorkflowStaticData('global')` (sin `this.`) — para cache entre ejecuciones.
-- `$input`, `$('NodeName').first().json` — referencias entre nodos siguen igual.
-- `Buffer`, `JSON`, `Date`, sintaxis ES2022 — normal.
+- `$input`, `$('NodeName').first().json`, `$env.X` — referencias normales.
+- `Buffer`, `JSON`, `Date`, sintaxis ES2022, `new Promise(setTimeout)`.
 
-**Patrón correcto cuando el Code necesita HTTP:**
-1. Añadir un nodo `HTTP Request` ANTES del Code.
-2. El Code lee la respuesta vía `$('NombreDelNodoHTTP').first().json.<campo>`.
-3. Si necesitas verificar firma de un JWT entrante: usa `https://oauth2.googleapis.com/tokeninfo?id_token=<token>` (Google verifica por ti) en lugar de hacer RSA local.
+**Patrón correcto para HTTP autenticado en Code (en vez de `httpRequestWithAuthentication`):** mover la autenticación a manual usando `$env` + headers + `this.helpers.request`. Patrón canónico para Supabase:
+
+```javascript
+const SUPABASE_KEY = $env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPABASE_KEY) throw new Error('[X] $env.SUPABASE_SERVICE_ROLE_KEY no esta definido');
+const sb = async (opts) => {
+  const headers = Object.assign({}, opts.headers || {}, {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY
+  });
+  if (opts.body !== undefined && opts.json && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const reqOpts = { method: opts.method, uri: opts.url, headers, simple: false, resolveWithFullResponse: true };
+  if (opts.json) reqOpts.json = true;
+  if (opts.body !== undefined) reqOpts.body = opts.body;
+  const resp = await this.helpers.request(reqOpts);
+  if (resp.statusCode < 200 || resp.statusCode >= 300) {
+    throw new Error('Supabase HTTP ' + resp.statusCode + ': ' + JSON.stringify(resp.body).slice(0,300));
+  }
+  return resp.body;
+};
+```
+
+Mismo patrón aplicable a Gemini (header `x-goog-api-key`), Anthropic (`x-api-key`), Bubble (`Authorization: Bearer`), etc.
+
+**Patrón alternativo (si no quieres tocar Code):** sacar la operación HTTP a un nodo `HTTP Request` nativo ANTES del Code, dejando el Code solo con transformación de datos. Recomendado para autenticación compleja (OAuth2 refresh, JWT firma local, etc.).
+
+**Caso especial JWT verification:** para verificar firma de JWT entrante NO uses `require('crypto')` ni implementación RSA local (bloqueado). Usa `HTTP Request → https://oauth2.googleapis.com/tokeninfo?id_token=<token>` (Google verifica por ti) o el equivalente del IdP.
 
 **Dónde ocurrió:**
 - `8snJvdNsmRM2yI2y` (2026-05-08). 4 iteraciones de patches al jsCode fallidas (`this.getWorkflowStaticData` → `$getWorkflowStaticData` → `fetch` → `require('https').get` → `require('crypto')`) antes de aceptar que la verificación JWT no se puede hacer dentro del Code y refactorizar a tokeninfo via HTTP Request.
 - `BqNTrwoQ2iJIcAB4` (2026-05-12). Code `Preparar Payload` usaba `this.helpers.httpRequestWithAuthentication.call(this, 'supabaseApi', opts)` para leer `bub_clientes`. Fallaba con `helpers.httpRequestWithAuthentication is not supported in the Code Node`. Fix: dividir en `Validar Input` (Code) + `GET Cliente` (Supabase node nativo, op `getAll`, filter `notion_id eq`) + `Preparar Payload` (Code, solo armado de payload).
-- `NI1oUwIY99TGk496` + `7yjLwl4cEJa7XAYY` + `JI5Tr7IogqXgaI7a` (2026-05-24). 3 workflows Cerebro con Code nodes haciendo `httpRequestWithAuthentication` para Supabase. Cuando el Code corre en sub-workflow vía `executeWorkflow` la restricción se vuelve dura (en ejecución manual del workflow padre a veces parecía pasar — falso positivo). Fix aplicado: helper `sb` manual usando `this.helpers.request` (legacy request-promise, NO httpRequest) + headers `apikey` + `Authorization: Bearer $env.SUPABASE_SERVICE_ROLE_KEY`. Patrón canónico:
-  ```javascript
-  const SUPABASE_KEY = $env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!SUPABASE_KEY) throw new Error('[X] $env.SUPABASE_SERVICE_ROLE_KEY no esta definido');
-  const sb = async (opts) => {
-    const headers = Object.assign({}, opts.headers || {}, {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY
-    });
-    if (opts.body !== undefined && opts.json && !headers['Content-Type']) {
-      headers['Content-Type'] = 'application/json';
-    }
-    const reqOpts = { method: opts.method, uri: opts.url, headers, simple: false, resolveWithFullResponse: true };
-    if (opts.json) reqOpts.json = true;
-    if (opts.body !== undefined) reqOpts.body = opts.body;
-    const resp = await this.helpers.request(reqOpts);
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw new Error('Supabase HTTP ' + resp.statusCode + ': ' + JSON.stringify(resp.body).slice(0,300));
-    }
-    return resp.body;
-  };
-  ```
-  **Nota importante:** `this.helpers.request` (lowercase) SÍ está expuesto en el sandbox del task runner; `this.helpers.httpRequest` y `this.helpers.httpRequestWithAuthentication` NO. Es una API distinta (legacy request-promise vs nuevo axios) que sobrevive porque retorna `simple:false + resolveWithFullResponse:true` desde fuera del flujo n8n. Confirmado el 2026-05-24 — todos los workflows Cerebro patcheados con este patrón funcionan en runtime sub-workflow.
+- `NI1oUwIY99TGk496` + `7yjLwl4cEJa7XAYY` + `JI5Tr7IogqXgaI7a` (2026-05-24). 3 workflows Cerebro con Code nodes haciendo `httpRequestWithAuthentication` para Supabase. Cuando el Code corre en sub-workflow vía `executeWorkflow` la restricción se vuelve dura (en ejecución manual del workflow padre a veces parecía pasar — falso positivo). Fix aplicado: helper `sb` manual usando `this.helpers.request` (legacy request-promise, ver patrón canónico en la sección "Patrón correcto" arriba) + headers `apikey` + `Authorization: Bearer $env.SUPABASE_SERVICE_ROLE_KEY`.
 
 **Aplica a:** cualquier Code node nuevo o legacy con `this.*` o HTTP interno. Si revisas Code legacy con esos patrones, marcar para refactor — funcionarán en n8n viejo pero romperán cuando la instancia migre a task runner. Ver memoria `feedback_n8n_task_runner_this.md`.
 
