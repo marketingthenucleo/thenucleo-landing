@@ -2,8 +2,8 @@
 title: Ficha de Cliente (admin-only)
 dominio: ficha-cliente
 estado: vivo
-actualizado: 2026-05-23
-version_dataset: F1 · seed hardcoded Dra. Neuss (4 pipelines) — backend Supabase F2 pendiente
+actualizado: 2026-05-24
+version_dataset: F2.2 completo — read RPC + 6 write RPCs + 4 drawers cableados + archivar + 11 estados finos. Deuda menor: archivar trigger/email + link plantilla→campaña.
 tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 ---
 
@@ -185,9 +185,16 @@ Vista lanzada. Antes era un mockup con datos inventados. Migration RPCs `ficha_c
 
 ## Pendientes
 
-1. **F2 backend Supabase Pipelines y Campañas** — 4 tablas + RPCs CRUD + RLS por `cliente_id`. Bloquea el resto: hasta no cablear, el módulo solo sirve para validar UI/UX con el seed.
-2. **Piloto con Melina sobre Neus** — sentarse 30 min y declarar los 4 pipelines reales en el módulo (cuando F2 esté listo). Validar si el modelo aguanta.
-3. **Migrar 5 clientes más activos** al modelo en sesiones acompañadas con Account.
-4. **Panel Catálogos cableado** — depende de la decisión sobre `cliente_plantillas_campania`.
-5. **Panel Anomalías** — integrar `n8n_incidencias` filtradas por cliente + checks operativos derivados (servicios sin Drive, campañas sin briefing).
-6. **Allowlist en tabla `playbook_editors(email)`** cuando crezca a 5+ editores.
+1. ~~**F2 schema Supabase Pipelines y Campañas**~~ ✅ **Aplicado 2026-05-24.** 5 tablas (`cliente_campania_plantillas` + `cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails`) con RLS via `is_comunidad_admin()` (20 policies, 4×tabla) + 7 plantillas seed. Migration `ficha_cliente_pipelines_f2_schema` en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql`. Detalle en [[../infra/supabase-schema#pipelines-y-campañas]].
+2. ~~**F2.2.1 RPC read + cableo frontend lectura**~~ ✅ **Cerrado 2026-05-24.** `ficha_pipelines_get(p_bubble_id)` (SECURITY INVOKER, devuelve jsonb con forma JS-friendly que matchea el SEED previo) + seed Neus migrado a DB (4 pipelines + 4 campañas + 4 triggers + 5 emails) + frontend modificado: `const SEED` removido, `PIPELINES_MODULE.loadFor(c.bubble_id)` cableado en `renderCliente`, módulo con `setData`/`loadFor`/`loadStatus`. Banner "modo lectura · F2.2.1" reemplaza la nota de seed. Migration en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_read_rpc_and_seed_neus.sql`. **Decisión sobre `ficha_cliente_get`:** NO se amplía con `pipelines` — frontend hace 2 calls en paralelo (evita el puzzle DEFINER↔INVOKER, mantiene RPCs separadas por dominio).
+3. ~~**F2.2.2.A RPC writes Supabase**~~ ✅ **Cerrado 2026-05-24.** 5 upserts (`ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`) con auto-código server-side via regex sobre max actual (regla `.docx` §3.4: codes nunca se reutilizan) + `ficha_archivar_codigo(p_kind, p_id)` genérico para los 4 tipos. Todas `SECURITY INVOKER`, GRANT a authenticated, gate por RLS `is_comunidad_admin()`. "Servidor propone, usuario valida": cada upsert acepta `p_codigo_override` opcional. Smoke test: insert P5 + P5C1 + P5C1FM1 + P5C1BD1 (con fecha obligatoria) + email + UPDATE estado → 'copy-listo' + archivar + cleanup. Verde. Migration en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_write_rpcs.sql`.
+4. ~~**F2.2.2.B cableo drawers frontend**~~ ✅ **Cerrado 2026-05-24 en 5 micro-commits.** B.1: `stateBadge()` ampliado a 11 estados finos + CSS por familia de color (warn/info/ok/neutral). B.2: drawer "Nuevo Pipeline" wired a `ficha_pipeline_upsert`. B.3: drawer "Nueva Campaña" wired (sin link `plantilla_id` — deuda menor). B.4: archivar pipeline/campaña wired a `ficha_archivar_codigo`. B.5+6: drawers "Nuevo Trigger" (3 cards FM/FW/BD + form contextual + fecha obligatoria si BD) y "Nuevo Email" (form + chip multi-select de triggers aplicables con preview reactivo del código + equivalencia caso 5: marcados==todos → []) creados desde cero + wire. Banner "modo lectura · F2.2.1" retirado.
+5. **Deuda menor abierta:**
+    - Archivar trigger/email — añadir botón en `renderTriggerView` y `renderEmailView` (RPC ya soporta `kind='trigger'|'email'`).
+    - Link plantilla→campaña al persistir — en B.3 se pasa `p_plantilla_id: null`. Cargar catálogo `cliente_campania_plantillas` en init y mapear slug→uuid antes del save, o ampliar la RPC con `p_plantilla_slug text` que resuelve server-side.
+    - "Editar" en los detail views — hoy los views son read-only. Habilitar inline edit que llame al upsert correspondiente con `p_id` pasado (ya soportado por las RPCs, sólo falta la UI).
+3. **Piloto con Melina sobre Neus** — sentarse 30 min y declarar los 4 pipelines reales en el módulo (cuando #2 esté listo). Validar si el modelo aguanta.
+4. **Migrar 5 clientes más activos** al modelo en sesiones acompañadas con Account.
+5. **Panel Catálogos cableado** — depende de las RPCs F2.
+6. **Panel Anomalías** — integrar `n8n_incidencias` filtradas por cliente + checks operativos derivados (servicios sin Drive, campañas sin briefing).
+7. **Allowlist en tabla `playbook_editors(email)`** cuando crezca a 5+ editores.

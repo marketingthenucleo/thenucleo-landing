@@ -461,7 +461,7 @@ Para evitar scope creep, este documento deja **fuera** explícitamente:
 
 1. **Validar este doc con Melina (PM).** Que lo lea en 15 min y diga si entiende cómo se rellena la ficha de Neus sin tener que preguntar.
 2. **Piloto Neus.** Ben + Melina sentados 30 min declaran los 4 Pipelines de Neus en un mockup de papel/HTML. Validan si el modelo aguanta.
-3. **Diseñar el modelo de datos Supabase.** Tablas, RPCs, RLS. Sesión técnica aparte.
+3. ~~**Diseñar el modelo de datos Supabase.**~~ ✅ **Schema aplicado 2026-05-24** — 5 tablas (`cliente_campania_plantillas`, `cliente_pipelines`, `cliente_campanias`, `cliente_triggers`, `cliente_emails`) + RLS `is_comunidad_admin()` + 7 plantillas seed. Pendiente: 7 RPCs (`ficha_pipelines_get`, `ficha_codigos_catalogo`, 5×`ficha_*_upsert`, `ficha_archivar_codigo`) + ampliar `ficha_cliente_get` para incluir `pipelines` en el jsonb. Detalle schema en [[../infra/supabase-schema#pipelines-y-campañas]].
 4. ~~**Refactor del bloque MOCKUP de Pipelines** en `work.thenucleo.com/ficha-cliente/` para que sea funcional.~~ ✅ **Hecho 2026-05-23** — frontend del módulo vivo con seed F1 hardcoded (4 pipelines de Dra. Neuss). Falta cablear backend Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + RPCs) = F2.
 5. **Modificar formulario "Crear tarea" en Bubble** para forzar dropdown de código del catálogo del cliente.
 6. **Catálogo seed de Plantillas** — crear las 7 plantillas del seed inicial (§4) con sus briefings master en Drive.

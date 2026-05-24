@@ -71,6 +71,134 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [WORK][FEATURE] — Ficha de Cliente F2.2.2.B: 4 drawers cableados + archivar via RPC + stateBadge 11 estados (frontend write completo)
+
+- **Área:** `ficha-cliente/index.html` (~300 líneas tocadas en 5 micro-commits) + 2 docs (`work/ficha-cliente.md`, `infra/supabase-schema.md`).
+- **Qué:** Cerrar el cableado frontend del módulo Pipelines y Campañas (F2.2.2.B). 5 commits incrementales, cada uno con build verde y riesgo aislado:
+  - **B.1 `6357aa8` — `stateBadge` 11 estados finos:** mapeo unificado de 3 estados (`declarada/en-produccion/archivada` del SEED previo) ampliado a 11 strings únicos derivados de los CHECK constraints DB: pipelines `activo/archivado` · campañas `declarada/en-produccion/archivada` · triggers `declarado/creado/monitorizando/archivado` · emails `declarado/copy-listo/diseno-listo/montado-ghl/activo/archivado`. CSS agrupado por color semántico (warn/info/ok/neutral). Bug menor de género arreglado: línea 2266 hardcodeaba `stateBadge('declarada')` para preview de trigger → corregido a `'declarado'`.
+  - **B.2 `fcfa3e8` — Drawer "Nuevo Pipeline" wired:** handler `#np-save` ahora llama `rpc('ficha_pipeline_upsert', { p_id: null, p_cliente_bubble_id: S.bubbleId, p_nombre, p_objetivo_negocio })`. closeSheet + `loadFor` + toast con código real. Botón disabled durante await.
+  - **B.3 `172291f` — Drawer "Nueva Campaña" wired:** mismo patrón con todos los campos del form. Picker de plantilla precarga el form (UX) pero pasa `p_plantilla_id: null` (deuda menor — mapear slug→uuid).
+  - **B.4 `a23fa7f` — Archivar pipeline/campaña wired:** `archiveItem(kind, id)` rewrite a async wrapper de `rpc('ficha_archivar_codigo')`. Botones de archivo llevan `data-kind="pipeline"|"campania"`. Handler async con loadFor para refresh.
+  - **B.5+6 `decea9d` — Drawers "Nuevo Trigger" + "Nuevo Email" creados desde cero + wire + banner retirado:**
+    - Trigger: paso 1 elige tipo via 3 cards (FM/FW/BD) con hint. Paso 2 form contextual (descripción + link externo con label que cambia por tipo + fecha lanzamiento sólo si BD con asterisco obligatorio + nota .docx caso 4). Preview code calcula `c.code+tipo+(count_existentes_de_ese_tipo+1)`. Validación cliente: descripción required, fecha required si BD.
+    - Email: form unificado con nombre, orden auto-precargado al next, espera, objetivo, **chip multi-select** de subcódigos de triggers de la campaña con **preview de código reactivo** (regla .docx caso 5: vacío o todos → `P1C1E<N>` · subset → `P1C1<concat>E<N>`). Convierte "marcados==todos" a `[]` al guardar.
+    - Botones `+ TRIGGER` y `+ EMAIL` actualizados con `data-pid`+`data-cid` para el dispatch.
+    - Banner `📌 Modo lectura · F2.2.1` retirado de `renderList` — la frase ya no aplica. Empty state actualizado: "Sin pipelines declarados. Pulsa + Pipeline para empezar." (sin "(próximamente)").
+- **Por qué:** Cerrar F2.2 funcionalmente end-to-end (read + write + archivar). Mel puede empezar a declarar pipelines reales para clientes desde hoy en `work.thenucleo.com/ficha-cliente/`.
+- **Impacto:**
+  - ✅ Frontend Account-mode 100% operativo: crear pipelines/campañas/triggers/emails + archivar pipelines/campañas. Persistencia en Supabase, todos los admins lo ven.
+  - ✅ Banner "modo lectura" fuera — ya no engaña.
+  - ⚠️ Deuda menor (no urgente): (a) archivar trigger/email (RPC soporta, falta botón en detail views), (b) link plantilla→campaña al persistir (`p_plantilla_id: null` en B.3), (c) "editar" inline en detail views (hoy son read-only — falta UI, las RPCs ya soportan UPDATE con `p_id`).
+  - ✅ Cero regresiones en otras secciones de la ficha (Datos, Servicios, Catálogos, Anomalías intactos).
+- **Refs:**
+  - Commits: `6357aa8` (B.1), `fcfa3e8` (B.2), `172291f` (B.3), `a23fa7f` (B.4), `decea9d` (B.5+6).
+  - Branch: `claude/customer-record-setup-sz960`.
+  - Archivos editados: `ficha-cliente/index.html` (+300 líneas, -45 sobre los 5 commits), `docs/work/ficha-cliente.md` (Pendientes 4 marcado hecho, 5 nuevo con deuda), `docs/infra/supabase-schema.md` (sección F2.2.2.B actualizada), `docs/log-cambios.md` (esta entrada).
+- **Siguiente paso (libre):**
+  1. **Piloto con Melina sobre Neus** — sentaros 30 min, declarar 2-3 pipelines/campañas de prueba reales, ver dónde duele la UX.
+  2. Cerrar deuda menor cuando aparezca uso real que la justifique.
+
+### 2026-05-24 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.2.2.A: 5 upsert + 1 archivar RPCs aplicados (backend write completo)
+
+- **Área:** Supabase `cbixhqjsnpuhcrcjppah` (6 RPCs nuevas — todas SECURITY INVOKER, GRANT a authenticated) + repo `supabase/migrations/20260524_ficha_cliente_pipelines_f2_write_rpcs.sql` (377 líneas) + 3 docs sincronizados.
+- **Qué:**
+  - **5 upserts del modelo PxCx:** `ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert` + helper `ficha_archivar_codigo(p_kind text, p_id uuid)` genérico para los 4 tipos. Patrón uniforme: `p_id NULL` = INSERT, `p_id` dado = UPDATE. INSERT auto-asigna código vía regex sobre max actual del contexto (cliente/pipeline/campaña), respetando `p_codigo_override` opcional. UPDATE nunca toca el codigo (regla `.docx` §3.4: codes never reused).
+  - **Auto-código por capa:**
+    - Pipelines: `P<N>` per cliente (max+1 sobre `cliente_pipelines.codigo` filtrado por `cliente_bubble_id`).
+    - Campañas: `<pipelineCodigo>C<N>` per pipeline (max+1 filtrado por `pipeline_id`).
+    - Triggers: `<campCodigo><tipo><N>` per (campaña, tipo) — FM1/FM2 son secuencia independiente de FW1, BD1 (max+1 filtrado por `campania_id + tipo`).
+    - Emails: sin codigo en DB — sólo `orden int` auto-asignado max+1 por campaña. El código display (`P1C1E2` / `P1C1FM1E2`) se deriva en frontend via `emailCode(camp, email)` en función de `orden + triggers_aplicables`.
+  - **Archivar:** `ficha_archivar_codigo('pipeline'|'campania'|'trigger'|'email', uuid)`. Resuelve la diferencia de género en los CHECKs (campañas → 'archivada', resto → 'archivado'). Regla `.docx` §3.6 + caso 9: nada se borra, sólo se archiva.
+  - **"Servidor propone, usuario valida":** cada upsert acepta `p_codigo_override text DEFAULT NULL`. Si NULL/'' el servidor autocompone (caso típico). Si pasa valor, lo respeta y el UNIQUE de la tabla valida unicidad. Decisión documentada en la sesión (preferencia de Ben).
+  - **Refresh tras save:** todas las RPCs devuelven la row insertada/actualizada como `jsonb` para el frontend, pero el flujo previsto es `await rpc('ficha_X_upsert', {...})` + `await loadFor(bubbleId)` para refrescar el árbol completo desde DB (consistencia garantizada vs merge selectivo — más simple en JS, +100ms por save irrelevante en admin tool).
+  - **Smoke test (DO block via execute_sql):** INSERT pipeline auto-código P5 → INSERT campaña dentro auto-código P5C1 → INSERT trigger FM auto-código P5C1FM1 → INSERT trigger BD con `fecha_lanzamiento='2026-06-01'` auto-código P5C1BD1 (CHECK obliga la fecha) → INSERT email orden auto-1 → UPDATE email estado 'declarado' → 'copy-listo' → archivar pipeline → DELETE cleanup. Verde, sin residuos. Neus permanece con sus P1-P4 intactos.
+  - **`get_advisors security`:** 0 hits sobre las 5 tablas + 6 RPCs nuevas.
+- **Por qué:** Cerrar la mitad write de F2.2 antes de tocar el frontend. Patrón seguro: con backend testeado, el cableo de UI puede iterar rápido sin miedo a regresiones de schema. La separación A (RPCs) / B (frontend) reduce el blast radius si algo falla en una parte.
+- **Impacto:**
+  - ✅ Backend write 100% disponible. Cualquier cliente Supabase puede crear/editar/archivar pipelines, campañas, triggers, emails desde ya.
+  - ✅ Mantiene el principio de "1 sitio de allowlist menos" — todas las RPCs son INVOKER. Sin tocar el contador (sigue en 7).
+  - ⚠️ Frontend `/ficha-cliente/` aún no llama a las upserts — los drawers siguen mutando `S.data` en memoria. El banner "modo lectura · F2.2.1" sigue visible y es preciso. Cerrar en F2.2.2.B.
+- **Refs:**
+  - Commit: pendiente push.
+  - Branch: `claude/customer-record-setup-sz960`.
+  - Migration: `ficha_cliente_pipelines_f2_write_rpcs`.
+  - RPCs nuevas (6): `public.ficha_pipeline_upsert`, `public.ficha_campania_upsert`, `public.ficha_trigger_upsert`, `public.ficha_email_upsert`, `public.ficha_archivar_codigo`.
+  - Archivos editados: `supabase/migrations/20260524_ficha_cliente_pipelines_f2_write_rpcs.sql` (nuevo), `docs/infra/supabase-schema.md`, `docs/work/ficha-cliente.md`, este `docs/log-cambios.md`.
+- **Siguiente paso (F2.2.2.B):**
+  1. Localizar los handlers de save de cada drawer en `ficha-cliente/index.html` (Nuevo Pipeline / Nueva Campaña / Nuevo Trigger / Nuevo Email + edit inline + archivar).
+  2. Reemplazar las mutaciones `S.data[i].foo = ...` por `await rpc('ficha_X_upsert', {...})` con try/catch + toast en error.
+  3. Tras cada save: `await PIPELINES_MODULE.loadFor(S.bubbleId)` para refresco completo.
+  4. Refactor `stateBadge()`: pasar de 3 a 14 estados (2 pipeline + 3 campaña + 4 trigger + 6 email) con labels en castellano + clases CSS por color.
+  5. Retirar banner "modo lectura · F2.2.1" en `renderList()` cuando todo esté wired.
+
+### 2026-05-24 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.2.1: read RPC + seed Neus migrado + frontend lee de Supabase
+
+- **Área:** Supabase `cbixhqjsnpuhcrcjppah` (1 RPC nueva + 4+4+4+5 filas de Neus en las 4 tablas hijas) + `ficha-cliente/index.html` (-62 líneas SEED, +30 líneas cabling) + 3 docs.
+- **Qué:**
+  - **RPC `ficha_pipelines_get(p_bubble_id text) RETURNS jsonb`** — devuelve el árbol completo pipelines→campañas→triggers+emails con la forma JS-friendly EXACTA que el frontend ya espera (claves cortas `code/name/obj/camps/triggers/emails` mapeadas explícitamente desde las columnas snake_case). `SECURITY INVOKER + STABLE` — la RLS (`is_comunidad_admin()`) gate-ea el acceso. `GRANT EXECUTE TO authenticated`. Migration `ficha_cliente_pipelines_f2_read_rpc_and_seed_neus`.
+  - **Decisión sobre cómo cablear:** NO se amplía `ficha_cliente_get` con `pipelines` en el jsonb (como sí se hizo con `servicios` 2026-05-22). El frontend hace 2 calls paralelas a `ficha_cliente_get` + `ficha_pipelines_get`. Razón: `ficha_cliente_get` es `SECURITY DEFINER` y llamar dentro a una INVOKER pierde el contexto auth.uid() de RLS → puzzle de privilegios. Más limpio mantener RPCs separadas por dominio (1 round-trip extra, irrelevante para tool admin).
+  - **Seed Neus migrado** — los 4 pipelines (P1 Venta directa, P2 Captación, P3 Reactivación, P4 Newsletter) + 4 campañas + 4 triggers (P1C1FM1, P2C1FM1, P3C1BD1 con fecha, P4C1BD1 con fecha) + 5 emails que vivían hardcoded en `ficha-cliente/index.html` lines 1694-1756 ahora viven en `cliente_pipelines`/`cliente_campanias`/`cliente_triggers`/`cliente_emails` para `cliente_bubble_id = '1773847038522x983519237604638700'`. ON CONFLICT en pares únicos → migration idempotente.
+  - **Frontend cableado** (`ficha-cliente/index.html`):
+    - Borrado `const SEED = [...]` (62 líneas).
+    - `S.data` arranca `[]`. Nuevos campos `bubbleId`, `loadStatus` (idle/loading/ready/error), `loadError`.
+    - Nueva API: `setData(arr)` y `loadFor(bubbleId)` en el return del IIFE.
+    - `renderList()` muestra banner `📌 Modo lectura · F2.2.1 · Pipelines cargados desde Supabase · Las ediciones en los drawers todavía no se guardan` + estados contextuales (cargando, error, vacío, lista).
+    - En `renderCliente()`: `PIPELINES_MODULE.init()` seguido de `PIPELINES_MODULE.loadFor(c.bubble_id)` — cada cliente trae sus propios pipelines (antes TODOS veían los 4 de Neus por SEED hardcoded — bug latente cerrado).
+  - **Verificación end-to-end:** `SELECT jsonb_array_length(ficha_pipelines_get('1773847038522x983519237604638700'))` → 4. Cuentas por tabla: 4 pipelines, 4 campañas, 4 triggers, 5 emails — match exacto con el SEED previo. Build Eleventy verde (54 files).
+- **Por qué:** Cerrar el primer entregable funcional de F2.2 (leer desde DB), con datos reales en producción para Melina (Neus) y el resto de clientes con panel vacío correcto. El SEED hardcoded además ocultaba un bug — el cliente seleccionado no afectaba a Pipelines, todos veían los de Neus.
+- **Impacto:**
+  - ✅ Reads end-to-end vivos en `work.thenucleo.com/ficha-cliente/?id=<bubble_id>`. Neus sigue con sus 4 pipelines; Bombo, Yucalcari, etc. ven panel vacío (correcto, no han declarado nada).
+  - ✅ Bug latente cerrado: ahora cada cliente ve SUS pipelines, no los de Neus.
+  - ⚠️ Drawers de creación/edición siguen mutando `S.data` en memoria — los cambios NO persisten (refresh los descarta). Banner visible lo aclara. Cerrar en F2.2.2.
+  - ✅ Cero consumidores rotos (`ficha_cliente_get` y `ficha_cliente_listar` intactos; Bubble no toca estas tablas).
+- **Refs:**
+  - Commit: pendiente push.
+  - Branch: `claude/customer-record-setup-sz960`.
+  - Migration: `ficha_cliente_pipelines_f2_read_rpc_and_seed_neus`.
+  - RPC: `public.ficha_pipelines_get(text) RETURNS jsonb`.
+  - Archivos editados: `ficha-cliente/index.html`, `supabase/migrations/20260524_ficha_cliente_pipelines_f2_read_rpc_and_seed_neus.sql` (nuevo), `docs/infra/supabase-schema.md`, `docs/work/ficha-cliente.md`, este `docs/log-cambios.md`.
+- **Siguiente paso (F2.2.2):**
+  1. **5 upserts** (`ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`) con auto-código server-side (regex sobre el max actual). Retornan la row insertada/actualizada como jsonb.
+  2. **`ficha_archivar_codigo(p_kind text, p_id uuid)`** — genérico para los 4 tipos. SET estado='archivado/a'. Validar tipo permitido por capa.
+  3. **Cableo drawers** `PIPELINES_MODULE`: después de cada save (drawer Pipeline / Campaña / Trigger / Email), llamar al upsert correspondiente, esperar respuesta, refrescar `loadFor(bubbleId)` para re-sync. Manejar errores con toast.
+  4. **Refactor `stateBadge()`** (`ficha-cliente/index.html:1792` antes del cambio F2.2.1, hoy ~línea 1730) — añadir labels + clases CSS para los nuevos estados finos (4 trigger + 6 email).
+  5. **Retirar banner "modo lectura"** una vez F2.2.2 esté live.
+
+### 2026-05-24 [WORK][INFRA][FEATURE] — Ficha de Cliente F2: schema Supabase Pipelines y Campañas aplicado (5 tablas + RLS + 7 plantillas seed)
+
+- **Área:** Supabase `cbixhqjsnpuhcrcjppah` (5 tablas nativas nuevas + 20 policies + 7 filas seed) + repo `marketingthenucleo/thenucleo-landing` (`supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql`, `.eleventyignore`, 3 docs actualizadas).
+- **Qué:**
+  - Migration `ficha_cliente_pipelines_f2_schema` aplicada vía MCP `apply_migration`. Crea 5 tablas (`cliente_campania_plantillas`, `cliente_pipelines`, `cliente_campanias`, `cliente_triggers`, `cliente_emails`) con todas sus columnas, CHECKs, UNIQUEs, FKs, índices y `BEFORE UPDATE` triggers reusando `public.update_updated_at()`.
+  - RLS habilitada en las 5 tablas + 20 policies (4 por tabla: select/insert/update/delete) todas gateadas por `public.is_comunidad_admin()`. Patrón idéntico a `fichas_categorias`/`fichas_de_producto`/`disponibilidad_*`. GRANTs explícitos por rol (regla rollout 2026-10-30). **NO suma al contador de 7 sitios de allowlist hardcoded** (sale por RLS limpia).
+  - Seed inicial: 7 plantillas para la agencia TheNucleo (`agencia_id='1769513105728x555492736219132700'`): Venta Directa Meta, Captación leads FM, Captación leads FW, Reactivación BBDD, Newsletter recurrente, Lanzamiento multicanal, Evento. Mismo set que `PIPELINES_MODULE.PLANTILLAS` del frontend (`ficha-cliente/index.html:1684-1692`) y §4 de `portal/ficha-cliente.md`.
+  - Decisiones de schema tomadas vía AskUserQuestion en la sesión:
+    1. **Plantillas por agencia** (no globales) — `agencia_id` NOT NULL.
+    2. **FK clientes via `bubble_id text`** (no uuid) — patrón `playbook_cliente_servicios`.
+    3. **Gate auth via `is_comunidad_admin()`** (no allowlist hardcoded) — patrón `disponibilidad_*`.
+    4. **`triggers_aplicables text[]` de subcódigos** (`'FM1','FW1'`, no `uuid[]`) — la regla `.docx` "los códigos no caducan ni se reutilizan" (caso 6) garantiza integridad sin FK formal y evita JOIN extra en la RPC `_get`. Decisión documentada con 4 razones (frontend ya los maneja así, regla del .docx, coherencia con el schema, riesgo mitigado por flujo "archivar, no delete").
+    5. **Estados finos por capa** (visión §2 original, NO los 3 unificados del SEED actual): pipelines `activo/archivado`, campañas `declarada/en-produccion/archivada`, triggers `declarado/creado/monitorizando/archivado`, emails `declarado/copy-listo/diseno-listo/montado-ghl/activo/archivado`. Impacto frontend: refactor de `stateBadge()` en `ficha-cliente/index.html:1792` al cablear writes.
+  - Migration committeada como SQL en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql` (323 líneas) para review/historial. `supabase/` añadido a `.eleventyignore`.
+  - Verificación post-apply:
+    - 5 tablas confirmadas vía query a `pg_class` + `pg_policies` + `pg_stat_user_tables`: RLS=true en las 5, 4 policies/tabla, `cliente_campania_plantillas` con 7 filas, las otras 4 vacías.
+    - `get_advisors security`: 0 hits sobre las 5 tablas nuevas (todas las 202 advertencias preexistentes son sobre otras tablas).
+- **Por qué:** F2 estaba documentada como pendiente en 3 sitios (`docs/portal/ficha-cliente.md` §10 punto 3, `docs/portal/ficha-cliente-pipelines-handoff-landing.md` "Próxima fase F2", `docs/work/ficha-cliente.md` Pendientes punto 1). El frontend F1 vive con SEED hardcoded desde 2026-05-23 y bloquea el piloto con Melina sobre Neus hasta tener backend real.
+- **Impacto:**
+  - ✅ Las 5 tablas listas para recibir datos reales. Catálogo de plantillas activo (no es ya mockup en el panel Catálogos cuando se cablee).
+  - ✅ Suma 0 al contador de sitios de allowlist hardcoded (sigue en 7). Las RPCs F2 irán con `SECURITY INVOKER` (RLS hace el filtrado) → tampoco sumarán.
+  - ❌ Frontend sigue con SEED hardcoded. Las 5 tablas existen pero ningún consumer las lee todavía. Sin riesgo de regresión visible en `work.thenucleo.com/ficha-cliente/`.
+  - ❌ Bubble (portal) tampoco consume estas tablas — no requiere cambios en `bub_*` ni en sync workflows.
+- **Refs:**
+  - Commit: `54b1264` (`feat(ficha-cliente): migration F2 — schema Pipelines + Campañas`)
+  - Branch: `claude/customer-record-setup-sz960`
+  - Migration name (Supabase): `ficha_cliente_pipelines_f2_schema`
+  - Tablas Supabase: `cliente_campania_plantillas`, `cliente_pipelines`, `cliente_campanias`, `cliente_triggers`, `cliente_emails`
+  - Docs editados: `docs/infra/supabase-schema.md` (nueva sección "Pipelines y Campañas — 5 tablas nativas"), `docs/work/ficha-cliente.md` (Pendientes refrescados), `docs/portal/ficha-cliente.md` (§10 punto 3 marcado como hecho), este `docs/log-cambios.md`.
+- **Siguiente paso (F2.2):**
+  1. **7 RPCs CRUD** (`ficha_pipelines_get`, `ficha_codigos_catalogo`, `ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`, `ficha_archivar_codigo`). `SECURITY INVOKER` para que las RLS hagan el gate.
+  2. **Ampliar `ficha_cliente_get`** con `pipelines: ficha_pipelines_get(p_bubble_id)` en el jsonb (mismo patrón que `servicios` 2026-05-22).
+  3. **Cablear frontend**: sustituir `const SEED = [...]` (`ficha-cliente/index.html:1758`) por load real desde `ficha_cliente_get`. Refactor `stateBadge()` para los estados finos por capa. Drawers de creación/edición conectados a `_upsert`.
+  4. **Piloto Melina sobre Neus** una vez F2.2 esté green.
+
 ### 2026-05-24 [INFRA][BUGFIX] — Rotación Gemini API key + migración secretos a env vars + memory bump n8n runner
 
 - **Área:** n8n workflows IA Cerebro + IA Newsletter, env vars Easypanel, GCP project `app-thenucleo`.

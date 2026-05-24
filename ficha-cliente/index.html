@@ -706,9 +706,23 @@
     text-transform: uppercase; letter-spacing: 0.08em;
     border: 1px solid; line-height: 1;
   }
-  .state-badge.declarada { color: var(--warn); background: var(--warn-bg); border-color: rgba(245,158,11,0.3); }
-  .state-badge.en-produccion { color: var(--info); background: var(--info-bg); border-color: rgba(59,130,246,0.3); }
-  .state-badge.archivada { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
+  /* F2.2.2.B.1: estados finos por capa (decisión sesión 2026-05-24).
+     11 strings únicos: 2 pipeline + 3 campaña + 4 trigger + 6 email.
+     Paleta consistente: declarado/-a + copy-listo → warn (ámbar) ·
+     en-produccion + creado + diseno-listo → info (azul) ·
+     activo + monitorizando + montado-ghl → ok (verde) ·
+     archivado/-a → neutro. */
+  .state-badge.declarada,
+  .state-badge.declarado,
+  .state-badge.copy-listo { color: var(--warn); background: var(--warn-bg); border-color: rgba(245,158,11,0.3); }
+  .state-badge.en-produccion,
+  .state-badge.creado,
+  .state-badge.diseno-listo { color: var(--info); background: var(--info-bg); border-color: rgba(59,130,246,0.3); }
+  .state-badge.activo,
+  .state-badge.monitorizando,
+  .state-badge.montado-ghl { color: var(--ok); background: var(--ok-bg); border-color: rgba(34,197,94,0.3); }
+  .state-badge.archivada,
+  .state-badge.archivado { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
   .state-badge.plantilla { color: #a78bfa; background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.3); }
   [data-theme="light"] .state-badge.plantilla { color: #7c3aed; background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.3); }
   .state-badge.custom { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
@@ -1443,8 +1457,10 @@ function renderCliente(c) {
   const servicios = Array.isArray(c.servicios) ? c.servicios : [];
   renderServiciosPanel(servicios);
 
-  // Pipelines — módulo F1 con SEED hardcoded Dra. Neuss
+  // Pipelines — F2.2.1: cargado desde Supabase vía RPC ficha_pipelines_get.
+  // init() pinta el árbol vacío inmediatamente; loadFor() trae los datos.
   PIPELINES_MODULE.init();
+  PIPELINES_MODULE.loadFor(c.bubble_id);
 
   // Mostrar tabs + content
   document.getElementById('tabs').style.display = '';
@@ -1691,72 +1707,17 @@ const PIPELINES_MODULE = (() => {
     { slug:'evento', nombre:'Evento (formulario + recordatorios)', triggers:[{tipo:'FW',name:'Inscripción evento'}], emails:[{name:'Confirmación',espera:'Día 0'},{name:'Recordatorio',espera:'-1d'}], briefingMaster:'drive://templates/briefing-evento.docx', defaults:{presup:100,kpi:'Inscripciones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
   ];
 
-  // SEED Dra. Neuss (4 pipelines, snapshot del mockup v3)
-  const SEED = [
-    {
-      id:'p1', code:'P1', name:'Venta directa Curso Suplementación',
-      obj:'Monetizar el infoproducto Curso Suplementación 75€ a tráfico frío.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p1c1', code:'P1C1', name:'Curso Suplementación 75€',
-        plantillaSlug:'venta-meta', estado:'en-produccion',
-        desde:'2026-05-15', hasta:'recurrente', presup:500, kpi:'30 ventas/mes',
-        briefingUrl:'drive://Dra-Neuss/CRM/P1C1/briefing.pdf', briefingName:'Briefing Curso Suplementación.pdf',
-        notas:'Producto en GHL · vincular píxel ahí · funnel.neusmunozgost.com',
-        triggers:[{ id:'t1', code:'P1C1FM1', tipo:'FM', name:'Anuncio Meta → checkout', estado:'en-produccion', ext:'funnel.neusmunozgost.com/curso-suplementacion-clinica-40' }],
-        emails:[]
-      }]
-    },
-    {
-      id:'p2', code:'P2', name:'Captación de clientes potenciales',
-      obj:'Nutrir BBDD con leads cualificados para futuras ofertas.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p2c1', code:'P2C1', name:'Captación leads',
-        plantillaSlug:'capt-fm', estado:'en-produccion',
-        desde:'2026-05-20', hasta:'recurrente', presup:300, kpi:'50 leads/mes',
-        briefingUrl:'drive://Dra-Neuss/CRM/P2C1/briefing-mayo.docx', briefingName:'Briefing captación mayo.docx',
-        notas:'',
-        triggers:[{ id:'t2', code:'P2C1FM1', tipo:'FM', name:'Formulario Meta clientes potenciales', estado:'en-produccion', ext:'Form ID Meta 12345' }],
-        emails:[
-          { id:'e1', name:'Bienvenida + valor', orden:1, espera:'Día 0', estado:'en-produccion', objetivo:'Romper el hielo, dar contexto del problema.', triggersAplicables:[] },
-          { id:'e2', name:'Educación / hábitos', orden:2, espera:'Día +2', estado:'declarada', objetivo:'Educar sobre suplementación con evidencia.', triggersAplicables:[] },
-          { id:'e3', name:'Oferta curso', orden:3, espera:'Día +5', estado:'declarada', objetivo:'Presentar curso 75€ con urgencia controlada.', triggersAplicables:[] }
-        ]
-      }]
-    },
-    {
-      id:'p3', code:'P3', name:'Reactivación de leads',
-      obj:'Recuperar leads sin conversión >60d.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p3c1', code:'P3C1', name:'Relanzamiento clientes potenciales',
-        plantillaSlug:'react-bd', estado:'declarada',
-        desde:'2026-05-25', hasta:'2026-05-31', presup:0, kpi:'5% reactivación',
-        briefingUrl:'', briefingName:'Sin briefing — Account pendiente de duplicar template',
-        notas:'Segmento: leads que no convirtieron en 60 días.',
-        triggers:[{ id:'t3', code:'P3C1BD1', tipo:'BD', name:'Segmento leads sin conversión >60d', estado:'declarada', ext:'GHL segment ID 88', fechaLanzamiento:'2026-05-25' }],
-        emails:[{ id:'e4', name:'Reactivación', orden:1, espera:'Día 0', estado:'declarada', objetivo:'Recordar valor + oferta de gancho.', triggersAplicables:[] }]
-      }]
-    },
-    {
-      id:'p4', code:'P4', name:'Newsletter mensual',
-      obj:'Mantener relación con BBDD activa.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p4c1', code:'P4C1', name:'Newsletter mayo',
-        plantillaSlug:'news', estado:'en-produccion',
-        desde:'2026-05-20', hasta:'mensual', presup:0, kpi:'25% apertura',
-        briefingUrl:'drive://Dra-Neuss/CRM/P4C1/briefing-mayo.docx', briefingName:'Briefing Mayo.docx',
-        notas:'',
-        triggers:[{ id:'t4', code:'P4C1BD1', tipo:'BD', name:'BBDD activa', estado:'en-produccion', ext:'Tag GHL activo', fechaLanzamiento:'2026-05-20' }],
-        emails:[{ id:'e5', name:'Edición mayo', orden:1, espera:'mensual', estado:'en-produccion', objetivo:'Edición mensual: hábito + recurso clínico.', triggersAplicables:[] }]
-      }]
-    }
-  ];
+  // F2.2.1 (2026-05-24): SEED hardcoded movido a Supabase
+  // (cliente_pipelines + 3 hijas). El árbol se carga vía RPC
+  // ficha_pipelines_get(p_bubble_id) en PIPELINES_MODULE.loadFor(bubbleId).
+  // Para Neus (1773847038522x983519237604638700) la migration sembró los
+  // 4 pipelines originales — el resto de clientes arrancan vacíos.
 
   const S = {
-    data: JSON.parse(JSON.stringify(SEED)),
+    data: [],
+    bubbleId: null,
+    loadStatus: 'idle',   // 'idle' | 'loading' | 'ready' | 'error'
+    loadError: null,
     role: 'account',
     showArchived: false,
     view: { kind: 'list' },
@@ -1789,9 +1750,26 @@ const PIPELINES_MODULE = (() => {
   function codeTag(code, sz) {
     return `<span class="code-tag ${sz==='lg'?'lg':''} ${tagClass(code)}">${escapeHtml(code)}</span>`;
   }
+  // F2.2.2.B.1: 11 estados finos por capa (CHECK constraints en DB).
+  //   pipelines:  activo / archivado
+  //   campañas:   declarada / en-produccion / archivada
+  //   triggers:   declarado / creado / monitorizando / archivado
+  //   emails:     declarado / copy-listo / diseno-listo / montado-ghl / activo / archivado
+  const STATE_LABELS = {
+    'activo':        'Activo',
+    'archivado':     'Archivado',
+    'declarada':     'Declarada',
+    'en-produccion': 'En producción',
+    'archivada':     'Archivada',
+    'declarado':     'Declarado',
+    'creado':        'Creado',
+    'monitorizando': 'Monitorizando',
+    'copy-listo':    'Copy listo',
+    'diseno-listo':  'Diseño listo',
+    'montado-ghl':   'Montado GHL',
+  };
   function stateBadge(s) {
-    const label = { 'declarada':'Declarada', 'en-produccion':'En producción', 'archivada':'Archivada' }[s] || s;
-    return `<span class="state-badge ${s}">${label}</span>`;
+    return `<span class="state-badge ${s}">${STATE_LABELS[s] || s}</span>`;
   }
   function findPlantilla(slug) { return PLANTILLAS.find(p => p.slug === slug); }
 
@@ -1833,11 +1811,18 @@ const PIPELINES_MODULE = (() => {
 
   function renderList() {
     const ps = S.data.filter(visible);
-    const seedNote = `<div class="pip-seed-note">📌 <strong>Datos seed F1</strong> · Los 4 pipelines de Dra. Neuss vienen hardcoded para validar UI. En F2 esto se cablea a Supabase por cliente.</div>`;
-    if (ps.length === 0) {
-      return seedNote + `<div class="empty-card">${S.showArchived ? 'Sin pipelines.' : 'Sin pipelines activos. Activa "Mostrar archivados" para ver los archivados.'}</div>`;
+    // F2.2.2.B.5/6 (2026-05-24): banner "modo lectura" retirado al cablearse
+    // los 4 drawers (Pipeline, Campaña, Trigger, Email) + archivar.
+    if (S.loadStatus === 'loading') {
+      return `<div class="empty-card">Cargando pipelines…</div>`;
     }
-    return seedNote + ps.map(p => `
+    if (S.loadStatus === 'error') {
+      return `<div class="empty-card">Error al cargar pipelines: ${escapeHtml(S.loadError || 'desconocido')}. Refresca o avisa a Ben.</div>`;
+    }
+    if (ps.length === 0) {
+      return `<div class="empty-card">${S.showArchived ? 'Sin pipelines.' : 'Sin pipelines declarados. Pulsa <strong>+ Pipeline</strong> para empezar.'}</div>`;
+    }
+    return ps.map(p => `
       <div class="pip-card ${p.estado==='archivada'?'archived':''}" data-action="open-pipeline" data-id="${p.id}" role="button" tabindex="0">
         <div class="pip-card-head">
           ${codeTag(p.code)}
@@ -1946,7 +1931,7 @@ const PIPELINES_MODULE = (() => {
         `).join('')}
 
       ${S.role==='account' && p.estado!=='archivada' ? `
-        <button class="pip-archive-btn" data-action="archive" data-id="${p.id}" data-code="${p.code}">Archivar pipeline ${p.code}</button>
+        <button class="pip-archive-btn" data-action="archive" data-kind="pipeline" data-id="${p.id}" data-code="${p.code}">Archivar pipeline ${p.code}</button>
       ` : ''}
     `;
   }
@@ -1997,7 +1982,7 @@ const PIPELINES_MODULE = (() => {
 
       <div class="pip-section-head">
         <span>Triggers · ${c.triggers.length}</span>
-        ${S.role==='account' ? `<button class="add-link" data-action="new-trigger">+ TRIGGER</button>` : ''}
+        ${S.role==='account' ? `<button class="add-link" data-action="new-trigger" data-pid="${p.id}" data-cid="${c.id}">+ TRIGGER</button>` : ''}
       </div>
       ${c.triggers.length === 0
         ? `<div class="empty-card">Sin triggers declarados.</div>`
@@ -2016,7 +2001,7 @@ const PIPELINES_MODULE = (() => {
 
       <div class="pip-section-head">
         <span>Emails · ${c.emails.length}</span>
-        ${S.role==='account' ? `<button class="add-link" data-action="new-email">+ EMAIL</button>` : ''}
+        ${S.role==='account' ? `<button class="add-link" data-action="new-email" data-pid="${p.id}" data-cid="${c.id}">+ EMAIL</button>` : ''}
       </div>
       ${hasTriggers && c.emails.length > 0 ? `
         <div class="pip-mode-note">
@@ -2049,7 +2034,7 @@ const PIPELINES_MODULE = (() => {
       </div>
 
       ${S.role==='account' && c.estado!=='archivada' ? `
-        <button class="pip-archive-btn" data-action="archive" data-id="${c.id}" data-code="${c.code}">Archivar campaña ${c.code}</button>
+        <button class="pip-archive-btn" data-action="archive" data-kind="campania" data-id="${c.id}" data-code="${c.code}">Archivar campaña ${c.code}</button>
       ` : ''}
     `;
   }
@@ -2134,14 +2119,9 @@ const PIPELINES_MODULE = (() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function archiveItem(id) {
-    for (const p of S.data) {
-      if (p.id === id) { p.estado = 'archivada'; return true; }
-      for (const c of p.camps) {
-        if (c.id === id) { c.estado = 'archivada'; return true; }
-      }
-    }
-    return false;
+  // F2.2.2.B.4: archivar via RPC. Devuelve row archivada o lanza.
+  async function archiveItem(kind, id) {
+    return rpc('ficha_archivar_codigo', { p_kind: kind, p_id: id });
   }
 
   function attachAllHandlers() {
@@ -2169,17 +2149,26 @@ const PIPELINES_MODULE = (() => {
         else if (a === 'back') back();
         else if (a === 'new-pipeline') openNewPipelineSheet();
         else if (a === 'new-campaign') openNewCampaignSheet(el.dataset.pid);
-        else if (a === 'new-trigger') showToast('Modal Nuevo Trigger (mockup)');
-        else if (a === 'new-email') showToast('Modal Nuevo Email (mockup)');
+        else if (a === 'new-trigger') openNewTriggerSheet(el.dataset.pid, el.dataset.cid);
+        else if (a === 'new-email') openNewEmailSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'create-tasks') openTasksSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'archive') {
           const code = el.dataset.code;
+          const kind = el.dataset.kind;
+          const id   = el.dataset.id;
+          if (!kind) { showToast('Tipo de elemento desconocido'); return; }
           if (confirm(`¿Archivar ${code}? Los códigos no caducan (regla .docx caso 9); podrás verlo con "Mostrar archivados".`)) {
-            archiveItem(el.dataset.id);
-            // Si archivamos lo que estamos viendo, volver atrás
-            if ((S.view.pId === el.dataset.id) || (S.view.cId === el.dataset.id)) back();
-            else render();
-            showToast(`${code} archivado`);
+            (async () => {
+              try {
+                await archiveItem(kind, id);
+                // Si archivamos lo que estamos viendo, volver atrás
+                if ((S.view.pId === id) || (S.view.cId === id)) back();
+                await loadFor(S.bubbleId);
+                showToast(`${code} archivado`);
+              } catch (e) {
+                showToast(`Error: ${e.message || 'no se pudo archivar'}`);
+              }
+            })();
           }
         }
         else if (a === 'briefing') showToast('Abrir: ' + (el.dataset.name || '—'));
@@ -2215,11 +2204,27 @@ const PIPELINES_MODULE = (() => {
       </div>
     `);
     setTimeout(() => {
-      document.getElementById('np-save')?.addEventListener('click', () => {
+      document.getElementById('np-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('np-save');
         const name = document.getElementById('np-name')?.value.trim();
+        const obj  = document.getElementById('np-obj')?.value.trim();
         if (!name) { showToast('Falta el nombre del pipeline'); return; }
-        closeSheet();
-        showToast(`${next} creado (mockup)`);
+        if (!S.bubbleId) { showToast('No hay cliente seleccionado'); return; }
+        btn.disabled = true;
+        try {
+          const row = await rpc('ficha_pipeline_upsert', {
+            p_id:                  null,
+            p_cliente_bubble_id:   S.bubbleId,
+            p_nombre:              name,
+            p_objetivo_negocio:    obj || null,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast(`${row?.codigo || 'Pipeline'} creado`);
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
       });
       document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
       document.getElementById('np-name')?.focus();
@@ -2277,7 +2282,7 @@ const PIPELINES_MODULE = (() => {
           ${plantilla ? `
             <div class="pip-inherits">
               <div class="pip-inherits-title">Lo que se hereda de la plantilla</div>
-              ${plantilla.triggers.map((t, i) => `<div class="pip-inherits-row">${codeTag(`${next}${t.tipo}${i+1}`)}<span>${escapeHtml(t.name)}</span>${stateBadge('declarada')}</div>`).join('')}
+              ${plantilla.triggers.map((t, i) => `<div class="pip-inherits-row">${codeTag(`${next}${t.tipo}${i+1}`)}<span>${escapeHtml(t.name)}</span>${stateBadge('declarado')}</div>`).join('')}
               ${plantilla.emails.length === 0
                 ? '<div class="pip-meta-min" style="padding:5px 0">Sin emails</div>'
                 : plantilla.emails.map((e, i) => `<div class="pip-inherits-row">${codeTag(`${next}E${i+1}`)}<span>${escapeHtml(e.name)}</span><span class="pip-meta-min">${escapeHtml(e.espera)}</span></div>`).join('')}
@@ -2304,12 +2309,43 @@ const PIPELINES_MODULE = (() => {
           rebind();
         });
       });
-      document.getElementById('nc-save')?.addEventListener('click', () => {
-        if (document.getElementById('nc-save').disabled) return;
+      document.getElementById('nc-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('nc-save');
+        if (!btn || btn.disabled) return;
         const name = document.getElementById('nc-name')?.value.trim();
         if (!name) { showToast('Falta el nombre de la campaña'); return; }
-        closeSheet();
-        showToast(`Campaña ${next} creada (mockup)`);
+        const desde  = document.getElementById('nc-desde')?.value || null;
+        const hasta  = document.getElementById('nc-hasta')?.value || null;
+        const presup = parseFloat(document.getElementById('nc-presup')?.value);
+        const kpi    = document.getElementById('nc-kpi')?.value.trim() || null;
+        const brief  = document.getElementById('nc-brief')?.value.trim() || null;
+        const notas  = document.getElementById('nc-notas')?.value.trim() || null;
+        btn.disabled = true;
+        try {
+          // F2.2.2.B.3 nota: p_plantilla_id queda NULL en esta fase —
+          // el picker de plantilla sirve sólo para precargar campos del
+          // form (UX). Linkar slug → cliente_campania_plantillas.id es
+          // deuda menor (requiere un GET adicional al catálogo o
+          // ampliar la RPC). Documentado en docs/work/ficha-cliente.md.
+          const row = await rpc('ficha_campania_upsert', {
+            p_id:                  null,
+            p_pipeline_id:         p.id,
+            p_nombre:              name,
+            p_plantilla_id:        null,
+            p_fecha_inicio:        desde,
+            p_fecha_fin:           hasta,
+            p_presupuesto_eur:     isNaN(presup) ? null : presup,
+            p_kpi_objetivo:        kpi,
+            p_link_briefing_drive: brief,
+            p_notas_account:       notas,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast(`${row?.codigo || 'Campaña'} creada`);
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
       });
       document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
     };
@@ -2381,7 +2417,244 @@ const PIPELINES_MODULE = (() => {
     }, 40);
   }
 
-  return { render, init: render };
+  // ── F2.2.2.B.5: Drawer "Nuevo Trigger" ──────────────────────────
+  function openNewTriggerSheet(pId, cId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    const state = { tipo: null };
+
+    // Próximo código preview por tipo: cuenta los existentes del mismo tipo
+    // y suma 1. La regla .docx §3.4 obliga "no reutilizar", así que para
+    // datos limpios coincidirá con el que asigne el servidor. Si hay
+    // huecos por archivar (codes never reused), servidor puede asignar
+    // distinto — el toast muestra el real.
+    const nextFor = (tipo) => {
+      const n = c.triggers.filter(t => t.tipo === tipo).length + 1;
+      return `${c.code}${tipo}${n}`;
+    };
+
+    const renderForm = () => {
+      const tipo = state.tipo;
+      const next = tipo ? nextFor(tipo) : '?';
+      return `
+        <div class="pip-info-callout">
+          Nuevo trigger en <strong>${escapeHtml(c.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.
+        </div>
+        <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Tipo de trigger</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          ${[
+            { v:'FM', label:'FM · Formulario Meta', hint:'Form nativo de Instagram/Facebook' },
+            { v:'FW', label:'FW · Formulario Web',  hint:'Form en la web del cliente → GHL' },
+            { v:'BD', label:'BD · Base de datos',   hint:'Segmento existente con fecha programada' },
+          ].map(opt => `
+            <button class="pip-plantilla-card ${tipo===opt.v?'selected':''}" data-pick-tipo="${opt.v}" type="button" style="flex:1;min-width:120px">
+              <div class="pp-name">${escapeHtml(opt.label)}</div>
+              <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">${escapeHtml(opt.hint)}</div>
+            </button>
+          `).join('')}
+        </div>
+        ${tipo ? `
+          <div class="form-field">
+            <label class="form-label" for="nt-desc">Descripción</label>
+            <input class="form-input" id="nt-desc" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':'Ej: Segmento leads frío >60d'}" autocomplete="off"/>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="nt-ext">${tipo==='FM'?'Form ID Meta':tipo==='FW'?'URL del formulario':'Segmento / Tag GHL'}</label>
+            <input class="form-input" id="nt-ext" autocomplete="off"/>
+          </div>
+          ${tipo==='BD' ? `
+            <div class="form-field">
+              <label class="form-label" for="nt-fecha">Fecha de lanzamiento <span style="color:var(--warn)">*</span></label>
+              <input class="form-input" type="date" id="nt-fecha"/>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px">Obligatoria para tipo BD (regla .docx caso 4).</div>
+            </div>
+          ` : ''}
+        ` : ''}
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cancelar</button>
+          <button class="btn-primary" id="nt-save" ${tipo ? '' : 'disabled style="opacity:.4;cursor:not-allowed"'}>Crear ${next}</button>
+        </div>
+      `;
+    };
+
+    openSheet('Nuevo trigger', `dentro de ${c.code}`, renderForm());
+
+    const rebind = () => {
+      document.querySelectorAll('[data-pick-tipo]').forEach(b => {
+        b.addEventListener('click', () => {
+          state.tipo = b.dataset.pickTipo;
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          rebind();
+        });
+      });
+      document.getElementById('nt-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('nt-save');
+        if (!btn || btn.disabled) return;
+        const desc  = document.getElementById('nt-desc')?.value.trim();
+        const ext   = document.getElementById('nt-ext')?.value.trim() || null;
+        const fecha = document.getElementById('nt-fecha')?.value || null;
+        if (!desc) { showToast('Falta la descripción del trigger'); return; }
+        if (state.tipo === 'BD' && !fecha) { showToast('Tipo BD requiere fecha de lanzamiento'); return; }
+        btn.disabled = true;
+        try {
+          const row = await rpc('ficha_trigger_upsert', {
+            p_id:                null,
+            p_campania_id:       c.id,
+            p_tipo:              state.tipo,
+            p_descripcion:       desc,
+            p_link_externo:      ext,
+            p_fecha_lanzamiento: fecha,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast(`${row?.codigo || 'Trigger'} creado`);
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    };
+    setTimeout(rebind, 40);
+  }
+
+  // ── F2.2.2.B.6: Drawer "Nuevo Email" ────────────────────────────
+  function openNewEmailSheet(pId, cId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    const nextOrden = c.emails.length + 1;
+    // Subcódigos de triggers de la campaña: 'FM1','FW1','BD1'... el frontend
+    // usa este formato para email.triggersAplicables (regla .docx caso 5).
+    const allSubcodes = c.triggers.map(t => t.code.replace(c.code, ''));
+    const state = { aplicables: new Set() };  // vacío = aplica a todos
+
+    const renderForm = () => {
+      const sharedWithAll = state.aplicables.size === 0;
+      const previewCode = sharedWithAll
+        ? `${c.code}E${nextOrden}`
+        : `${c.code}${[...state.aplicables].sort((a,b)=>{
+            const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+            return w(a)-w(b);
+          }).join('')}E${nextOrden}`;
+      return `
+        <div class="pip-info-callout">
+          Nuevo email en <strong>${escapeHtml(c.code)}</strong> → código preview <strong>${escapeHtml(previewCode)}</strong>.
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="ne-name">Nombre operativo</label>
+          <input class="form-input" id="ne-name" placeholder="Ej: Bienvenida + valor" autocomplete="off"/>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label" for="ne-orden">Orden</label>
+            <input class="form-input" type="number" id="ne-orden" value="${nextOrden}" min="1"/>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="ne-espera">Espera desde el anterior</label>
+            <input class="form-input" id="ne-espera" placeholder="Día 0, Día +2, +1 semana…" autocomplete="off"/>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="ne-obj">Objetivo</label>
+          <textarea class="form-textarea" id="ne-obj" placeholder="Una frase: qué consigue este email."></textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Triggers aplicables</label>
+          ${allSubcodes.length === 0
+            ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. El email se aplicará automáticamente a los que se añadan.</div>`
+            : `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+                ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger ${state.aplicables.has(sub)?'selected':''}" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
+              </div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Vacío = aplica a todos los triggers (regla .docx caso 5, código sin trigger). Marca solo los que apliquen si el email varía por trigger.</div>`}
+        </div>
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cancelar</button>
+          <button class="btn-primary" id="ne-save">Crear email</button>
+        </div>
+      `;
+    };
+
+    openSheet('Nuevo email', `dentro de ${c.code}`, renderForm());
+
+    const rebind = () => {
+      document.querySelectorAll('[data-toggle-trig]').forEach(b => {
+        b.addEventListener('click', () => {
+          const sub = b.dataset.toggleTrig;
+          if (state.aplicables.has(sub)) state.aplicables.delete(sub);
+          else state.aplicables.add(sub);
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          rebind();
+        });
+      });
+      document.getElementById('ne-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('ne-save');
+        if (!btn || btn.disabled) return;
+        const name   = document.getElementById('ne-name')?.value.trim();
+        const orden  = parseInt(document.getElementById('ne-orden')?.value, 10);
+        const espera = document.getElementById('ne-espera')?.value.trim() || null;
+        const obj    = document.getElementById('ne-obj')?.value.trim() || null;
+        if (!name) { showToast('Falta el nombre del email'); return; }
+        // Si seleccionados == todos los triggers de la campaña, equivale a vacío
+        // (caso 5: "aplica a todos" → código sin trigger). Lo enviamos como [].
+        const apl = (state.aplicables.size === 0 || state.aplicables.size === allSubcodes.length)
+          ? []
+          : [...state.aplicables];
+        btn.disabled = true;
+        try {
+          await rpc('ficha_email_upsert', {
+            p_id:                    null,
+            p_campania_id:           c.id,
+            p_nombre:                name,
+            p_orden:                 isNaN(orden) ? null : orden,
+            p_espera_desde_anterior: espera,
+            p_objetivo:              obj,
+            p_triggers_aplicables:   apl,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast('Email creado');
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    };
+    setTimeout(rebind, 40);
+  }
+
+  // F2.2.1: API público para inyección de datos desde Supabase.
+  function setData(arr) {
+    S.data = Array.isArray(arr) ? arr : [];
+    S.loadStatus = 'ready';
+    S.loadError = null;
+    S.view = { kind: 'list' };
+    S.stack = [];
+    render();
+  }
+  async function loadFor(bubbleId) {
+    if (!bubbleId) return;
+    S.bubbleId = bubbleId;
+    S.loadStatus = 'loading';
+    S.loadError = null;
+    S.data = [];
+    S.view = { kind: 'list' };
+    S.stack = [];
+    render();
+    try {
+      const arr = await rpc('ficha_pipelines_get', { p_bubble_id: bubbleId });
+      setData(Array.isArray(arr) ? arr : []);
+    } catch (e) {
+      console.error('[ficha-cliente] ficha_pipelines_get failed', e);
+      S.loadStatus = 'error';
+      S.loadError = e.message || String(e);
+      render();
+    }
+  }
+
+  return { render, init: render, setData, loadFor };
 })();
 
 // ─── Nav dropdown ──────────────────────────────────

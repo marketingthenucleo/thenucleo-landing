@@ -476,6 +476,133 @@ Misma allowlist. Devuelve `to_jsonb(c.*)` del cliente con TODAS las columnas de 
 
 ⚠️ **Allowlist en 7 sitios ahora** (antes 6 con playbook): frontend `playbook`, `fichas-de-producto`, `ficha-cliente` + RLS policies de `playbook_progreso`/`playbook_task_feedback`/`playbook_cliente_servicios` + RPC `playbook_cliente_detalle` + RPCs `ficha_cliente_listar` y `ficha_cliente_get`. Si añades editor: actualizar los 7.
 
+### Pipelines y Campañas — 5 tablas nativas (F2, desde 2026-05-24)
+
+Backend del módulo "Pipelines y Campañas" de `work.thenucleo.com/ficha-cliente/` (frontend F1 vivo desde 2026-05-23 con SEED hardcoded en `ficha-cliente/index.html:1677-2100`). Visión operacional completa en [[../portal/ficha-cliente]] (modelo PxCx, 7 reglas, casuísticas). Migration `ficha_cliente_pipelines_f2_schema`, también vive en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql` del repo landing.
+
+**Decisiones de schema (sesión 2026-05-24):**
+- Plantillas por agencia (`agencia_id` NOT NULL, no global) — coherente con `bub_plantillas_tareas_notion`.
+- FK a clientes via `bubble_id text` (patrón `playbook_cliente_servicios`, no `cliente_id uuid`).
+- `triggers_aplicables text[]` de subcódigos (`'FM1','FW1'`) en vez de uuid[]: la regla `.docx` "los códigos no caducan ni se reutilizan" (caso 6) garantiza integridad sin FK formal y evita JOIN extra en la RPC `_get`.
+- Estados finos por capa (visión §2 original, **NO** los 3 unificados `declarada/en-produccion/archivada` del SEED actual del frontend — impacto en `stateBadge()` del frontend documentado abajo).
+
+#### `cliente_campania_plantillas` — catálogo abierto de plantillas, por agencia
+```
+id                  uuid PK DEFAULT gen_random_uuid()
+agencia_id          text NOT NULL
+slug                text NOT NULL                          -- 'venta-meta','capt-fm'...
+nombre              text NOT NULL
+descripcion         text
+triggers_tipicos    jsonb NOT NULL DEFAULT '[]'            -- array {tipo, nombre}
+emails_tipicos      jsonb NOT NULL DEFAULT '[]'            -- array {nombre, espera, objetivo}
+campos_briefing     jsonb NOT NULL DEFAULT '[]'            -- array strings
+roles_default       jsonb NOT NULL DEFAULT '{}'            -- {copy, diseno, meta, ghl,...}
+briefing_master_url text
+kpi_default         text
+presupuesto_default numeric
+estado              text NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa','archivada'))
+orden               int  NOT NULL DEFAULT 0
+created_at, updated_at timestamptz                          -- updated_at via trigger reusa update_updated_at()
+created_by          text DEFAULT auth.email()
+UNIQUE (agencia_id, slug)
+INDEX cliente_campania_plantillas_agencia_estado_idx (agencia_id, estado)
+```
+**Seed (7 filas, agencia TheNucleo `1769513105728x555492736219132700`):** Venta Directa con anuncio Meta · Captación leads FM · Captación leads FW · Reactivación BBDD · Newsletter recurrente · Lanzamiento multicanal · Evento. Mismo set que `PIPELINES_MODULE.PLANTILLAS` del frontend.
+
+#### `cliente_pipelines` — líneas estratégicas por cliente
+```
+id                  uuid PK
+cliente_bubble_id   text NOT NULL REFERENCES bub_clientes(bubble_id) ON DELETE CASCADE
+codigo              text NOT NULL                          -- 'P1','P2'... secuencial por cliente
+nombre              text NOT NULL
+objetivo_negocio    text
+estado              text NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo','archivado'))
+responsable_account text                                   -- bubble_id de bub_user
+notas               text
+orden               int NOT NULL DEFAULT 0
+created_at, updated_at, created_by
+UNIQUE (cliente_bubble_id, codigo)
+INDEX cliente_pipelines_cliente_idx (cliente_bubble_id)
+```
+
+#### `cliente_campanias` — acción concreta dentro de un pipeline
+```
+id                  uuid PK
+pipeline_id         uuid NOT NULL REFERENCES cliente_pipelines(id) ON DELETE CASCADE
+codigo              text NOT NULL                          -- 'P1C1' (denormalizado)
+nombre              text NOT NULL
+plantilla_id        uuid REFERENCES cliente_campania_plantillas(id) ON DELETE SET NULL
+estado              text NOT NULL DEFAULT 'declarada' CHECK (estado IN ('declarada','en-produccion','archivada'))
+fecha_inicio, fecha_fin date                               -- NULL fin = recurrente
+presupuesto_eur     numeric
+canal_principal     text                                   -- Meta/Google/Email/Organico/Mixto
+kpi_objetivo        text
+link_briefing_drive text
+briefing_nombre     text
+responsable_pm      text                                   -- bubble_id de bub_user
+notas_account       text
+created_at, updated_at, created_by
+UNIQUE (pipeline_id, codigo)
+INDEX cliente_campanias_pipeline_idx (pipeline_id)
+```
+
+#### `cliente_triggers` — FM / FW / BD por campaña
+```
+id                  uuid PK
+campania_id         uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
+codigo              text NOT NULL                          -- 'P1C1FM1' (denormalizado)
+tipo                text NOT NULL CHECK (tipo IN ('FM','FW','BD'))
+descripcion         text
+link_externo        text                                   -- form id Meta, URL FW, segmento GHL
+fecha_lanzamiento   date                                   -- obligatoria si tipo='BD' (CHECK)
+estado              text NOT NULL DEFAULT 'declarado' CHECK (estado IN ('declarado','creado','monitorizando','archivado'))
+created_at, updated_at, created_by
+UNIQUE (campania_id, codigo)
+CHECK (tipo <> 'BD' OR fecha_lanzamiento IS NOT NULL)      -- regla .docx caso 4
+INDEX cliente_triggers_campania_idx (campania_id)
+```
+
+#### `cliente_emails` — emails de la secuencia por campaña
+```
+id                    uuid PK
+campania_id           uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
+orden                 int NOT NULL
+nombre                text NOT NULL
+espera_desde_anterior text                                 -- 'Día 0','+2d','cadencia'
+objetivo              text
+triggers_aplicables   text[] NOT NULL DEFAULT '{}'         -- subcódigos: 'FM1','FW1'. Vacío = todos
+link_copy_drive       text
+link_diseno_drive     text
+link_ghl_workflow     text
+estado                text NOT NULL DEFAULT 'declarado'
+                      CHECK (estado IN ('declarado','copy-listo','diseno-listo','montado-ghl','activo','archivado'))
+created_at, updated_at, created_by
+UNIQUE (campania_id, orden)
+INDEX cliente_emails_campania_idx (campania_id)
+```
+
+**Triggers:** `BEFORE UPDATE` en las 5 reusa `public.update_updated_at()`.
+
+**RLS:** habilitada en las 5 tablas. **20 policies** (4 por tabla — `select/insert/update/delete`, prefijos `ccp_`, `cp_`, `cc_`, `ct_`, `ce_`), todas con `USING/WITH CHECK public.is_comunidad_admin()` a `authenticated`. Mismo patrón que `fichas_categorias`/`fichas_de_producto`/`disponibilidad_*`. **Sale 1 de los 7 sitios de allowlist hardcoded** (estas 5 tablas NO suman al contador).
+
+**GRANTs:** `authenticated` SELECT+INSERT+UPDATE+DELETE (RLS filtra), `service_role` ALL.
+
+⚠️ **Impacto frontend pendiente (F2.1):** el SEED del frontend usa solo `declarada/en-produccion/archivada` para los 4 niveles (unificado). Con los estados finos del backend, `stateBadge()` en `ficha-cliente/index.html:1792` necesita ampliar labels + clases CSS para los nuevos valores (`copy-listo`, `diseno-listo`, `montado-ghl`, `creado`, `monitorizando`, etc.). Se hará al cablear writes.
+
+**RPC lectura (F2.2.1, desde 2026-05-24):** `ficha_pipelines_get(p_bubble_id text) RETURNS jsonb` — devuelve el árbol completo pipelines→campañas→triggers+emails con la forma JS-friendly que el frontend ya espera (claves cortas `code/name/obj/camps/triggers/emails`). `SECURITY INVOKER + STABLE` — gate via RLS `is_comunidad_admin()`. `GRANT EXECUTE TO authenticated`. Frontend lo consume desde `PIPELINES_MODULE.loadFor(bubbleId)` en `ficha-cliente/index.html`. **Seed Neus migrado:** los 4 pipelines + 4 campañas + 4 triggers + 5 emails que vivían como SEED hardcoded en el frontend ahora viven en DB (idempotent INSERT en la misma migration). Decisión: NO se amplía `ficha_cliente_get` con `pipelines` — se hace una segunda llamada paralela (1 round-trip extra, sin context security puzzle DEFINER↔INVOKER).
+
+**RPCs escritura (F2.2.2.A, desde 2026-05-24):** 5 upsert + 1 archivar, todas `SECURITY INVOKER` (RLS gate-ea), `GRANT EXECUTE TO authenticated`:
+
+- `ficha_pipeline_upsert(p_id, p_cliente_bubble_id, p_nombre, p_objetivo_negocio, p_estado, p_responsable_account, p_notas, p_orden, p_codigo_override)` — `p_id NULL` = INSERT con auto-código `P<N>` (regex sobre max actual del cliente), `p_id` dado = UPDATE (no toca codigo, regla `.docx` §3.4).
+- `ficha_campania_upsert(p_id, p_pipeline_id, p_nombre, p_plantilla_id, p_estado, p_fecha_inicio, p_fecha_fin, p_presupuesto_eur, p_canal_principal, p_kpi_objetivo, p_link_briefing_drive, p_briefing_nombre, p_responsable_pm, p_notas_account, p_codigo_override)` — auto-código `P<N>C<M>` resolviendo prefix vía JOIN al pipeline.
+- `ficha_trigger_upsert(p_id, p_campania_id, p_tipo, p_descripcion, p_link_externo, p_fecha_lanzamiento, p_estado, p_codigo_override)` — auto-código `<campCodigo><tipo><N>` per (campaña, tipo) — FM1, FM2 son secuencias independientes de FW1, BD1. CHECK `tipo IN ('FM','FW','BD')`. La CHECK de tabla obliga `fecha_lanzamiento` si tipo=BD.
+- `ficha_email_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_diseno_drive, p_link_ghl_workflow, p_estado)` — emails NO tienen columna codigo; el código display se deriva en frontend via `emailCode(camp, email)` en función de `orden + triggers_aplicables`. `p_orden NULL` = server asigna max+1.
+- `ficha_archivar_codigo(p_kind text, p_id uuid)` — genérico para los 4 tipos (`'pipeline'|'campania'|'trigger'|'email'`). Resuelve la diferencia de género ('archivado' vs 'archivada' campañas). Regla `.docx` §3.6 + caso 9: nada se borra, sólo se archiva. Todas las RPCs devuelven la row insertada/actualizada como jsonb (frontend hace `loadFor(bubbleId)` tras el save para refrescar el árbol completo — decisión "consistencia garantizada" vs merge selectivo).
+
+"Servidor propone, usuario valida": cada upsert acepta `p_codigo_override`. Si NULL/'' → auto-asigna. Si pasa valor → respeta y valida unicidad vía UNIQUE constraint. El frontend por defecto deja al servidor; el caso "Account quiere override" es raro pero soportado.
+
+**Frontend cableado (F2.2.2.B, completo desde 2026-05-24):** 4 drawers de `PIPELINES_MODULE` cableados a las 6 RPCs en 5 micro-commits. Cada save hace `await rpc('ficha_X_upsert', {...})` + `await PIPELINES_MODULE.loadFor(bubbleId)` (refresh completo, consistencia garantizada). `stateBadge()` ampliado a 11 estados finos con CSS agrupado por familia (warn/info/ok/neutral). Banner "modo lectura · F2.2.1" retirado. Deuda menor abierta: archivar trigger/email (RPC ya soporta `kind='trigger'|'email'`, falta botón en detail view) + link plantilla→campaña al persistir (B.3 pasa `p_plantilla_id: null`; cargar catálogo en init y mapear slug→uuid, o ampliar RPC con `p_plantilla_slug`).
+
 ### `agencia_integraciones_config` — Credenciales cifradas (desde 2026-05-04)
 
 Master nativo de credenciales de TODAS las integraciones (nativas + addons de pago). RLS service_role only — Bubble nunca lee credenciales en claro.
