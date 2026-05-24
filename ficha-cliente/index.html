@@ -1733,10 +1733,15 @@ const PIPELINES_MODULE = (() => {
     }).join('');
   }
   function emailCode(camp, email) {
-    const all = camp.triggers.map(t => t.code.replace(camp.code, ''));
+    // Cambio 2026-05-24 (sesión piloto): retirada la lógica "vacío = todos
+    // → código sin trigger" (regla .docx caso 5 original). Confundía cuando
+    // la campaña tiene 1 trigger único — P1C1E1 sugiere email huérfano.
+    // Nuevo modelo: el código SIEMPRE incluye los triggers que disparan el
+    // email, concatenados en orden FM→FW→BD. Si triggers_aplicables viene
+    // vacío (data legacy o campaña sin triggers), fallback al formato sin
+    // prefijo para no romper render.
     const apl = email.triggersAplicables || [];
-    const isShared = apl.length === 0 || apl.length === all.length;
-    if (isShared || camp.triggers.length === 0) return `${camp.code}E${email.orden}`;
+    if (apl.length === 0) return `${camp.code}E${email.orden}`;
     return `${camp.code}${orderTriggersInCode(apl)}E${email.orden}`;
   }
 
@@ -2525,19 +2530,23 @@ const PIPELINES_MODULE = (() => {
     const c = p && p.camps.find(x => x.id === cId);
     if (!c) return;
     const nextOrden = c.emails.length + 1;
-    // Subcódigos de triggers de la campaña: 'FM1','FW1','BD1'... el frontend
-    // usa este formato para email.triggersAplicables (regla .docx caso 5).
+    // Subcódigos de triggers de la campaña: 'FM1','FW1','BD1'...
     const allSubcodes = c.triggers.map(t => t.code.replace(c.code, ''));
-    const state = { aplicables: new Set() };  // vacío = aplica a todos
+    // Pre-selección: si la campaña tiene 1 trigger único, marcarlo
+    // automáticamente (no hay nada que elegir). Con 2+ triggers el
+    // usuario decide explícitamente cuáles disparan este email.
+    const state = {
+      aplicables: new Set(allSubcodes.length === 1 ? allSubcodes : [])
+    };
 
     const renderForm = () => {
-      const sharedWithAll = state.aplicables.size === 0;
-      const previewCode = sharedWithAll
+      const sortedApl = [...state.aplicables].sort((a,b)=>{
+        const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+        return w(a)-w(b);
+      });
+      const previewCode = sortedApl.length === 0
         ? `${c.code}E${nextOrden}`
-        : `${c.code}${[...state.aplicables].sort((a,b)=>{
-            const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
-            return w(a)-w(b);
-          }).join('')}E${nextOrden}`;
+        : `${c.code}${sortedApl.join('')}E${nextOrden}`;
       return `
         <div class="pip-info-callout">
           Nuevo email en <strong>${escapeHtml(c.code)}</strong> → código preview <strong>${escapeHtml(previewCode)}</strong>.
@@ -2563,11 +2572,16 @@ const PIPELINES_MODULE = (() => {
         <div class="form-field">
           <label class="form-label">Triggers aplicables</label>
           ${allSubcodes.length === 0
-            ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. El email se aplicará automáticamente a los que se añadan.</div>`
-            : `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-                ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger ${state.aplicables.has(sub)?'selected':''}" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
-              </div>
-              <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Vacío = aplica a todos los triggers (regla .docx caso 5, código sin trigger). Marca solo los que apliquen si el email varía por trigger.</div>`}
+            ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. Añade al menos uno antes de crear emails.</div>`
+            : allSubcodes.length === 1
+              ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+                  ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger selected" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
+                </div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Único trigger de la campaña — el email se asocia a <strong>${escapeHtml(allSubcodes[0])}</strong> automáticamente.</div>`
+              : `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+                  ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger ${state.aplicables.has(sub)?'selected':''}" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
+                </div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Marca al menos uno. El código del email refleja los triggers seleccionados en orden FM→FW→BD.</div>`}
         </div>
         <div class="pip-sheet-actions">
           <button class="btn-secondary" data-pip-close>Cancelar</button>
@@ -2596,11 +2610,14 @@ const PIPELINES_MODULE = (() => {
         const espera = document.getElementById('ne-espera')?.value.trim() || null;
         const obj    = document.getElementById('ne-obj')?.value.trim() || null;
         if (!name) { showToast('Falta el nombre del email'); return; }
-        // Si seleccionados == todos los triggers de la campaña, equivale a vacío
-        // (caso 5: "aplica a todos" → código sin trigger). Lo enviamos como [].
-        const apl = (state.aplicables.size === 0 || state.aplicables.size === allSubcodes.length)
-          ? []
-          : [...state.aplicables];
+        // Validación: si la campaña tiene triggers, el email debe estar
+        // asociado a al menos uno. Sin atajos "vacío = todos" — el código
+        // siempre refleja exactamente qué triggers disparan este email.
+        if (allSubcodes.length > 0 && state.aplicables.size === 0) {
+          showToast('Marca al menos un trigger que dispare este email');
+          return;
+        }
+        const apl = [...state.aplicables];
         btn.disabled = true;
         try {
           await rpc('ficha_email_upsert', {
