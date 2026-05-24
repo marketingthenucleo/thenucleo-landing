@@ -1443,8 +1443,10 @@ function renderCliente(c) {
   const servicios = Array.isArray(c.servicios) ? c.servicios : [];
   renderServiciosPanel(servicios);
 
-  // Pipelines — módulo F1 con SEED hardcoded Dra. Neuss
+  // Pipelines — F2.2.1: cargado desde Supabase vía RPC ficha_pipelines_get.
+  // init() pinta el árbol vacío inmediatamente; loadFor() trae los datos.
   PIPELINES_MODULE.init();
+  PIPELINES_MODULE.loadFor(c.bubble_id);
 
   // Mostrar tabs + content
   document.getElementById('tabs').style.display = '';
@@ -1691,72 +1693,17 @@ const PIPELINES_MODULE = (() => {
     { slug:'evento', nombre:'Evento (formulario + recordatorios)', triggers:[{tipo:'FW',name:'Inscripción evento'}], emails:[{name:'Confirmación',espera:'Día 0'},{name:'Recordatorio',espera:'-1d'}], briefingMaster:'drive://templates/briefing-evento.docx', defaults:{presup:100,kpi:'Inscripciones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
   ];
 
-  // SEED Dra. Neuss (4 pipelines, snapshot del mockup v3)
-  const SEED = [
-    {
-      id:'p1', code:'P1', name:'Venta directa Curso Suplementación',
-      obj:'Monetizar el infoproducto Curso Suplementación 75€ a tráfico frío.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p1c1', code:'P1C1', name:'Curso Suplementación 75€',
-        plantillaSlug:'venta-meta', estado:'en-produccion',
-        desde:'2026-05-15', hasta:'recurrente', presup:500, kpi:'30 ventas/mes',
-        briefingUrl:'drive://Dra-Neuss/CRM/P1C1/briefing.pdf', briefingName:'Briefing Curso Suplementación.pdf',
-        notas:'Producto en GHL · vincular píxel ahí · funnel.neusmunozgost.com',
-        triggers:[{ id:'t1', code:'P1C1FM1', tipo:'FM', name:'Anuncio Meta → checkout', estado:'en-produccion', ext:'funnel.neusmunozgost.com/curso-suplementacion-clinica-40' }],
-        emails:[]
-      }]
-    },
-    {
-      id:'p2', code:'P2', name:'Captación de clientes potenciales',
-      obj:'Nutrir BBDD con leads cualificados para futuras ofertas.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p2c1', code:'P2C1', name:'Captación leads',
-        plantillaSlug:'capt-fm', estado:'en-produccion',
-        desde:'2026-05-20', hasta:'recurrente', presup:300, kpi:'50 leads/mes',
-        briefingUrl:'drive://Dra-Neuss/CRM/P2C1/briefing-mayo.docx', briefingName:'Briefing captación mayo.docx',
-        notas:'',
-        triggers:[{ id:'t2', code:'P2C1FM1', tipo:'FM', name:'Formulario Meta clientes potenciales', estado:'en-produccion', ext:'Form ID Meta 12345' }],
-        emails:[
-          { id:'e1', name:'Bienvenida + valor', orden:1, espera:'Día 0', estado:'en-produccion', objetivo:'Romper el hielo, dar contexto del problema.', triggersAplicables:[] },
-          { id:'e2', name:'Educación / hábitos', orden:2, espera:'Día +2', estado:'declarada', objetivo:'Educar sobre suplementación con evidencia.', triggersAplicables:[] },
-          { id:'e3', name:'Oferta curso', orden:3, espera:'Día +5', estado:'declarada', objetivo:'Presentar curso 75€ con urgencia controlada.', triggersAplicables:[] }
-        ]
-      }]
-    },
-    {
-      id:'p3', code:'P3', name:'Reactivación de leads',
-      obj:'Recuperar leads sin conversión >60d.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p3c1', code:'P3C1', name:'Relanzamiento clientes potenciales',
-        plantillaSlug:'react-bd', estado:'declarada',
-        desde:'2026-05-25', hasta:'2026-05-31', presup:0, kpi:'5% reactivación',
-        briefingUrl:'', briefingName:'Sin briefing — Account pendiente de duplicar template',
-        notas:'Segmento: leads que no convirtieron en 60 días.',
-        triggers:[{ id:'t3', code:'P3C1BD1', tipo:'BD', name:'Segmento leads sin conversión >60d', estado:'declarada', ext:'GHL segment ID 88', fechaLanzamiento:'2026-05-25' }],
-        emails:[{ id:'e4', name:'Reactivación', orden:1, espera:'Día 0', estado:'declarada', objetivo:'Recordar valor + oferta de gancho.', triggersAplicables:[] }]
-      }]
-    },
-    {
-      id:'p4', code:'P4', name:'Newsletter mensual',
-      obj:'Mantener relación con BBDD activa.',
-      estado:'declarada', account:'Melina Dalmazo',
-      camps:[{
-        id:'p4c1', code:'P4C1', name:'Newsletter mayo',
-        plantillaSlug:'news', estado:'en-produccion',
-        desde:'2026-05-20', hasta:'mensual', presup:0, kpi:'25% apertura',
-        briefingUrl:'drive://Dra-Neuss/CRM/P4C1/briefing-mayo.docx', briefingName:'Briefing Mayo.docx',
-        notas:'',
-        triggers:[{ id:'t4', code:'P4C1BD1', tipo:'BD', name:'BBDD activa', estado:'en-produccion', ext:'Tag GHL activo', fechaLanzamiento:'2026-05-20' }],
-        emails:[{ id:'e5', name:'Edición mayo', orden:1, espera:'mensual', estado:'en-produccion', objetivo:'Edición mensual: hábito + recurso clínico.', triggersAplicables:[] }]
-      }]
-    }
-  ];
+  // F2.2.1 (2026-05-24): SEED hardcoded movido a Supabase
+  // (cliente_pipelines + 3 hijas). El árbol se carga vía RPC
+  // ficha_pipelines_get(p_bubble_id) en PIPELINES_MODULE.loadFor(bubbleId).
+  // Para Neus (1773847038522x983519237604638700) la migration sembró los
+  // 4 pipelines originales — el resto de clientes arrancan vacíos.
 
   const S = {
-    data: JSON.parse(JSON.stringify(SEED)),
+    data: [],
+    bubbleId: null,
+    loadStatus: 'idle',   // 'idle' | 'loading' | 'ready' | 'error'
+    loadError: null,
     role: 'account',
     showArchived: false,
     view: { kind: 'list' },
@@ -1833,11 +1780,19 @@ const PIPELINES_MODULE = (() => {
 
   function renderList() {
     const ps = S.data.filter(visible);
-    const seedNote = `<div class="pip-seed-note">📌 <strong>Datos seed F1</strong> · Los 4 pipelines de Dra. Neuss vienen hardcoded para validar UI. En F2 esto se cablea a Supabase por cliente.</div>`;
-    if (ps.length === 0) {
-      return seedNote + `<div class="empty-card">${S.showArchived ? 'Sin pipelines.' : 'Sin pipelines activos. Activa "Mostrar archivados" para ver los archivados.'}</div>`;
+    // Banner contextual F2.2.1: lectura desde Supabase ya cableada,
+    // escrituras todavía en memoria (drawers no persisten hasta F2.2.2).
+    const banner = `<div class="pip-seed-note">📌 <strong>Modo lectura · F2.2.1</strong> · Pipelines cargados desde Supabase (cliente_pipelines + 3 hijas). Las ediciones en los drawers todavía no se guardan — refrescar la página descarta cambios. Escritura cableada en F2.2.2.</div>`;
+    if (S.loadStatus === 'loading') {
+      return banner + `<div class="empty-card">Cargando pipelines…</div>`;
     }
-    return seedNote + ps.map(p => `
+    if (S.loadStatus === 'error') {
+      return banner + `<div class="empty-card">Error al cargar pipelines: ${escapeHtml(S.loadError || 'desconocido')}. Refresca o avisa a Ben.</div>`;
+    }
+    if (ps.length === 0) {
+      return banner + `<div class="empty-card">${S.showArchived ? 'Sin pipelines.' : 'Sin pipelines declarados. Pulsa <strong>+ Pipeline</strong> para empezar (próximamente).'}</div>`;
+    }
+    return banner + ps.map(p => `
       <div class="pip-card ${p.estado==='archivada'?'archived':''}" data-action="open-pipeline" data-id="${p.id}" role="button" tabindex="0">
         <div class="pip-card-head">
           ${codeTag(p.code)}
@@ -2381,7 +2336,36 @@ const PIPELINES_MODULE = (() => {
     }, 40);
   }
 
-  return { render, init: render };
+  // F2.2.1: API público para inyección de datos desde Supabase.
+  function setData(arr) {
+    S.data = Array.isArray(arr) ? arr : [];
+    S.loadStatus = 'ready';
+    S.loadError = null;
+    S.view = { kind: 'list' };
+    S.stack = [];
+    render();
+  }
+  async function loadFor(bubbleId) {
+    if (!bubbleId) return;
+    S.bubbleId = bubbleId;
+    S.loadStatus = 'loading';
+    S.loadError = null;
+    S.data = [];
+    S.view = { kind: 'list' };
+    S.stack = [];
+    render();
+    try {
+      const arr = await rpc('ficha_pipelines_get', { p_bubble_id: bubbleId });
+      setData(Array.isArray(arr) ? arr : []);
+    } catch (e) {
+      console.error('[ficha-cliente] ficha_pipelines_get failed', e);
+      S.loadStatus = 'error';
+      S.loadError = e.message || String(e);
+      render();
+    }
+  }
+
+  return { render, init: render, setData, loadFor };
 })();
 
 // ─── Nav dropdown ──────────────────────────────────

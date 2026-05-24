@@ -589,7 +589,9 @@ INDEX cliente_emails_campania_idx (campania_id)
 
 ⚠️ **Impacto frontend pendiente (F2.1):** el SEED del frontend usa solo `declarada/en-produccion/archivada` para los 4 niveles (unificado). Con los estados finos del backend, `stateBadge()` en `ficha-cliente/index.html:1792` necesita ampliar labels + clases CSS para los nuevos valores (`copy-listo`, `diseno-listo`, `montado-ghl`, `creado`, `monitorizando`, etc.). Se hará al cablear writes.
 
-**Pendiente F2.2 (siguiente paso):** crear 7 RPCs (`ficha_pipelines_get`, `ficha_codigos_catalogo`, `ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`, `ficha_archivar_codigo`) + ampliar `ficha_cliente_get` para incluir `pipelines: ficha_pipelines_get(p_bubble_id)` en el jsonb (mismo patrón que `servicios`).
+**RPC lectura (F2.2.1, desde 2026-05-24):** `ficha_pipelines_get(p_bubble_id text) RETURNS jsonb` — devuelve el árbol completo pipelines→campañas→triggers+emails con la forma JS-friendly que el frontend ya espera (claves cortas `code/name/obj/camps/triggers/emails`). `SECURITY INVOKER + STABLE` — gate via RLS `is_comunidad_admin()`. `GRANT EXECUTE TO authenticated`. Frontend lo consume desde `PIPELINES_MODULE.loadFor(bubbleId)` en `ficha-cliente/index.html`. **Seed Neus migrado:** los 4 pipelines + 4 campañas + 4 triggers + 5 emails que vivían como SEED hardcoded en el frontend ahora viven en DB (idempotent INSERT en la misma migration). Decisión: NO se amplía `ficha_cliente_get` con `pipelines` — se hace una segunda llamada paralela (1 round-trip extra, sin context security puzzle DEFINER↔INVOKER).
+
+**Pendiente F2.2.2 (siguiente paso):** 5 upserts CRUD (`ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`) + `ficha_archivar_codigo` con auto-asignación de código secuencial server-side (regla `.docx` §3.4 — codes never reused) + cableo drawers frontend a las upserts + refactor `stateBadge()` (`ficha-cliente/index.html:1792` ya antes del cambio F2.2.1) para los estados finos por capa.
 
 ### `agencia_integraciones_config` — Credenciales cifradas (desde 2026-05-04)
 

@@ -3,7 +3,7 @@ title: Ficha de Cliente (admin-only)
 dominio: ficha-cliente
 estado: vivo
 actualizado: 2026-05-24
-version_dataset: F1 frontend (seed hardcoded) · F2 schema Supabase APLICADO (vacío) · F2 RPCs + cableo frontend pendiente
+version_dataset: F2.2.1 vivo · schema + read RPC + seed Neus migrado + frontend lee de Supabase · escritura (F2.2.2) pendiente
 tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 ---
 
@@ -186,7 +186,8 @@ Vista lanzada. Antes era un mockup con datos inventados. Migration RPCs `ficha_c
 ## Pendientes
 
 1. ~~**F2 schema Supabase Pipelines y Campañas**~~ ✅ **Aplicado 2026-05-24.** 5 tablas (`cliente_campania_plantillas` + `cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails`) con RLS via `is_comunidad_admin()` (20 policies, 4×tabla) + 7 plantillas seed. Migration `ficha_cliente_pipelines_f2_schema` en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql`. Detalle en [[../infra/supabase-schema#pipelines-y-campañas]].
-2. **F2 RPCs + cableo frontend (siguiente paso)** — 7 RPCs (`ficha_pipelines_get`, `ficha_codigos_catalogo`, `ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`, `ficha_archivar_codigo`) + ampliar `ficha_cliente_get` con `pipelines: ficha_pipelines_get(p_bubble_id)` (patrón de `servicios`) + sustituir `const SEED` por load real en `ficha-cliente/index.html:1758`. Incluye refactor de `stateBadge()` (línea 1792) para los estados finos por capa.
+2. ~~**F2.2.1 RPC read + cableo frontend lectura**~~ ✅ **Cerrado 2026-05-24.** `ficha_pipelines_get(p_bubble_id)` (SECURITY INVOKER, devuelve jsonb con forma JS-friendly que matchea el SEED previo) + seed Neus migrado a DB (4 pipelines + 4 campañas + 4 triggers + 5 emails) + frontend modificado: `const SEED` removido, `PIPELINES_MODULE.loadFor(c.bubble_id)` cableado en `renderCliente`, módulo con `setData`/`loadFor`/`loadStatus`. Banner "modo lectura · F2.2.1" reemplaza la nota de seed. Migration en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_read_rpc_and_seed_neus.sql`. **Decisión sobre `ficha_cliente_get`:** NO se amplía con `pipelines` — frontend hace 2 calls en paralelo (evita el puzzle DEFINER↔INVOKER, mantiene RPCs separadas por dominio).
+3. **F2.2.2 RPC writes + cableo drawers (siguiente paso)** — 5 upserts (`ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`) con auto-código server-side (regla `.docx` §3.4: codes nunca se reutilizan) + `ficha_archivar_codigo` (genérico para los 4 tipos) + cableo drawers de `PIPELINES_MODULE` a las upserts + refactor `stateBadge()` para los estados finos por capa (hoy mapea solo `declarada/en-produccion/archivada` → ampliar a 6 estados de email + 4 de trigger + 2 de pipeline).
 3. **Piloto con Melina sobre Neus** — sentarse 30 min y declarar los 4 pipelines reales en el módulo (cuando #2 esté listo). Validar si el modelo aguanta.
 4. **Migrar 5 clientes más activos** al modelo en sesiones acompañadas con Account.
 5. **Panel Catálogos cableado** — depende de las RPCs F2.
