@@ -43,9 +43,10 @@ thenucleo-landing/
 │   │   └── sectores/
 │   └── work/                    ← documentación pages admin de este repo
 ├── Design/                      ← assets mockups (gitignored)
+├── .claude/skills/              ← skills externas commiteadas (n8n×7, supabase×2, ui-ux-pro-max). 2.7 MB. Tracked en git, ignorado por Eleventy. Detalle abajo.
 ├── vercel.json
 ├── .eleventy.js
-├── .eleventyignore              ← incluye docs/, Design/
+├── .eleventyignore              ← incluye docs/, Design/, .claude/
 └── package.json
 ~~~
 
@@ -61,6 +62,20 @@ thenucleo-landing/
 | Portal Bubble (no-code app interna) | `docs/portal/secciones-app.md` + `docs/portal/*` |
 | Nomenclatura PxCx, Pipelines, Campañas | `docs/portal/ficha-cliente.md` + manuales |
 | IDs, credenciales, tokens | `docs/infra/ids-referencias.md` |
+| Skills Claude (n8n / supabase / ui-ux-pro-max) | `.claude/skills/<nombre>/SKILL.md` |
+
+## Skills Claude en el repo (`.claude/skills/`)
+
+Las sesiones de Claude Code on the web corren en contenedores efímeros — skills instaladas en `~/.claude/skills/` no persisten entre sesiones. Para tenerlas disponibles automáticamente al clonar, viven commiteadas en `.claude/skills/`:
+
+- **n8n** (7 skills de [czlonkowski/n8n-skills](https://github.com/czlonkowski/n8n-skills)): `n8n-expression-syntax`, `n8n-mcp-tools-expert`, `n8n-workflow-patterns`, `n8n-validation-expert`, `n8n-node-configuration`, `n8n-code-javascript`, `n8n-code-python`. Pensadas para el MCP de n8n activo en las sesiones.
+- **supabase** (2 oficiales de [supabase/agent-skills](https://github.com/supabase/agent-skills)): `supabase` + `supabase-postgres-best-practices` (RLS, security, schema). Recomendadas por el MCP de Supabase.
+- **ui-ux-pro-max** (de [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)): priority rules + anti-patterns + 31 CSVs (50+ estilos, 161 paletas, 57 font pairings, 99 guidelines UX, 25 tipos de chart) + 3 scripts Python stdlib. Los symlinks `data`/`scripts` del repo origen se resolvieron a archivos reales (self-contained).
+
+**Reglas:**
+- `.claude/` está en `.eleventyignore` → los `SKILL.md` no se procesan ni emiten páginas en `_site/`.
+- `__pycache__/` y `*.pyc` en `.gitignore` → los scripts Python no ensucian el repo al ejecutarse.
+- Para añadir/actualizar una skill: `cp -r` desde el repo origen, verificar `npm run build` (debe seguir en 53 archivos) y registrar en `docs/log-cambios.md`.
 
 ## Convención para evitar drift
 

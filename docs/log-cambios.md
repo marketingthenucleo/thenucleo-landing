@@ -71,6 +71,32 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [WORK][OPS][DOCS] — Skills de Claude commiteadas al repo (n8n + supabase + ui-ux-pro-max)
+
+- **Área:** `thenucleo-landing/` repo. Tooling Claude Code on the web. Frontend (`.claude/skills/` nueva), config (`.eleventyignore`, `.gitignore`), docs (`CLAUDE.md` raíz + esta entrada).
+- **Qué (1 commit `77333de` fast-forward a `main`):**
+  - **`.claude/skills/` creada con 10 skills externas (~2.7 MB):**
+    - **n8n (7 skills)** de [czlonkowski/n8n-skills](https://github.com/czlonkowski/n8n-skills): `n8n-expression-syntax`, `n8n-mcp-tools-expert`, `n8n-workflow-patterns`, `n8n-validation-expert`, `n8n-node-configuration`, `n8n-code-javascript`, `n8n-code-python`. Diseñadas para usarse con el MCP de n8n ya activo en las sesiones web.
+    - **supabase (2 skills oficiales)** de [supabase/agent-skills](https://github.com/supabase/agent-skills): `supabase` (general) + `supabase-postgres-best-practices` (35 archivos con references RLS, security, schema). Recomendadas por las instrucciones del propio MCP de Supabase.
+    - **ui-ux-pro-max (1 skill)** de [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill): SKILL.md con priority rules (accesibilidad, touch, performance, estilo, layout, tipografía, color, animación) + anti-patterns + 31 CSVs (50+ estilos, 161 paletas, 57 font pairings, 99 guidelines UX, 25 tipos de chart) + 3 scripts Python stdlib (`search.py`, `core.py` BM25, `design_system.py` generator). Los symlinks del repo origen (`data` → `../../../src/...`, `scripts` → idem) se resolvieron a archivos reales para que la skill sea self-contained en cualquier clone.
+  - **`.eleventyignore`** + `.claude/` (necesario: si no, Eleventy procesaría los `SKILL.md` como markdown y emitiría páginas fantasma en `_site/`).
+  - **`.gitignore`** + `__pycache__/` y `*.pyc` (para que los scripts Python de `ui-ux-pro-max` no ensucien el repo al ejecutarse).
+- **Por qué:** Claude Code on the web corre en entornos remotos efímeros — el contenedor se reclama al cerrar sesión, así que skills instaladas en `~/.claude/skills/` no persisten. Commitearlas en `.claude/skills/` del repo es la única forma de tenerlas disponibles automáticamente en cada sesión nueva. Selección por relevancia al stack del proyecto: n8n (workflows del Portal), supabase (BD principal), ui-ux-pro-max (rediseños landing + admin pages).
+- **Impacto:**
+  - Build Eleventy verificado: 53 archivos escritos (idéntico al pre-cambio), 0 leaks de `.claude/` en `_site/`.
+  - Smoke test del CLI de ui-ux-pro-max OK (`python3 scripts/search.py --domain style "dashboard"` devuelve resultados reales del CSV).
+  - Próximas sesiones tendrán las skills disponibles como referencia consultable. ⚠️ Pendiente verificar si el harness de Claude Code on the web las carga automáticamente en la lista de skills invocables vía `Skill` tool, o si requieren configuración explícita en `settings.json` del workspace.
+- **Refs:**
+  - Commit: `77333de` (fast-forward sobre `b4a6fa7`).
+  - Branch original: `claude/skills-usage-question-WbSwF` (pusheada antes del merge a main).
+  - Archivos creados: 109 archivos bajo `.claude/skills/` (78 de n8n + supabase, 31 CSVs ui-ux-pro-max, 3 scripts Python, SKILL.md ×10).
+  - Archivos editados: `CLAUDE.md` raíz (layout + convención), `.eleventyignore`, `.gitignore`.
+- **Pendientes para próximas sesiones:**
+  - Verificar en próxima sesión nueva si las skills aparecen en la lista de "available skills" del system prompt sin configuración extra, o si hay que añadir un `settings.json` apuntando a `.claude/skills/`.
+  - Las otras 6 skills del repo `ui-ux-pro-max-skill` (`design`, `design-system`, `brand`, `ui-styling`, `slides`, `banner-design`) son ~6.6 MB extra — añadir si Ben las quiere disponibles también.
+
+---
+
 ### 2026-05-23 [WORK][DOCS][BUGFIX][REFACTOR] — Sesión continuación migración vault: 5 pendientes landing cerrados + 4 quick wins
 
 - **Área:** `thenucleo-landing/` repo unificado. Frontend (`index.html`, `ficha-cliente/index.html`). Docs (`CLAUDE.md` raíz, `docs/portal/ficha-cliente.md`, `docs/work/README.md`, `docs/work/ficha-cliente.md`, `docs/work/deuda-tecnica.md`, `docs/CLAUDE.md`). Config (`docs/.gitignore`, `.eleventyignore`).
