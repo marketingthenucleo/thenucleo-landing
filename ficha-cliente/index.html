@@ -2065,6 +2065,9 @@ const PIPELINES_MODULE = (() => {
         ${fieldStatic('Link externo / referencia', t.ext, { mono: true })}
         ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', t.fechaLanzamiento || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
       </div>
+      ${S.role === 'account' && t.estado !== 'archivado' ? `
+        <button class="pip-archive-btn" data-action="archive" data-kind="trigger" data-id="${t.id}" data-code="${t.code}">Archivar trigger ${t.code}</button>
+      ` : ''}
     `;
   }
 
@@ -2097,11 +2100,14 @@ const PIPELINES_MODULE = (() => {
                 ? `<span class="field-value empty">La campaña no tiene triggers.</span>`
                 : allCodes.map(tc => `<span class="pip-pill-trigger ${aplSet.has(tc)?'selected':''}">${escapeHtml(tc)}</span>`).join('')}
             </div>
-            <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Vacío = aplica a todos los triggers (regla .docx caso 5, código sin trigger).</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">El código del email refleja los triggers marcados (orden FM→FW→BD).</div>
           </div>
         </div>
         ${fieldStatic('Versionado', 'v1 — original · sin revisiones registradas', { hint: 'Regla .docx caso 7: el código no cambia al modificar; se versiona en Drive (P1C1E2_v2_copy.docx).' })}
       </div>
+      ${S.role === 'account' && e.estado !== 'archivado' ? `
+        <button class="pip-archive-btn" data-action="archive" data-kind="email" data-id="${e.id}" data-code="${code}">Archivar email ${code}</button>
+      ` : ''}
     `;
   }
 
@@ -2166,8 +2172,8 @@ const PIPELINES_MODULE = (() => {
             (async () => {
               try {
                 await archiveItem(kind, id);
-                // Si archivamos lo que estamos viendo, volver atrás
-                if ((S.view.pId === id) || (S.view.cId === id)) back();
+                // Si archivamos lo que estamos viendo, volver atrás (cualquier nivel)
+                if (S.view.pId === id || S.view.cId === id || S.view.tId === id || S.view.eId === id) back();
                 await loadFor(S.bubbleId);
                 showToast(`${code} archivado`);
               } catch (e) {
