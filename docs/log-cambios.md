@@ -71,6 +71,18 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [OPS] — Migración vault Obsidian móvil a `thenucleo-landing/docs/`
+
+- **Área:** Workspace Ben (Termux Android + Obsidian Android). No toca código del landing ni contenido de `docs/`.
+- **Qué:**
+  - **Desktop ya migrado** desde 2026-05-23 (vault vieja renombrada a `_OLD_vault`, Obsidian sobre `thenucleo-landing/docs/`). Móvil seguía clonando el repo viejo `thenucleo-vault` (ahora archivado read-only) → cualquier edición en móvil se descartaba silenciosamente porque los push fallaban contra el repo archived.
+  - **Setup Termux:** `pkg install git`, `termux-setup-storage`, clone HTTPS en `~/storage/shared/Documents/thenucleo-landing/`. Workarounds Android: `git config --global --add safe.directory <path>` para evitar `fatal: detected dubious ownership` (UID Termux ≠ UID del storage compartido emulado). `credential.helper store` para cachear PAT en `~/.git-credentials`.
+  - **PAT regenerado** con scopes `repo` + `workflow`. El anterior daba 403 en push (solo read scope — clone/pull funcionaban). `workflow` añadido por si se editan `.github/workflows/*.yml` desde móvil en el futuro (hoy el repo no tiene workflows GH Actions; CI/deploy va por Vercel).
+  - **Aliases Termux** en `~/.bashrc`: `tnpull` (cd + `git pull`) y `tnpush` (cd + `git add -A && commit con timestamp + push`). Commit message `vault backup (mobile): $(date +%Y-%m-%d %H:%M:%S)` manteniendo la convención histórica de commits móviles ya presente en el `git log`.
+  - **Obsidian Android:** vault abierta sobre `Documents/thenucleo-landing/docs` (vault = subfolder, `.git/` en parent). Plugin Obsidian Git instalado en **modo manual** (Plan B híbrido — sin auto-commit/auto-push/auto-pull). Setting clave: `Custom base path = ../` para que isomorphic-git móvil encuentre el `.git/` un nivel arriba del vault. Uso diario vía paleta → `Obsidian Git: Commit-and-sync`. Termux queda como fallback de emergencia.
+- **Por qué:** unificar el sync móvil ↔ desktop sobre el mismo repo (`thenucleo-landing`). Antes requería cross-PR entre 2 repos y se rompía. Ahora un solo `git pull`/`git push` cierra el ciclo. Cierre operacional de la unificación 2026-05-23.
+- **Refs:** vault móvil en `/storage/emulated/0/Documents/thenucleo-landing/`. Aliases en `~/.bashrc` Termux. Config plugin en `docs/.obsidian/plugins/obsidian-git/data.json` (incluye `Custom base path = ../`). Repo viejo `thenucleo-vault` queda archivado en GitHub (safety net read-only).
+
 ### 2026-05-24 [WORK][OPS] — Hygiene Claude Code: de-dupe skill, bump hook timeout, cleanup `additionalDirectories`
 
 - **Área:** Workspace local Ben (`~/.claude/`) + repo `.claude/settings.json`. NO toca código del landing ni docs portal.
