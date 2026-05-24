@@ -1932,7 +1932,7 @@ const PIPELINES_MODULE = (() => {
         `).join('')}
 
       ${S.role==='account' && p.estado!=='archivada' ? `
-        <button class="pip-archive-btn" data-action="archive" data-id="${p.id}" data-code="${p.code}">Archivar pipeline ${p.code}</button>
+        <button class="pip-archive-btn" data-action="archive" data-kind="pipeline" data-id="${p.id}" data-code="${p.code}">Archivar pipeline ${p.code}</button>
       ` : ''}
     `;
   }
@@ -2035,7 +2035,7 @@ const PIPELINES_MODULE = (() => {
       </div>
 
       ${S.role==='account' && c.estado!=='archivada' ? `
-        <button class="pip-archive-btn" data-action="archive" data-id="${c.id}" data-code="${c.code}">Archivar campaña ${c.code}</button>
+        <button class="pip-archive-btn" data-action="archive" data-kind="campania" data-id="${c.id}" data-code="${c.code}">Archivar campaña ${c.code}</button>
       ` : ''}
     `;
   }
@@ -2120,14 +2120,9 @@ const PIPELINES_MODULE = (() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function archiveItem(id) {
-    for (const p of S.data) {
-      if (p.id === id) { p.estado = 'archivada'; return true; }
-      for (const c of p.camps) {
-        if (c.id === id) { c.estado = 'archivada'; return true; }
-      }
-    }
-    return false;
+  // F2.2.2.B.4: archivar via RPC. Devuelve row archivada o lanza.
+  async function archiveItem(kind, id) {
+    return rpc('ficha_archivar_codigo', { p_kind: kind, p_id: id });
   }
 
   function attachAllHandlers() {
@@ -2160,12 +2155,21 @@ const PIPELINES_MODULE = (() => {
         else if (a === 'create-tasks') openTasksSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'archive') {
           const code = el.dataset.code;
+          const kind = el.dataset.kind;
+          const id   = el.dataset.id;
+          if (!kind) { showToast('Tipo de elemento desconocido'); return; }
           if (confirm(`¿Archivar ${code}? Los códigos no caducan (regla .docx caso 9); podrás verlo con "Mostrar archivados".`)) {
-            archiveItem(el.dataset.id);
-            // Si archivamos lo que estamos viendo, volver atrás
-            if ((S.view.pId === el.dataset.id) || (S.view.cId === el.dataset.id)) back();
-            else render();
-            showToast(`${code} archivado`);
+            (async () => {
+              try {
+                await archiveItem(kind, id);
+                // Si archivamos lo que estamos viendo, volver atrás
+                if ((S.view.pId === id) || (S.view.cId === id)) back();
+                await loadFor(S.bubbleId);
+                showToast(`${code} archivado`);
+              } catch (e) {
+                showToast(`Error: ${e.message || 'no se pudo archivar'}`);
+              }
+            })();
           }
         }
         else if (a === 'briefing') showToast('Abrir: ' + (el.dataset.name || '—'));
