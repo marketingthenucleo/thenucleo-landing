@@ -5,3 +5,5 @@ Thumbs.db
 _site/
 node_modules/
 .cache/
+__pycache__/
+*.pyc

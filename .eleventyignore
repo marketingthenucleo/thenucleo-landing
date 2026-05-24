@@ -13,3 +13,4 @@ privacidad.html
 docs/
 node_modules/
 _site/
+.claude/
