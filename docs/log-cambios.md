@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-22
+actualizado: 2026-05-23
 tags:
   - log
   - historial
@@ -71,7 +71,33 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
-### 2026-05-23 [INFRA][DOCS][BUGFIX] — Fix `CLAUDE.md` raíz (enum disponibilidades 6→7 tipos) + apuntar 5 pendientes detectados en docs del repo landing
+### 2026-05-23 [WORK][DOCS][BUGFIX][REFACTOR] — Sesión continuación migración vault: 5 pendientes landing cerrados + 4 quick wins
+
+- **Área:** `thenucleo-landing/` repo unificado. Frontend (`index.html`, `ficha-cliente/index.html`). Docs (`CLAUDE.md` raíz, `docs/portal/ficha-cliente.md`, `docs/work/README.md`, `docs/work/ficha-cliente.md`, `docs/work/deuda-tecnica.md`, `docs/CLAUDE.md`). Config (`docs/.gitignore`, `.eleventyignore`).
+- **Qué (6 commits sobre `ded6eef`, todos a `main`):**
+  1. `48af7c8` **fix(ficha-cliente)**: retirado chip "Pipelines · mockup" hardcoded en `ficha-cliente/index.html:1392`. El módulo Pipelines ya no es mockup (seed F1 hardcoded de Dra. Neuss desde 2026-05-23). El chip "Anomalías · mockup" se queda — sigue siendo mockup plano.
+  2. `1f99fd3` **docs(work)**: refrescada `docs/portal/ficha-cliente.md` (§10 punto 4 marcado como hecho + referencia línea 475 reformulada: Pipelines vivo con seed F1, solo Catálogos/Anomalías quedan MOCKUP). Bumpeada fecha de `docs/work/README.md` (2026-05-22 → 2026-05-23) y celda Ficha de Cliente menciona retirada del chip. **Creado `docs/work/deuda-tecnica.md`** con 2 críticos + 7 no críticos + 3 cerrados hoy + 5 históricos.
+  3. `9041966` **docs**: cerrado drift en `CLAUDE.md` raíz post-unificación. 6 refs muertas saneadas (línea 77 árbol con `docs/archive/`, línea 115 `../docs/publico/blog-zenyx-workflow.md`, línea 121 `../docs/infra/supabase-schema.md`, línea 142 `docs/publico/comunidad-publica.md`, líneas 152-154 `docs/archive/*`, línea 195 path Windows local Ben). **Creado `docs/work/ficha-cliente.md`** (~200 líneas) — cierra el gap del patrón (todas las admin pages tienen ahora `.md` dedicado). Cubre auth/allowlist (7 sitios), RPCs `ficha_cliente_listar` + `ficha_cliente_get`, 5 paneles (Datos coll-group, Servicios, Pipelines F1, Catálogos/Anomalías MOCKUP), chip strip, fixes recientes, pendientes F2. Índices `docs/CLAUDE.md` y `docs/work/README.md` actualizados.
+  4. `2727be7` **chore: 4 quick wins post-unificación**:
+     - `docs/.gitignore` limpiado (−15 líneas heredadas del vault standalone: `my-video/`, `thenucleo-landing/`, `Design/Mockups/`, `*.docx`, `*.blend`, `.claude/`, `.vscode/`, `node_modules/`, etc.). Solo quedan reglas Obsidian locales (`.obsidian/workspace.json` + `.obsidian/cache/`) + sistema.
+     - `.eleventyignore` hardening: whitelist → regla genérica `/*.md` (leading slash limita a raíz; posts del blog en `content/conocimiento-zenyx/*.md` intactos). Futuros `ROADMAP.md`/`CONTRIBUTING.md` ya no rompen el build.
+     - WCAG 2.5.5 AA touch targets: `.btn-sm` mobile (≤600px) `+min-height: 44px`. `.pdot` mantiene visual 8×8 pero hit area 44×44 vía `::after { inset: -18px }`.
+     - Magnetic buttons: bloque envuelto en `if (matchMedia('(hover: hover) and (pointer: fine)').matches)`. Touch ya no registra handlers `mousemove`/`mouseleave` sobre `.btn-primary/.btn-ghost/.btn-sm/.pricing-cta`.
+  - **Limpieza GitHub:** PR #1 del bot Cloudflare Workers (abierto desde 2026-04-11, no aplica — el landing va por Vercel) cerrado sin merge. Branch `claude/import-vault-migration-WZQlx` queda en remote (delete-ref bloqueado por el proxy del entorno; eliminación pendiente desde GitHub UI o clone local de Ben).
+- **Por qué:** consolidar la unificación del vault. Cerrar el drift inmediato (refs muertas tras migración) y el bug visible (chip "mockup" sobre módulo ya cableado). Honrar la convención "doc junto a código en el mismo PR" estrenada al unificar el repo.
+- **Impacto:** producción smoke verde (`/`, `/ficha-cliente/`, `/playbook/`, `/conocimiento-zenyx/`, `/comunidad/` → todos 200). Build sigue en 53 files (`_site/` excluye `docs/` correctamente). Cero issues abiertas + cero PRs abiertas en `marketingthenucleo/thenucleo-landing` tras la limpieza.
+- **Refs:**
+  - Commits: `48af7c8`, `1f99fd3`, `9041966`, `2727be7` (sobre `ded6eef` merge unificación).
+  - Archivos creados: `docs/work/ficha-cliente.md`, `docs/work/deuda-tecnica.md`.
+  - Archivos editados: `CLAUDE.md`, `index.html`, `ficha-cliente/index.html`, `.eleventyignore`, `docs/.gitignore`, `docs/CLAUDE.md`, `docs/portal/ficha-cliente.md`, `docs/work/README.md`.
+  - PR cerrado: [#1 Cloudflare Workers config](https://github.com/marketingthenucleo/thenucleo-landing/pull/1).
+- **Pendientes para próximas sesiones:**
+  - Críticos: Stripe TEST→PROD (bloqueado intencional hasta cuenta Stripe PROD lista), `prefers-reduced-motion` gate en Three.js (requiere sesión dedicada — `CLAUDE.md` prohíbe tocar arquitectura Three.js sin confirmación).
+  - No críticos: OG image v2, CSP `report-to`, RLS `comunidad_*` audit UPDATE/DELETE, Bundle Three.js local, Lazy-load GLB MacBook.
+  - Backlog Ben (manuales): copiar mockups `Design/*` del vault local (220 KB gitignored), sub n8n `d0B4LokmPhHWdg6g` añadir L1 Campañas, piloto con Melina sobre Neus + módulo Pipelines (cuando F2 backend Supabase listo).
+  - Cosmético: borrar branch remota `claude/import-vault-migration-WZQlx` desde GitHub UI o clone local.
+
+
 
 - **Área:** `CLAUDE.md` raíz (1 línea) + `docs/portal/secciones-app.md` (callout pendientes landing).
 - **Qué:**
