@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-23
+actualizado: 2026-05-24
 tags:
   - log
   - historial
@@ -68,6 +68,20 @@ Ejemplo completo:
 ```
 
 Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el historial narrativo queda como estaba).
+
+---
+
+### 2026-05-24 [WORK][OPS] — Rename carpeta local `thenucleo-landing` → `TheNucleo-Global` + migración slug Claude Code
+
+- **Área:** Workspace local de Ben (Windows). NO afecta repo GitHub (sigue siendo `marketingthenucleo/thenucleo-landing`), Vercel, ni ningún sistema productivo.
+- **Qué:**
+  - Renombrada `C:\Users\Benjamin\Desktop\Claude\thenucleo-landing` → `…\TheNucleo-Global`. Nombre nuevo refleja mejor el alcance tras la unificación con el vault (2026-05-23): cubre Landing + Portal docs + tooling Claude, no solo landing.
+  - Claude Code creó automáticamente el slug nuevo `~/.claude/projects/c--Users-Benjamin-Desktop-Claude-TheNucleo-Global/` al abrir la sesión en el path renombrado.
+  - Borrado el slug viejo `…-thenucleo-landing/` (los `.jsonl` históricos pre-rename se descartaron conscientemente, la `memory/` estaba vacía).
+- **Por qué:** post-unificación el nombre `thenucleo-landing` se quedó corto. Cambio nominal local sin impacto operacional.
+- **Impacto:** Cero en producción — git, npm, Vercel, hooks `.claude/`, skills y builds Eleventy son todos relativos al repo. Solo dev local: la UI de Claude Code abre el proyecto bajo el slug nuevo (no muestra historial pre-rename).
+- **Gotcha para próximas veces (cualquier rename de workspace):** Claude Code deriva el slug de proyecto del path absoluto (`<drive en minúsculas>--<path con \\ y : sustituidos por ->`, case del folder preservado). Renombrar = slug nuevo = memoria + historial UI no se transfieren automáticamente. Si hay que conservarlos, `Copy-Item -Recurse` del slug viejo al nuevo **antes** de abrir Claude Code en el path renombrado.
+- **Refs:** Solo esta entrada en `docs/log-cambios.md`. `CLAUDE.md` raíz NO se toca — el layout `thenucleo-landing/` representa el repo GitHub (canonical), no el path local de cada dev.
 
 ---
 
