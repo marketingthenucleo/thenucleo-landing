@@ -1811,19 +1811,18 @@ const PIPELINES_MODULE = (() => {
 
   function renderList() {
     const ps = S.data.filter(visible);
-    // Banner contextual F2.2.1: lectura desde Supabase ya cableada,
-    // escrituras todavía en memoria (drawers no persisten hasta F2.2.2).
-    const banner = `<div class="pip-seed-note">📌 <strong>Modo lectura · F2.2.1</strong> · Pipelines cargados desde Supabase (cliente_pipelines + 3 hijas). Las ediciones en los drawers todavía no se guardan — refrescar la página descarta cambios. Escritura cableada en F2.2.2.</div>`;
+    // F2.2.2.B.5/6 (2026-05-24): banner "modo lectura" retirado al cablearse
+    // los 4 drawers (Pipeline, Campaña, Trigger, Email) + archivar.
     if (S.loadStatus === 'loading') {
-      return banner + `<div class="empty-card">Cargando pipelines…</div>`;
+      return `<div class="empty-card">Cargando pipelines…</div>`;
     }
     if (S.loadStatus === 'error') {
-      return banner + `<div class="empty-card">Error al cargar pipelines: ${escapeHtml(S.loadError || 'desconocido')}. Refresca o avisa a Ben.</div>`;
+      return `<div class="empty-card">Error al cargar pipelines: ${escapeHtml(S.loadError || 'desconocido')}. Refresca o avisa a Ben.</div>`;
     }
     if (ps.length === 0) {
-      return banner + `<div class="empty-card">${S.showArchived ? 'Sin pipelines.' : 'Sin pipelines declarados. Pulsa <strong>+ Pipeline</strong> para empezar (próximamente).'}</div>`;
+      return `<div class="empty-card">${S.showArchived ? 'Sin pipelines.' : 'Sin pipelines declarados. Pulsa <strong>+ Pipeline</strong> para empezar.'}</div>`;
     }
-    return banner + ps.map(p => `
+    return ps.map(p => `
       <div class="pip-card ${p.estado==='archivada'?'archived':''}" data-action="open-pipeline" data-id="${p.id}" role="button" tabindex="0">
         <div class="pip-card-head">
           ${codeTag(p.code)}
@@ -1983,7 +1982,7 @@ const PIPELINES_MODULE = (() => {
 
       <div class="pip-section-head">
         <span>Triggers · ${c.triggers.length}</span>
-        ${S.role==='account' ? `<button class="add-link" data-action="new-trigger">+ TRIGGER</button>` : ''}
+        ${S.role==='account' ? `<button class="add-link" data-action="new-trigger" data-pid="${p.id}" data-cid="${c.id}">+ TRIGGER</button>` : ''}
       </div>
       ${c.triggers.length === 0
         ? `<div class="empty-card">Sin triggers declarados.</div>`
@@ -2002,7 +2001,7 @@ const PIPELINES_MODULE = (() => {
 
       <div class="pip-section-head">
         <span>Emails · ${c.emails.length}</span>
-        ${S.role==='account' ? `<button class="add-link" data-action="new-email">+ EMAIL</button>` : ''}
+        ${S.role==='account' ? `<button class="add-link" data-action="new-email" data-pid="${p.id}" data-cid="${c.id}">+ EMAIL</button>` : ''}
       </div>
       ${hasTriggers && c.emails.length > 0 ? `
         <div class="pip-mode-note">
@@ -2150,8 +2149,8 @@ const PIPELINES_MODULE = (() => {
         else if (a === 'back') back();
         else if (a === 'new-pipeline') openNewPipelineSheet();
         else if (a === 'new-campaign') openNewCampaignSheet(el.dataset.pid);
-        else if (a === 'new-trigger') showToast('Modal Nuevo Trigger (mockup)');
-        else if (a === 'new-email') showToast('Modal Nuevo Email (mockup)');
+        else if (a === 'new-trigger') openNewTriggerSheet(el.dataset.pid, el.dataset.cid);
+        else if (a === 'new-email') openNewEmailSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'create-tasks') openTasksSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'archive') {
           const code = el.dataset.code;
@@ -2416,6 +2415,214 @@ const PIPELINES_MODULE = (() => {
       });
       document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
     }, 40);
+  }
+
+  // ── F2.2.2.B.5: Drawer "Nuevo Trigger" ──────────────────────────
+  function openNewTriggerSheet(pId, cId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    const state = { tipo: null };
+
+    // Próximo código preview por tipo: cuenta los existentes del mismo tipo
+    // y suma 1. La regla .docx §3.4 obliga "no reutilizar", así que para
+    // datos limpios coincidirá con el que asigne el servidor. Si hay
+    // huecos por archivar (codes never reused), servidor puede asignar
+    // distinto — el toast muestra el real.
+    const nextFor = (tipo) => {
+      const n = c.triggers.filter(t => t.tipo === tipo).length + 1;
+      return `${c.code}${tipo}${n}`;
+    };
+
+    const renderForm = () => {
+      const tipo = state.tipo;
+      const next = tipo ? nextFor(tipo) : '?';
+      return `
+        <div class="pip-info-callout">
+          Nuevo trigger en <strong>${escapeHtml(c.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.
+        </div>
+        <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Tipo de trigger</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          ${[
+            { v:'FM', label:'FM · Formulario Meta', hint:'Form nativo de Instagram/Facebook' },
+            { v:'FW', label:'FW · Formulario Web',  hint:'Form en la web del cliente → GHL' },
+            { v:'BD', label:'BD · Base de datos',   hint:'Segmento existente con fecha programada' },
+          ].map(opt => `
+            <button class="pip-plantilla-card ${tipo===opt.v?'selected':''}" data-pick-tipo="${opt.v}" type="button" style="flex:1;min-width:120px">
+              <div class="pp-name">${escapeHtml(opt.label)}</div>
+              <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">${escapeHtml(opt.hint)}</div>
+            </button>
+          `).join('')}
+        </div>
+        ${tipo ? `
+          <div class="form-field">
+            <label class="form-label" for="nt-desc">Descripción</label>
+            <input class="form-input" id="nt-desc" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':'Ej: Segmento leads frío >60d'}" autocomplete="off"/>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="nt-ext">${tipo==='FM'?'Form ID Meta':tipo==='FW'?'URL del formulario':'Segmento / Tag GHL'}</label>
+            <input class="form-input" id="nt-ext" autocomplete="off"/>
+          </div>
+          ${tipo==='BD' ? `
+            <div class="form-field">
+              <label class="form-label" for="nt-fecha">Fecha de lanzamiento <span style="color:var(--warn)">*</span></label>
+              <input class="form-input" type="date" id="nt-fecha"/>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px">Obligatoria para tipo BD (regla .docx caso 4).</div>
+            </div>
+          ` : ''}
+        ` : ''}
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cancelar</button>
+          <button class="btn-primary" id="nt-save" ${tipo ? '' : 'disabled style="opacity:.4;cursor:not-allowed"'}>Crear ${next}</button>
+        </div>
+      `;
+    };
+
+    openSheet('Nuevo trigger', `dentro de ${c.code}`, renderForm());
+
+    const rebind = () => {
+      document.querySelectorAll('[data-pick-tipo]').forEach(b => {
+        b.addEventListener('click', () => {
+          state.tipo = b.dataset.pickTipo;
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          rebind();
+        });
+      });
+      document.getElementById('nt-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('nt-save');
+        if (!btn || btn.disabled) return;
+        const desc  = document.getElementById('nt-desc')?.value.trim();
+        const ext   = document.getElementById('nt-ext')?.value.trim() || null;
+        const fecha = document.getElementById('nt-fecha')?.value || null;
+        if (!desc) { showToast('Falta la descripción del trigger'); return; }
+        if (state.tipo === 'BD' && !fecha) { showToast('Tipo BD requiere fecha de lanzamiento'); return; }
+        btn.disabled = true;
+        try {
+          const row = await rpc('ficha_trigger_upsert', {
+            p_id:                null,
+            p_campania_id:       c.id,
+            p_tipo:              state.tipo,
+            p_descripcion:       desc,
+            p_link_externo:      ext,
+            p_fecha_lanzamiento: fecha,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast(`${row?.codigo || 'Trigger'} creado`);
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    };
+    setTimeout(rebind, 40);
+  }
+
+  // ── F2.2.2.B.6: Drawer "Nuevo Email" ────────────────────────────
+  function openNewEmailSheet(pId, cId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    const nextOrden = c.emails.length + 1;
+    // Subcódigos de triggers de la campaña: 'FM1','FW1','BD1'... el frontend
+    // usa este formato para email.triggersAplicables (regla .docx caso 5).
+    const allSubcodes = c.triggers.map(t => t.code.replace(c.code, ''));
+    const state = { aplicables: new Set() };  // vacío = aplica a todos
+
+    const renderForm = () => {
+      const sharedWithAll = state.aplicables.size === 0;
+      const previewCode = sharedWithAll
+        ? `${c.code}E${nextOrden}`
+        : `${c.code}${[...state.aplicables].sort((a,b)=>{
+            const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+            return w(a)-w(b);
+          }).join('')}E${nextOrden}`;
+      return `
+        <div class="pip-info-callout">
+          Nuevo email en <strong>${escapeHtml(c.code)}</strong> → código preview <strong>${escapeHtml(previewCode)}</strong>.
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="ne-name">Nombre operativo</label>
+          <input class="form-input" id="ne-name" placeholder="Ej: Bienvenida + valor" autocomplete="off"/>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label" for="ne-orden">Orden</label>
+            <input class="form-input" type="number" id="ne-orden" value="${nextOrden}" min="1"/>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="ne-espera">Espera desde el anterior</label>
+            <input class="form-input" id="ne-espera" placeholder="Día 0, Día +2, +1 semana…" autocomplete="off"/>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="ne-obj">Objetivo</label>
+          <textarea class="form-textarea" id="ne-obj" placeholder="Una frase: qué consigue este email."></textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Triggers aplicables</label>
+          ${allSubcodes.length === 0
+            ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. El email se aplicará automáticamente a los que se añadan.</div>`
+            : `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+                ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger ${state.aplicables.has(sub)?'selected':''}" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
+              </div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Vacío = aplica a todos los triggers (regla .docx caso 5, código sin trigger). Marca solo los que apliquen si el email varía por trigger.</div>`}
+        </div>
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cancelar</button>
+          <button class="btn-primary" id="ne-save">Crear email</button>
+        </div>
+      `;
+    };
+
+    openSheet('Nuevo email', `dentro de ${c.code}`, renderForm());
+
+    const rebind = () => {
+      document.querySelectorAll('[data-toggle-trig]').forEach(b => {
+        b.addEventListener('click', () => {
+          const sub = b.dataset.toggleTrig;
+          if (state.aplicables.has(sub)) state.aplicables.delete(sub);
+          else state.aplicables.add(sub);
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          rebind();
+        });
+      });
+      document.getElementById('ne-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('ne-save');
+        if (!btn || btn.disabled) return;
+        const name   = document.getElementById('ne-name')?.value.trim();
+        const orden  = parseInt(document.getElementById('ne-orden')?.value, 10);
+        const espera = document.getElementById('ne-espera')?.value.trim() || null;
+        const obj    = document.getElementById('ne-obj')?.value.trim() || null;
+        if (!name) { showToast('Falta el nombre del email'); return; }
+        // Si seleccionados == todos los triggers de la campaña, equivale a vacío
+        // (caso 5: "aplica a todos" → código sin trigger). Lo enviamos como [].
+        const apl = (state.aplicables.size === 0 || state.aplicables.size === allSubcodes.length)
+          ? []
+          : [...state.aplicables];
+        btn.disabled = true;
+        try {
+          await rpc('ficha_email_upsert', {
+            p_id:                    null,
+            p_campania_id:           c.id,
+            p_nombre:                name,
+            p_orden:                 isNaN(orden) ? null : orden,
+            p_espera_desde_anterior: espera,
+            p_objetivo:              obj,
+            p_triggers_aplicables:   apl,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast('Email creado');
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    };
+    setTimeout(rebind, 40);
   }
 
   // F2.2.1: API público para inyección de datos desde Supabase.
