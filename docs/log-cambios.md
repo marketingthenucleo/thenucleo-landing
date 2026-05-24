@@ -71,6 +71,26 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [WORK][INFRA] — Ficha de Cliente: reset SEED Neus para piloto formal (corrige dirección del modelo)
+
+- **Área:** Supabase `cbixhqjsnpuhcrcjppah` (DELETE en 5 tablas vía CASCADE) + 1 migration SQL + 1 doc.
+- **Qué:** DELETE de los 4 pipelines de Neus (`cliente_bubble_id = '1773847038522x983519237604638700'`) en `cliente_pipelines`. ON DELETE CASCADE de las 3 FKs hijas (`cliente_campanias.pipeline_id`, `cliente_triggers.campania_id`, `cliente_emails.campania_id`) nukea las 4+4+5=13 filas dependientes en una sola operación. Migration `ficha_cliente_pipelines_reset_neus_seed_pre_piloto`. Estado final: catálogo 7 plantillas intacto · datos cliente totalmente vacíos · RPC `ficha_pipelines_get('<neus>')` devuelve `'[]'` · frontend muestra empty state "Sin pipelines declarados. Pulsa + Pipeline para empezar."
+- **Por qué:** El SEED migrado en F2.2.1 era una **reconstrucción post-hoc** de 60 tareas observadas en Notion entre marzo→mayo 2026 (`docs/portal/ficha-cliente.md` §8). Esa dirección es **la inversa del modelo correcto**:
+  ```
+  ficha (Account declara intent) → tarea Notion → equipo ejecuta en
+  Meta/GHL/Drive → link_externo capturado en la ficha
+  ```
+  La ficha es UPSTREAM (declara), Notion/Meta/GHL son DOWNSTREAM (ejecutan). Sembrar datos "inferidos del downstream" rompe la pedagogía de la herramienta — enseña a Mel un patrón que NO debe replicar. Mejor partir de cero y que ella declare formalmente en el piloto.
+- **Impacto:**
+  - ✅ Frontend operativo end-to-end para crear desde cero (los 4 drawers + archivar siguen wired desde F2.2.2.B).
+  - ✅ Catálogo TheNucleo (7 plantillas) intacto — Account las ve al crear campaña.
+  - ✅ Cero clientes con datos legacy. Estado "limpio" para arrancar el piloto sin contaminación.
+- **Refs:**
+  - Migration name: `ficha_cliente_pipelines_reset_neus_seed_pre_piloto`.
+  - SQL en repo: `supabase/migrations/20260524_ficha_cliente_pipelines_reset_neus_seed_pre_piloto.sql`.
+  - Tablas afectadas: `cliente_pipelines` (-4), `cliente_campanias` (-4), `cliente_triggers` (-4), `cliente_emails` (-5).
+- **Siguiente paso (único que tiene sentido ahora):** piloto Mel sobre Neus — 30 min en `work.thenucleo.com/ficha-cliente/?id=1773847038522x983519237604638700`, declara desde cero las pipelines reales que opera con Neus, valida UX, anota fricciones.
+
 ### 2026-05-24 [WORK][FEATURE] — Ficha de Cliente F2.2.2.B: 4 drawers cableados + archivar via RPC + stateBadge 11 estados (frontend write completo)
 
 - **Área:** `ficha-cliente/index.html` (~300 líneas tocadas en 5 micro-commits) + 2 docs (`work/ficha-cliente.md`, `infra/supabase-schema.md`).
