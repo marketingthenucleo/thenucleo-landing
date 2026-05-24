@@ -1892,13 +1892,6 @@ const PIPELINES_MODULE = (() => {
         <p>El código del ítem archivado queda <strong>reservado</strong> — no se reutiliza para crear nuevos. Así no hay colisiones con referencias antiguas en Notion/Drive/GHL.</p>
         <div class="info-pop-ref">Ref: .docx §9</div>`
     },
-    'email-orden': {
-      title: 'Orden del email en la secuencia',
-      body: `
-        <p>Posición del email dentro de la secuencia post-trigger. <code>1</code> es el primer email que sale, <code>2</code> el segundo, etc.</p>
-        <p>El orden lo asigna automáticamente el servidor (max+1) cuando creas un email nuevo — no hace falta tocarlo en la mayoría de casos.</p>
-        <p>Hoy no es editable desde aquí (cambiar el orden de uno requiere desplazar los siguientes — se hará en el bloque "insertar intercalado", pendiente).</p>`
-    },
     'versionado': {
       title: 'Versionado en Drive',
       body: `
@@ -2973,15 +2966,9 @@ const PIPELINES_MODULE = (() => {
           <label class="form-label" for="ne-name">Nombre operativo</label>
           <input class="form-input" id="ne-name" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="Ej: Bienvenida + valor" autocomplete="off"/>
         </div>
-        <div class="form-row">
-          <div class="form-field">
-            <label class="form-label" for="ne-orden">Orden ${infoIcon('email-orden')}${isEdit ? ' <span style="color:var(--text-3);font-size:10px;font-weight:500">· no editable hoy</span>' : ''}</label>
-            <input class="form-input" type="number" id="ne-orden" value="${ordenInicial}" min="1" ${isEdit ? 'disabled style="opacity:.6;cursor:not-allowed"' : ''}/>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="ne-espera">Espera desde el anterior</label>
-            <input class="form-input" id="ne-espera" value="${escapeHtml(isEdit ? (editing.espera || '') : '')}" placeholder="Día 0, Día +2, +1 semana…" autocomplete="off"/>
-          </div>
+        <div class="form-field">
+          <label class="form-label" for="ne-espera">Espera desde el anterior</label>
+          <input class="form-input" id="ne-espera" value="${escapeHtml(isEdit ? (editing.espera || '') : '')}" placeholder="Día 0, Día +2, +1 semana…" autocomplete="off"/>
         </div>
         <div class="form-field">
           <label class="form-label" for="ne-obj">Objetivo</label>
@@ -3070,7 +3057,7 @@ const PIPELINES_MODULE = (() => {
             p_id:                    isEdit ? editing.id : null,
             p_campania_id:           isEdit ? null : c.id,
             p_nombre:                name,
-            p_orden:                 isEdit ? null : ordenInicial,
+            p_orden:                 null,  // servidor asigna max+1 en create; conserva en update
             p_espera_desde_anterior: espera,
             p_objetivo:              obj,
             p_triggers_aplicables:   apl,
