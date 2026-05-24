@@ -932,6 +932,62 @@
   }
   .pip-info-callout strong { color: var(--text); }
 
+  /* Iconos ⓘ + popover secundario (apilable sobre #sheet sin pisarlo). */
+  .pip-info-ico {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: transparent; border: 1px solid var(--line-2);
+    color: var(--text-3); font-size: 11px; font-weight: 700; font-style: italic;
+    font-family: Georgia, 'Times New Roman', serif; line-height: 1;
+    cursor: pointer; margin-left: 6px; vertical-align: middle; padding: 0;
+    transition: color 120ms, border-color 120ms, background 120ms;
+    flex-shrink: 0;
+  }
+  .pip-info-ico:hover, .pip-info-ico:focus-visible {
+    color: var(--accent); border-color: var(--accent);
+    background: var(--accent-muted); outline: none;
+  }
+  .info-pop-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 110; display: none;
+  }
+  .info-pop-backdrop.open { display: block; }
+  .info-pop {
+    position: fixed; left: 12px; right: 12px; bottom: 12px;
+    max-width: 520px; margin: 0 auto;
+    background: var(--bg-2); border: 1px solid var(--line-2);
+    border-radius: 14px; padding: 18px 18px 16px;
+    z-index: 120; display: none;
+    max-height: 70vh; overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  .info-pop.open { display: block; }
+  .info-pop h4 {
+    margin: 0 0 10px; padding-right: 30px;
+    font-size: 14px; font-weight: 700; color: var(--text);
+  }
+  .info-pop p, .info-pop li {
+    font-size: 13px; line-height: 1.5; color: var(--text-2); margin: 0 0 8px;
+  }
+  .info-pop ul { margin: 0 0 8px; padding-left: 18px; }
+  .info-pop strong { color: var(--text); font-weight: 600; }
+  .info-pop code {
+    background: var(--bg-3); border: 1px solid var(--line-2);
+    border-radius: 4px; padding: 1px 5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px;
+  }
+  .info-pop .info-pop-ref {
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-2);
+    font-size: 11px; color: var(--text-3);
+  }
+  .info-pop-close {
+    position: absolute; top: 8px; right: 10px;
+    background: transparent; border: 0; color: var(--text-3);
+    font-size: 20px; line-height: 1; cursor: pointer; padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .info-pop-close:hover { color: var(--text); background: var(--bg-3); }
+
   .pip-sheet-actions { display: flex; gap: 8px; margin-top: 14px; }
   .pip-sheet-actions .btn-primary,
   .pip-sheet-actions .btn-secondary { flex: 1; margin-top: 0; }
@@ -1716,6 +1772,134 @@ const PIPELINES_MODULE = (() => {
     { slug:'lanz', nombre:'Lanzamiento multicanal (FM + FW + BD)', triggers:[{tipo:'FM',name:'Anuncio Meta'},{tipo:'FW',name:'Form web'},{tipo:'BD',name:'BBDD'}], emails:[{name:'Pre-aviso',espera:'-3d'},{name:'Anuncio',espera:'D0'},{name:'Recordatorio',espera:'+2d'},{name:'Última llamada',espera:'+5d'},{name:'Cierre',espera:'+7d'}], briefingMaster:'drive://templates/briefing-lanzamiento.docx', defaults:{presup:1500,kpi:'Ventas'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',meta:'Damian',ghl:'Camilo Balanta'} },
     { slug:'evento', nombre:'Evento (formulario + recordatorios)', triggers:[{tipo:'FW',name:'Inscripción evento'}], emails:[{name:'Confirmación',espera:'Día 0'},{name:'Recordatorio',espera:'-1d'}], briefingMaster:'drive://templates/briefing-evento.docx', defaults:{presup:100,kpi:'Inscripciones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
   ];
+
+  // ─── ⓘ Info-tooltip content (C1 — 2026-05-24) ──────────────────
+  // 12 entradas. Expuestas a window.FICHA_INFO_CONTENT para que el
+  // handler global (al final del script) las resuelva por key.
+  // Copy alineado con docs/portal/ficha-cliente.md §3, §3.4, §5, §7, §9
+  // + decisiones de sesión: emails siempre con triggers explícitos (no
+  // hay atajo "vacío = todos") + estados intermedios derivan de Notion.
+  const INFO_CONTENT = {
+    'pipeline': {
+      title: 'Qué es un Pipeline',
+      body: `
+        <p>Un <strong>Pipeline (P1, P2…)</strong> es una <strong>línea estratégica de negocio</strong> del cliente. Estable en el tiempo (vive meses o años) y agrupa todas las acciones de marketing que persiguen un mismo objetivo de negocio.</p>
+        <p>Regla mental: si lo que describes <strong>se acaba en una fecha concreta</strong>, no es un Pipeline — es una Campaña.</p>
+        <p>Ejemplos: "Captación B2B colegios", "Reactivación de clientes antiguos", "Newsletter mensual".</p>
+        <div class="info-pop-ref">Ref: nomenclatura .docx §3</div>`
+    },
+    'campania': {
+      title: 'Qué es una Campaña',
+      body: `
+        <p>Una <strong>Campaña (P1<u>C1</u>, P1<u>C2</u>…)</strong> es la <strong>unidad real de trabajo</strong> dentro de un Pipeline. Cuando el equipo monta algo concreto, monta una Campaña.</p>
+        <p>Tiene fechas, presupuesto, KPI, briefing en Drive, y al menos <strong>un Trigger</strong> (FM/FW/BD) que la dispara. Puede llevar 0 o N emails detrás.</p>
+        <p>Una Campaña <strong>siempre tiene ≥1 Trigger</strong>; sin Trigger está incompleta — declarada pero no ejecutable.</p>
+        <div class="info-pop-ref">Ref: nomenclatura .docx §3</div>`
+    },
+    'trigger-tipos': {
+      title: 'Tipos de Trigger (FM / FW / BD)',
+      body: `
+        <p>Un <strong>Trigger</strong> es el mecanismo que hace que entren leads o se dispare la secuencia. Hay 3 tipos:</p>
+        <ul>
+          <li><strong>FM — Formulario Meta</strong>. Form nativo de Instagram/Facebook que captura el lead dentro de la plataforma. Lo crea Media Buyer.</li>
+          <li><strong>FW — Formulario Web</strong>. Form en la web del cliente (landing/popup) que envía el lead a GHL. Lo crea CRM Manager o Dev.</li>
+          <li><strong>BD — Base de Datos</strong>. Lista existente a la que se lanza una secuencia en fecha programada. Lo crea CRM Manager. <strong>Requiere fecha de lanzamiento.</strong></li>
+        </ul>
+        <p>Los códigos son <code>P1C1FM1</code>, <code>P1C1FW1</code>, <code>P1C1BD1</code> y van por tipo independiente (FM2 puede existir aunque no haya FW2).</p>
+        <div class="info-pop-ref">Ref: .docx §3</div>`
+    },
+    'trigger-bd-fecha': {
+      title: 'Por qué BD pide fecha',
+      body: `
+        <p>Los triggers <strong>FM y FW</strong> son <em>siempre on</em>: los leads entran cuando llegan al form. No tienen fecha.</p>
+        <p>Un trigger <strong>BD</strong> trabaja sobre una <strong>lista existente</strong>. Hay que programar <strong>cuándo</strong> se le envía la secuencia (no se manda automáticamente).</p>
+        <p>Sin esa fecha la campaña queda inejecutable — por eso es obligatoria.</p>
+        <div class="info-pop-ref">Ref: .docx §4 (caso 4)</div>`
+    },
+    'objetivo-negocio': {
+      title: 'Objetivo de negocio',
+      body: `
+        <p>Una <strong>frase corta</strong> describiendo qué problema del cliente resuelve este Pipeline.</p>
+        <p>No es un KPI numérico (eso va en cada Campaña). Es el "por qué" estratégico.</p>
+        <p>Ejemplos: <em>"Monetizar el infoproducto Curso Suplementación a tráfico frío"</em>, <em>"Nutrir BBDD con leads cualificados para futuras ofertas"</em>.</p>`
+    },
+    'triggers-aplicables': {
+      title: 'Triggers aplicables',
+      body: `
+        <p>Marca qué triggers de la campaña <strong>disparan este email</strong>. Mínimo uno.</p>
+        <p>El código del email se forma con los marcados en <strong>orden FM → FW → BD</strong>:</p>
+        <ul>
+          <li>Marcas <code>FM1</code> → email = <code>P1C1FM1E2</code></li>
+          <li>Marcas <code>FM1 + FW1</code> → email = <code>P1C1FM1FW1E2</code></li>
+        </ul>
+        <p>Si la campaña tiene <strong>un solo trigger</strong>, se asocia automáticamente (no hay nada que elegir).</p>
+        <div class="info-pop-ref">Ref: .docx §5</div>`
+    },
+    'plantilla': {
+      title: 'Plantilla del catálogo',
+      body: `
+        <p>Las <strong>7 plantillas</strong> del catálogo TheNucleo (Venta Directa Meta, Captación FM, Reactivación BD…) <strong>precargan</strong> campos típicos: nombre sugerido, KPI estándar, presupuesto, secuencia heredada de triggers y emails.</p>
+        <p>Elegir <em>"Sin plantilla · custom"</em> arranca con el form vacío para casos no encajables.</p>
+        <p>⚠️ Hoy la elección <strong>solo precarga el form</strong> — no queda asociada en DB. La link plantilla↔campaña es deuda menor.</p>`
+    },
+    'briefing-drive': {
+      title: 'Link briefing en Drive',
+      body: `
+        <p>El <strong>briefing operativo</strong> (PDF/Doc detallado) vive en <strong>Google Drive del cliente</strong>, no en la ficha. Aquí solo pegamos el link.</p>
+        <p>Flujo: duplicas el template master de Drive a la carpeta del cliente → ajustas → pegas el link aquí. Así el equipo abre el briefing desde la ficha sin ir a buscarlo.</p>`
+    },
+    'estado-fino': {
+      title: 'Estados — quién los llena',
+      body: `
+        <p><strong>Tú (Account) solo marcas 2 estados:</strong></p>
+        <ul>
+          <li><strong>Declarado/-a</strong> — acabas de crearlo. Estado inicial automático.</li>
+          <li><strong>Archivado/-a</strong> — botón Archivar (regla §9: no se borra).</li>
+        </ul>
+        <p>El resto son <strong>derivados del lifecycle de tareas Notion</strong> (los pinta el sync, no tú):</p>
+        <ul>
+          <li><strong>Campaña</strong>: En producción ← cuando un trigger pasa a "creado/monitorizando".</li>
+          <li><strong>Trigger</strong>: Creado ← tarea "crear form" cerrada · Monitorizando ← primer lead entró.</li>
+          <li><strong>Email</strong>: Copy listo · Diseño listo · Montado GHL · Activo ← cada uno cuando la tarea Notion de ese hito cierra.</li>
+        </ul>
+        <p>⏸ <em>Sync Notion → ficha aún no operativo. Mientras tanto el dropdown deja editarlo manualmente.</em></p>`
+    },
+    'codigo-inmutable': {
+      title: 'Por qué el código no cambia al editar',
+      body: `
+        <p>Los códigos <code>P1</code>, <code>P1C1</code>, <code>P1C1FM1</code>, <code>P1C1FM1E1</code>… son <strong>permanentes</strong>. Nunca cambian ni se reutilizan tras crearlos.</p>
+        <p>Permite que tareas en Notion, briefings en Drive, segmentos en GHL y referencias en chats sigan apuntando al mismo sitio, aunque renombres o re-estructures.</p>
+        <p>Si te equivocaste de tipo (ej. creaste FM cuando era FW) o de nombre, edita lo demás o <strong>archiva y crea uno nuevo</strong>. El archivado guarda el código reservado.</p>
+        <div class="info-pop-ref">Ref: .docx §3.4</div>`
+    },
+    'archivar': {
+      title: 'Archivar ≠ borrar',
+      body: `
+        <p><strong>Nada se borra</strong> en esta ficha. Archivar es ocultar del flujo activo, pero la fila sigue viva en DB.</p>
+        <p>Recuperable con el toggle <em>"Mostrar archivados"</em> en la cabecera del módulo.</p>
+        <p>El código del ítem archivado queda <strong>reservado</strong> — no se reutiliza para crear nuevos. Así no hay colisiones con referencias antiguas en Notion/Drive/GHL.</p>
+        <div class="info-pop-ref">Ref: .docx §9</div>`
+    },
+    'versionado': {
+      title: 'Versionado en Drive',
+      body: `
+        <p>El código del email (<code>P1C1FM1E1</code>) <strong>no cambia</strong> aunque rehagas el copy o el diseño 5 veces.</p>
+        <p>Las versiones nuevas viven en Drive con <strong>sufijo en el nombre del archivo</strong>:</p>
+        <ul>
+          <li><code>P1C1E2_copy.docx</code> — v1</li>
+          <li><code>P1C1E2_v2_copy.docx</code> — v2</li>
+          <li><code>P1C1E2_v3_copy.docx</code> — v3</li>
+        </ul>
+        <p>Así el código operativo es estable y la trazabilidad de revisiones queda en Drive.</p>
+        <div class="info-pop-ref">Ref: .docx §7</div>`
+    },
+  };
+  // Exponer al handler global (definido al final del script).
+  window.FICHA_INFO_CONTENT = Object.assign(window.FICHA_INFO_CONTENT || {}, INFO_CONTENT);
+
+  function infoIcon(key) {
+    return `<button type="button" class="pip-info-ico" data-info="${key}" aria-label="Más información" tabindex="0">i</button>`;
+  }
 
   // F2.2.1 (2026-05-24): SEED hardcoded movido a Supabase
   // (cliente_pipelines + 3 hijas). El árbol se carga vía RPC
@@ -2899,6 +3083,55 @@ function getUrlClientId() {
     document.getElementById('state-loading').innerHTML =
       `<div class="empty-card">Error cargando ficha: ${escapeHtml(e.message)}</div>`;
   }
+})();
+
+// ────────────────────────────────────────────────────────────────────────
+// ⓘ Info-tooltip overlay — secundario, apilable sobre #sheet (no lo pisa)
+// Markup inyectado al cargar. Handlers globales con delegación.
+// Mapa de contenidos vive dentro de PIPELINES_MODULE (INFO_CONTENT).
+// El IIFE expone window.openFichaInfo para que el dispatcher global
+// resuelva la key sin necesidad de importar el módulo.
+// ────────────────────────────────────────────────────────────────────────
+(function setupInfoPop() {
+  const overlay = document.createElement('div');
+  overlay.innerHTML = `
+    <div id="info-pop-backdrop" class="info-pop-backdrop"></div>
+    <aside id="info-pop" class="info-pop" role="dialog" aria-modal="true" aria-labelledby="info-pop-title" aria-hidden="true">
+      <button class="info-pop-close" aria-label="Cerrar" type="button">×</button>
+      <h4 id="info-pop-title"></h4>
+      <div id="info-pop-body"></div>
+    </aside>
+  `;
+  document.body.appendChild(overlay);
+
+  const pop = document.getElementById('info-pop');
+  const backdrop = document.getElementById('info-pop-backdrop');
+  const titleEl = document.getElementById('info-pop-title');
+  const bodyEl = document.getElementById('info-pop-body');
+
+  window.openFichaInfo = function(key) {
+    const content = (window.FICHA_INFO_CONTENT || {})[key];
+    if (!content) { console.warn('[ficha-cliente] info key desconocida:', key); return; }
+    titleEl.textContent = content.title;
+    bodyEl.innerHTML = content.body;
+    pop.classList.add('open');
+    backdrop.classList.add('open');
+    pop.setAttribute('aria-hidden', 'false');
+  };
+  window.closeFichaInfo = function() {
+    pop.classList.remove('open');
+    backdrop.classList.remove('open');
+    pop.setAttribute('aria-hidden', 'true');
+  };
+
+  document.addEventListener('click', (e) => {
+    const trig = e.target.closest('[data-info]');
+    if (trig) { e.preventDefault(); window.openFichaInfo(trig.dataset.info); return; }
+    if (e.target.closest('.info-pop-close') || e.target.id === 'info-pop-backdrop') window.closeFichaInfo();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && pop.classList.contains('open')) window.closeFichaInfo();
+  });
 })();
 </script>
 </body>
