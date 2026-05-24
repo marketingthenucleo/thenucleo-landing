@@ -2,7 +2,7 @@
 title: Deuda técnica — work.thenucleo.com
 dominio: work
 estado: vivo
-actualizado: 2026-05-23
+actualizado: 2026-05-24
 tags: [deuda-tecnica, work, landing, backlog]
 ---
 
@@ -32,6 +32,12 @@ Inventario de items pendientes del landing y páginas admin (`/playbook/`, `/fic
 - ~~**Chip "Pipelines · mockup" en `/ficha-cliente/`.**~~ ✅ **Cerrado 2026-05-23** — `ficha-cliente/index.html:1392` retirado. El módulo Pipelines ya no es mockup (seed F1 hardcoded de Dra. Neuss). Commit `48af7c8`.
 - ~~**`docs/portal/ficha-cliente.md` describía Pipelines como placeholder anterior, no el v3.**~~ ✅ **Cerrado 2026-05-23** — §10 punto 4 marcado como hecho; Referencias línea 475 reformulada (Pipelines vivo con seed, solo Catálogos y Anomalías siguen MOCKUP).
 - ~~**Convención drift no declarada en `CLAUDE.md` raíz tras unificación del vault.**~~ ✅ **Cerrado 2026-05-23** — bloque "Repo unificado" + tabla "Cuándo mirar qué" + sección "Convención para evitar drift" añadidos al inicio del `CLAUDE.md` raíz (commits `8647846`, `483fb4e`).
+
+## Seguridad / config local
+
+> Items de hygiene del setup local de Claude Code (`~/.claude/`) que no pertenecen al landing per se, pero se registran aquí por falta de mejor sitio y para que sean visibles al revisar deuda.
+
+- **n8n JWT en plano en `~/.claude/settings.json` (PC1 Ben).** 2 entradas `Bash(curl -s -X PUT -H 'X-N8N-API-KEY: eyJ…IsyI' …)` contienen la API key de PROD literal dentro de la allowlist user-level. Riesgo bajo (archivo local), pero la key activa en plano = mal patrón (cualquier backup de `~/.claude/` la lleva). Acción: rotar el token desde n8n UI → reemplazar las 2 entradas por wildcard `Bash(curl * X-N8N-API-KEY: *)` (sin valor literal) o pasar la key a variable de entorno y usar `$N8N_API_KEY` en el curl. Detectado 2026-05-24.
 
 ## Cerrados (histórico corto)
 

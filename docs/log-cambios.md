@@ -71,6 +71,26 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [WORK][OPS] — Hygiene Claude Code: de-dupe skill, bump hook timeout, cleanup `additionalDirectories`
+
+- **Área:** Workspace local Ben (`~/.claude/`) + repo `.claude/settings.json`. NO toca código del landing ni docs portal.
+- **Qué:**
+  - **De-dupe `ui-ux-pro-max`:** borrada la copia user-level en `~/.claude/skills/ui-ux-pro-max/` (8 KB, solo `SKILL.md` stripped de 95 líneas). La copia del repo `.claude/skills/ui-ux-pro-max/` (1.8 MB, full con `SKILL.md` 659 líneas + `data/` 31 CSVs + `scripts/` Python) queda como single source of truth. Antes había riesgo de drift entre las dos en PC1 y comportamiento distinto en PC2/mobile (donde solo está la del repo).
+  - **Hook timeouts 5 → 10 s** en `.claude/settings.json` para `SessionStart` y `Stop`. El cálculo `git log <ultimo-commit-log>..HEAD` puede ser lento en primera carga post-rebase en Windows con repo grande; con 5 s el hook saltaba silenciosamente y no avisaba de commits sin documentar.
+  - **`additionalDirectories` user-level limpio:** borradas 3 entradas stale en `~/.claude/settings.json` que apuntaban a paths inexistentes post-unificación (2026-05-23) + post-rename (2026-05-24): `…\App The Nucleo MCP integral\docs\integraciones`, `…\App The Nucleo MCP integral\thenucleo-landing`, `…\.claude\projects\c--…-thenucleo-landing`. Queda `\tmp` (genérico) + `C:\Users\Benjamin\.claude` (añadido por el harness durante esta sesión cuando tocamos config user-level — necesario, se conserva).
+- **Por qué:** auditoría de incoherencias técnicas multi-entorno (PC1 Cursor + PC2 Cursor + mobile cloud). Las 3 cosas eran fricciones reales: la skill duplicada producía comportamiento distinto entre PC1 y el resto; el timeout corto rompía el reminder del log; las entradas stale en allowlist daban permisos cross-project a paths que ya no existen.
+- **Impacto:**
+  - PC1: `ui-ux-pro-max` ahora carga siempre la versión full del repo (no había estado cargando la stripped — Claude Code prioriza project-level — pero ya no hay ambigüedad ni riesgo de drift).
+  - PC2 + mobile cloud: sin cambio (ya cargaban la del repo).
+  - Hooks: próxima sesión arranca con timeout 10 s. Watcher caveat de siempre: el cambio en `.claude/settings.json` no lo recoge la sesión actual, sí la próxima.
+- **Pendiente registrado en `docs/work/deuda-tecnica.md` (sección nueva "Seguridad / config local"):** rotar el n8n JWT que vive en plano en 2 entradas Bash de `~/.claude/settings.json` (key de PROD literal en allowlist user-level). No se aborda hoy por decisión consciente — toca rotación en n8n UI primero.
+- **Refs:**
+  - Archivos editados: `.claude/settings.json` (repo, timeouts), `~/.claude/settings.json` (PC1, additionalDirectories), `docs/log-cambios.md`, `docs/work/deuda-tecnica.md` (nueva sección).
+  - Archivos borrados: `~/.claude/skills/ui-ux-pro-max/` (user-level entera).
+  - Sin commit aún — pendiente decidir con Ben.
+
+---
+
 ### 2026-05-24 [WORK][OPS] — Rename carpeta local `thenucleo-landing` → `TheNucleo-Global` + migración slug Claude Code
 
 - **Área:** Workspace local de Ben (Windows). NO afecta repo GitHub (sigue siendo `marketingthenucleo/thenucleo-landing`), Vercel, ni ningún sistema productivo.
