@@ -2,8 +2,8 @@
 title: Ficha de Cliente (admin-only)
 dominio: ficha-cliente
 estado: vivo
-actualizado: 2026-05-23
-version_dataset: F1 · seed hardcoded Dra. Neuss (4 pipelines) — backend Supabase F2 pendiente
+actualizado: 2026-05-24
+version_dataset: F1 frontend (seed hardcoded) · F2 schema Supabase APLICADO (vacío) · F2 RPCs + cableo frontend pendiente
 tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 ---
 
@@ -185,9 +185,10 @@ Vista lanzada. Antes era un mockup con datos inventados. Migration RPCs `ficha_c
 
 ## Pendientes
 
-1. **F2 backend Supabase Pipelines y Campañas** — 4 tablas + RPCs CRUD + RLS por `cliente_id`. Bloquea el resto: hasta no cablear, el módulo solo sirve para validar UI/UX con el seed.
-2. **Piloto con Melina sobre Neus** — sentarse 30 min y declarar los 4 pipelines reales en el módulo (cuando F2 esté listo). Validar si el modelo aguanta.
-3. **Migrar 5 clientes más activos** al modelo en sesiones acompañadas con Account.
-4. **Panel Catálogos cableado** — depende de la decisión sobre `cliente_plantillas_campania`.
-5. **Panel Anomalías** — integrar `n8n_incidencias` filtradas por cliente + checks operativos derivados (servicios sin Drive, campañas sin briefing).
-6. **Allowlist en tabla `playbook_editors(email)`** cuando crezca a 5+ editores.
+1. ~~**F2 schema Supabase Pipelines y Campañas**~~ ✅ **Aplicado 2026-05-24.** 5 tablas (`cliente_campania_plantillas` + `cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails`) con RLS via `is_comunidad_admin()` (20 policies, 4×tabla) + 7 plantillas seed. Migration `ficha_cliente_pipelines_f2_schema` en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql`. Detalle en [[../infra/supabase-schema#pipelines-y-campañas]].
+2. **F2 RPCs + cableo frontend (siguiente paso)** — 7 RPCs (`ficha_pipelines_get`, `ficha_codigos_catalogo`, `ficha_pipeline_upsert`, `ficha_campania_upsert`, `ficha_trigger_upsert`, `ficha_email_upsert`, `ficha_archivar_codigo`) + ampliar `ficha_cliente_get` con `pipelines: ficha_pipelines_get(p_bubble_id)` (patrón de `servicios`) + sustituir `const SEED` por load real en `ficha-cliente/index.html:1758`. Incluye refactor de `stateBadge()` (línea 1792) para los estados finos por capa.
+3. **Piloto con Melina sobre Neus** — sentarse 30 min y declarar los 4 pipelines reales en el módulo (cuando #2 esté listo). Validar si el modelo aguanta.
+4. **Migrar 5 clientes más activos** al modelo en sesiones acompañadas con Account.
+5. **Panel Catálogos cableado** — depende de las RPCs F2.
+6. **Panel Anomalías** — integrar `n8n_incidencias` filtradas por cliente + checks operativos derivados (servicios sin Drive, campañas sin briefing).
+7. **Allowlist en tabla `playbook_editors(email)`** cuando crezca a 5+ editores.
