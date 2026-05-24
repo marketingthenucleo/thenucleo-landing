@@ -601,7 +601,7 @@ INDEX cliente_emails_campania_idx (campania_id)
 
 "Servidor propone, usuario valida": cada upsert acepta `p_codigo_override`. Si NULL/'' → auto-asigna. Si pasa valor → respeta y valida unicidad vía UNIQUE constraint. El frontend por defecto deja al servidor; el caso "Account quiere override" es raro pero soportado.
 
-**Pendiente F2.2.2.B (siguiente paso):** cableo drawers frontend `PIPELINES_MODULE` a las 5 upserts + handler de archivar + refactor `stateBadge()` (ampliar de 3 a 14 estados finos: 2 pipeline + 3 campaña + 4 trigger + 6 email — hoy mapea solo `declarada/en-produccion/archivada`) + retirar banner "modo lectura · F2.2.1".
+**Frontend cableado (F2.2.2.B, completo desde 2026-05-24):** 4 drawers de `PIPELINES_MODULE` cableados a las 6 RPCs en 5 micro-commits. Cada save hace `await rpc('ficha_X_upsert', {...})` + `await PIPELINES_MODULE.loadFor(bubbleId)` (refresh completo, consistencia garantizada). `stateBadge()` ampliado a 11 estados finos con CSS agrupado por familia (warn/info/ok/neutral). Banner "modo lectura · F2.2.1" retirado. Deuda menor abierta: archivar trigger/email (RPC ya soporta `kind='trigger'|'email'`, falta botón en detail view) + link plantilla→campaña al persistir (B.3 pasa `p_plantilla_id: null`; cargar catálogo en init y mapear slug→uuid, o ampliar RPC con `p_plantilla_slug`).
 
 ### `agencia_integraciones_config` — Credenciales cifradas (desde 2026-05-04)
 

@@ -71,6 +71,33 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [WORK][FEATURE] — Ficha de Cliente F2.2.2.B: 4 drawers cableados + archivar via RPC + stateBadge 11 estados (frontend write completo)
+
+- **Área:** `ficha-cliente/index.html` (~300 líneas tocadas en 5 micro-commits) + 2 docs (`work/ficha-cliente.md`, `infra/supabase-schema.md`).
+- **Qué:** Cerrar el cableado frontend del módulo Pipelines y Campañas (F2.2.2.B). 5 commits incrementales, cada uno con build verde y riesgo aislado:
+  - **B.1 `6357aa8` — `stateBadge` 11 estados finos:** mapeo unificado de 3 estados (`declarada/en-produccion/archivada` del SEED previo) ampliado a 11 strings únicos derivados de los CHECK constraints DB: pipelines `activo/archivado` · campañas `declarada/en-produccion/archivada` · triggers `declarado/creado/monitorizando/archivado` · emails `declarado/copy-listo/diseno-listo/montado-ghl/activo/archivado`. CSS agrupado por color semántico (warn/info/ok/neutral). Bug menor de género arreglado: línea 2266 hardcodeaba `stateBadge('declarada')` para preview de trigger → corregido a `'declarado'`.
+  - **B.2 `fcfa3e8` — Drawer "Nuevo Pipeline" wired:** handler `#np-save` ahora llama `rpc('ficha_pipeline_upsert', { p_id: null, p_cliente_bubble_id: S.bubbleId, p_nombre, p_objetivo_negocio })`. closeSheet + `loadFor` + toast con código real. Botón disabled durante await.
+  - **B.3 `172291f` — Drawer "Nueva Campaña" wired:** mismo patrón con todos los campos del form. Picker de plantilla precarga el form (UX) pero pasa `p_plantilla_id: null` (deuda menor — mapear slug→uuid).
+  - **B.4 `a23fa7f` — Archivar pipeline/campaña wired:** `archiveItem(kind, id)` rewrite a async wrapper de `rpc('ficha_archivar_codigo')`. Botones de archivo llevan `data-kind="pipeline"|"campania"`. Handler async con loadFor para refresh.
+  - **B.5+6 `decea9d` — Drawers "Nuevo Trigger" + "Nuevo Email" creados desde cero + wire + banner retirado:**
+    - Trigger: paso 1 elige tipo via 3 cards (FM/FW/BD) con hint. Paso 2 form contextual (descripción + link externo con label que cambia por tipo + fecha lanzamiento sólo si BD con asterisco obligatorio + nota .docx caso 4). Preview code calcula `c.code+tipo+(count_existentes_de_ese_tipo+1)`. Validación cliente: descripción required, fecha required si BD.
+    - Email: form unificado con nombre, orden auto-precargado al next, espera, objetivo, **chip multi-select** de subcódigos de triggers de la campaña con **preview de código reactivo** (regla .docx caso 5: vacío o todos → `P1C1E<N>` · subset → `P1C1<concat>E<N>`). Convierte "marcados==todos" a `[]` al guardar.
+    - Botones `+ TRIGGER` y `+ EMAIL` actualizados con `data-pid`+`data-cid` para el dispatch.
+    - Banner `📌 Modo lectura · F2.2.1` retirado de `renderList` — la frase ya no aplica. Empty state actualizado: "Sin pipelines declarados. Pulsa + Pipeline para empezar." (sin "(próximamente)").
+- **Por qué:** Cerrar F2.2 funcionalmente end-to-end (read + write + archivar). Mel puede empezar a declarar pipelines reales para clientes desde hoy en `work.thenucleo.com/ficha-cliente/`.
+- **Impacto:**
+  - ✅ Frontend Account-mode 100% operativo: crear pipelines/campañas/triggers/emails + archivar pipelines/campañas. Persistencia en Supabase, todos los admins lo ven.
+  - ✅ Banner "modo lectura" fuera — ya no engaña.
+  - ⚠️ Deuda menor (no urgente): (a) archivar trigger/email (RPC soporta, falta botón en detail views), (b) link plantilla→campaña al persistir (`p_plantilla_id: null` en B.3), (c) "editar" inline en detail views (hoy son read-only — falta UI, las RPCs ya soportan UPDATE con `p_id`).
+  - ✅ Cero regresiones en otras secciones de la ficha (Datos, Servicios, Catálogos, Anomalías intactos).
+- **Refs:**
+  - Commits: `6357aa8` (B.1), `fcfa3e8` (B.2), `172291f` (B.3), `a23fa7f` (B.4), `decea9d` (B.5+6).
+  - Branch: `claude/customer-record-setup-sz960`.
+  - Archivos editados: `ficha-cliente/index.html` (+300 líneas, -45 sobre los 5 commits), `docs/work/ficha-cliente.md` (Pendientes 4 marcado hecho, 5 nuevo con deuda), `docs/infra/supabase-schema.md` (sección F2.2.2.B actualizada), `docs/log-cambios.md` (esta entrada).
+- **Siguiente paso (libre):**
+  1. **Piloto con Melina sobre Neus** — sentaros 30 min, declarar 2-3 pipelines/campañas de prueba reales, ver dónde duele la UX.
+  2. Cerrar deuda menor cuando aparezca uso real que la justifique.
+
 ### 2026-05-24 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.2.2.A: 5 upsert + 1 archivar RPCs aplicados (backend write completo)
 
 - **Área:** Supabase `cbixhqjsnpuhcrcjppah` (6 RPCs nuevas — todas SECURITY INVOKER, GRANT a authenticated) + repo `supabase/migrations/20260524_ficha_cliente_pipelines_f2_write_rpcs.sql` (377 líneas) + 3 docs sincronizados.
