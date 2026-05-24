@@ -89,6 +89,16 @@ Hooks committeados al repo para que se carguen automáticamente en cada sesión 
 
 **Para añadir un hook nuevo:** crear script en `.claude/scripts/`, hacerlo ejecutable (`chmod +x`), pipe-testear con `echo '{}' | ./script.sh`, registrar en `.claude/settings.json` (event + matcher si aplica + path), validar JSON con `jq -e`, commit + push, registrar en `docs/log-cambios.md`. La skill `update-config` (invocable vía `Skill` tool) guía el proceso.
 
+## Obsidian Git en `docs/.obsidian/`
+
+La carpeta `docs/` es una vault de Obsidian con el plugin **Obsidian Git** instalado (`docs/.obsidian/plugins/obsidian-git/data.json`). En móvil convive un alias `tnpush` de Termux que produce commits con el mismo formato `vault backup (mobile): {{date}}` — ambos lados usan el mismo string por convención.
+
+**Gotcha desktop:** el plugin opera desde la raíz del repo git, NO desde la raíz del vault. Si `autoSaveInterval > 0` y `autoCommitOnlyStaged: false`, commitea **todo el working tree** (incluyendo cambios fuera de `docs/`) con el mensaje genérico. Si tienes cambios uncommitted en PC1 cuando dispara, los absorbe y pierdes el mensaje descriptivo de tu commit propio.
+
+**Estado actual (2026-05-24):** `autoSaveInterval: 0` → autocommit desactivado. Commits del vault se hacen manualmente desde Obsidian Source Control panel (desktop) o vía alias `tnpush` (móvil Termux).
+
+**Si reactivas autocommit:** poner también `autoCommitOnlyStaged: true` desde Obsidian Settings → Obsidian Git → Backup. Si no, vuelve el problema. Histórico previo a 2026-05-24 con commits cada 15 min exactos = plugin desktop. Commits sueltos a horas aleatorias = Termux móvil manual. Detalle en `docs/log-cambios.md` (2 entries de 2026-05-24).
+
 ## Convención para evitar drift
 
 **Doc junto a código.** Cualquier cambio funcional en un archivo de este repo se propaga en el mismo PR a su `.md` de referencia:
