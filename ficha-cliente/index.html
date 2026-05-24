@@ -1781,8 +1781,9 @@ const PIPELINES_MODULE = (() => {
     { slug:'capt-fw', nombre:'Captación de leads vía formulario Web', triggers:[{tipo:'FW',name:'Form en web'}], emails:[{name:'Bienvenida',espera:'Día 0'},{name:'Valor',espera:'Día +2'},{name:'Oferta',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-captacion-fw.docx', defaults:{presup:200,kpi:'Leads · CPL'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',form:'Dev/CRM',ghl:'Camilo Balanta'} },
     { slug:'react-bd', nombre:'Reactivación BBDD (con fecha)', triggers:[{tipo:'BD',name:'Segmento BBDD'}], emails:[{name:'Reactivación',espera:'Día 0'},{name:'Oferta',espera:'Día +2'},{name:'Cierre',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-react-bd.docx', defaults:{presup:0,kpi:'Conversiones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
     { slug:'news', nombre:'Newsletter recurrente', triggers:[{tipo:'BD',name:'BBDD activa'}], emails:[{name:'Edición única',espera:'cadencia'}], briefingMaster:'drive://templates/briefing-newsletter.docx', defaults:{presup:0,kpi:'Apertura · Clicks'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
-    { slug:'lanz', nombre:'Lanzamiento multicanal (FM + FW + BD)', triggers:[{tipo:'FM',name:'Anuncio Meta'},{tipo:'FW',name:'Form web'},{tipo:'BD',name:'BBDD'}], emails:[{name:'Pre-aviso',espera:'-3d'},{name:'Anuncio',espera:'D0'},{name:'Recordatorio',espera:'+2d'},{name:'Última llamada',espera:'+5d'},{name:'Cierre',espera:'+7d'}], briefingMaster:'drive://templates/briefing-lanzamiento.docx', defaults:{presup:1500,kpi:'Ventas'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',meta:'Damian',ghl:'Camilo Balanta'} },
-    { slug:'evento', nombre:'Evento (formulario + recordatorios)', triggers:[{tipo:'FW',name:'Inscripción evento'}], emails:[{name:'Confirmación',espera:'Día 0'},{name:'Recordatorio',espera:'-1d'}], briefingMaster:'drive://templates/briefing-evento.docx', defaults:{presup:100,kpi:'Inscripciones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
+    // 'lanz' (Lanzamiento multicanal) y 'evento' (Evento) eliminadas
+    // 2026-05-24 — no encajan con el workflow actual TheNucleo.
+    // Mismo DELETE aplicado en cliente_campania_plantillas (migration).
   ];
 
   // ─── ⓘ Info-tooltip content (C1 — 2026-05-24) ──────────────────
@@ -2478,7 +2479,7 @@ const PIPELINES_MODULE = (() => {
                 await archiveItem(kind, id);
                 // Si archivamos lo que estamos viendo, volver atrás (cualquier nivel)
                 if (S.view.pId === id || S.view.cId === id || S.view.tId === id || S.view.eId === id) back();
-                await loadFor(S.bubbleId);
+                await loadFor(S.bubbleId, { preserveView: true });
                 showToast(`${code} archivado`);
               } catch (e) {
                 showToast(`Error: ${e.message || 'no se pudo archivar'}`);
@@ -2559,7 +2560,7 @@ const PIPELINES_MODULE = (() => {
             p_notas:               notas,
           });
           closeSheet();
-          await loadFor(S.bubbleId);
+          await loadFor(S.bubbleId, { preserveView: true });
           showToast(isEdit ? `${row?.codigo || 'Pipeline'} actualizado` : `${row?.codigo || 'Pipeline'} creado`);
         } catch (e) {
           btn.disabled = false;
@@ -2705,9 +2706,23 @@ const PIPELINES_MODULE = (() => {
             p_notas_account:       notas,
             p_estado:              estado,
           });
+          // Si la campaña era custom (sin plantilla del picker) y es nueva,
+          // auto-creamos plantilla en el catálogo con su metadata. La
+          // plantilla shell aparecerá en el picker tras refresh de página
+          // (deuda menor: hoy el picker lee de JS const PLANTILLAS, no de
+          // DB — refactor pendiente para auto-actualizar el catálogo live).
+          let autoPlantilla = null;
+          if (!isEdit && state.custom && row?.id) {
+            try {
+              autoPlantilla = await rpc('ficha_plantilla_create_from_campania', { p_campania_id: row.id });
+            } catch (e2) {
+              console.warn('[ficha-cliente] auto-create plantilla falló (la campaña sí se guardó):', e2);
+            }
+          }
           closeSheet();
-          await loadFor(S.bubbleId);
-          showToast(isEdit ? `${row?.codigo || 'Campaña'} actualizada` : `${row?.codigo || 'Campaña'} creada`);
+          await loadFor(S.bubbleId, { preserveView: true });
+          const baseMsg = isEdit ? `${row?.codigo || 'Campaña'} actualizada` : `${row?.codigo || 'Campaña'} creada`;
+          showToast(autoPlantilla ? `${baseMsg} · plantilla "${autoPlantilla.slug}" añadida al catálogo` : baseMsg);
         } catch (e) {
           btn.disabled = false;
           showToast(`Error: ${e.message || 'no se pudo guardar'}`);
@@ -2916,7 +2931,7 @@ const PIPELINES_MODULE = (() => {
             p_estado:            estado,
           });
           closeSheet();
-          await loadFor(S.bubbleId);
+          await loadFor(S.bubbleId, { preserveView: true });
           showToast(isEdit ? `${row?.codigo || 'Trigger'} actualizado` : `${row?.codigo || 'Trigger'} creado`);
         } catch (e) {
           btn.disabled = false;
@@ -3064,7 +3079,7 @@ const PIPELINES_MODULE = (() => {
             p_estado:                estado,
           });
           closeSheet();
-          await loadFor(S.bubbleId);
+          await loadFor(S.bubbleId, { preserveView: true });
           showToast(isEdit ? 'Email actualizado' : 'Email creado');
         } catch (e) {
           btn.disabled = false;
@@ -3077,7 +3092,8 @@ const PIPELINES_MODULE = (() => {
   }
 
   // F2.2.1: API público para inyección de datos desde Supabase.
-  function setData(arr) {
+  function setData(arr, opts) {
+    opts = opts || {};
     S.data = Array.isArray(arr) ? arr : [];
     // Normalización 2026-05-24: emails con triggersAplicables vacío + campaña
     // con triggers son orphans (legacy o estado degenerado). emailCode
@@ -3096,22 +3112,30 @@ const PIPELINES_MODULE = (() => {
     }));
     S.loadStatus = 'ready';
     S.loadError = null;
-    S.view = { kind: 'list' };
-    S.stack = [];
+    // Si preserveView=true (refresh tras save), conservamos S.view y S.stack
+    // para que el usuario no vuelva a la lista. Por defecto resetea.
+    if (!opts.preserveView) {
+      S.view = { kind: 'list' };
+      S.stack = [];
+    }
     render();
   }
-  async function loadFor(bubbleId) {
+  async function loadFor(bubbleId, opts) {
     if (!bubbleId) return;
+    opts = opts || {};
+    const isRefresh = opts.preserveView && bubbleId === S.bubbleId;
     S.bubbleId = bubbleId;
     S.loadStatus = 'loading';
     S.loadError = null;
-    S.data = [];
-    S.view = { kind: 'list' };
-    S.stack = [];
-    render();
+    if (!isRefresh) {
+      S.data = [];
+      S.view = { kind: 'list' };
+      S.stack = [];
+      render();
+    }
     try {
       const arr = await rpc('ficha_pipelines_get', { p_bubble_id: bubbleId });
-      setData(Array.isArray(arr) ? arr : []);
+      setData(Array.isArray(arr) ? arr : [], { preserveView: isRefresh });
     } catch (e) {
       console.error('[ficha-cliente] ficha_pipelines_get failed', e);
       S.loadStatus = 'error';
