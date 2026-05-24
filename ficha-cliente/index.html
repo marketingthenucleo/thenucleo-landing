@@ -706,9 +706,23 @@
     text-transform: uppercase; letter-spacing: 0.08em;
     border: 1px solid; line-height: 1;
   }
-  .state-badge.declarada { color: var(--warn); background: var(--warn-bg); border-color: rgba(245,158,11,0.3); }
-  .state-badge.en-produccion { color: var(--info); background: var(--info-bg); border-color: rgba(59,130,246,0.3); }
-  .state-badge.archivada { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
+  /* F2.2.2.B.1: estados finos por capa (decisión sesión 2026-05-24).
+     11 strings únicos: 2 pipeline + 3 campaña + 4 trigger + 6 email.
+     Paleta consistente: declarado/-a + copy-listo → warn (ámbar) ·
+     en-produccion + creado + diseno-listo → info (azul) ·
+     activo + monitorizando + montado-ghl → ok (verde) ·
+     archivado/-a → neutro. */
+  .state-badge.declarada,
+  .state-badge.declarado,
+  .state-badge.copy-listo { color: var(--warn); background: var(--warn-bg); border-color: rgba(245,158,11,0.3); }
+  .state-badge.en-produccion,
+  .state-badge.creado,
+  .state-badge.diseno-listo { color: var(--info); background: var(--info-bg); border-color: rgba(59,130,246,0.3); }
+  .state-badge.activo,
+  .state-badge.monitorizando,
+  .state-badge.montado-ghl { color: var(--ok); background: var(--ok-bg); border-color: rgba(34,197,94,0.3); }
+  .state-badge.archivada,
+  .state-badge.archivado { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
   .state-badge.plantilla { color: #a78bfa; background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.3); }
   [data-theme="light"] .state-badge.plantilla { color: #7c3aed; background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.3); }
   .state-badge.custom { color: var(--text-3); background: var(--bg-3); border-color: var(--line-2); }
@@ -1736,9 +1750,26 @@ const PIPELINES_MODULE = (() => {
   function codeTag(code, sz) {
     return `<span class="code-tag ${sz==='lg'?'lg':''} ${tagClass(code)}">${escapeHtml(code)}</span>`;
   }
+  // F2.2.2.B.1: 11 estados finos por capa (CHECK constraints en DB).
+  //   pipelines:  activo / archivado
+  //   campañas:   declarada / en-produccion / archivada
+  //   triggers:   declarado / creado / monitorizando / archivado
+  //   emails:     declarado / copy-listo / diseno-listo / montado-ghl / activo / archivado
+  const STATE_LABELS = {
+    'activo':        'Activo',
+    'archivado':     'Archivado',
+    'declarada':     'Declarada',
+    'en-produccion': 'En producción',
+    'archivada':     'Archivada',
+    'declarado':     'Declarado',
+    'creado':        'Creado',
+    'monitorizando': 'Monitorizando',
+    'copy-listo':    'Copy listo',
+    'diseno-listo':  'Diseño listo',
+    'montado-ghl':   'Montado GHL',
+  };
   function stateBadge(s) {
-    const label = { 'declarada':'Declarada', 'en-produccion':'En producción', 'archivada':'Archivada' }[s] || s;
-    return `<span class="state-badge ${s}">${label}</span>`;
+    return `<span class="state-badge ${s}">${STATE_LABELS[s] || s}</span>`;
   }
   function findPlantilla(slug) { return PLANTILLAS.find(p => p.slug === slug); }
 
@@ -2232,7 +2263,7 @@ const PIPELINES_MODULE = (() => {
           ${plantilla ? `
             <div class="pip-inherits">
               <div class="pip-inherits-title">Lo que se hereda de la plantilla</div>
-              ${plantilla.triggers.map((t, i) => `<div class="pip-inherits-row">${codeTag(`${next}${t.tipo}${i+1}`)}<span>${escapeHtml(t.name)}</span>${stateBadge('declarada')}</div>`).join('')}
+              ${plantilla.triggers.map((t, i) => `<div class="pip-inherits-row">${codeTag(`${next}${t.tipo}${i+1}`)}<span>${escapeHtml(t.name)}</span>${stateBadge('declarado')}</div>`).join('')}
               ${plantilla.emails.length === 0
                 ? '<div class="pip-meta-min" style="padding:5px 0">Sin emails</div>'
                 : plantilla.emails.map((e, i) => `<div class="pip-inherits-row">${codeTag(`${next}E${i+1}`)}<span>${escapeHtml(e.name)}</span><span class="pip-meta-min">${escapeHtml(e.espera)}</span></div>`).join('')}
