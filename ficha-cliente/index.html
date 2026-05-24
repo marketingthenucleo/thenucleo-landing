@@ -1993,7 +1993,7 @@ const PIPELINES_MODULE = (() => {
           <input type="checkbox" data-toggle="archived" ${S.showArchived?'checked':''}/>
           <span>Mostrar archivados</span>
         </label>
-        ${S.role==='account' && S.view.kind==='list' ? `<button class="pip-new-btn" data-action="new-pipeline">+ Pipeline</button>` : ''}
+        ${S.role==='account' && S.view.kind==='list' ? `<button class="pip-new-btn" data-action="new-pipeline">+ Pipeline</button>${infoIcon('pipeline')}` : ''}
       </div>
     `;
   }
@@ -2052,10 +2052,11 @@ const PIPELINES_MODULE = (() => {
     opts = opts || {};
     const color = opts.warn ? 'color:var(--warn)' : '';
     const font = opts.mono ? 'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px' : '';
+    const info = opts.info ? ' ' + infoIcon(opts.info) : '';
     return `
       <div class="field" style="cursor:default">
         <div style="flex:1;min-width:0">
-          <div class="field-label">${escapeHtml(label)}</div>
+          <div class="field-label">${escapeHtml(label)}${info}</div>
           <div class="field-value" style="${color};${font}">${escapeHtml(value)}</div>
           ${opts.hint ? `<div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">${escapeHtml(opts.hint)}</div>` : ''}
         </div>
@@ -2108,7 +2109,7 @@ const PIPELINES_MODULE = (() => {
       </div>
 
       <div class="pip-section-head">
-        <span>Campañas dentro de ${escapeHtml(p.code)}</span>
+        <span>Campañas dentro de ${escapeHtml(p.code)} ${infoIcon('campania')}</span>
         ${S.role==='account' ? `<button class="add-link" data-action="new-campaign" data-pid="${p.id}">+ NUEVA</button>` : ''}
       </div>
       ${visibleCamps.length === 0
@@ -2183,7 +2184,7 @@ const PIPELINES_MODULE = (() => {
       </div>
 
       <div class="pip-section-head">
-        <span>Triggers · ${c.triggers.length}</span>
+        <span>Triggers · ${c.triggers.length} ${infoIcon('trigger-tipos')}</span>
         ${S.role==='account' ? `<button class="add-link" data-action="new-trigger" data-pid="${p.id}" data-cid="${c.id}">+ TRIGGER</button>` : ''}
       </div>
       ${c.triggers.length === 0
@@ -2202,7 +2203,7 @@ const PIPELINES_MODULE = (() => {
       ${hasMissingBD ? `<div class="pip-warn-note">⚠ Algún trigger BD no tiene fecha de lanzamiento (obligatoria, regla .docx).</div>` : ''}
 
       <div class="pip-section-head">
-        <span>Emails · ${c.emails.length}</span>
+        <span>Emails · ${c.emails.length} ${infoIcon('triggers-aplicables')}</span>
         ${S.role==='account' ? `<button class="add-link" data-action="new-email" data-pid="${p.id}" data-cid="${c.id}">+ EMAIL</button>` : ''}
       </div>
       ${hasTriggers && c.emails.length > 0 ? `
@@ -2297,7 +2298,7 @@ const PIPELINES_MODULE = (() => {
         ${fieldStatic('Orden / Espera', `${e.orden} · ${e.espera}`)}
         <div class="field" style="cursor:default">
           <div style="flex:1;min-width:0">
-            <div class="field-label">Triggers aplicables</div>
+            <div class="field-label">Triggers aplicables ${infoIcon('triggers-aplicables')}</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
               ${allCodes.length === 0
                 ? `<span class="field-value empty">La campaña no tiene triggers.</span>`
@@ -2306,7 +2307,7 @@ const PIPELINES_MODULE = (() => {
             <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">El código del email refleja los triggers marcados (orden FM→FW→BD).</div>
           </div>
         </div>
-        ${fieldStatic('Versionado', 'v1 — original · sin revisiones registradas', { hint: 'Regla .docx caso 7: el código no cambia al modificar; se versiona en Drive (P1C1E2_v2_copy.docx).' })}
+        ${fieldStatic('Versionado', 'v1 — original · sin revisiones registradas', { info: 'versionado' })}
       </div>
       ${S.role === 'account' ? `
         <button class="pip-edit-btn" data-action="edit-email" data-pid="${p.id}" data-cid="${c.id}" data-eid="${e.id}">Editar email ${code}</button>
@@ -2441,7 +2442,7 @@ const PIPELINES_MODULE = (() => {
         <input class="form-input" id="np-name" value="${escapeHtml(editing?.name || '')}" placeholder="Ej: Captación B2B colegios" autocomplete="off"/>
       </div>
       <div class="form-field">
-        <label class="form-label" for="np-obj">Objetivo de negocio</label>
+        <label class="form-label" for="np-obj">Objetivo de negocio ${infoIcon('objetivo-negocio')}</label>
         <textarea class="form-textarea" id="np-obj" placeholder="Qué problema del cliente resuelve este Pipeline.">${escapeHtml(editing?.obj || '')}</textarea>
       </div>
       ${isEdit ? `
@@ -2514,7 +2515,7 @@ const PIPELINES_MODULE = (() => {
             : `Nueva campaña en <strong>${escapeHtml(p.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.`}
         </div>
         ${isEdit ? '' : `
-          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Plantilla del catálogo</div>
+          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Plantilla del catálogo ${infoIcon('plantilla')}</div>
           <div style="margin-bottom:16px">
             ${PLANTILLAS.map(pp => `
               <button class="pip-plantilla-card ${state.pickedSlug===pp.slug?'selected':''}" data-pick="${pp.slug}" type="button">
@@ -2542,7 +2543,7 @@ const PIPELINES_MODULE = (() => {
             <div class="form-field"><label class="form-label" for="nc-kpi">KPI objetivo</label><input class="form-input" id="nc-kpi" value="${escapeHtml(isEdit ? (editing.kpi || '') : (plantilla ? plantilla.defaults.kpi : ''))}"/></div>
           </div>
           <div class="form-field">
-            <label class="form-label" for="nc-brief">Link briefing Drive</label>
+            <label class="form-label" for="nc-brief">Link briefing Drive ${infoIcon('briefing-drive')}</label>
             <input class="form-input" id="nc-brief" value="${escapeHtml(isEdit ? (editing.briefingUrl || '') : '')}" placeholder="${plantilla ? escapeHtml(plantilla.briefingMaster) : 'https://drive.google.com/…'}" autocomplete="off"/>
             <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">${plantilla ? 'Duplica el template master al Drive del cliente y pega el link aquí.' : 'Pega el link al briefing que vivirá en Drive.'}</div>
           </div>
@@ -2733,7 +2734,7 @@ const PIPELINES_MODULE = (() => {
             <div class="form-input" style="background:var(--bg-3);cursor:default">${escapeHtml(tipoLabelFull)}</div>
           </div>
         ` : `
-          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Tipo de trigger</div>
+          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Tipo de trigger ${infoIcon('trigger-tipos')}</div>
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
             ${[
               { v:'FM', label:'FM · Formulario Meta', hint:'Form nativo de Instagram/Facebook' },
@@ -2758,7 +2759,7 @@ const PIPELINES_MODULE = (() => {
           </div>
           ${tipo==='BD' ? `
             <div class="form-field">
-              <label class="form-label" for="nt-fecha">Fecha de lanzamiento <span style="color:var(--warn)">*</span></label>
+              <label class="form-label" for="nt-fecha">Fecha de lanzamiento <span style="color:var(--warn)">*</span> ${infoIcon('trigger-bd-fecha')}</label>
               <input class="form-input" type="date" id="nt-fecha" value="${isEdit ? dateVal(editing.fechaLanzamiento) : ''}"/>
               <div style="font-size:11px;color:var(--text-3);margin-top:6px">Obligatoria para tipo BD (regla .docx caso 4).</div>
             </div>
@@ -2885,7 +2886,7 @@ const PIPELINES_MODULE = (() => {
           <textarea class="form-textarea" id="ne-obj" placeholder="Una frase: qué consigue este email.">${escapeHtml(isEdit ? (editing.objetivo || '') : '')}</textarea>
         </div>
         <div class="form-field">
-          <label class="form-label">Triggers aplicables</label>
+          <label class="form-label">Triggers aplicables ${infoIcon('triggers-aplicables')}</label>
           ${allSubcodes.length === 0
             ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. Añade al menos uno antes de crear emails.</div>`
             : allSubcodes.length === 1 && !isEdit
