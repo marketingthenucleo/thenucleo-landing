@@ -71,6 +71,29 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-24 [WORK][OPS] — Hooks de Claude Code para no olvidar actualizar log + docs
+
+- **Área:** `thenucleo-landing/.claude/` (tooling). Frontend (scripts hook + settings.json), docs (`CLAUDE.md` raíz sección Skills/Hooks + esta entrada).
+- **Qué (1 commit `0e8e9cc` a `main`):**
+  - `.claude/settings.json` nuevo: registra 2 hooks (SessionStart + Stop) apuntando a scripts en `.claude/scripts/`.
+  - `.claude/scripts/log-reminder-session-start.sh`: al inicio de cada sesión calcula `git log <ultimo-commit-que-toca-log>..HEAD`. Si n ≥ 1 commits sin documentar, emite JSON con `systemMessage` al user + `additionalContext` al modelo con la lista de commits + el formato del log (`YYYY-MM-DD [TAGS]` + Área/Qué/Por qué/Impacto/Refs) + la convención de propagación a `CLAUDE.md`/`docs/work/`/`docs/portal/`/`docs/infra/`. Silencioso cuando todo está al día.
+  - `.claude/scripts/log-reminder-stop.sh`: en cada Stop (fin de turno asistente), si hay cambios en working tree que NO incluyen `docs/log-cambios.md`, incrementa un counter en `$TMPDIR/claude-thenucleo-log-counter`. A los 4 turnos consecutivos emite `systemMessage` al user y resetea. Counter se borra cuando el log se toca o el working tree queda limpio. Soft nudge — no bloquea ni obliga.
+- **Por qué:** la convención "doc junto a código" del repo (declarada en `CLAUDE.md` raíz tras unificación con vault) requiere actualizar `docs/log-cambios.md` + CLAUDE.md/docs en cada cambio funcional. Hasta ahora dependía de que Ben recordara pedirlo ("actualiza log") o de que yo me acordara — falló varias veces. Los hooks lo automatizan a nivel harness (los ejecuta Claude Code, no el modelo): cualquier sesión nueva o cualquier secuencia larga de turnos sin tocar el log dispara un recordatorio visible.
+- **Impacto:**
+  - **Watcher caveat:** la primera vez que `.claude/settings.json` se crea, el watcher de Claude Code on the web no lo detecta hasta la siguiente sesión (o `/hooks` en local). Esta sesión NO los está ejecutando — la próxima sí.
+  - Verificado en pre-commit: `jq -e` contra ambas rutas devuelve los paths correctos. Pipe-test silencioso con working tree limpio. Pipe-test Stop con cambios: iters 1-3 silencio + counter incrementa, iter 4 emite JSON + resetea. Reset al tocar log verificado.
+  - Build Eleventy sigue en 53 files (`.claude/` ya estaba en `.eleventyignore`).
+- **Refs:**
+  - Commits: `0e8e9cc` (hooks + settings + scripts), `<este-commit>` (docs).
+  - Archivos creados: `.claude/settings.json`, `.claude/scripts/log-reminder-session-start.sh`, `.claude/scripts/log-reminder-stop.sh`.
+  - Archivos editados: `CLAUDE.md` raíz (sección Skills+Hooks), `docs/log-cambios.md`.
+- **Pendientes para próximas sesiones:**
+  - Validar que en la próxima sesión web el `SessionStart` se ejecuta (debería disparar porque hay commits sin documentar al cierre — irónicamente este commit es el primero en testearlo en vivo).
+  - Si después de uso real el umbral 4 turnos es demasiado bajo (ruidoso) o demasiado alto (se olvida), ajustar `THRESHOLD` en `log-reminder-stop.sh`.
+  - Considerar añadir más hooks si emergen patrones repetitivos (ej. recordatorio de `npm run build` antes de commit si `_site/` quedaría desactualizado — aunque Vercel lo regenera, no es crítico).
+
+---
+
 ### 2026-05-24 [WORK][OPS][DOCS] — Skills de Claude commiteadas al repo (n8n + supabase + ui-ux-pro-max)
 
 - **Área:** `thenucleo-landing/` repo. Tooling Claude Code on the web. Frontend (`.claude/skills/` nueva), config (`.eleventyignore`, `.gitignore`), docs (`CLAUDE.md` raíz + esta entrada).
