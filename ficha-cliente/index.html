@@ -961,7 +961,7 @@
   }
   .info-pop-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 110; display: none;
+    z-index: 1100; display: none;
   }
   .info-pop-backdrop.open { display: block; }
   .info-pop {
@@ -969,7 +969,7 @@
     max-width: 520px; margin: 0 auto;
     background: var(--bg-2); border: 1px solid var(--line-2);
     border-radius: 14px; padding: 18px 18px 16px;
-    z-index: 120; display: none;
+    z-index: 1101; display: none;
     max-height: 70vh; overflow-y: auto;
     box-shadow: 0 12px 40px rgba(0,0,0,0.5);
   }
@@ -1892,6 +1892,13 @@ const PIPELINES_MODULE = (() => {
         <p>El código del ítem archivado queda <strong>reservado</strong> — no se reutiliza para crear nuevos. Así no hay colisiones con referencias antiguas en Notion/Drive/GHL.</p>
         <div class="info-pop-ref">Ref: .docx §9</div>`
     },
+    'email-orden': {
+      title: 'Orden del email en la secuencia',
+      body: `
+        <p>Posición del email dentro de la secuencia post-trigger. <code>1</code> es el primer email que sale, <code>2</code> el segundo, etc.</p>
+        <p>El orden lo asigna automáticamente el servidor (max+1) cuando creas un email nuevo — no hace falta tocarlo en la mayoría de casos.</p>
+        <p>Hoy no es editable desde aquí (cambiar el orden de uno requiere desplazar los siguientes — se hará en el bloque "insertar intercalado", pendiente).</p>`
+    },
     'versionado': {
       title: 'Versionado en Drive',
       body: `
@@ -1911,6 +1918,14 @@ const PIPELINES_MODULE = (() => {
 
   function infoIcon(key) {
     return `<button type="button" class="pip-info-ico" data-info="${key}" aria-label="Más información" tabindex="0">i</button>`;
+  }
+
+  // Formato dd/mm/yy para display de fechas (los inputs type=date siguen
+  // con formato browser-locale, no se puede cambiar sin custom widget).
+  function dmy(s) {
+    if (!s) return '';
+    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}/${m[2]}/${m[1].slice(2)}` : s;
   }
 
   // F2.2.1 (2026-05-24): SEED hardcoded movido a Supabase
@@ -1984,7 +1999,10 @@ const PIPELINES_MODULE = (() => {
   }
   function findPlantilla(slug) { return PLANTILLAS.find(p => p.slug === slug); }
 
-  const visible = item => S.showArchived || item.estado !== 'archivada';
+  // Cubre ambos géneros — pipelines/triggers/emails 'archivado' (masc),
+  // campañas 'archivada' (fem). Antes solo filtraba 'archivada' → bug:
+  // pipelines/triggers/emails archivados aparecían aunque el check estuviera off.
+  const visible = item => S.showArchived || !(item.estado || '').startsWith('archiv');
   const root = () => document.getElementById('pipelines-module');
 
   function render() {
@@ -2118,6 +2136,7 @@ const PIPELINES_MODULE = (() => {
             <div>${stateBadge(p.estado)}</div>
           </div>
         </div>
+        ${p.notas ? fieldStatic('Notas', p.notas) : ''}
       </div>
 
       <div class="pip-section-head">
@@ -2134,7 +2153,7 @@ const PIPELINES_MODULE = (() => {
               <div class="pip-card-name">${escapeHtml(c.name)}</div>
             </div>
             <div class="pip-card-meta">
-              <span>${escapeHtml(c.desde)} → ${escapeHtml(c.hasta)}</span>
+              <span>${escapeHtml(dmy(c.desde))} → ${escapeHtml(dmy(c.hasta) || 'sin fin')}</span>
               <span>${c.presup}€</span>
               <span>${escapeHtml(c.kpi)}</span>
               <span>${c.triggers.length}T · ${c.emails.length}E</span>
@@ -2195,7 +2214,7 @@ const PIPELINES_MODULE = (() => {
 
       <div class="pip-section-head"><span>Datos básicos</span></div>
       <div class="field-list">
-        ${fieldStatic('Fechas', `${c.desde} → ${c.hasta}`)}
+        ${fieldStatic('Fechas', `${dmy(c.desde) || '—'} → ${dmy(c.hasta) || 'sin fin'}`)}
         ${fieldStatic('Presupuesto', `${c.presup} €`)}
         ${fieldStatic('KPI objetivo', c.kpi)}
         ${fieldBriefing(c)}
@@ -2214,7 +2233,7 @@ const PIPELINES_MODULE = (() => {
               <div class="pip-row-name">${escapeHtml(t.name)}</div>
               <div class="pip-row-sub">${escapeHtml(t.ext)}</div>
             </div>
-            ${t.tipo==='BD' && t.fechaLanzamiento ? `<span class="pip-row-meta">📅 ${escapeHtml(t.fechaLanzamiento)}</span>` : ''}
+            ${t.tipo==='BD' && t.fechaLanzamiento ? `<span class="pip-row-meta">📅 ${escapeHtml(dmy(t.fechaLanzamiento))}</span>` : ''}
             ${stateBadge(t.estado)}
           </div>
         `).join('')}
@@ -2288,8 +2307,36 @@ const PIPELINES_MODULE = (() => {
       <div class="field-list">
         ${fieldStatic('Tipo', tipoFull)}
         ${fieldStatic('Link externo / referencia', t.ext, { mono: true })}
-        ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', t.fechaLanzamiento || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
+        ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', dmy(t.fechaLanzamiento) || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
       </div>
+
+      ${(() => {
+        // Emails que se disparan desde este trigger — filtrados por
+        // triggersAplicables del email. Si está vacío y la campaña
+        // tiene triggers, asumimos "aplica a todos" (caso legacy /
+        // orphan: ver normalización en setData).
+        const sub = t.code.replace(c.code, '');
+        const triggered = c.emails.filter(e => {
+          const apl = e.triggersAplicables || [];
+          return apl.length === 0 || apl.includes(sub);
+        });
+        return `
+          <div class="pip-section-head">
+            <span>Emails que se disparan desde ${escapeHtml(t.code)} · ${triggered.length}</span>
+          </div>
+          ${triggered.length === 0
+            ? `<div class="empty-card">Aún no hay emails asociados a este trigger. Crea uno desde la vista de la campaña ${escapeHtml(c.code)} y marca <code>${escapeHtml(sub)}</code>.</div>`
+            : triggered.map(e => `
+                <div class="pip-row ${(e.estado||'').startsWith('archiv')?'archived':''}" data-action="open-email" data-pid="${p.id}" data-cid="${c.id}" data-eid="${e.id}" role="button" tabindex="0">
+                  ${codeTag(emailCode(c, e))}
+                  ${stateBadge(e.estado)}
+                  <div class="pip-row-name">${escapeHtml(e.name)}</div>
+                  <span class="pip-row-meta">${escapeHtml(e.espera || '—')}</span>
+                </div>
+              `).join('')}
+        `;
+      })()}
+
       ${S.role === 'account' ? `
         <div class="pip-action-row">
           <button class="pip-edit-btn" data-action="edit-trigger" data-pid="${p.id}" data-cid="${c.id}" data-tid="${t.id}">Editar trigger ${t.code}</button>
@@ -2928,7 +2975,7 @@ const PIPELINES_MODULE = (() => {
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label class="form-label" for="ne-orden">Orden${isEdit ? ' <span style="color:var(--text-3);font-size:10px;font-weight:500">· no editable hoy</span>' : ''}</label>
+            <label class="form-label" for="ne-orden">Orden ${infoIcon('email-orden')}${isEdit ? ' <span style="color:var(--text-3);font-size:10px;font-weight:500">· no editable hoy</span>' : ''}</label>
             <input class="form-input" type="number" id="ne-orden" value="${ordenInicial}" min="1" ${isEdit ? 'disabled style="opacity:.6;cursor:not-allowed"' : ''}/>
           </div>
           <div class="form-field">
@@ -3045,6 +3092,21 @@ const PIPELINES_MODULE = (() => {
   // F2.2.1: API público para inyección de datos desde Supabase.
   function setData(arr) {
     S.data = Array.isArray(arr) ? arr : [];
+    // Normalización 2026-05-24: emails con triggersAplicables vacío + campaña
+    // con triggers son orphans (legacy o estado degenerado). emailCode
+    // antes los renderizaba como "P1C1E1" sin prefijo de trigger →
+    // visual debt reportada por Mel. Auto-apply ALL triggers en memoria
+    // para que el código se vea consistente. La DB se sincroniza la
+    // primera vez que se edita el email (el upsert manda el array
+    // efectivo). No persistimos en el load para evitar writes silenciosos.
+    S.data.forEach(p => (p.camps || []).forEach(c => {
+      const allSubs = (c.triggers || []).map(t => t.code.replace(c.code, ''));
+      (c.emails || []).forEach(e => {
+        if (allSubs.length > 0 && (!e.triggersAplicables || e.triggersAplicables.length === 0)) {
+          e.triggersAplicables = [...allSubs];
+        }
+      });
+    }));
     S.loadStatus = 'ready';
     S.loadError = null;
     S.view = { kind: 'list' };
