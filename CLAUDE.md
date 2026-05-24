@@ -93,11 +93,11 @@ Hooks committeados al repo para que se carguen automáticamente en cada sesión 
 
 La carpeta `docs/` es una vault de Obsidian con el plugin **Obsidian Git** instalado (`docs/.obsidian/plugins/obsidian-git/data.json`). En móvil convive un alias `tnpush` de Termux que produce commits con el mismo formato `vault backup (mobile): {{date}}` — ambos lados usan el mismo string por convención.
 
-**Gotcha desktop:** el plugin opera desde la raíz del repo git, NO desde la raíz del vault. Si `autoSaveInterval > 0` y `autoCommitOnlyStaged: false`, commitea **todo el working tree** (incluyendo cambios fuera de `docs/`) con el mensaje genérico. Si tienes cambios uncommitted en PC1 cuando dispara, los absorbe y pierdes el mensaje descriptivo de tu commit propio.
+**Gotcha desktop (importante):** aunque todos los `auto*` settings del plugin estén en 0 (`autoSaveInterval: 0`, `autoBackupAfterFileChange: false`, etc.), **basta con tener Obsidian desktop abierto** con la vault cargada para que aparezcan commits periódicos con el mensaje `vault backup (mobile): {{date}}`. El plugin opera desde repo root (`basePath: "../"`) → barre todo el working tree, no solo `docs/`. Si tienes cambios uncommitted en PC1 (Cursor) cuando el plugin commitea, los absorbe bajo el mensaje genérico y pierdes la trazabilidad de tu commit descriptivo. Probable trigger: `refreshSourceControlTimer: 7000` ms o algún side-effect del Source Control panel del plugin — verificado empíricamente 2026-05-24 (3 entries en `docs/log-cambios.md`).
 
-**Estado actual (2026-05-24):** `autoSaveInterval: 0` → autocommit desactivado. Commits del vault se hacen manualmente desde Obsidian Source Control panel (desktop) o vía alias `tnpush` (móvil Termux).
+**Regla operativa (decisión 2026-05-24):** **mantener Obsidian desktop CERRADO mientras trabajes en Cursor en este repo.** Solo abrirlo cuando vayas a editar docs en Obsidian conscientemente. Test verificado: con Obsidian cerrado, 0 commits genéricos en 4 min. Con Obsidian abierto, salen cada pocos segundos/minutos sin patrón fijo.
 
-**Si reactivas autocommit:** poner también `autoCommitOnlyStaged: true` desde Obsidian Settings → Obsidian Git → Backup. Si no, vuelve el problema. Histórico previo a 2026-05-24 con commits cada 15 min exactos = plugin desktop. Commits sueltos a horas aleatorias = Termux móvil manual. Detalle en `docs/log-cambios.md` (2 entries de 2026-05-24).
+**Cómo distinguir origen de un commit `vault backup (mobile)` en `git log`:** per-repo `.git/config` tiene `[user] email = benjamin.sanchis@thenucleo.com` que sobreescribe la `~/.gitconfig` global (`marketingthenucleo`). Por tanto: **PC1 commits = "Benjamin Sanchis"** (vienen de Obsidian desktop si están), **móvil Termux commits = "marketingthenucleo"**. Histórico previo a 2026-05-24 con cadencia 15 min exactos = plugin desktop con autocommit on (ya desactivado).
 
 ## Convención para evitar drift
 

@@ -94,6 +94,26 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 - **Por qué:** unificar el sync móvil ↔ desktop sobre el mismo repo (`thenucleo-landing`). Antes requería cross-PR entre 2 repos y se rompía. Ahora un solo `git pull`/`git push` cierra el ciclo. Cierre operacional de la unificación 2026-05-23.
 - **Refs:** vault móvil en `/storage/emulated/0/Documents/thenucleo-landing/`. Aliases en `~/.bashrc` Termux. Config plugin en `docs/.obsidian/plugins/obsidian-git/data.json` (incluye `Custom base path = ../`). Repo viejo `thenucleo-vault` queda archivado en GitHub (safety net read-only).
 
+### 2026-05-24 [WORK][OPS] — Cierre del misterio Obsidian desktop: con la app abierta sigue commiteando aunque autocommit esté en 0 — regla operativa "cerrar Obsidian al currar en Cursor"
+
+> Cierra la investigación de la entry siguiente ("Lado desktop del plugin Obsidian Git"). Spoiler: `autoSaveInterval: 0` NO bastaba.
+
+- **Síntoma post-fix anterior:** tras deshabilitar `autoSaveInterval` (15→0), aparecieron commits `vault backup (mobile)` autorados por Benjamin Sanchis (PC1) a las 12:11, 12:18, 12:19, 12:24:42, 12:24:54, 12:25:18, 12:27:33. Cadencia variable (no interval) → event-driven.
+- **Aclaración de autoría:** PC1 commits aparecen como "Benjamin Sanchis" aunque `~/.gitconfig` global sea `marketingthenucleo` porque per-repo `.git/config` tiene `[user] email = benjamin.sanchis@thenucleo.com` que sobreescribe. **Para distinguir en `git log` de aquí en adelante:** PC1 = "Benjamin Sanchis", móvil Termux = "marketingthenucleo".
+- **Test ejecutado 12:29 → 12:33:** Ben cerró Obsidian desktop. Watch de 4 min comparando HEAD. Resultado: **0 commits "vault backup (mobile)"** post-cierre. (Apareció 1 commit con mensaje descriptivo `chore(hooks): add dirty-tree-reminder Stop hook (python-based, no jq)` — push manual desde móvil, no afecta diagnóstico.)
+- **Causa confirmada:** Obsidian desktop con plugin obsidian-git cargado, aunque todos los `auto*` settings estén en 0, dispara "Commit-and-sync" periódicamente. Probable trigger: `refreshSourceControlTimer: 7000` ms refresca el Source Control panel cada 7 seg y en alguna ruta de código eso dispara el flow de backup. Causa exacta no investigada en código del plugin — basta saber el efecto.
+- **Regla operativa (Opción A elegida):** **mantener Obsidian desktop CERRADO mientras trabajes en Cursor en este repo.** Solo abrirlo cuando vayas a editar docs en Obsidian conscientemente. Móvil sigue funcionando vía Termux `tnpush` manual (no afectado — vive en clone separado).
+- **Impacto:**
+  - PC1 con Obsidian cerrado → commits propios sobreviven 100%, sin pisados.
+  - PC1 con Obsidian abierto → riesgo de absorción bajo mensaje genérico en cualquier momento.
+  - Actualizada sección "Obsidian Git en `docs/.obsidian/`" en `CLAUDE.md` raíz para reflejar la regla.
+- **Refs:**
+  - Baseline test: `b2daa56` (12:27:33). Post-watch: `3ffe017` (12:31:08, commit móvil descriptivo).
+  - Investigación: per-repo `.git/config`, procesos Obsidian.exe (4 visibles vía `Get-Process`, no vía `tasklist` con filtro estrecho — lección de tooling), reflog con cadencia variable, plugin data.json completo (`autoSaveInterval: 0`, `autoBackupAfterFileChange: false`, `basePath: "../"`, `refreshSourceControlTimer: 7000`).
+  - Complementa: entries anteriores 2026-05-24 [WORK][OPS] "Lado desktop del plugin Obsidian Git" + [OPS] "Migración vault Obsidian móvil".
+
+---
+
 ### 2026-05-24 [WORK][OPS] — Lado desktop del plugin Obsidian Git: autocommit pisaba commits PC1, desactivado
 
 > Complementa la entrada anterior "Migración vault Obsidian móvil" — esta cubre el lado **desktop** del mismo plugin.
