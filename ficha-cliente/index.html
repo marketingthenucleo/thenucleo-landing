@@ -2306,12 +2306,43 @@ const PIPELINES_MODULE = (() => {
           rebind();
         });
       });
-      document.getElementById('nc-save')?.addEventListener('click', () => {
-        if (document.getElementById('nc-save').disabled) return;
+      document.getElementById('nc-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('nc-save');
+        if (!btn || btn.disabled) return;
         const name = document.getElementById('nc-name')?.value.trim();
         if (!name) { showToast('Falta el nombre de la campaña'); return; }
-        closeSheet();
-        showToast(`Campaña ${next} creada (mockup)`);
+        const desde  = document.getElementById('nc-desde')?.value || null;
+        const hasta  = document.getElementById('nc-hasta')?.value || null;
+        const presup = parseFloat(document.getElementById('nc-presup')?.value);
+        const kpi    = document.getElementById('nc-kpi')?.value.trim() || null;
+        const brief  = document.getElementById('nc-brief')?.value.trim() || null;
+        const notas  = document.getElementById('nc-notas')?.value.trim() || null;
+        btn.disabled = true;
+        try {
+          // F2.2.2.B.3 nota: p_plantilla_id queda NULL en esta fase —
+          // el picker de plantilla sirve sólo para precargar campos del
+          // form (UX). Linkar slug → cliente_campania_plantillas.id es
+          // deuda menor (requiere un GET adicional al catálogo o
+          // ampliar la RPC). Documentado en docs/work/ficha-cliente.md.
+          const row = await rpc('ficha_campania_upsert', {
+            p_id:                  null,
+            p_pipeline_id:         p.id,
+            p_nombre:              name,
+            p_plantilla_id:        null,
+            p_fecha_inicio:        desde,
+            p_fecha_fin:           hasta,
+            p_presupuesto_eur:     isNaN(presup) ? null : presup,
+            p_kpi_objetivo:        kpi,
+            p_link_briefing_drive: brief,
+            p_notas_account:       notas,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId);
+          showToast(`${row?.codigo || 'Campaña'} creada`);
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
       });
       document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
     };
