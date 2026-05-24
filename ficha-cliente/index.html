@@ -2625,6 +2625,11 @@ const PIPELINES_MODULE = (() => {
       document.querySelectorAll('[data-pick]').forEach(b => {
         b.addEventListener('click', () => {
           const v = b.dataset.pick;
+          // Fix 2026-05-24: no-op si re-pulsas la card ya seleccionada,
+          // para no perder lo que el usuario ya tecleó en el form. Cambiar
+          // de plantilla SÍ re-renderiza (intencional: nuevos defaults).
+          const isSame = (v === '__custom' && state.custom) || (v === state.pickedSlug);
+          if (isSame) return;
           if (v === '__custom') { state.pickedSlug = null; state.custom = true; }
           else { state.pickedSlug = v; state.custom = false; }
           document.getElementById('sheet-body').innerHTML = renderForm();
@@ -2830,8 +2835,22 @@ const PIPELINES_MODULE = (() => {
       if (!isEdit) {
         document.querySelectorAll('[data-pick-tipo]').forEach(b => {
           b.addEventListener('click', () => {
-            state.tipo = b.dataset.pickTipo;
+            const newTipo = b.dataset.pickTipo;
+            if (newTipo === state.tipo) return;  // no-op si pulsas la misma card
+            // Fix 2026-05-24: snapshot inputs antes del re-render para no
+            // perder lo tecleado al cambiar de tipo (el form cambia
+            // estructuralmente — placeholder, label, fecha BD — así que
+            // el re-render es necesario; restauramos los valores tras).
+            const snap = {
+              desc: document.getElementById('nt-desc')?.value || '',
+              ext:  document.getElementById('nt-ext')?.value  || '',
+              fecha: document.getElementById('nt-fecha')?.value || '',
+            };
+            state.tipo = newTipo;
             document.getElementById('sheet-body').innerHTML = renderForm();
+            if (snap.desc)  { const el = document.getElementById('nt-desc');  if (el) el.value = snap.desc; }
+            if (snap.ext)   { const el = document.getElementById('nt-ext');   if (el) el.value = snap.ext; }
+            if (snap.fecha) { const el = document.getElementById('nt-fecha'); if (el) el.value = snap.fecha; }
             rebind();
           });
         });
@@ -2900,8 +2919,8 @@ const PIPELINES_MODULE = (() => {
       return `
         <div class="pip-info-callout">
           ${isEdit
-            ? `Editando email <strong>${escapeHtml(previewCode)}</strong> en ${escapeHtml(c.code)}.`
-            : `Nuevo email en <strong>${escapeHtml(c.code)}</strong> → código preview <strong>${escapeHtml(previewCode)}</strong>.`}
+            ? `Editando email <strong data-preview-code>${escapeHtml(previewCode)}</strong> en ${escapeHtml(c.code)}.`
+            : `Nuevo email en <strong>${escapeHtml(c.code)}</strong> → código preview <strong data-preview-code>${escapeHtml(previewCode)}</strong>.`}
         </div>
         <div class="form-field">
           <label class="form-label" for="ne-name">Nombre operativo</label>
@@ -2962,13 +2981,27 @@ const PIPELINES_MODULE = (() => {
     );
 
     const rebind = () => {
+      // Fix 2026-05-24: en vez de re-renderizar todo el form al togglear
+      // un chip (lo cual reseteaba inputs como ne-name que el usuario ya
+      // había tecleado — bug reportado en piloto), actualización in-place:
+      // toggle la clase del chip + reescribir solo el <strong data-preview-code>.
+      const buildPreview = () => {
+        const sortedApl = [...state.aplicables].sort((a,b)=>{
+          const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+          return w(a)-w(b);
+        });
+        return sortedApl.length === 0
+          ? `${c.code}E${ordenInicial}`
+          : `${c.code}${sortedApl.join('')}E${ordenInicial}`;
+      };
       document.querySelectorAll('[data-toggle-trig]').forEach(b => {
         b.addEventListener('click', () => {
           const sub = b.dataset.toggleTrig;
           if (state.aplicables.has(sub)) state.aplicables.delete(sub);
           else state.aplicables.add(sub);
-          document.getElementById('sheet-body').innerHTML = renderForm();
-          rebind();
+          b.classList.toggle('selected');
+          const previewEl = document.querySelector('#sheet-body [data-preview-code]');
+          if (previewEl) previewEl.textContent = buildPreview();
         });
       });
       document.getElementById('ne-save')?.addEventListener('click', async () => {
