@@ -839,6 +839,16 @@
     transition: color 120ms, border-color 120ms;
   }
   .pip-archive-btn:hover { color: var(--bad); border-color: rgba(239,68,68,0.4); }
+  .pip-edit-btn {
+    margin-top: 28px; padding: 12px;
+    background: var(--bg-2); border: 1px solid var(--line-2);
+    color: var(--text-2); border-radius: 10px;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; width: 100%; min-height: 44px;
+    transition: color 120ms, border-color 120ms;
+  }
+  .pip-edit-btn:hover { color: var(--accent); border-color: rgba(34,197,94,0.4); }
+  .pip-edit-btn + .pip-archive-btn { margin-top: 12px; }
 
   .pip-seed-note {
     background: rgba(167,139,250,0.06); border: 1px dashed rgba(167,139,250,0.3);
@@ -1935,7 +1945,10 @@ const PIPELINES_MODULE = (() => {
           </div>
         `).join('')}
 
-      ${S.role==='account' && p.estado!=='archivada' ? `
+      ${S.role==='account' ? `
+        <button class="pip-edit-btn" data-action="edit-pipeline" data-id="${p.id}">Editar pipeline ${p.code}</button>
+      ` : ''}
+      ${S.role==='account' && p.estado!=='archivado' ? `
         <button class="pip-archive-btn" data-action="archive" data-kind="pipeline" data-id="${p.id}" data-code="${p.code}">Archivar pipeline ${p.code}</button>
       ` : ''}
     `;
@@ -2038,6 +2051,9 @@ const PIPELINES_MODULE = (() => {
         Estáticos, reels, carruseles, copies RRSS, vídeos: viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;tipo&gt;_v&lt;n&gt;.&lt;ext&gt;</code> (regla .docx caso 10). No se listan aquí — abre la subcarpeta Drive de la campaña.
       </div>
 
+      ${S.role==='account' ? `
+        <button class="pip-edit-btn" data-action="edit-campaign" data-pid="${p.id}" data-cid="${c.id}">Editar campaña ${c.code}</button>
+      ` : ''}
       ${S.role==='account' && c.estado!=='archivada' ? `
         <button class="pip-archive-btn" data-action="archive" data-kind="campania" data-id="${c.id}" data-code="${c.code}">Archivar campaña ${c.code}</button>
       ` : ''}
@@ -2065,6 +2081,9 @@ const PIPELINES_MODULE = (() => {
         ${fieldStatic('Link externo / referencia', t.ext, { mono: true })}
         ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', t.fechaLanzamiento || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
       </div>
+      ${S.role === 'account' ? `
+        <button class="pip-edit-btn" data-action="edit-trigger" data-pid="${p.id}" data-cid="${c.id}" data-tid="${t.id}">Editar trigger ${t.code}</button>
+      ` : ''}
       ${S.role === 'account' && t.estado !== 'archivado' ? `
         <button class="pip-archive-btn" data-action="archive" data-kind="trigger" data-id="${t.id}" data-code="${t.code}">Archivar trigger ${t.code}</button>
       ` : ''}
@@ -2105,6 +2124,9 @@ const PIPELINES_MODULE = (() => {
         </div>
         ${fieldStatic('Versionado', 'v1 — original · sin revisiones registradas', { hint: 'Regla .docx caso 7: el código no cambia al modificar; se versiona en Drive (P1C1E2_v2_copy.docx).' })}
       </div>
+      ${S.role === 'account' ? `
+        <button class="pip-edit-btn" data-action="edit-email" data-pid="${p.id}" data-cid="${c.id}" data-eid="${e.id}">Editar email ${code}</button>
+      ` : ''}
       ${S.role === 'account' && e.estado !== 'archivado' ? `
         <button class="pip-archive-btn" data-action="archive" data-kind="email" data-id="${e.id}" data-code="${code}">Archivar email ${code}</button>
       ` : ''}
@@ -2162,6 +2184,27 @@ const PIPELINES_MODULE = (() => {
         else if (a === 'new-campaign') openNewCampaignSheet(el.dataset.pid);
         else if (a === 'new-trigger') openNewTriggerSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'new-email') openNewEmailSheet(el.dataset.pid, el.dataset.cid);
+        else if (a === 'edit-pipeline') {
+          const target = S.data.find(x => x.id === el.dataset.id);
+          if (target) openNewPipelineSheet(target);
+        }
+        else if (a === 'edit-campaign') {
+          const pp = S.data.find(x => x.id === el.dataset.pid);
+          const cc = pp && pp.camps.find(x => x.id === el.dataset.cid);
+          if (cc) openNewCampaignSheet(el.dataset.pid, cc);
+        }
+        else if (a === 'edit-trigger') {
+          const pp = S.data.find(x => x.id === el.dataset.pid);
+          const cc = pp && pp.camps.find(x => x.id === el.dataset.cid);
+          const tt = cc && cc.triggers.find(x => x.id === el.dataset.tid);
+          if (tt) openNewTriggerSheet(el.dataset.pid, el.dataset.cid, tt);
+        }
+        else if (a === 'edit-email') {
+          const pp = S.data.find(x => x.id === el.dataset.pid);
+          const cc = pp && pp.camps.find(x => x.id === el.dataset.cid);
+          const ee = cc && cc.emails.find(x => x.id === el.dataset.eid);
+          if (ee) openNewEmailSheet(el.dataset.pid, el.dataset.cid, ee);
+        }
         else if (a === 'create-tasks') openTasksSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'archive') {
           const code = el.dataset.code;
@@ -2195,23 +2238,44 @@ const PIPELINES_MODULE = (() => {
   }
 
   // ── Drawers (reutilizan el sheet bottom global) ──
-  function openNewPipelineSheet() {
-    const next = 'P' + (S.data.length + 1);
-    openSheet(`Nuevo pipeline · ${next}`, 'Línea estratégica del cliente', `
+  // F2.2.2.B+ (bloque 1): los 4 drawers aceptan `editing` opcional. Si
+  // está, prellenan los campos del objeto y el save llama UPDATE
+  // (p_id = editing.id). El código es inmutable (regla .docx §3.4).
+  function openNewPipelineSheet(editing) {
+    const isEdit = !!editing;
+    const next = isEdit ? editing.code : ('P' + (S.data.length + 1));
+    const title = isEdit ? `Editar ${editing.code}` : `Nuevo pipeline · ${next}`;
+    const subtitle = isEdit ? 'Modifica nombre, objetivo, estado o notas' : 'Línea estratégica del cliente';
+    openSheet(title, subtitle, `
       <div class="pip-info-callout">
-        ℹ Un Pipeline es una <strong>línea estratégica de negocio</strong> del cliente, estable en el tiempo. Si tiene fecha de fin concreta, es una Campaña, no un Pipeline (.docx §3).
+        ${isEdit
+          ? `Editando <strong>${escapeHtml(editing.code)}</strong>. El código no cambia (regla .docx §3.4).`
+          : 'ℹ Un Pipeline es una <strong>línea estratégica de negocio</strong> del cliente, estable en el tiempo. Si tiene fecha de fin concreta, es una Campaña, no un Pipeline (.docx §3).'}
       </div>
       <div class="form-field">
         <label class="form-label" for="np-name">Nombre operativo</label>
-        <input class="form-input" id="np-name" placeholder="Ej: Captación B2B colegios" autocomplete="off"/>
+        <input class="form-input" id="np-name" value="${escapeHtml(editing?.name || '')}" placeholder="Ej: Captación B2B colegios" autocomplete="off"/>
       </div>
       <div class="form-field">
         <label class="form-label" for="np-obj">Objetivo de negocio</label>
-        <textarea class="form-textarea" id="np-obj" placeholder="Qué problema del cliente resuelve este Pipeline."></textarea>
+        <textarea class="form-textarea" id="np-obj" placeholder="Qué problema del cliente resuelve este Pipeline.">${escapeHtml(editing?.obj || '')}</textarea>
       </div>
+      ${isEdit ? `
+        <div class="form-field">
+          <label class="form-label" for="np-estado">Estado</label>
+          <select class="form-input" id="np-estado">
+            <option value="activo"     ${editing.estado==='activo'?'selected':''}>Activo</option>
+            <option value="archivado"  ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="np-notas">Notas</label>
+          <textarea class="form-textarea" id="np-notas" placeholder="Contexto interno (opcional).">${escapeHtml(editing?.notas || '')}</textarea>
+        </div>
+      ` : ''}
       <div class="pip-sheet-actions">
         <button class="btn-secondary" data-pip-close>Cancelar</button>
-        <button class="btn-primary" id="np-save">Crear ${next}</button>
+        <button class="btn-primary" id="np-save">${isEdit ? 'Guardar cambios' : `Crear ${next}`}</button>
       </div>
     `);
     setTimeout(() => {
@@ -2219,19 +2283,23 @@ const PIPELINES_MODULE = (() => {
         const btn = document.getElementById('np-save');
         const name = document.getElementById('np-name')?.value.trim();
         const obj  = document.getElementById('np-obj')?.value.trim();
+        const estado = isEdit ? document.getElementById('np-estado')?.value : null;
+        const notas  = isEdit ? (document.getElementById('np-notas')?.value.trim() || null) : null;
         if (!name) { showToast('Falta el nombre del pipeline'); return; }
-        if (!S.bubbleId) { showToast('No hay cliente seleccionado'); return; }
+        if (!isEdit && !S.bubbleId) { showToast('No hay cliente seleccionado'); return; }
         btn.disabled = true;
         try {
           const row = await rpc('ficha_pipeline_upsert', {
-            p_id:                  null,
-            p_cliente_bubble_id:   S.bubbleId,
+            p_id:                  isEdit ? editing.id : null,
+            p_cliente_bubble_id:   isEdit ? null : S.bubbleId,
             p_nombre:              name,
             p_objetivo_negocio:    obj || null,
+            p_estado:              estado,
+            p_notas:               notas,
           });
           closeSheet();
           await loadFor(S.bubbleId);
-          showToast(`${row?.codigo || 'Pipeline'} creado`);
+          showToast(isEdit ? `${row?.codigo || 'Pipeline'} actualizado` : `${row?.codigo || 'Pipeline'} creado`);
         } catch (e) {
           btn.disabled = false;
           showToast(`Error: ${e.message || 'no se pudo guardar'}`);
@@ -2242,54 +2310,72 @@ const PIPELINES_MODULE = (() => {
     }, 40);
   }
 
-  function openNewCampaignSheet(pId) {
+  function openNewCampaignSheet(pId, editing) {
     const p = S.data.find(x => x.id === pId);
     if (!p) return;
-    const next = p.code + 'C' + (p.camps.length + 1);
+    const isEdit = !!editing;
+    const next = isEdit ? editing.code : (p.code + 'C' + (p.camps.length + 1));
     const state = { pickedSlug: null, custom: false };
+    // Helper para input date (acepta YYYY-MM-DD o '')
+    const dateVal = (v) => (v && typeof v === 'string') ? v.slice(0, 10) : '';
 
     const renderForm = () => {
-      const plantilla = state.pickedSlug ? findPlantilla(state.pickedSlug) : null;
-      const showForm = plantilla || state.custom;
+      const plantilla = !isEdit && state.pickedSlug ? findPlantilla(state.pickedSlug) : null;
+      // En edit mode, el form se muestra directo (sin picker de plantilla).
+      const showForm = isEdit || plantilla || state.custom;
       return `
         <div class="pip-info-callout">
-          Nueva campaña en <strong>${escapeHtml(p.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.
+          ${isEdit
+            ? `Editando <strong>${escapeHtml(editing.code)}</strong> en ${escapeHtml(p.code)}. El código no cambia (regla .docx §3.4).`
+            : `Nueva campaña en <strong>${escapeHtml(p.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.`}
         </div>
-        <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Plantilla del catálogo</div>
-        <div style="margin-bottom:16px">
-          ${PLANTILLAS.map(pp => `
-            <button class="pip-plantilla-card ${state.pickedSlug===pp.slug?'selected':''}" data-pick="${pp.slug}" type="button">
-              <div class="pp-name">${escapeHtml(pp.nombre)}</div>
-              <div class="pp-meta">${pp.triggers.length}T · ${pp.emails.length}E · KPI ${escapeHtml(pp.defaults.kpi)}</div>
+        ${isEdit ? '' : `
+          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Plantilla del catálogo</div>
+          <div style="margin-bottom:16px">
+            ${PLANTILLAS.map(pp => `
+              <button class="pip-plantilla-card ${state.pickedSlug===pp.slug?'selected':''}" data-pick="${pp.slug}" type="button">
+                <div class="pp-name">${escapeHtml(pp.nombre)}</div>
+                <div class="pp-meta">${pp.triggers.length}T · ${pp.emails.length}E · KPI ${escapeHtml(pp.defaults.kpi)}</div>
+              </button>
+            `).join('')}
+            <button class="pip-plantilla-card custom ${state.custom?'selected':''}" data-pick="__custom" type="button">
+              <div class="pp-name">Sin plantilla · campaña custom</div>
+              <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">No hereda triggers ni emails. Los declaras tú a mano.</div>
             </button>
-          `).join('')}
-          <button class="pip-plantilla-card custom ${state.custom?'selected':''}" data-pick="__custom" type="button">
-            <div class="pp-name">Sin plantilla · campaña custom</div>
-            <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">No hereda triggers ni emails. Los declaras tú a mano.</div>
-          </button>
-        </div>
+          </div>
+        `}
         ${showForm ? `
           <div class="form-field">
             <label class="form-label" for="nc-name">Nombre operativo</label>
-            <input class="form-input" id="nc-name" value="${plantilla ? escapeHtml(plantilla.nombre) : ''}" placeholder="Ej: Captación leads junio" autocomplete="off"/>
+            <input class="form-input" id="nc-name" value="${escapeHtml(isEdit ? (editing.name || '') : (plantilla ? plantilla.nombre : ''))}" placeholder="Ej: Captación leads junio" autocomplete="off"/>
           </div>
           <div class="form-row">
-            <div class="form-field"><label class="form-label" for="nc-desde">Desde</label><input class="form-input" type="date" id="nc-desde"/></div>
-            <div class="form-field"><label class="form-label" for="nc-hasta">Hasta</label><input class="form-input" type="date" id="nc-hasta"/></div>
+            <div class="form-field"><label class="form-label" for="nc-desde">Desde</label><input class="form-input" type="date" id="nc-desde" value="${isEdit ? dateVal(editing.desde) : ''}"/></div>
+            <div class="form-field"><label class="form-label" for="nc-hasta">Hasta</label><input class="form-input" type="date" id="nc-hasta" value="${isEdit ? dateVal(editing.hasta) : ''}"/></div>
           </div>
           <div class="form-row">
-            <div class="form-field"><label class="form-label" for="nc-presup">Presupuesto (€)</label><input class="form-input" type="number" id="nc-presup" value="${plantilla ? (plantilla.defaults.presup || '') : ''}"/></div>
-            <div class="form-field"><label class="form-label" for="nc-kpi">KPI objetivo</label><input class="form-input" id="nc-kpi" value="${plantilla ? escapeHtml(plantilla.defaults.kpi) : ''}"/></div>
+            <div class="form-field"><label class="form-label" for="nc-presup">Presupuesto (€)</label><input class="form-input" type="number" id="nc-presup" value="${isEdit ? (editing.presup ?? '') : (plantilla ? (plantilla.defaults.presup || '') : '')}"/></div>
+            <div class="form-field"><label class="form-label" for="nc-kpi">KPI objetivo</label><input class="form-input" id="nc-kpi" value="${escapeHtml(isEdit ? (editing.kpi || '') : (plantilla ? plantilla.defaults.kpi : ''))}"/></div>
           </div>
           <div class="form-field">
             <label class="form-label" for="nc-brief">Link briefing Drive</label>
-            <input class="form-input" id="nc-brief" placeholder="${plantilla ? escapeHtml(plantilla.briefingMaster) : 'https://drive.google.com/…'}" autocomplete="off"/>
+            <input class="form-input" id="nc-brief" value="${escapeHtml(isEdit ? (editing.briefingUrl || '') : '')}" placeholder="${plantilla ? escapeHtml(plantilla.briefingMaster) : 'https://drive.google.com/…'}" autocomplete="off"/>
             <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">${plantilla ? 'Duplica el template master al Drive del cliente y pega el link aquí.' : 'Pega el link al briefing que vivirá en Drive.'}</div>
           </div>
           <div class="form-field">
             <label class="form-label" for="nc-notas">Notas Account</label>
-            <textarea class="form-textarea" id="nc-notas" placeholder="Contexto corto que no encaja en el briefing largo."></textarea>
+            <textarea class="form-textarea" id="nc-notas" placeholder="Contexto corto que no encaja en el briefing largo.">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
           </div>
+          ${isEdit ? `
+            <div class="form-field">
+              <label class="form-label" for="nc-estado">Estado</label>
+              <select class="form-input" id="nc-estado">
+                <option value="declarada"     ${editing.estado==='declarada'?'selected':''}>Declarada</option>
+                <option value="en-produccion" ${editing.estado==='en-produccion'?'selected':''}>En producción</option>
+                <option value="archivada"     ${editing.estado==='archivada'?'selected':''}>Archivada</option>
+              </select>
+            </div>
+          ` : ''}
           ${plantilla ? `
             <div class="pip-inherits">
               <div class="pip-inherits-title">Lo que se hereda de la plantilla</div>
@@ -2303,12 +2389,16 @@ const PIPELINES_MODULE = (() => {
         ` : ''}
         <div class="pip-sheet-actions">
           <button class="btn-secondary" data-pip-close>Cancelar</button>
-          <button class="btn-primary" id="nc-save" ${showForm ? '' : 'disabled style="opacity:.4;cursor:not-allowed"'}>Crear ${next}</button>
+          <button class="btn-primary" id="nc-save" ${showForm ? '' : 'disabled style="opacity:.4;cursor:not-allowed"'}>${isEdit ? 'Guardar cambios' : `Crear ${next}`}</button>
         </div>
       `;
     };
 
-    openSheet(`Nueva campaña → ${next}`, `dentro de ${p.code}`, renderForm());
+    openSheet(
+      isEdit ? `Editar ${editing.code}` : `Nueva campaña → ${next}`,
+      isEdit ? `dentro de ${p.code}` : `dentro de ${p.code}`,
+      renderForm()
+    );
 
     const rebind = () => {
       document.querySelectorAll('[data-pick]').forEach(b => {
@@ -2331,16 +2421,14 @@ const PIPELINES_MODULE = (() => {
         const kpi    = document.getElementById('nc-kpi')?.value.trim() || null;
         const brief  = document.getElementById('nc-brief')?.value.trim() || null;
         const notas  = document.getElementById('nc-notas')?.value.trim() || null;
+        const estado = isEdit ? document.getElementById('nc-estado')?.value : null;
         btn.disabled = true;
         try {
-          // F2.2.2.B.3 nota: p_plantilla_id queda NULL en esta fase —
-          // el picker de plantilla sirve sólo para precargar campos del
-          // form (UX). Linkar slug → cliente_campania_plantillas.id es
-          // deuda menor (requiere un GET adicional al catálogo o
-          // ampliar la RPC). Documentado en docs/work/ficha-cliente.md.
+          // p_plantilla_id queda NULL — el picker de plantilla sirve sólo
+          // para precargar el form (UX). Linkar slug → uuid es deuda menor.
           const row = await rpc('ficha_campania_upsert', {
-            p_id:                  null,
-            p_pipeline_id:         p.id,
+            p_id:                  isEdit ? editing.id : null,
+            p_pipeline_id:         isEdit ? null : p.id,
             p_nombre:              name,
             p_plantilla_id:        null,
             p_fecha_inicio:        desde,
@@ -2349,10 +2437,11 @@ const PIPELINES_MODULE = (() => {
             p_kpi_objetivo:        kpi,
             p_link_briefing_drive: brief,
             p_notas_account:       notas,
+            p_estado:              estado,
           });
           closeSheet();
           await loadFor(S.bubbleId);
-          showToast(`${row?.codigo || 'Campaña'} creada`);
+          showToast(isEdit ? `${row?.codigo || 'Campaña'} actualizada` : `${row?.codigo || 'Campaña'} creada`);
         } catch (e) {
           btn.disabled = false;
           showToast(`Error: ${e.message || 'no se pudo guardar'}`);
@@ -2429,17 +2518,16 @@ const PIPELINES_MODULE = (() => {
   }
 
   // ── F2.2.2.B.5: Drawer "Nuevo Trigger" ──────────────────────────
-  function openNewTriggerSheet(pId, cId) {
+  function openNewTriggerSheet(pId, cId, editing) {
     const p = S.data.find(x => x.id === pId);
     const c = p && p.camps.find(x => x.id === cId);
     if (!c) return;
-    const state = { tipo: null };
+    const isEdit = !!editing;
+    // En edit, tipo es inmutable (codigo no se reutiliza). En create, el
+    // usuario elige tipo en el paso 1 y el form aparece para el paso 2.
+    const state = { tipo: isEdit ? editing.tipo : null };
+    const dateVal = (v) => (v && typeof v === 'string') ? v.slice(0, 10) : '';
 
-    // Próximo código preview por tipo: cuenta los existentes del mismo tipo
-    // y suma 1. La regla .docx §3.4 obliga "no reutilizar", así que para
-    // datos limpios coincidirá con el que asigne el servidor. Si hay
-    // huecos por archivar (codes never reused), servidor puede asignar
-    // distinto — el toast muestra el real.
     const nextFor = (tipo) => {
       const n = c.triggers.filter(t => t.tipo === tipo).length + 1;
       return `${c.code}${tipo}${n}`;
@@ -2447,79 +2535,109 @@ const PIPELINES_MODULE = (() => {
 
     const renderForm = () => {
       const tipo = state.tipo;
-      const next = tipo ? nextFor(tipo) : '?';
+      const next = isEdit ? editing.code : (tipo ? nextFor(tipo) : '?');
+      const tipoLabelFull = tipo==='FM' ? 'FM · Formulario Meta' : tipo==='FW' ? 'FW · Formulario Web' : tipo==='BD' ? 'BD · Base de datos' : '';
       return `
         <div class="pip-info-callout">
-          Nuevo trigger en <strong>${escapeHtml(c.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.
+          ${isEdit
+            ? `Editando <strong>${escapeHtml(editing.code)}</strong> en ${escapeHtml(c.code)}. El código y el tipo no cambian (regla .docx §3.4).`
+            : `Nuevo trigger en <strong>${escapeHtml(c.code)}</strong> → próximo código <strong>${escapeHtml(next)}</strong>.`}
         </div>
-        <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Tipo de trigger</div>
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-          ${[
-            { v:'FM', label:'FM · Formulario Meta', hint:'Form nativo de Instagram/Facebook' },
-            { v:'FW', label:'FW · Formulario Web',  hint:'Form en la web del cliente → GHL' },
-            { v:'BD', label:'BD · Base de datos',   hint:'Segmento existente con fecha programada' },
-          ].map(opt => `
-            <button class="pip-plantilla-card ${tipo===opt.v?'selected':''}" data-pick-tipo="${opt.v}" type="button" style="flex:1;min-width:120px">
-              <div class="pp-name">${escapeHtml(opt.label)}</div>
-              <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">${escapeHtml(opt.hint)}</div>
-            </button>
-          `).join('')}
-        </div>
+        ${isEdit ? `
+          <div class="form-field">
+            <label class="form-label">Tipo</label>
+            <div class="form-input" style="background:var(--bg-3);cursor:default">${escapeHtml(tipoLabelFull)}</div>
+          </div>
+        ` : `
+          <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Tipo de trigger</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            ${[
+              { v:'FM', label:'FM · Formulario Meta', hint:'Form nativo de Instagram/Facebook' },
+              { v:'FW', label:'FW · Formulario Web',  hint:'Form en la web del cliente → GHL' },
+              { v:'BD', label:'BD · Base de datos',   hint:'Segmento existente con fecha programada' },
+            ].map(opt => `
+              <button class="pip-plantilla-card ${tipo===opt.v?'selected':''}" data-pick-tipo="${opt.v}" type="button" style="flex:1;min-width:120px">
+                <div class="pp-name">${escapeHtml(opt.label)}</div>
+                <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">${escapeHtml(opt.hint)}</div>
+              </button>
+            `).join('')}
+          </div>
+        `}
         ${tipo ? `
           <div class="form-field">
             <label class="form-label" for="nt-desc">Descripción</label>
-            <input class="form-input" id="nt-desc" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':'Ej: Segmento leads frío >60d'}" autocomplete="off"/>
+            <input class="form-input" id="nt-desc" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':'Ej: Segmento leads frío >60d'}" autocomplete="off"/>
           </div>
           <div class="form-field">
             <label class="form-label" for="nt-ext">${tipo==='FM'?'Form ID Meta':tipo==='FW'?'URL del formulario':'Segmento / Tag GHL'}</label>
-            <input class="form-input" id="nt-ext" autocomplete="off"/>
+            <input class="form-input" id="nt-ext" value="${escapeHtml(isEdit ? (editing.ext || '') : '')}" autocomplete="off"/>
           </div>
           ${tipo==='BD' ? `
             <div class="form-field">
               <label class="form-label" for="nt-fecha">Fecha de lanzamiento <span style="color:var(--warn)">*</span></label>
-              <input class="form-input" type="date" id="nt-fecha"/>
+              <input class="form-input" type="date" id="nt-fecha" value="${isEdit ? dateVal(editing.fechaLanzamiento) : ''}"/>
               <div style="font-size:11px;color:var(--text-3);margin-top:6px">Obligatoria para tipo BD (regla .docx caso 4).</div>
+            </div>
+          ` : ''}
+          ${isEdit ? `
+            <div class="form-field">
+              <label class="form-label" for="nt-estado">Estado</label>
+              <select class="form-input" id="nt-estado">
+                <option value="declarado"     ${editing.estado==='declarado'?'selected':''}>Declarado</option>
+                <option value="creado"        ${editing.estado==='creado'?'selected':''}>Creado</option>
+                <option value="monitorizando" ${editing.estado==='monitorizando'?'selected':''}>Monitorizando</option>
+                <option value="archivado"     ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+              </select>
             </div>
           ` : ''}
         ` : ''}
         <div class="pip-sheet-actions">
           <button class="btn-secondary" data-pip-close>Cancelar</button>
-          <button class="btn-primary" id="nt-save" ${tipo ? '' : 'disabled style="opacity:.4;cursor:not-allowed"'}>Crear ${next}</button>
+          <button class="btn-primary" id="nt-save" ${tipo ? '' : 'disabled style="opacity:.4;cursor:not-allowed"'}>${isEdit ? 'Guardar cambios' : `Crear ${next}`}</button>
         </div>
       `;
     };
 
-    openSheet('Nuevo trigger', `dentro de ${c.code}`, renderForm());
+    openSheet(
+      isEdit ? `Editar ${editing.code}` : 'Nuevo trigger',
+      `dentro de ${c.code}`,
+      renderForm()
+    );
 
     const rebind = () => {
-      document.querySelectorAll('[data-pick-tipo]').forEach(b => {
-        b.addEventListener('click', () => {
-          state.tipo = b.dataset.pickTipo;
-          document.getElementById('sheet-body').innerHTML = renderForm();
-          rebind();
+      // En edit no hay picker, así que no rebind data-pick-tipo
+      if (!isEdit) {
+        document.querySelectorAll('[data-pick-tipo]').forEach(b => {
+          b.addEventListener('click', () => {
+            state.tipo = b.dataset.pickTipo;
+            document.getElementById('sheet-body').innerHTML = renderForm();
+            rebind();
+          });
         });
-      });
+      }
       document.getElementById('nt-save')?.addEventListener('click', async () => {
         const btn = document.getElementById('nt-save');
         if (!btn || btn.disabled) return;
-        const desc  = document.getElementById('nt-desc')?.value.trim();
-        const ext   = document.getElementById('nt-ext')?.value.trim() || null;
-        const fecha = document.getElementById('nt-fecha')?.value || null;
+        const desc   = document.getElementById('nt-desc')?.value.trim();
+        const ext    = document.getElementById('nt-ext')?.value.trim() || null;
+        const fecha  = document.getElementById('nt-fecha')?.value || null;
+        const estado = isEdit ? document.getElementById('nt-estado')?.value : null;
         if (!desc) { showToast('Falta la descripción del trigger'); return; }
         if (state.tipo === 'BD' && !fecha) { showToast('Tipo BD requiere fecha de lanzamiento'); return; }
         btn.disabled = true;
         try {
           const row = await rpc('ficha_trigger_upsert', {
-            p_id:                null,
-            p_campania_id:       c.id,
-            p_tipo:              state.tipo,
+            p_id:                isEdit ? editing.id : null,
+            p_campania_id:       isEdit ? null : c.id,
+            p_tipo:              isEdit ? null : state.tipo,
             p_descripcion:       desc,
             p_link_externo:      ext,
             p_fecha_lanzamiento: fecha,
+            p_estado:            estado,
           });
           closeSheet();
           await loadFor(S.bubbleId);
-          showToast(`${row?.codigo || 'Trigger'} creado`);
+          showToast(isEdit ? `${row?.codigo || 'Trigger'} actualizado` : `${row?.codigo || 'Trigger'} creado`);
         } catch (e) {
           btn.disabled = false;
           showToast(`Error: ${e.message || 'no se pudo guardar'}`);
@@ -2531,18 +2649,23 @@ const PIPELINES_MODULE = (() => {
   }
 
   // ── F2.2.2.B.6: Drawer "Nuevo Email" ────────────────────────────
-  function openNewEmailSheet(pId, cId) {
+  function openNewEmailSheet(pId, cId, editing) {
     const p = S.data.find(x => x.id === pId);
     const c = p && p.camps.find(x => x.id === cId);
     if (!c) return;
-    const nextOrden = c.emails.length + 1;
-    // Subcódigos de triggers de la campaña: 'FM1','FW1','BD1'...
+    const isEdit = !!editing;
+    // En edit, conserva el orden actual. En create, propone next = max+1.
+    const ordenInicial = isEdit ? editing.orden : (c.emails.length + 1);
     const allSubcodes = c.triggers.map(t => t.code.replace(c.code, ''));
-    // Pre-selección: si la campaña tiene 1 trigger único, marcarlo
-    // automáticamente (no hay nada que elegir). Con 2+ triggers el
-    // usuario decide explícitamente cuáles disparan este email.
+    // Pre-selección:
+    //   - Edit: lo que tenga el email actual en triggersAplicables.
+    //   - Create + 1 trigger único: ese trigger.
+    //   - Create + 2+ triggers: vacío, el usuario elige.
     const state = {
-      aplicables: new Set(allSubcodes.length === 1 ? allSubcodes : [])
+      aplicables: new Set(
+        isEdit ? (editing.triggersAplicables || [])
+               : (allSubcodes.length === 1 ? allSubcodes : [])
+      )
     };
 
     const renderForm = () => {
@@ -2551,35 +2674,37 @@ const PIPELINES_MODULE = (() => {
         return w(a)-w(b);
       });
       const previewCode = sortedApl.length === 0
-        ? `${c.code}E${nextOrden}`
-        : `${c.code}${sortedApl.join('')}E${nextOrden}`;
+        ? `${c.code}E${ordenInicial}`
+        : `${c.code}${sortedApl.join('')}E${ordenInicial}`;
       return `
         <div class="pip-info-callout">
-          Nuevo email en <strong>${escapeHtml(c.code)}</strong> → código preview <strong>${escapeHtml(previewCode)}</strong>.
+          ${isEdit
+            ? `Editando email <strong>${escapeHtml(previewCode)}</strong> en ${escapeHtml(c.code)}.`
+            : `Nuevo email en <strong>${escapeHtml(c.code)}</strong> → código preview <strong>${escapeHtml(previewCode)}</strong>.`}
         </div>
         <div class="form-field">
           <label class="form-label" for="ne-name">Nombre operativo</label>
-          <input class="form-input" id="ne-name" placeholder="Ej: Bienvenida + valor" autocomplete="off"/>
+          <input class="form-input" id="ne-name" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="Ej: Bienvenida + valor" autocomplete="off"/>
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label class="form-label" for="ne-orden">Orden</label>
-            <input class="form-input" type="number" id="ne-orden" value="${nextOrden}" min="1"/>
+            <label class="form-label" for="ne-orden">Orden${isEdit ? ' <span style="color:var(--text-3);font-size:10px;font-weight:500">· no editable hoy</span>' : ''}</label>
+            <input class="form-input" type="number" id="ne-orden" value="${ordenInicial}" min="1" ${isEdit ? 'disabled style="opacity:.6;cursor:not-allowed"' : ''}/>
           </div>
           <div class="form-field">
             <label class="form-label" for="ne-espera">Espera desde el anterior</label>
-            <input class="form-input" id="ne-espera" placeholder="Día 0, Día +2, +1 semana…" autocomplete="off"/>
+            <input class="form-input" id="ne-espera" value="${escapeHtml(isEdit ? (editing.espera || '') : '')}" placeholder="Día 0, Día +2, +1 semana…" autocomplete="off"/>
           </div>
         </div>
         <div class="form-field">
           <label class="form-label" for="ne-obj">Objetivo</label>
-          <textarea class="form-textarea" id="ne-obj" placeholder="Una frase: qué consigue este email."></textarea>
+          <textarea class="form-textarea" id="ne-obj" placeholder="Una frase: qué consigue este email.">${escapeHtml(isEdit ? (editing.objetivo || '') : '')}</textarea>
         </div>
         <div class="form-field">
           <label class="form-label">Triggers aplicables</label>
           ${allSubcodes.length === 0
             ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. Añade al menos uno antes de crear emails.</div>`
-            : allSubcodes.length === 1
+            : allSubcodes.length === 1 && !isEdit
               ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
                   ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger selected" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
                 </div>
@@ -2589,14 +2714,31 @@ const PIPELINES_MODULE = (() => {
                 </div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Marca al menos uno. El código del email refleja los triggers seleccionados en orden FM→FW→BD.</div>`}
         </div>
+        ${isEdit ? `
+          <div class="form-field">
+            <label class="form-label" for="ne-estado">Estado</label>
+            <select class="form-input" id="ne-estado">
+              <option value="declarado"    ${editing.estado==='declarado'?'selected':''}>Declarado</option>
+              <option value="copy-listo"   ${editing.estado==='copy-listo'?'selected':''}>Copy listo</option>
+              <option value="diseno-listo" ${editing.estado==='diseno-listo'?'selected':''}>Diseño listo</option>
+              <option value="montado-ghl"  ${editing.estado==='montado-ghl'?'selected':''}>Montado GHL</option>
+              <option value="activo"       ${editing.estado==='activo'?'selected':''}>Activo</option>
+              <option value="archivado"    ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+            </select>
+          </div>
+        ` : ''}
         <div class="pip-sheet-actions">
           <button class="btn-secondary" data-pip-close>Cancelar</button>
-          <button class="btn-primary" id="ne-save">Crear email</button>
+          <button class="btn-primary" id="ne-save">${isEdit ? 'Guardar cambios' : 'Crear email'}</button>
         </div>
       `;
     };
 
-    openSheet('Nuevo email', `dentro de ${c.code}`, renderForm());
+    openSheet(
+      isEdit ? `Editar email` : 'Nuevo email',
+      `dentro de ${c.code}`,
+      renderForm()
+    );
 
     const rebind = () => {
       document.querySelectorAll('[data-toggle-trig]').forEach(b => {
@@ -2612,13 +2754,10 @@ const PIPELINES_MODULE = (() => {
         const btn = document.getElementById('ne-save');
         if (!btn || btn.disabled) return;
         const name   = document.getElementById('ne-name')?.value.trim();
-        const orden  = parseInt(document.getElementById('ne-orden')?.value, 10);
         const espera = document.getElementById('ne-espera')?.value.trim() || null;
         const obj    = document.getElementById('ne-obj')?.value.trim() || null;
+        const estado = isEdit ? document.getElementById('ne-estado')?.value : null;
         if (!name) { showToast('Falta el nombre del email'); return; }
-        // Validación: si la campaña tiene triggers, el email debe estar
-        // asociado a al menos uno. Sin atajos "vacío = todos" — el código
-        // siempre refleja exactamente qué triggers disparan este email.
         if (allSubcodes.length > 0 && state.aplicables.size === 0) {
           showToast('Marca al menos un trigger que dispare este email');
           return;
@@ -2627,17 +2766,18 @@ const PIPELINES_MODULE = (() => {
         btn.disabled = true;
         try {
           await rpc('ficha_email_upsert', {
-            p_id:                    null,
-            p_campania_id:           c.id,
+            p_id:                    isEdit ? editing.id : null,
+            p_campania_id:           isEdit ? null : c.id,
             p_nombre:                name,
-            p_orden:                 isNaN(orden) ? null : orden,
+            p_orden:                 isEdit ? null : ordenInicial,
             p_espera_desde_anterior: espera,
             p_objetivo:              obj,
             p_triggers_aplicables:   apl,
+            p_estado:                estado,
           });
           closeSheet();
           await loadFor(S.bubbleId);
-          showToast('Email creado');
+          showToast(isEdit ? 'Email actualizado' : 'Email creado');
         } catch (e) {
           btn.disabled = false;
           showToast(`Error: ${e.message || 'no se pudo guardar'}`);
