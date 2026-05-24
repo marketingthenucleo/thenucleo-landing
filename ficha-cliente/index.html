@@ -894,6 +894,24 @@
   }
   .pip-plantilla-card:hover { border-color: var(--line-2); background: var(--bg-3); }
   .pip-plantilla-card.selected { border-color: var(--accent); background: var(--accent-muted); }
+  /* Wrapper para card + X de archivar */
+  .pip-plantilla-card-wrap {
+    position: relative; margin-bottom: 6px;
+  }
+  .pip-plantilla-card-wrap .pip-plantilla-card { width: 100%; padding-right: 32px; margin-bottom: 0; }
+  .pip-plantilla-x {
+    position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px; padding: 0;
+    background: transparent; border: 1px solid transparent;
+    color: var(--text-3); font-size: 18px; line-height: 1;
+    cursor: pointer; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 120ms, border-color 120ms, background 120ms;
+  }
+  .pip-plantilla-x:hover, .pip-plantilla-x:focus-visible {
+    color: var(--bad); border-color: rgba(239,68,68,0.4);
+    background: rgba(239,68,68,0.08); outline: none;
+  }
   .pip-plantilla-card .pp-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
   .pip-plantilla-card .pp-meta {
     font-size: 10px; color: var(--text-3); margin-top: 4px;
@@ -1774,17 +1792,10 @@ window.showToast = showToast;
 // para emailCode, BD requiere fechaLanzamiento, creatividades viven en Drive.
 const PIPELINES_MODULE = (() => {
 
-  // Catálogo abierto de plantillas (plan v2 §4)
-  const PLANTILLAS = [
-    { slug:'venta-meta', nombre:'Venta Directa con anuncio Meta', triggers:[{tipo:'FM',name:'Anuncio Meta → checkout'}], emails:[], briefingMaster:'drive://templates/briefing-venta-directa.docx', defaults:{presup:500,kpi:'Ventas'}, roles:{estaticos:'Valentin Arias',video:'Joaquin Rojo',meta:'Damian'} },
-    { slug:'capt-fm', nombre:'Captación de leads vía formulario Meta', triggers:[{tipo:'FM',name:'Formulario Meta'}], emails:[{name:'Bienvenida',espera:'Día 0'},{name:'Valor',espera:'Día +2'},{name:'Oferta',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-captacion-fm.docx', defaults:{presup:300,kpi:'Leads · CPL'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',formulario:'Damian',ghl:'Camilo Balanta'} },
-    { slug:'capt-fw', nombre:'Captación de leads vía formulario Web', triggers:[{tipo:'FW',name:'Form en web'}], emails:[{name:'Bienvenida',espera:'Día 0'},{name:'Valor',espera:'Día +2'},{name:'Oferta',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-captacion-fw.docx', defaults:{presup:200,kpi:'Leads · CPL'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',form:'Dev/CRM',ghl:'Camilo Balanta'} },
-    { slug:'react-bd', nombre:'Reactivación BBDD (con fecha)', triggers:[{tipo:'BD',name:'Segmento BBDD'}], emails:[{name:'Reactivación',espera:'Día 0'},{name:'Oferta',espera:'Día +2'},{name:'Cierre',espera:'Día +5'}], briefingMaster:'drive://templates/briefing-react-bd.docx', defaults:{presup:0,kpi:'Conversiones'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
-    { slug:'news', nombre:'Newsletter recurrente', triggers:[{tipo:'BD',name:'BBDD activa'}], emails:[{name:'Edición única',espera:'cadencia'}], briefingMaster:'drive://templates/briefing-newsletter.docx', defaults:{presup:0,kpi:'Apertura · Clicks'}, roles:{copy:'Valentin Arias',diseno:'Valentin Arias',ghl:'Camilo Balanta'} },
-    // 'lanz' (Lanzamiento multicanal) y 'evento' (Evento) eliminadas
-    // 2026-05-24 — no encajan con el workflow actual TheNucleo.
-    // Mismo DELETE aplicado en cliente_campania_plantillas (migration).
-  ];
+  // Catálogo de plantillas: vive en cliente_campania_plantillas (DB),
+  // se carga en loadFor() y queda en S.plantillas (adaptado al shape JS
+  // que el módulo espera). Antes vivía como const hardcoded — retirado
+  // 2026-05-24 para soportar plantillas auto-creadas y delete via UI.
 
   // ─── ⓘ Info-tooltip content (C1 — 2026-05-24) ──────────────────
   // 12 entradas. Expuestas a window.FICHA_INFO_CONTENT para que el
@@ -1930,6 +1941,7 @@ const PIPELINES_MODULE = (() => {
 
   const S = {
     data: [],
+    plantillas: [],       // catálogo cargado desde DB en loadFor
     bubbleId: null,
     loadStatus: 'idle',   // 'idle' | 'loading' | 'ready' | 'error'
     loadError: null,
@@ -1938,6 +1950,23 @@ const PIPELINES_MODULE = (() => {
     view: { kind: 'list' },
     stack: [],
   };
+
+  // Adapta una plantilla DB (snake_case + triggers_tipicos[{tipo,nombre}])
+  // al shape JS que el resto del módulo ya espera (defaults.kpi/presup,
+  // briefingMaster, triggers[{tipo,name}], emails[{name,espera}], roles).
+  function adaptPlantilla(p) {
+    if (!p) return null;
+    return {
+      id: p.id,
+      slug: p.slug,
+      nombre: p.nombre,
+      briefingMaster: p.briefing_master_url || '',
+      defaults: { presup: p.presupuesto_default, kpi: p.kpi_default || '' },
+      triggers: (p.triggers_tipicos || []).map(t => ({ tipo: t.tipo, name: t.nombre || t.name || '' })),
+      emails: (p.emails_tipicos || []).map(e => ({ name: e.nombre || e.name || '', espera: e.espera || '' })),
+      roles: p.roles_default || {},
+    };
+  }
 
   // Regla .docx caso 5: emails compartidos → código sin trigger;
   // emails por subset → código con triggers concatenados ordenados FM→FW→BD.
@@ -1991,7 +2020,7 @@ const PIPELINES_MODULE = (() => {
   function stateBadge(s) {
     return `<span class="state-badge ${s}">${STATE_LABELS[s] || s}</span>`;
   }
-  function findPlantilla(slug) { return PLANTILLAS.find(p => p.slug === slug); }
+  function findPlantilla(slug) { return S.plantillas.find(p => p.slug === slug); }
 
   // Cubre ambos géneros — pipelines/triggers/emails 'archivado' (masc),
   // campañas 'archivada' (fem). Antes solo filtraba 'archivada' → bug:
@@ -2594,15 +2623,18 @@ const PIPELINES_MODULE = (() => {
         ${isEdit ? '' : `
           <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Plantilla del catálogo ${infoIcon('plantilla')}</div>
           <div style="margin-bottom:16px">
-            ${PLANTILLAS.map(pp => `
-              <button class="pip-plantilla-card ${state.pickedSlug===pp.slug?'selected':''}" data-pick="${pp.slug}" type="button">
-                <div class="pp-name">${escapeHtml(pp.nombre)}</div>
-                <div class="pp-meta">${pp.triggers.length}T · ${pp.emails.length}E · KPI ${escapeHtml(pp.defaults.kpi)}</div>
-              </button>
+            ${S.plantillas.map(pp => `
+              <div class="pip-plantilla-card-wrap">
+                <button class="pip-plantilla-card ${state.pickedSlug===pp.slug?'selected':''}" data-pick="${escapeHtml(pp.slug)}" type="button">
+                  <div class="pp-name">${escapeHtml(pp.nombre)}</div>
+                  <div class="pp-meta">${pp.triggers.length}T · ${pp.emails.length}E · KPI ${escapeHtml(pp.defaults.kpi || '—')}</div>
+                </button>
+                <button class="pip-plantilla-x" data-archive-plantilla="${escapeHtml(pp.id)}" data-plantilla-nombre="${escapeHtml(pp.nombre)}" type="button" aria-label="Archivar plantilla ${escapeHtml(pp.nombre)} del catálogo">×</button>
+              </div>
             `).join('')}
             <button class="pip-plantilla-card custom ${state.custom?'selected':''}" data-pick="__custom" type="button">
               <div class="pp-name">Sin plantilla · campaña custom</div>
-              <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">No hereda triggers ni emails. Los declaras tú a mano.</div>
+              <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">No hereda triggers ni emails. Los declaras tú a mano. Se añade al catálogo automáticamente.</div>
             </button>
           </div>
         `}
@@ -2677,6 +2709,30 @@ const PIPELINES_MODULE = (() => {
           rebind();
         });
       });
+      // X para archivar plantilla del catálogo
+      document.querySelectorAll('[data-archive-plantilla]').forEach(b => {
+        b.addEventListener('click', async (ev) => {
+          ev.stopPropagation();  // evitar trigger del pick del card
+          const id = b.dataset.archivePlantilla;
+          const nombre = b.dataset.plantillaNombre;
+          if (!confirm(`¿Eliminar la plantilla "${nombre}" del catálogo? Dejará de aparecer en el picker. Las campañas existentes que la usaron no se ven afectadas (queda archivada en histórico).`)) return;
+          try {
+            await rpc('ficha_plantilla_archivar', { p_id: id });
+            // Recargar plantillas (solo el catálogo, no los pipelines)
+            const newList = await rpc('ficha_plantillas_listar', { p_bubble_id: S.bubbleId });
+            S.plantillas = Array.isArray(newList) ? newList.map(adaptPlantilla).filter(Boolean) : [];
+            // Si la borrada era la seleccionada, desseleccionar
+            if (state.pickedSlug && !S.plantillas.find(p => p.id === id)) {
+              state.pickedSlug = null; state.custom = false;
+            }
+            document.getElementById('sheet-body').innerHTML = renderForm();
+            rebind();
+            showToast(`Plantilla "${nombre}" archivada`);
+          } catch (err) {
+            showToast(`Error: ${err.message || 'no se pudo archivar'}`);
+          }
+        });
+      });
       document.getElementById('nc-save')?.addEventListener('click', async () => {
         const btn = document.getElementById('nc-save');
         if (!btn || btn.disabled) return;
@@ -2707,10 +2763,8 @@ const PIPELINES_MODULE = (() => {
             p_estado:              estado,
           });
           // Si la campaña era custom (sin plantilla del picker) y es nueva,
-          // auto-creamos plantilla en el catálogo con su metadata. La
-          // plantilla shell aparecerá en el picker tras refresh de página
-          // (deuda menor: hoy el picker lee de JS const PLANTILLAS, no de
-          // DB — refactor pendiente para auto-actualizar el catálogo live).
+          // auto-creamos plantilla en el catálogo con su metadata. Aparece
+          // live en el picker porque loadFor recarga S.plantillas.
           let autoPlantilla = null;
           if (!isEdit && state.custom && row?.id) {
             try {
@@ -3134,7 +3188,11 @@ const PIPELINES_MODULE = (() => {
       render();
     }
     try {
-      const arr = await rpc('ficha_pipelines_get', { p_bubble_id: bubbleId });
+      const [arr, plts] = await Promise.all([
+        rpc('ficha_pipelines_get',    { p_bubble_id: bubbleId }),
+        rpc('ficha_plantillas_listar', { p_bubble_id: bubbleId }),
+      ]);
+      S.plantillas = Array.isArray(plts) ? plts.map(adaptPlantilla).filter(Boolean) : [];
       setData(Array.isArray(arr) ? arr : [], { preserveView: isRefresh });
     } catch (e) {
       console.error('[ficha-cliente] ficha_pipelines_get failed', e);
