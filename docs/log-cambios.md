@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-24
+actualizado: 2026-05-25
 tags:
   - log
   - historial
@@ -70,6 +70,14 @@ Ejemplo completo:
 Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el historial narrativo queda como estaba).
 
 ---
+
+### 2026-05-25 [WORK][UX] — Ficha de Cliente: listado de clientes inline en estado vacío (en vez de "Elige cliente" + botón)
+
+- **Área:** `work.thenucleo.com/ficha-cliente/` — `ficha-cliente/index.html`.
+- **Qué:** al entrar sin `?id=` el panel ya no muestra el empty card "👋 Elige un cliente para empezar" + botón "Seleccionar cliente" (que abría un sheet bottom con la lista). Ahora muestra **directamente inline** el `section-title` "Selecciona un cliente · N activos" + buscador `.picker-search` + listado `.picker-list` con todos los clientes activos. Mismo patrón visual que el sheet "Cambiar" del header, pero embebido en `#state-empty` sin overlay.
+- **Por qué:** un click menos. El estado vacío era una pantalla intermedia que no añadía información — el listado siempre cabe sin scroll y se navega tecleando 1-2 chars. Pedido de Ben.
+- **Implementación:** nueva función `showEmptyClientList(warningMsg?)` reutiliza `renderPickerItem()` + `attachPickerHandlers()` (mismas reglas: tap → `?id=<bubble_id>` + reload). Filtro por `nombre_empresas`/`sector` idéntico al del sheet. Caso "cliente no encontrado" ya no sobreescribe un `<div>` perdido del empty card — usa un `<div id="empty-warning" class="empty-card">` ocultable encima del buscador con el mensaje "Cliente no encontrado. Elige otro de la lista." Listener del botón viejo (`pick-client-btn`) eliminado. El botón "Cambiar" del header sigue invocando `openClientPicker()` (sheet bottom) — sin cambio, porque ese ya es el flujo correcto cuando hay cliente cargado.
+- **Refs:** `ficha-cliente/index.html` (~50 líneas tocadas: markup `#state-empty` reemplazado, nueva fn `showEmptyClientList`, 2 callsites en `init()`, 1 listener retirado). Build Eleventy verde, 55 archivos. `CLAUDE.md` raíz sección `/ficha-cliente/` actualizada (entry de bullet existente).
 
 ### 2026-05-25 [INFRA][OPS] — Hook SessionStart `upstream-sync-reminder` (avisa drift vs origin)
 

@@ -1114,14 +1114,13 @@
 
   <!-- ─── Estado: sin cliente seleccionado ─── -->
   <div id="state-empty" style="display:none">
-    <div class="empty-card">
-      <div style="font-size:42px;margin-bottom:10px">👋</div>
-      <div style="font-size:15px;color:var(--text);font-style:normal;margin-bottom:10px">
-        Elige un cliente para empezar
-      </div>
-      <div style="margin-bottom:18px">Sus datos vienen de Bubble vía espejo Supabase.</div>
-      <button class="btn-primary" id="pick-client-btn" style="max-width:280px;margin:0 auto">Seleccionar cliente</button>
+    <div class="section-title">
+      <span>Selecciona un cliente</span>
+      <span id="empty-count"></span>
     </div>
+    <div id="empty-warning" class="empty-card" style="display:none;margin-bottom:12px;text-align:left;font-style:normal;color:var(--text-2)"></div>
+    <input class="picker-search" id="empty-search" type="search" placeholder="Buscar cliente o sector…" autocomplete="off">
+    <div class="picker-list" id="empty-list" style="max-height:none"></div>
   </div>
 
   <!-- ─── Estado: contenido (paneles) ─── -->
@@ -1669,6 +1668,46 @@ function renderServiciosPanel(servicios) {
   };
 
   renderGroups();
+}
+
+// ─── Listado inline (estado vacío) ──────────────────
+function showEmptyClientList(warningMsg) {
+  const list = STATE.clientes || [];
+  const countEl = document.getElementById('empty-count');
+  const warnEl = document.getElementById('empty-warning');
+  const search = document.getElementById('empty-search');
+  const listEl = document.getElementById('empty-list');
+
+  countEl.textContent = list.length
+    ? `${list.length} ${list.length === 1 ? 'activo' : 'activos'}`
+    : '';
+
+  if (warningMsg) {
+    warnEl.textContent = warningMsg;
+    warnEl.style.display = '';
+  } else {
+    warnEl.style.display = 'none';
+    warnEl.textContent = '';
+  }
+
+  const paint = (items) => {
+    listEl.innerHTML = items.length
+      ? items.map(c => renderPickerItem(c, null)).join('')
+      : '<div class="empty-card">Sin resultados.</div>';
+    attachPickerHandlers();
+  };
+
+  paint(list);
+
+  search.value = '';
+  search.oninput = () => {
+    const q = search.value.toLowerCase().trim();
+    const filtered = !q ? list : list.filter(c =>
+      (c.nombre_empresas || '').toLowerCase().includes(q) ||
+      (c.sector || '').toLowerCase().includes(q)
+    );
+    paint(filtered);
+  };
 }
 
 // ─── Picker (selector cliente) ──────────────────────
@@ -3238,7 +3277,6 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 
 // ─── Switch client triggers ────────────────────────
 document.getElementById('client-switch').addEventListener('click', openClientPicker);
-document.getElementById('pick-client-btn').addEventListener('click', openClientPicker);
 
 // ─── BOOTSTRAP ─────────────────────────────────────
 function getUrlClientId() {
@@ -3265,6 +3303,7 @@ function getUrlClientId() {
   if (!wantId) {
     document.getElementById('state-loading').style.display = 'none';
     document.getElementById('state-empty').style.display = '';
+    showEmptyClientList();
     return;
   }
 
@@ -3273,8 +3312,7 @@ function getUrlClientId() {
     if (!c) {
       document.getElementById('state-loading').style.display = 'none';
       document.getElementById('state-empty').style.display = '';
-      document.querySelector('#state-empty .empty-card div:nth-of-type(2)').textContent =
-        'Cliente no encontrado. Elige otro.';
+      showEmptyClientList('Cliente no encontrado. Elige otro de la lista.');
       return;
     }
     STATE.cliente = c;

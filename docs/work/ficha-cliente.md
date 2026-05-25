@@ -2,8 +2,8 @@
 title: Ficha de Cliente (admin-only)
 dominio: ficha-cliente
 estado: vivo
-actualizado: 2026-05-24
-version_dataset: F2.2 + iteración piloto Mel (tarde 2026-05-24) — edit inline, archivar trigger/email, ⓘ explicativos (12 cuelgues), catálogo plantillas live desde DB con × archivar, auto-create plantilla desde custom, preserveView en saves, fechas dd/mm/yy, emails desde trigger en su detail view. Deuda menor: link plantilla→campaña en flujo "picker eligió existente".
+actualizado: 2026-05-25
+version_dataset: F2.2 + iteración piloto Mel (tarde 2026-05-24) — edit inline, archivar trigger/email, ⓘ explicativos (12 cuelgues), catálogo plantillas live desde DB con × archivar, auto-create plantilla desde custom, preserveView en saves, fechas dd/mm/yy, emails desde trigger en su detail view. UX 2026-05-25: estado vacío muestra listado inline + buscador en vez de empty card + botón. Deuda menor: link plantilla→campaña en flujo "picker eligió existente".
 tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 ---
 
@@ -20,7 +20,7 @@ Vista admin-only mobile-first para consultar y operar sobre la ficha de un clien
 - **Frontend**: HTML standalone en `thenucleo-landing/ficha-cliente/index.html`. Sin Eleventy templating (passthrough copy), sin framework. Carga Supabase JS desde jsdelivr. Mobile-first con paleta TheNucleo dark + verde, font NewBlack (theme switch).
 - **Backend**: lectura sobre `bub_clientes` (73 filas) + `playbook_cliente_servicios` (199 filas) vía 2 RPCs `SECURITY DEFINER` con allowlist hardcoded. No escribe — operaciones de escritura siguen viviendo en el portal Bubble.
 - **Auth**: Google OAuth reutilizando el flujo de `/comunidad/entrar/` (mismo `storageKey`). Allowlist 4 emails TheNucleo. Mismo patrón que `/playbook/` y `/fichas-de-producto/`.
-- **URL deep-link**: `?id=<bubble_id>` carga directamente la ficha del cliente. Sin parámetro abre el selector con buscador (sheet bottom).
+- **URL deep-link**: `?id=<bubble_id>` carga directamente la ficha del cliente. Sin parámetro muestra el listado de clientes activos + buscador **inline** en el panel (fix 2026-05-25, antes era empty card "Elige un cliente" + botón que abría sheet). El botón "Cambiar" del header sigue abriendo el mismo sheet bottom para switch cuando ya hay cliente cargado.
 - **Datos en producción**: 73 clientes activos (filtra `COALESCE(estado,'') <> 'No Activo'`). Selector ordenado alfabético por `nombre_empresas`.
 - **Paneles**: 5 — **Datos** (5 grupos colapsables), **Servicios contratados** (agrupado por categoría), **Pipelines y Campañas** (seed F1), **Catálogos** (MOCKUP), **Anomalías** (MOCKUP plano).
 
