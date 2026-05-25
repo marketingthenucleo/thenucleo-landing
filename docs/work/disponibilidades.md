@@ -76,12 +76,12 @@ Eje X: 08:00 – 20:00. Una banda por miembro. Bandas base verde/ámbar/gris. L�
 | Anónimo (sin login) | Nada — gate Auth Google obligatorio | — |
 | **Admin equipo** (allowlist única) | AHORA + HOY + SEMANA completas + botón "+" override | Crear/editar/borrar overrides. **Hoy todos los admin son "Project".** |
 
-**Allowlist actual (2026-05-25):** 5 emails en frontend `EDITOR_EMAILS`. Los 4 originales coinciden con `comunidad_admins`; **Valentina sólo está en frontend** — pendiente INSERT en `comunidad_admins` tras su primer login.
+**Allowlist actual (2026-05-25):** 5 emails en frontend `EDITOR_EMAILS`, todos presentes también en `comunidad_admins`:
 - `benjamin.sanchis@thenucleo.com`
 - `alejandro.lopez@thenucleo.com`
 - `marketing.thenucleo@gmail.com`
 - `mel.dalmazo@thenucleo.com`
-- `valentina.ramirez@thenucleo.com` ⚠️ frontend sí, `comunidad_admins` no — necesita INSERT manual con su `auth.uid` después de loguearse
+- `valentina.ramirez@thenucleo.com` (UID `f2624ac9-e2de-4255-b1f4-d7fc12eabe96`, primer login 2026-05-25, INSERT en `comunidad_admins` mismo día tras error 403 en `ficha_plantillas_listar`)
 
 **RLS Supabase:** las 3 tablas (`disponibilidad_franjas_base`, `disponibilidad_overrides`, `festivos_es`) usan `is_comunidad_admin()` como gate. Esto es **distinto** del patrón de Casuísticas/Playbook (allowlist hardcoded en SQL). Ventaja: un INSERT en `comunidad_admins` da acceso automáticamente al nuevo admin **sin tocar RLS**. Sigue requiriendo editar el frontend `EDITOR_EMAILS` igualmente.
 
