@@ -2954,9 +2954,10 @@ const PIPELINES_MODULE = (() => {
         </div>
         ${isEdit ? '' : `
           <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px">Plantilla del catálogo ${infoIcon('plantilla')}</div>
-          <div style="margin-bottom:16px">
+          ${S.plantillas.length >= 4 ? `<input class="picker-search" id="nc-plant-search" type="search" placeholder="Buscar plantilla…" autocomplete="off">` : ''}
+          <div id="nc-plant-list" style="margin-bottom:16px">
             ${S.plantillas.map(pp => `
-              <div class="pip-plantilla-card-wrap">
+              <div class="pip-plantilla-card-wrap" data-plant-name="${escapeHtml((pp.nombre || '').toLowerCase())}" data-plant-kpi="${escapeHtml((pp.defaults.kpi || '').toLowerCase())}">
                 <button class="pip-plantilla-card ${state.pickedSlug===pp.slug?'selected':''}" data-pick="${escapeHtml(pp.slug)}" type="button">
                   <div class="pp-name">${escapeHtml(pp.nombre)}</div>
                   <div class="pp-meta">${pp.triggers.length}T · ${pp.emails.length}E · KPI ${escapeHtml(pp.defaults.kpi || '—')}</div>
@@ -2964,6 +2965,7 @@ const PIPELINES_MODULE = (() => {
                 <button class="pip-plantilla-x" data-archive-plantilla="${escapeHtml(pp.id)}" data-plantilla-nombre="${escapeHtml(pp.nombre)}" type="button" aria-label="Archivar plantilla ${escapeHtml(pp.nombre)} del catálogo">×</button>
               </div>
             `).join('')}
+            <div id="nc-plant-empty" style="display:none;padding:10px 4px;color:var(--text-3);font-size:12px;font-style:italic">Sin coincidencias</div>
             <button class="pip-plantilla-card custom ${state.custom?'selected':''}" data-pick="__custom" type="button">
               <div class="pp-name">Sin plantilla · campaña custom</div>
               <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">No hereda triggers ni emails. Los declaras tú a mano. Se añade al catálogo automáticamente.</div>
@@ -3027,6 +3029,23 @@ const PIPELINES_MODULE = (() => {
     );
 
     const rebind = () => {
+      // Buscador del picker de plantillas (filtrado in-place — no re-render
+      // para no perder el query). Aparece sólo si hay ≥4 plantillas. Filtra
+      // por nombre y KPI (lowercase). La card "custom" siempre visible.
+      const plantSearch = document.getElementById('nc-plant-search');
+      if (plantSearch) {
+        plantSearch.addEventListener('input', () => {
+          const q = plantSearch.value.trim().toLowerCase();
+          let visibles = 0;
+          document.querySelectorAll('#nc-plant-list [data-plant-name]').forEach(el => {
+            const hit = q === '' || (el.dataset.plantName || '').includes(q) || (el.dataset.plantKpi || '').includes(q);
+            el.style.display = hit ? '' : 'none';
+            if (hit) visibles++;
+          });
+          const empty = document.getElementById('nc-plant-empty');
+          if (empty) empty.style.display = (q !== '' && visibles === 0) ? '' : 'none';
+        });
+      }
       document.querySelectorAll('[data-pick]').forEach(b => {
         b.addEventListener('click', () => {
           const v = b.dataset.pick;
