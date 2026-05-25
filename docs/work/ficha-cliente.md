@@ -176,6 +176,11 @@ Cada catálogo es un `.coll-group` colapsable con:
 - `text`, `url`, `number` (con step), `date`, `textarea`, `select` (con `options`), `checkbox`.
 - Strings vacíos opcionales se envían `null` para no machacar defaults DB.
 
+**Política de borrado** (decisión 2026-05-25):
+- **No hay DELETE duro desde la UI**, a propósito. El único modo de "borrar" desde Account es **archivar** (soft-delete con `archivada=true` + `archivada_en=now()`). Las archivadas siguen visibles tachadas con badge `🗄` y se pueden desarchivar.
+- Razones: (1) trazabilidad — un borrado real rompe la historia; (2) **Fase C** (cuando Campaña referencie entradas del catálogo por FK + snapshot del nombre) un DELETE duro rompería esas referencias retroactivas y el patrón snapshot+vivo deja de funcionar; (3) consistencia con el resto de tablas `cliente_*` (emails, mensajes WhatsApp, creatividades, triggers) que ya usan `estado='archivado'`/`archivada=true` sin DELETE.
+- Si alguna vez hace falta limpiar de verdad (entrada creada por error, duplicado, etc.): **SQL directo desde Supabase Studio** (acceso admin Ben). No es operativa de Account.
+
 **Helpers JS** (en `ficha-cliente/index.html`):
 - `tableRequest(table, opts)` — helper genérico PostgREST con `Prefer: return=representation` en POST/PATCH.
 - `CATALOGOS_MODULE` — IIFE que encapsula `MACROS` (7), `CATALOGOS` (17 con `table` + `fields` + extractores read-only), `OPTS` (selects predefinidos), `loadFor()`, `render()`, `refreshAll()`, handlers de click delegados.
