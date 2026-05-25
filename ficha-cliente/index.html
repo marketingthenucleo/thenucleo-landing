@@ -1578,7 +1578,12 @@ async function tableRequest(table, opts = {}) {
     throw new Error(`${method} ${table} HTTP ${res.status}: ${t || res.statusText}`);
   }
   if (res.status === 204) return null;
-  return res.json();
+  // Tolerar body vacío: PostgREST con `return=minimal` devuelve 201 sin body.
+  // Si el body llega vacío, devolvemos null en vez de fallar en JSON.parse.
+  const text = await res.text();
+  if (!text) return null;
+  try { return JSON.parse(text); }
+  catch { return null; }
 }
 
 function escapeHtml(s) {
@@ -5039,7 +5044,7 @@ const CATALOGOS_MODULE = (() => {
       await tableRequest('cliente_catalogo_visibilidad', {
         method: 'POST',
         query: 'on_conflict=cliente_bubble_id,scope_type,scope_key',
-        prefer: 'resolution=merge-duplicates,return=minimal',
+        prefer: 'resolution=merge-duplicates,return=representation',
         body: {
           cliente_bubble_id: currentBubbleId,
           scope_type: scopeType,
