@@ -120,6 +120,27 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][PORTAL][INFRA][FEATURE] — Bridge Portal Bubble → `/ficha-cliente/` sin doble login (Edge Function + magic link)
+
+- **Disparador:** Ben pregunta cómo lograr que desde el portal Bubble, al pulsar un botón en la sección Cliente, se abra `work.thenucleo.com/ficha-cliente/?id=<bubble_id>` **sin pasar por el OAuth Google de Supabase otra vez**. Hoy son 2 sistemas auth aislados (Bubble propietaria vs Supabase Auth) → cada vez que el admin va de un lado al otro, OAuth completo.
+- **Opciones evaluadas** (plan `~/.claude/plans/habr-a-alguna-forma-ingeniosa-polished-island.md`): 1) auto-OAuth con `prompt=none` (cero infra, 2-3 redirects silenciosos), 2) refresh silencioso del JWT, 3) **Edge Function + magic link single-use** (sweet spot UX/seguridad, 1 redirect visible ~300ms), 4) JWT pre-firmado en URL hash (mágico pero token en URL = leak risk). Descartada cookie compartida `.thenucleo.com` (Bubble no la soporta cómodamente).
+- **Decisión Ben:** **Opción 3** (sweet spot: UX casi indistinguible de la 4 pero sin tokens en URL).
+- **Componentes creados:**
+  - **Edge Function `bridge_from_portal`** (`supabase/functions/bridge_from_portal/index.ts`, Deno). `verify_jwt=false` — la autenticación es por HMAC, no JWT. Body: `{email, bubble_id, timestamp, signature}`. Valida en orden (falla rápido + respuesta genérica `403 forbidden`): HMAC timing-safe → ventana ±5 min → email ∈ allowlist hardcoded x5 → `supabase.auth.admin.generateLink({ type:'magiclink', email, options:{ redirectTo:'work.thenucleo.com/comunidad/entrar/?next=/ficha-cliente/?id=<bubble_id>' } })`. Devuelve `{action_link}`. Cada llamada (ok o fail) se loguea en `bridge_audit_log`.
+  - **Tabla `bridge_audit_log`** (migration `20260525_bridge_portal_audit_log.sql`): id uuid + email + bubble_id + ip + user_agent + success bool + failure_reason + created_at. 3 indexes (created_at desc + email + parcial fails). RLS ON con policy `admins_read_audit` (mismos 5 emails hardcoded que `ficha_cliente_listar/get`). Escritura solo SERVICE_ROLE.
+  - **Patch frontend `assets/js/comunidad-entrar.js`**: detecta `#access_token=` en el hash al cargar la página → oculta captcha + botón Google + muestra "Iniciando sesión…" como subtítulo. Elimina el flicker al llegar desde el magic link mientras el SDK procesa el hash y dispara SIGNED_IN.
+  - **Doc canónico:** [[../work/bridge-portal-ficha|docs/work/bridge-portal-ficha]] con diagrama de secuencia, setup paso a paso (generar secret + deploy + migration + allowlist redirect URLs + config Bubble con plugin Toolbox), tabla de vectores de ataque y mitigaciones, rotación del secret, troubleshooting.
+- **Setup pendiente (manual, no automatizable desde Claude):**
+  1. `openssl rand -hex 32` → pegar en Supabase Secrets (`BRIDGE_SHARED_SECRET`) + Bubble App Constant privada.
+  2. Deploy Edge Function vía MCP `deploy_edge_function` o dashboard (config `verify_jwt: false`).
+  3. Aplicar migration vía MCP `apply_migration` o `supabase db push`.
+  4. Supabase Auth → URL Configuration → añadir `https://work.thenucleo.com/comunidad/entrar/**` a Redirect URLs.
+  5. Bubble: plugin Toolbox (gratis, `crypto` no está en Bubble nativo) + backend workflow `bridge_to_work_ficha` (Server Script HMAC + API Connector POST a la Edge Function + Go to external website con `action_link`) + botón "Ver ficha en Work" en sección Cliente.
+- **UX final esperada:** click botón en Bubble → 1 redirect visible (~300ms del magic link consume) → aterriza en `/ficha-cliente/?id=<bubble_id>` autenticado, sin captcha visible.
+- **Seguridad:** secret nunca expuesto al cliente (vive en backend Bubble + Supabase secrets, ambos rotables). HMAC timing-safe + ventana 5 min + allowlist 5 emails + magic link single-use con TTL 5 min de Supabase. Auditoría en `bridge_audit_log` detecta volumen anómalo o `bad_signature` repetido (= secret desfasado).
+- **Allowlist:** sube de 8 a **9 sitios hardcoded** (el 9º es la `ALLOWLIST` const de la Edge Function + la policy `admins_read_audit` que comparten allowlist). Deuda técnica abierta documentada en [[deuda-tecnica]]: extraer a tabla `admin_emails` + RPC `is_work_admin(email)`. Fuera de alcance de este bridge.
+- **Refs:** Edge Function `supabase/functions/bridge_from_portal/index.ts`, migration `supabase/migrations/20260525_bridge_portal_audit_log.sql`, doc [[bridge-portal-ficha]], patch `assets/js/comunidad-entrar.js`, plan `~/.claude/plans/habr-a-alguna-forma-ingeniosa-polished-island.md`. Branch: `claude/portal-work-client-card-link-Ih6Tz`.
+
 ### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.7 Fase B Sprint 3: visibilidad de macros/catálogos por cliente
 
 - **Disparador:** Ben pide que Account pueda ocultar macros/catálogos que no aplican a un cliente concreto (ej. cliente que no vende webinars → ocultar Webinars; cliente sin sistema de reserva → ocultar Sistemas de reserva). Descartado schema builder (la opción B del framing inicial de F2.7 Fase A) — basta con ocultar.

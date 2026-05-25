@@ -2,8 +2,20 @@ import { supabase, getCurrentUser } from "./comunidad-supabase.js";
 
 const googleBtn = document.getElementById("google-signin");
 const captcha = document.getElementById("captcha");
+const captchaWrap = document.getElementById("captcha-wrap");
 const captchaHelp = document.getElementById("login-help");
 const errorEl = document.getElementById("login-error");
+const subtitleEl = document.querySelector(".login-sub");
+
+// Magic-link callbacks (incl. el bridge desde portal Bubble) llegan con
+// #access_token=… en el hash. El SDK lo procesa y dispara SIGNED_IN, pero
+// hay un flicker del captcha/botón. Lo ocultamos al detectar el hash.
+const arrivingFromMagicLink = window.location.hash.includes("access_token=");
+if (arrivingFromMagicLink) {
+  if (captchaWrap) captchaWrap.style.display = "none";
+  if (googleBtn) googleBtn.style.display = "none";
+  if (subtitleEl) subtitleEl.textContent = "Iniciando sesión…";
+}
 
 let verified = false;
 let verifying = false;

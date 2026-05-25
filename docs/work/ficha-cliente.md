@@ -52,7 +52,7 @@ Reutiliza el mismo storageKey `thenucleo-comunidad-auth` que `/comunidad/entrar/
 - `mel.dalmazo@thenucleo.com` (añadida 2026-05-15)
 - `valentina.ramirez@thenucleo.com` (añadida 2026-05-25)
 
-⚠️ **La allowlist vive en 8 sitios** que hay que sincronizar a mano:
+⚠️ **La allowlist vive en 9 sitios** que hay que sincronizar a mano:
 
 - `EDITOR_EMAILS` en `playbook/index.html` (frontend)
 - `EDITOR_EMAILS` en `fichas-de-producto/index.html` (frontend)
@@ -61,11 +61,12 @@ Reutiliza el mismo storageKey `thenucleo-comunidad-auth` que `/comunidad/entrar/
 - Body hardcoded de RPC `playbook_cliente_detalle` (SECURITY DEFINER)
 - Body hardcoded de RPC `ficha_cliente_listar` (SECURITY DEFINER)
 - Body hardcoded de RPC `ficha_cliente_get` (SECURITY DEFINER)
-- Body hardcoded de RPC `catalogos_cliente_get` (SECURITY DEFINER) — **añadida 2026-05-25 con F2.7 Fase A**
+- Body hardcoded de RPC `catalogos_cliente_get` (SECURITY DEFINER) — añadida 2026-05-25 con F2.7 Fase A
+- **`ALLOWLIST` const en Edge Function `bridge_from_portal` + policy `admins_read_audit` de `bridge_audit_log` — añadidas 2026-05-25** (bridge portal→/ficha-cliente/, ver [[bridge-portal-ficha]])
 
 > Las **17 tablas `cliente_catalogo_*`** (F2.7) NO usan allowlist hardcoded — usan policies con `is_comunidad_admin()` (la misma función que las tablas `cliente_pipelines`, `cliente_emails`, etc.). Al añadir/retirar admin se gestiona desde `comunidad_admins` (no requiere editar 17 × 4 = 68 policies).
 
-> Nota adyacente — `/casuisticas/`, `/presentacion-pipelines/` y los 5 emails del frontend de `/disponibilidades/` también se sincronizan al mismo tiempo (mismo set), pero usan sus propios mecanismos (3 policies hardcoded `casuisticas_board_*`, copy del gate de presentación, `EDITOR_EMAILS` standalone). Total: 11 sitios frontend+backend al añadir/retirar editor.
+> Nota adyacente — `/casuisticas/`, `/presentacion-pipelines/` y los 5 emails del frontend de `/disponibilidades/` también se sincronizan al mismo tiempo (mismo set), pero usan sus propios mecanismos (3 policies hardcoded `casuisticas_board_*`, copy del gate de presentación, `EDITOR_EMAILS` standalone). Total: 12 sitios frontend+backend al añadir/retirar editor.
 
 Con 5 editores ya estamos en el umbral: cuando crezca a 6+ migrar a tabla `playbook_editors(email)` y reescribir las 3 RPCs + 3 policies + las de casuisticas para consultarla. Mientras tanto es asumible.
 

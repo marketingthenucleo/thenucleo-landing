@@ -474,7 +474,7 @@ Misma allowlist. Devuelve `to_jsonb(c.*)` del cliente con TODAS las columnas de 
 
 > El campo `bb_servicios_contratados` fue **eliminado de `bub_clientes` el 2026-05-22** (legacy huérfano, 78 clientes con array vacío). La RPC nunca lo devolvió porque la columna ya no existía cuando el frontend intentaba leerla — síntoma: el panel "Servicios contratados" mostraba "Sin servicios" aunque el cliente tuviera 32 en `playbook_cliente_servicios`. Fix: ampliar la RPC con el `jsonb_agg` arriba descrito.
 
-⚠️ **Allowlist en 7 sitios ahora** (antes 6 con playbook): frontend `playbook`, `fichas-de-producto`, `ficha-cliente` + RLS policies de `playbook_progreso`/`playbook_task_feedback`/`playbook_cliente_servicios` + RPC `playbook_cliente_detalle` + RPCs `ficha_cliente_listar` y `ficha_cliente_get`. Si añades editor: actualizar los 7.
+⚠️ **Allowlist en 9 sitios ahora** (frontend `playbook`/`fichas-de-producto`/`ficha-cliente` + RLS `playbook_progreso`/`playbook_task_feedback`/`playbook_cliente_servicios` + RPCs `playbook_cliente_detalle`/`ficha_cliente_listar`/`ficha_cliente_get`/`catalogos_cliente_get` + Edge Function `bridge_from_portal` + policy `admins_read_audit` de `bridge_audit_log`). Si añades editor: actualizar todos. Casuísticas + disponibilidades tienen sus propios sets independientes.
 
 ### Pipelines y Campañas — 5 tablas nativas (F2, desde 2026-05-24)
 
@@ -763,7 +763,7 @@ Prefer: resolution=merge-duplicates,return=representation
 
 SECURITY DEFINER + `SET search_path = public, pg_temp` + allowlist hardcoded 5 emails (`benjamin.sanchis`, `camilo.carvajal`, `damian.gomez`, `joaquin.almeida`, `valentina.ramirez` @thenucleo.com) que RAISE `forbidden` ERRCODE `42501` si email no autorizado. GRANT EXECUTE TO authenticated. Devuelve jsonb con **18 keys**: 17 catálogos (`carpetas_drive`, `documentos`, `comunidades_wsp`, `emails_remitentes`, `etiquetas`, `cuentas_publicitarias`, `pixels`, `paginas_sociales`, `publicos_personalizados`, `plantillas_form_meta`, `presupuestos`, `lead_magnets`, `webinars`, `sistemas_reserva`, `productos_servicios`, `reglas`, `webs_cliente`) con `jsonb_agg(to_jsonb(t.*))` ordenado por `archivada` (activas primero) + un campo natural del tipo + **`visibilidad`** con `jsonb_agg({scope_type, scope_key, oculto})` desde `cliente_catalogo_visibilidad`. Frontend hace **1 fetch en lugar de 18**.
 
-⚠️ **Allowlist ahora en 8 sitios** (frontend playbook/fichas-de-producto/ficha-cliente + RLS policies playbook_progreso/playbook_task_feedback/playbook_cliente_servicios + RPCs `playbook_cliente_detalle` + `ficha_cliente_listar` + `ficha_cliente_get` + esta nueva `catalogos_cliente_get`). Al añadir/retirar admin, sincronizar todos. Casuísticas mantiene su allowlist propia (3 policies).
+⚠️ **Allowlist ahora en 9 sitios** (frontend playbook/fichas-de-producto/ficha-cliente + RLS policies playbook_progreso/playbook_task_feedback/playbook_cliente_servicios + RPCs `playbook_cliente_detalle` + `ficha_cliente_listar` + `ficha_cliente_get` + esta `catalogos_cliente_get` + Edge Function `bridge_from_portal` con su policy `admins_read_audit` desde 2026-05-25). Al añadir/retirar admin, sincronizar todos. Casuísticas mantiene su allowlist propia (3 policies).
 
 **Modelo snapshot vs vivo (cuando llegue Fase C):** las referencias Campaña→Catálogo guardarán `recurso_id uuid` + `nombre_snapshot text`. Renderizado: si la entrada del catálogo está archivada → frontend usa `nombre_snapshot` + etiqueta `🗄`; si activa → lee vivo del catálogo (URLs cambian = la realidad cambió, queremos propagación; nombres pueden renombrarse por motivos cosméticos, el snapshot da estabilidad visual). Patrón validado contra Stripe payment_link archived + GitHub deleted-user "ghost".
 
@@ -1158,6 +1158,53 @@ RLS habilitada **sin policies** → solo `service_role` accede directo. La funci
 
 ### Edge Function `comunidad_admin_action` (verify_jwt=true)
 POST `{ tipo: 'propuesta'|'comentario', id, accion: 'aprobar'|'rechazar', nota? }`. Verifica admin via `comunidad_admins`, hace UPDATE con service_role, dispara `VERCEL_DEPLOY_HOOK_URL` al aprobar propuesta.
+
+---
+
+## Bridge Portal Bubble → Work (2026-05-25)
+
+Soporta el deep-link autenticado desde el portal Bubble (portal.thenucleo.com) hasta `work.thenucleo.com/ficha-cliente/?id=<bubble_id>` sin que el admin pase por Google OAuth otra vez. Patrón HMAC + magic link single-use.
+
+### `bridge_audit_log`
+Tabla de auditoría. Cada llamada a la Edge Function (ok o fail) deja una fila.
+```
+id              uuid PK DEFAULT gen_random_uuid()
+email           text                              -- email del admin que solicita el bridge
+bubble_id       text                              -- bubble_id del cliente target
+ip              text                              -- x-forwarded-for de la request
+user_agent      text
+success         boolean NOT NULL
+failure_reason  text                              -- invalid_json | missing_fields | bad_signature | stale_timestamp | not_in_allowlist | magiclink_failed:<msg>
+created_at      timestamptz NOT NULL DEFAULT now()
+```
+
+**Indexes:** `(created_at DESC)`, `(email)`, parcial `(success) WHERE success=false`.
+
+### RLS (1 policy)
+`admins_read_audit` (SELECT) — `auth.jwt() ->> 'email'` en allowlist 5 emails hardcoded (mismos que `ficha_cliente_listar/get`). Escritura solo SERVICE_ROLE (sin policy de INSERT necesaria).
+
+### Edge Function `bridge_from_portal` (verify_jwt=false)
+Caller: backend workflow de Bubble (no JWT Supabase). Autenticación por HMAC compartido.
+
+POST `{ email, bubble_id, timestamp: unix_seconds, signature: hex_hmac_sha256 }` →
+- Si OK: 200 `{ action_link: '<magic_link_supabase>' }`.
+- Si KO: 403 `{ error: 'forbidden' }` (genérico, sin revelar qué validación falló — el motivo real va a `bridge_audit_log.failure_reason`).
+
+**Validaciones (en orden, fail-fast):**
+1. HMAC: `HMAC-SHA256(BRIDGE_SHARED_SECRET, "<email>|<bubble_id>|<timestamp>")` comparación timing-safe.
+2. Timestamp: `Math.abs(now - timestamp) <= 300` segundos (anti-replay).
+3. Email: ∈ allowlist hardcoded x5.
+4. Genera magic link: `auth.admin.generateLink({type:'magiclink', email, options:{redirectTo: 'work.thenucleo.com/comunidad/entrar/?next=/ficha-cliente/?id=<bubble_id>'}})`.
+
+**Secrets:**
+- `BRIDGE_SHARED_SECRET` — `openssl rand -hex 32`. Mismo valor en Supabase Dashboard → Edge Functions → Secrets y en Bubble App Constant privada. Rotable simultáneamente en ambos lados.
+- `SUPABASE_SERVICE_ROLE_KEY` — ya provisto por Supabase.
+
+**Allowlist asciende a 9 sitios** con esta Edge Function (8 previos: 3 frontend + 4 RLS/RPCs ficha_cliente + 1 `catalogos_cliente_get`; el 9º es `ALLOWLIST` en la Edge Function + policy `admins_read_audit` que comparten). Deuda técnica: extraer a tabla `admin_emails` + RPC `is_work_admin(email)`.
+
+**Setup en Supabase Auth:** añadir `https://work.thenucleo.com/comunidad/entrar/**` a Redirect URLs (sin esto el magic link redirige al Site URL por defecto y se pierde el deep-link).
+
+**Detalle operativo:** [[../work/bridge-portal-ficha|docs/work/bridge-portal-ficha]] (diagrama de secuencia, setup paso a paso, vectores de ataque, troubleshooting). Migration: `supabase/migrations/20260525_bridge_portal_audit_log.sql`. Código Edge Function: `supabase/functions/bridge_from_portal/index.ts`.
 
 ---
 
