@@ -67,6 +67,35 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
+## 2026-05-25 [WORK][FEATURE] — Ficha cliente: F2.8 panel contextual "Estás en…" con dismiss progresivo
+
+- **Área:** Frontend `work.thenucleo.com/ficha-cliente/index.html` (sin tocar Supabase).
+- **Qué:** tarjeta sticky desktop ≥1280px / FAB `?` + bottom-sheet <1280px que en cada vista explica dónde está el usuario, qué puede hacer ahí y un tip práctico. 12 scopes cubiertos: `home.cliente-list`, `cliente.{datos,servicios,catalogos,anomalias}`, `pipelines.{list,pipeline,campaign,trigger,email,whatsapp,creatividad}`.
+- **Por qué:** Account/PM se pierde en la jerarquía Pipelines → Campañas → 4 sub-bloques. El `breadcrumb` + `infoIcon` existentes daban contexto a campos individuales, pero faltaba una capa que orientase sobre **el lugar** (qué tipo de cosa es esto y qué se hace aquí).
+- **Diseño UX (validado con `/ui-ux-pro-max` antes de codear):**
+  - Card desktop: rail izq verde 3px + LABEL eyebrow + TITLE + CAPTION dinámico (code PxCx…) + BODY 2 frases + TIP 1 línea + link "Más sobre…" que reusa `window.openFichaInfo(key)`.
+  - Mobile/tablet: FAB `?` 44px a la izquierda del action FAB existente (right:84px, z-index:49) + bottom-sheet `.sg-sheet` reusando patrón de pickers.
+  - `prefers-reduced-motion` desactiva transforms (solo opacity). `aria-live="polite"` en el card para screen readers. Focus visible en `?` FAB + close button. `aria-label="Ayuda contextual"`.
+- **Dismiss progresivo por scope_key** (localStorage `thenucleo-fc-scope-guide-v1`):
+  - Visitas 1-3: card visible expandida.
+  - Visita 4: pre-colapsada (solo header, signal de que puede plegarse).
+  - Visita 5: oculta + toast "Guía oculta. Pulsa ? para reactivar" + dot violeta sobre el FAB.
+  - Botón `?` reactiva siempre (resetea contador del scope).
+- **Detección de scope:** `currentScope()` lee `.tab.active` (data-panel) + `PIPELINES_MODULE.getView()` que ahora expone `{kind, code}` resuelto. El code se computa con `emailCode/whatsappCode/creatividad.codigo` igual que el breadcrumb.
+- **Cableado del refresh:**
+  - `PIPELINES_MODULE.render()` dispara `window.dispatchEvent(new Event('ficha:view-changed'))` al final.
+  - Tab click handler + bootstrap inicial (state-content/state-empty) también lo disparan.
+  - `SCOPE_GUIDE.refresh()` escucha el evento y re-evalúa.
+- **Convivencia con sheets existentes:** MutationObserver sobre `#sheet` oculta el FAB ayuda mientras está abierto un sheet del CRUD (Pipeline/Campaña/Trigger/etc.) → no compite por atención. Vuelve al cerrarse.
+- **Microcopy del card:** tono "compañero técnico" (no marketing), 2 frases body máx, 1 tip accionable, prohibido "simplemente/fácil/intuitivo". 12 textos refinados con `/ui-ux-pro-max` antes de implementar.
+- **Cambios técnicos:**
+  - CSS ~165 líneas nuevas (`.sg-card`, `.sg-fab`, `.sg-sheet`, breakpoints 1280/767, prefers-reduced-motion).
+  - JS módulo IIFE `SCOPE_GUIDE` ~280 líneas (state, render desktop + sheet, handlers click/keydown, MutationObserver).
+  - HTML: `<aside id="sg-card">` + `<button id="sg-fab">` con SVG `help-circle` Lucide stroke 1.75 + sheet + backdrop.
+  - `PIPELINES_MODULE` ahora exporta `getView()` además de los existentes.
+- **Out of scope (Sprint 4):** persistencia del contador por usuario en DB (hoy es local del browser); textos de scopes nuevos cuando se añada Fase C de Catálogos.
+- **Refs:** archivos `ficha-cliente/index.html`, `CLAUDE.md` raíz. Commit `f39b96a`.
+
 ## 2026-05-25 [WORK][INFRA][FEATURE] — Ficha cliente: 5º tipo de trigger `SD` (Sin trigger definido)
 
 - **Área:** Supabase + Frontend `work.thenucleo.com/ficha-cliente/` + Docs.
