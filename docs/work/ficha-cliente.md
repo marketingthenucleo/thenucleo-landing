@@ -3,7 +3,7 @@ title: Ficha de Cliente (admin-only)
 dominio: ficha-cliente
 estado: vivo
 actualizado: 2026-05-25
-version_dataset: F2.2 + iteración piloto Mel (tarde 2026-05-24) + F2.7 Fase A (17 catálogos Supabase + RPC agregadora `catalogos_cliente_get`, seed Rock & Climb 16 entradas) + F2.7 Fase B Sprint 1+2 (panel Catálogos cableado a Supabase real con CRUD inline via PostgREST + sheet bottom + archivado). Deuda menor: link plantilla→campaña en flujo "picker eligió existente"; pickers FK webinar→comunidad_wsp/lead_magnet y editor `campos_capturar` jsonb pendientes (Sprint 3).
+version_dataset: F2.2 + iteración piloto Mel (tarde 2026-05-24) + F2.7 Fase A (17 catálogos Supabase + RPC agregadora `catalogos_cliente_get`, seed Rock & Climb 16 entradas) + F2.7 Fase B Sprint 1+2 (panel Catálogos cableado a Supabase real con CRUD inline via PostgREST + sheet bottom + archivado) + F2.7 Fase B Sprint 3 (visibilidad de macros/catálogos por cliente — tabla `cliente_catalogo_visibilidad`, botón ⚙️ Gestionar abre sheet con toggle switches por cada macro y catálogo, datos preservados al ocultar). Deuda menor: link plantilla→campaña en flujo "picker eligió existente"; pickers FK webinar→comunidad_wsp/lead_magnet y editor `campos_capturar` jsonb pendientes (Sprint 4).
 tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 ---
 
@@ -13,7 +13,7 @@ Vista admin-only mobile-first para consultar y operar sobre la ficha de un clien
 
 > ✅ **Vivo desde 2026-05-22** en `work.thenucleo.com/ficha-cliente/` (allowlist 5 emails TheNucleo desde 2026-05-25, `noindex`). **Módulo Pipelines y Campañas** vivo (F2.5d cerrada 2026-05-25): triggers `FM/FW/BD/DM` (DM = auto-DM RRSS con keyword + mensaje); creatividades 1-fila-por-pieza con código `<trigger.code><E|R|C|O><n>` (P1C1FM1E1, P1C1DM1R1…) — cada pieza apunta a un trigger destino obligatorio, categoría ANUNCIOS [Estático/Reel] / RRSS [Carrusel/Reel] / OTROS, sin cantidad (para varias piezas similares crear N entradas); sin Brief Drive (retirado por feedback Ben "aquí no tenemos URLs"). Backend completo en Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + `cliente_mensajes_whatsapp` + `cliente_creatividades` + `cliente_campania_plantillas` + RPCs).
 >
-> 🆕 **Módulo Catálogos del cliente (F2.7 Fase A + B Sprint 1+2 — 2026-05-25):** panel Catálogos pasa de mockup a 17 catálogos reales `cliente_catalogo_*` agrupados en 7 macro-categorías (📁 Recursos Drive · 💬 Comunicación · 📣 Marketing Meta · 💰 Operativo · 🎯 Producto del cliente · ⚠️ Gobierno · 🌐 Webs cliente). Lectura via RPC agregadora `catalogos_cliente_get` (1 fetch). CRUD inline via PostgREST + sheet bottom: botón **+ Añadir** por catálogo, click en entrada → editar, botón archivar/desarchivar (soft-delete con badge `🗄`). Seed Rock & Climb 16 entradas. Pendientes Sprint 3: pickers FK webinar→comunidad_wsp + lead_magnet, editor `campos_capturar` jsonb, buscador global, toggle "ver archivadas".
+> 🆕 **Módulo Catálogos del cliente (F2.7 Fase A + B Sprint 1+2+3 — 2026-05-25):** panel Catálogos pasa de mockup a 17 catálogos reales `cliente_catalogo_*` agrupados en 7 macro-categorías (📁 Recursos Drive · 💬 Comunicación · 📣 Marketing Meta · 💰 Operativo · 🎯 Producto del cliente · ⚠️ Gobierno · 🌐 Webs cliente). Lectura via RPC agregadora `catalogos_cliente_get` (1 fetch que trae los 17 catálogos + la lista de visibilidad). CRUD inline via PostgREST + sheet bottom: botón **+ Añadir** por catálogo, click en entrada → editar, botón archivar/desarchivar (soft-delete con badge `🗄`). **Visibilidad por cliente (Sprint 3):** botón **⚙️ Gestionar catálogos** arriba del panel abre sheet con toggle switches por cada macro y catálogo — Account oculta lo que no aplica al cliente concreto, los datos se preservan al ocultar. Seed Rock & Climb 16 entradas. Pendientes Sprint 4: pickers FK webinar→comunidad_wsp + lead_magnet, editor `campos_capturar` jsonb, buscador global, toggle "ver archivadas".
 
 ---
 
@@ -176,6 +176,18 @@ Cada catálogo es un `.coll-group` colapsable con:
 - `text`, `url`, `number` (con step), `date`, `textarea`, `select` (con `options`), `checkbox`.
 - Strings vacíos opcionales se envían `null` para no machacar defaults DB.
 
+**Visibilidad por cliente (Sprint 3, decisión 2026-05-25):**
+
+Tabla nueva `cliente_catalogo_visibilidad` con `(cliente_bubble_id, scope_type CHECK ('macro','catalogo'), scope_key, oculto bool, audit)` + UNIQUE compuesta. Si NO existe row → visible (default). Si existe con `oculto=true` → oculto. Macro oculta tiene **precedencia**: aunque sus catálogos estén marcados visibles individualmente, no se renderizan.
+
+- **UI:** botón "⚙️ Gestionar catálogos" arriba del panel (`.catalogos-controls` + `.cat-manage-btn`). Abre sheet bottom con 2 secciones: **Macros** (7 switches) + **Catálogos individuales** (17 switches agrupados por su macro, con `disabled` cuando la macro padre está oculta).
+- **UPSERT** via `tableRequest('cliente_catalogo_visibilidad', { method:'POST', query:'on_conflict=cliente_bubble_id,scope_type,scope_key', prefer:'resolution=merge-duplicates,return=minimal', body:{...} })`. El helper acepta ahora `prefer` custom (Sprint 3 amplía el helper original).
+- **Auto-hide de macros vacías:** si TODOS los catálogos de una macro están ocultos individualmente, la macro se omite del render aunque no esté explícitamente oculta. Evita "carpeta sin contenido" en pantalla.
+- **Refresh sin recargar:** toggle → UPSERT → actualiza `data.visibilidad` en memoria → re-render del sheet (para reflejar disabled) + re-render del panel detrás preservando coll-groups abiertos.
+- **Empty state:** si TODAS las macros están ocultas, el panel muestra `empty-card` "Todas las macros están ocultas para este cliente. Pulsa '⚙️ Gestionar catálogos' para reactivar".
+- **Listener:** `change` (no `click`) en los `[data-vis-toggle]` — el browser ya gestiona el flip del checkbox, sólo persistimos el nuevo estado.
+- **Vive en Supabase**, no en localStorage: la visibilidad es del cliente, no del usuario. Si Mel oculta "Sistemas de reserva" para Rock & Climb, Ben también lo ve oculto al abrir Rock & Climb.
+
 **Política de borrado** (decisión 2026-05-25):
 - **No hay DELETE duro desde la UI**, a propósito. El único modo de "borrar" desde Account es **archivar** (soft-delete con `archivada=true` + `archivada_en=now()`). Las archivadas siguen visibles tachadas con badge `🗄` y se pueden desarchivar.
 - Razones: (1) trazabilidad — un borrado real rompe la historia; (2) **Fase C** (cuando Campaña referencie entradas del catálogo por FK + snapshot del nombre) un DELETE duro rompería esas referencias retroactivas y el patrón snapshot+vivo deja de funcionar; (3) consistencia con el resto de tablas `cliente_*` (emails, mensajes WhatsApp, creatividades, triggers) que ya usan `estado='archivado'`/`archivada=true` sin DELETE.
@@ -215,6 +227,14 @@ Pinta entre 1 y 5 chips según los datos del cliente:
 ---
 
 ## Fixes y cambios recientes
+
+### 2026-05-25 — F2.7 Fase B Sprint 3: visibilidad de macros/catálogos por cliente
+Commit `7eef03f` (frontend) + migration Supabase `f2_7_sprint3_catalogos_visibilidad`. Tabla nueva `cliente_catalogo_visibilidad` + RLS con `is_comunidad_admin()` + RPC `catalogos_cliente_get` ampliada para devolver array `visibilidad`. Frontend: botón "⚙️ Gestionar catálogos" abre sheet bottom con switches por macro (7) + catálogo (17 agrupados). UPSERT vía PostgREST `on_conflict=...&prefer:resolution=merge-duplicates`. Auto-hide de macros con todos sus catálogos ocultos. Datos preservados al ocultar.
+
+Helper `tableRequest()` ampliado: ahora acepta `prefer` opcional (compat retro — si no se pasa, mantiene el `Prefer: return=representation` previo en POST/PATCH).
+
+### 2026-05-25 — Fix botón "+ Añadir" del panel Catálogos
+Commit `5fa8363`. El `onclick="event.stopPropagation()"` inline del botón rompía el delegate handler del módulo (vivía en `document`). Fix: quitar el onclick + añadir guard `if (e.target.closest('[data-cat-add]')) return;` en el handler de `[data-coll-toggle]` (línea ~1823).
 
 ### 2026-05-25 — F2.7 Fase B Sprint 2: CRUD inline en panel Catálogos
 Commits `b59e9fd` (frontend). Reemplaza el panel mockup por CRUD completo via PostgREST (`tableRequest()` helper) + sheet bottom reutilizado (`openSheet/closeSheet`). Cada uno de los 17 catálogos declara `table` + array `fields` (text/url/number/date/textarea/select/checkbox) consumido por un render genérico. Validación required client-side. Strings vacíos opcionales → `null`. Archive desde form con `confirm()`. Tras CRUD: re-fetch agregado preservando grupos abiertos.

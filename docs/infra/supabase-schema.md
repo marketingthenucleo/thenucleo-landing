@@ -719,17 +719,50 @@ Cada tabla lleva: index `(cliente_bubble_id)` + index parcial `(cliente_bubble_i
 
 **Relaciones FK entre catálogos:** solo `cliente_catalogo_webinar` → (`#3 comunidad_wsp_id`, `#12 lead_magnet_id`) ambos `ON DELETE RESTRICT`. Si Account intenta borrar duro una comunidad WSP o lead magnet referenciado por un webinar, falla — debe archivar el webinar primero o desvincular. El soft-delete (`archivada=true`) sí está permitido y NO bloquea (la FK uuid sigue válida).
 
+#### Tabla auxiliar — `cliente_catalogo_visibilidad` (F2.7 Sprint 3, 2026-05-25)
+
+Visibilidad de macros y catálogos por cliente. Permite que Account oculte macros/catálogos que no aplican a un cliente concreto sin tocar los datos (los datos siguen en DB, sólo cambia el render).
+
+```
+id                  uuid PK default gen_random_uuid()
+cliente_bubble_id   text NOT NULL
+scope_type          text NOT NULL CHECK (scope_type IN ('macro','catalogo'))
+scope_key           text NOT NULL                        -- 'recursos_drive'|'gobierno'|… (macro) o 'carpetas_drive'|'webinars'|… (catalogo)
+oculto              boolean NOT NULL DEFAULT true
+audit               created_at, updated_at, created_by DEFAULT auth.email()
+UNIQUE (cliente_bubble_id, scope_type, scope_key)
+INDEX  (cliente_bubble_id)
+INDEX  (cliente_bubble_id) WHERE oculto = true
+```
+
+**Semántica:** si NO existe row → visible (default). Si existe con `oculto=true` → oculto. Macro oculta tiene **precedencia** sobre catálogos visibles individualmente. RLS + 4 policies con `is_comunidad_admin()`. Trigger `update_updated_at()`.
+
+**Escritura desde frontend** vía PostgREST UPSERT:
+```
+POST /rest/v1/cliente_catalogo_visibilidad?on_conflict=cliente_bubble_id,scope_type,scope_key
+Prefer: resolution=merge-duplicates,return=minimal
+{ cliente_bubble_id, scope_type, scope_key, oculto }
+```
+
+**Lectura:** integrada en la RPC `catalogos_cliente_get` (ver abajo) — devuelve array `visibilidad: [{scope_type, scope_key, oculto}]` además de los 17 catálogos.
+
+**Migration:** `f2_7_sprint3_catalogos_visibilidad` aplicada 2026-05-25. Total de tablas del bloque F2.7: 17 `cliente_catalogo_*` + 1 `cliente_catalogo_visibilidad` = **18 tablas**.
+
 **RPC agregadora — `catalogos_cliente_get(p_bubble_id text) RETURNS jsonb`**
 
-SECURITY DEFINER + `SET search_path = public, pg_temp` + allowlist hardcoded 5 emails (`benjamin.sanchis`, `camilo.carvajal`, `damian.gomez`, `joaquin.almeida`, `valentina.ramirez` @thenucleo.com) que RAISE `forbidden` ERRCODE `42501` si email no autorizado. GRANT EXECUTE TO authenticated. Devuelve jsonb con 17 keys (`carpetas_drive`, `documentos`, `comunidades_wsp`, `emails_remitentes`, `etiquetas`, `cuentas_publicitarias`, `pixels`, `paginas_sociales`, `publicos_personalizados`, `plantillas_form_meta`, `presupuestos`, `lead_magnets`, `webinars`, `sistemas_reserva`, `productos_servicios`, `reglas`, `webs_cliente`), cada uno con `jsonb_agg(to_jsonb(t.*))` ordenado por `archivada` (activas primero) + un campo natural del tipo. Frontend hace **1 fetch en lugar de 17**.
+SECURITY DEFINER + `SET search_path = public, pg_temp` + allowlist hardcoded 5 emails (`benjamin.sanchis`, `camilo.carvajal`, `damian.gomez`, `joaquin.almeida`, `valentina.ramirez` @thenucleo.com) que RAISE `forbidden` ERRCODE `42501` si email no autorizado. GRANT EXECUTE TO authenticated. Devuelve jsonb con **18 keys**: 17 catálogos (`carpetas_drive`, `documentos`, `comunidades_wsp`, `emails_remitentes`, `etiquetas`, `cuentas_publicitarias`, `pixels`, `paginas_sociales`, `publicos_personalizados`, `plantillas_form_meta`, `presupuestos`, `lead_magnets`, `webinars`, `sistemas_reserva`, `productos_servicios`, `reglas`, `webs_cliente`) con `jsonb_agg(to_jsonb(t.*))` ordenado por `archivada` (activas primero) + un campo natural del tipo + **`visibilidad`** con `jsonb_agg({scope_type, scope_key, oculto})` desde `cliente_catalogo_visibilidad`. Frontend hace **1 fetch en lugar de 18**.
 
 ⚠️ **Allowlist ahora en 8 sitios** (frontend playbook/fichas-de-producto/ficha-cliente + RLS policies playbook_progreso/playbook_task_feedback/playbook_cliente_servicios + RPCs `playbook_cliente_detalle` + `ficha_cliente_listar` + `ficha_cliente_get` + esta nueva `catalogos_cliente_get`). Al añadir/retirar admin, sincronizar todos. Casuísticas mantiene su allowlist propia (3 policies).
 
 **Modelo snapshot vs vivo (cuando llegue Fase C):** las referencias Campaña→Catálogo guardarán `recurso_id uuid` + `nombre_snapshot text`. Renderizado: si la entrada del catálogo está archivada → frontend usa `nombre_snapshot` + etiqueta `🗄`; si activa → lee vivo del catálogo (URLs cambian = la realidad cambió, queremos propagación; nombres pueden renombrarse por motivos cosméticos, el snapshot da estabilidad visual). Patrón validado contra Stripe payment_link archived + GitHub deleted-user "ghost".
 
-**Fases pendientes (no en esta migration):**
-- **Fase B — UI CRUD:** cablear `/ficha-cliente/` panel Catálogos pasando de 2 mockups (Emails remitentes + Etiquetas) a 17 `.coll-group` reales agrupados en 5 macro-categorías + buscador.
-- **Fase C — cablear Campaña:** sección "Recursos asociados" en Campaña con picker por tipo + 1 plantilla hardcodeada (la del PDF Rock and Climb) + tabla nueva `campania_sesion_webinar` para webinars con N sesiones específicas (PDF3 Actualízate tiene 3 masterclass V/S/D). Estas sesiones son temporales del lanzamiento, NO recursos catálogo.
+**Fase B — UI CRUD (cerrada 2026-05-25):**
+- **Sprint 1 (lectura):** `ficha-cliente/index.html` panel Catálogos cableado a la RPC. 17 `.coll-group` agrupados en 7 macros visuales. Commit `7de0b79`.
+- **Sprint 2 (CRUD):** botón "+ Añadir" por catálogo + click en entrada → editar + botón archivar (soft-delete con `archivada=true`). Helper `tableRequest(table, opts)` para POST/PATCH directos vía PostgREST. Commit `b59e9fd`.
+- **Sprint 3 (visibilidad):** botón "⚙️ Gestionar catálogos" abre sheet con toggles para ocultar macros + catálogos. Tabla auxiliar `cliente_catalogo_visibilidad` (descrita arriba). Commit `7eef03f`.
+- **Pendientes Sprint 4:** pickers FK webinar→`comunidad_wsp_id`/`lead_magnet_id`, editor `campos_capturar` jsonb, buscador global, toggle "ver archivadas".
+
+**Fase C (pendiente) — cablear Campaña al catálogo:** sección "Recursos asociados" en Campaña con picker por tipo + 1 plantilla hardcodeada (la del PDF Rock and Climb) + tabla nueva `campania_sesion_webinar` para webinars con N sesiones específicas (PDF3 Actualízate tiene 3 masterclass V/S/D). Estas sesiones son temporales del lanzamiento, NO recursos catálogo.
 
 ### `agencia_integraciones_config` — Credenciales cifradas (desde 2026-05-04)
 
@@ -850,6 +883,21 @@ RLS: enabled, sin policies → solo service_role accede.
 - `newsletter_update_email(p_conversation_id, p_idx, p_asunto, p_contenido_html)` → `{ok, idx}`.
 - `newsletter_reset_stuck()` — libera filas atascadas.
 - `newsletter_reset_wip(p_conversation_id)` → `{ok:true}`. Borra `chat_messages` + resetea fila WIP.
+
+### Demo Quasar (1, creado 2026-05-25)
+
+- `demo_rolling_refresh()` → jsonb. SECURITY DEFINER, search_path=public, GRANT EXECUTE a `service_role` + `authenticated`. Mantiene las fechas seed de la agencia Demo Quasar (`bea972de-6499-4086-b8de-57e8ed2d42a7`) actualizadas al `CURRENT_DATE` para que la demo no quede "atrás en el tiempo" en filtros tipo "últimos 30 días". Disparada cada lunes 03:00 Madrid vía workflow n8n `Z9Mp78CHNeuEwtCc` y on-demand para refresh puntual.
+  - **Detección delta:** `delta_days = CURRENT_DATE - max(fecha_inicio::date) FROM clockify_time_entries WHERE agencia_id = demo AND 'demo'=ANY(tags)`. Si `<= 0` → no-op (`{status:'skipped', reason:'already_fresh'}`). Idempotente.
+  - **UPDATE en cascada** (filas seed identificadas por `tag='demo'` o `metadata.seed='demo'`):
+    - `clockify_time_entries`: `fecha_inicio/fecha_fin += delta_days` (filtro tag).
+    - `holded_facturas`: `fecha/fecha_vencimiento += delta_days` (filtro tag).
+    - `chat_conversations`: `created_at/updated_at += delta_days` (filtro `metadata->>'seed' = 'demo'`).
+    - `chat_messages`: idem para mensajes de esas conversations (JOIN).
+    - `analisis_wip`: `created_at/updated_at += delta_days` (filtro `cliente_id IN` los 3 notion_ids fake hardcoded en la función).
+  - **REGENERA** `holded_metricas` completa (DELETE + INSERT 6 últimos meses desde `date_trunc('month', NOW())` con MRR creciente 5500→7750).
+  - **Return:** `{status, delta_days, target_date, previous_max_clockify, rows: {clockify, holded_facturas, chat_conversations, chat_messages, analisis_wip, holded_metricas}}`.
+  - **NO toca Bubble:** las fechas en `bub_clientes` (`fecha_onboarding`, `ultimo_seguimiento`) son espejo desde Bubble. Refresh on-demand manual vía PATCH a Bubble Data API + pausa transitoria de `wvHcgVqqjkWJcJDu`. Detalle protocolo en `docs/portal/demo-quasar.md` sección "Mantenimiento automático".
+  - **Convención `metadata.seed`:** clave nueva en `chat_conversations.metadata` jsonb introducida 2026-05-25 para distinguir conversations seed (creadas por el clonado demo) de conversations creadas por el admin Demo durante el uso del Portal. Si en el futuro se replica el patrón para otra demo, mantener la clave `seed=<slug-agencia>`.
 
 ---
 

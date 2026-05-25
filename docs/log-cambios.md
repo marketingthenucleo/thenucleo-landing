@@ -71,6 +71,33 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.7 Fase B Sprint 3: visibilidad de macros/catálogos por cliente
+
+- **Disparador:** Ben pide que Account pueda ocultar macros/catálogos que no aplican a un cliente concreto (ej. cliente que no vende webinars → ocultar Webinars; cliente sin sistema de reserva → ocultar Sistemas de reserva). Descartado schema builder (la opción B del framing inicial de F2.7 Fase A) — basta con ocultar.
+- **Bug previo arreglado en la misma sesión** (commit `5fa8363`): botón "+ Añadir" del Sprint 2 no respondía porque el `onclick="event.stopPropagation()"` inline impedía que el click llegara al `document` donde vive el delegate handler que abre el form. Fix: quitar el onclick + guard `closest('[data-cat-add]')` en el handler de `[data-coll-toggle]` (línea ~1823).
+- **Backend (migration `f2_7_sprint3_catalogos_visibilidad`):**
+  - Tabla nueva `cliente_catalogo_visibilidad` con `(cliente_bubble_id, scope_type CHECK ('macro','catalogo'), scope_key, oculto boolean, audit)` + UNIQUE `(cliente_bubble_id, scope_type, scope_key)`. Si NO existe row → visible (default). Si existe con `oculto=true` → oculto.
+  - 2 indexes: `(cliente_bubble_id)` + parcial `(cliente_bubble_id) WHERE oculto=true`.
+  - RLS ON + 4 policies con `is_comunidad_admin()` (mismo patrón que las 17 tablas de catálogos).
+  - Trigger `update_updated_at()`.
+  - RPC `catalogos_cliente_get` ampliada: añade key `visibilidad` al jsonb con `jsonb_agg({scope_type, scope_key, oculto})`. El 1-fetch sigue cubriendo todo el panel (17 catálogos + visibilidad).
+- **Frontend (commit `7eef03f`):**
+  - `tableRequest(table, opts)` helper ampliado: ahora acepta `prefer` opcional (compat retro — si no se pasa, mantiene `Prefer: return=representation` previo). Necesario para UPSERT con `resolution=merge-duplicates`.
+  - CSS nuevo (~80 líneas): `.catalogos-controls` + `.cat-manage-btn` (barra superior del panel) + `.vis-section/-title/-row/-emoji/-dot/-label/-meta` (sheet de gestión) + toggle switch CSS puro sobre `<input type=checkbox>`.
+  - **MACROS** ampliadas con `key` (string que mapea a `scope_key` en DB): `recursos_drive`, `comunicacion`, `marketing_meta`, `operativo`, `producto`, `gobierno`, `webs`.
+  - Helper `isHidden(scopeType, scopeKey)` mira `data.visibilidad`.
+  - `renderCatalogo(key, items)` devuelve `''` si `isHidden('catalogo', key)`.
+  - `renderMacro(macro, data)` devuelve `''` si oculta O si TODOS sus catálogos están ocultos (auto-hide para evitar "carpeta vacía" visual).
+  - `render()` añade barra de controles arriba con botón **"⚙️ Gestionar catálogos"**. Si TODAS las macros están ocultas, empty-card explicativo.
+  - **Sheet de gestión** (`renderVisibilityForm`): 2 secciones — **Macros** (7 toggles con emoji + label + count de catálogos) + **Catálogos individuales** (17 toggles agrupados por macro, con `disabled` cuando la macro padre está oculta + label en línea "· macro oculta"). Help text explicando que ocultar no borra.
+  - `toggleVisibility(scope_type, scope_key, willHide)`: UPSERT vía PostgREST `POST /rest/v1/cliente_catalogo_visibilidad?on_conflict=cliente_bubble_id,scope_type,scope_key` con `Prefer: resolution=merge-duplicates,return=minimal`. Actualiza `data.visibilidad` local sin re-fetch. Re-render del sheet (para reflejar disabled al togglear macro) + `renderPreservingOpen()` del panel detrás (re-render conservando coll-groups abiertos).
+  - **Listener `change`** (no `click`) en `[data-vis-toggle]` — el browser ya gestiona el flip del checkbox, aquí sólo persistimos el nuevo estado.
+- **Scope de la visibilidad:** **del cliente, no del usuario** (decisión Ben). Vive en Supabase. Si Mel oculta "Sistemas de reserva" para Rock & Climb, Ben también lo ve oculto al abrir ese cliente.
+- **Política de datos al ocultar:** **datos preservados** (decisión Ben). Ocultar afecta solo visibilidad, los datos siguen en DB. Al re-activar el toggle, todo vuelve a verse exactamente igual. No hay `confirm()` al ocultar con datos — la red de seguridad es que NO se borra nada.
+- **Estado backend:** 1 nueva tabla (`cliente_catalogo_visibilidad`) + 4 policies + 1 trigger + RPC `catalogos_cliente_get` re-creada. Total catálogos F2.7: 17 tablas `cliente_catalogo_*` + 1 tabla auxiliar de visibilidad = 18 tablas en el bloque.
+- **Out of scope deliberado (Sprint 4):** pickers FK webinar→`comunidad_wsp_id`/`lead_magnet_id`, editor `campos_capturar` jsonb en plantillas Form Meta, buscador global del panel, toggle "ver archivadas".
+- **Refs:** migration `f2_7_sprint3_catalogos_visibilidad` aplicada vía MCP. Commit `7eef03f` (frontend) + `5fa8363` (bugfix prev sprint). Doc canónico: [[../work/ficha-cliente|docs/work/ficha-cliente]] sección "Visibilidad por cliente" + entrada en "Fixes y cambios recientes". Schema: [[../infra/supabase-schema|docs/infra/supabase-schema]] sección "Catálogos del cliente — F2.7 Fase A" ampliada en esta misma sesión con la tabla de visibilidad.
+
 ### 2026-05-25 [WORK][FEATURE] — Ficha de Cliente F2.7 Fase B: panel Catálogos cableado a Supabase real (lectura + CRUD inline)
 
 - **Disparador:** cerrar Fase B de F2.7. Fase A dejó el schema y la RPC `catalogos_cliente_get` listos + Rock & Climb sembrado con 16 entradas en 6 catálogos. Faltaba pasar el panel de mockup a UI real con CRUD inline.
@@ -138,6 +165,7 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 - **Disparo manual:** `SELECT demo_rolling_refresh();` desde SQL editor de Supabase. Devuelve JSON con `delta_days` aplicados y filas movidas por tabla.
 - **Refs:** migration `demo_rolling_refresh_function`. Workflow `Z9Mp78CHNeuEwtCc`. Doc actualizada en `docs/portal/demo-quasar.md` sección "Mantenimiento automático".
 - **Iteración misma sesión:** Ben pide bajar frecuencia a 7 días y extender el rolling a Bubble (`fecha_onboarding` + `ultimo_seguimiento`). Implementación pragmática: (a) CRON cambiado a weekly lunes 03:00 (vs daily original) — Ben "tampoco hace falta ir al día"; (b) PATCH puntual ahora a los 3 clientes con fechas relativas coherentes (Quasar Software 6m/7d, Shop 4m/14d, Studio 2m/3d) vía pause `wvHcgVqqjkWJcJDu` + 3 PATCH Bubble Data API + reactivar; (c) refresh Bubble queda **on-demand manual** en vez de incluido en el CRON — razón: PATCH a `bub_clientes` dispara `wvHcgVqqjkWJcJDu` que falla al intentar actualizar Notion page inexistente (UUIDs fake), generaría 3 incidencias semanales en `n8n_incidencias`. Ben puede pedir "refresca fechas Bubble" cuando lo vea raro. Workflow renombrado a *CRON DEMO — Rolling Refresh Fechas (Lunes 03:00)*.
+- **Scope de la propagación documental (aplicación de la convención existente — no decisión nueva):** la tabla "Cuándo mirar qué" del `CLAUDE.md` raíz del repo asigna Portal Bubble a `docs/portal/*` + `docs/CLAUDE.md`, y reserva el `CLAUDE.md` raíz para landing pública / páginas admin de work.thenucleo.com. Esta demo es 100% Portal Bubble + cbi (no toca landing/work público), por eso la propagación se hizo a 6 sitios SIN tocar el `CLAUDE.md` raíz: (1) `docs/portal/demo-quasar.md` (nuevo, hub operacional), (2) este `docs/log-cambios.md` (2 entries), (3) `docs/infra/supabase-schema.md` (RPC `demo_rolling_refresh` + convención `metadata.seed`), (4) `docs/infra/n8n-workflows.md` (workflow `Z9Mp78CHNeuEwtCc` en sección CRON), (5) `docs/infra/ids-referencias.md` (bloque "Agencia Demo Quasar" + entry CRON), (6) `docs/CLAUDE.md` (entry CRON + Regla clave multitenant + link a `demo-quasar.md` en "Documentación detallada"). Si en el futuro la demo se expone públicamente (p.ej. `work.thenucleo.com/demo` o se enlaza desde la landing), entonces SÍ habría que añadir entry en el `CLAUDE.md` raíz porque el alcance cruzaría a landing.
 
 ### 2026-05-25 [PORTAL][INFRA][FEATURE] — Agencia "Demo Quasar" en Bubble LIVE: multitenant convivencia + datos clonados
 
