@@ -615,25 +615,32 @@ INDEX cliente_mensajes_whatsapp_campania_idx (campania_id)
 **Códigos display (frontend):** `P1C1WA1` (Compartido) o `P1C1FM1WA1` (Específico FM1). Mismo modelo per-scope que emails (caso 5 .docx simplificado).
 **Decisión:** NO unificar como `cliente_mensajes` con discriminador `canal`. Razones: copy/tono/longitud distintos por canal, secuencias independientes naturalmente, permite añadir columnas específicas (WA → `link_workflow` Evolution; Email → `link_ghl_workflow`) sin contaminar.
 
-#### `cliente_creatividades` — declaración de piezas por Campaña (NUEVO 2026-05-25, F2.5 → F2.5c)
+#### `cliente_creatividades` — 1 fila = 1 pieza ligada a Trigger (NUEVO 2026-05-25, F2.5 → F2.5d)
 ```
 id                uuid PK
 campania_id       uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
+                                                       -- Denormalizado para queries simples (= trigger.campania_id).
+trigger_id        uuid NOT NULL REFERENCES cliente_triggers(id) ON DELETE CASCADE
+                                                       -- F2.5d 2026-05-25. Cada pieza apunta a su trigger destino.
+codigo            text NOT NULL                        -- F2.5d. '<trigger.code><E|R|C|O><n>'
+                                                       -- e.g. P1C1FM1E1, P1C1DM1R1, P1C1FW1C1, P1C1FM1O1
+                                                       -- Inmutable (regla .docx §3.4). Auto-asignado server-side.
+                                                       -- UNIQUE (campania_id, codigo).
 categoria         text NOT NULL CHECK (categoria IN ('anuncios','rrss','otros'))
-                                                       -- F2.5c 2026-05-25. Reemplaza el `tipo` plano anterior.
-subtipo           text                                 -- F2.5c. anuncios → {estatico,reel} · rrss → {carrusel,reel} · otros → NULL
-duracion_segundos integer                              -- F2.5c. Solo para subtipo='reel'
-num_slides        integer                              -- F2.5c. Solo para subtipo='carrusel'
-cantidad          int NOT NULL DEFAULT 1 CHECK (cantidad > 0)
-notas             text                                 -- Obligatoria si categoria='otros' (no en CHECK, validación frontend)
-                                                       -- ⚠️ `link_brief_drive` eliminada 2026-05-25 (F2.5c) — F2.5b revertida.
+subtipo           text                                 -- anuncios → {estatico,reel} · rrss → {carrusel,reel} · otros → NULL
+duracion_segundos integer                              -- Solo para subtipo='reel'
+num_slides        integer                              -- Solo para subtipo='carrusel'
+                                                       -- ⚠️ `cantidad` eliminada en F2.5d (2026-05-25): 1 fila = 1 pieza.
+                                                       --    Para varias piezas similares, crear N entradas (E1, E2, E3…).
+                                                       -- ⚠️ `link_brief_drive` eliminada en F2.5c (2026-05-25). F2.5b revertida.
+notas             text                                 -- Obligatoria si categoria='otros' (validación frontend, no CHECK)
 estado            text NOT NULL DEFAULT 'declarada'
                   CHECK (estado IN ('declarada','en-produccion','lista','aprobada','archivada'))
 orden             int NOT NULL DEFAULT 0
 created_at, updated_at, created_by
 INDEX cliente_creatividades_campania_idx (campania_id)
 ```
-**Modelo (F2.5c):** 1 fila = 1 declaración categoria/subtipo + cantidad + atributos. Account elige primero la categoría (ANUNCIOS / RRSS / OTROS) y luego el subtipo (con sus atributos contextuales). Ejemplos: "ANUNCIOS · Reel × 3 · 15s", "RRSS · Carrusel × 1 · 5 slides", "OTROS × 2 · notas obligatorias". Las versiones individuales (v1, v2…) viven en Drive con nomenclatura `PxCx_<subtipo>_v<n>` (caso 10 .docx). Lifecycle: declarada (Account) → en-produccion → lista → aprobada (por equipo).
+**Modelo (F2.5d):** 1 fila = 1 pieza concreta con código único ligada a 1 trigger destino. Account elige primero el trigger (form Meta/web, BD, DM RRSS) y luego categoría → subtipo + atributos contextuales. Ejemplos: `P1C1FM1E1` (estático del anuncio Meta), `P1C1FM1R1 · 15s` (reel del mismo anuncio), `P1C1DM1C1 · 5 slides` (carrusel ligado al DM RRSS), `P1C1FW1O1` (pieza Otros del form web). Para varias piezas similares Account crea N entradas — el server numera automáticamente per (trigger, subtipo). Las versiones individuales (v1, v2…) viven en Drive con nomenclatura `<codigo>_v<n>` (caso 10 .docx, v=revisión, nunca se borran versiones). Lifecycle: declarada (Account) → en-produccion → lista → aprobada (por equipo).
 
 **Triggers:** `BEFORE UPDATE` en las 7 tablas reusa `public.update_updated_at()`.
 
@@ -652,7 +659,7 @@ INDEX cliente_creatividades_campania_idx (campania_id)
 - `ficha_trigger_upsert(p_id, p_campania_id, p_tipo, p_descripcion, p_link_externo, p_fecha_lanzamiento, p_estado, p_codigo_override, p_campos_capturar, p_activador, p_mensaje_dm)` — auto-código `<campCodigo><tipo><N>` per (campaña, tipo). CHECK `tipo IN ('FM','FW','BD','DM')`. La CHECK de tabla obliga `fecha_lanzamiento` si tipo=BD; obliga `activador+mensaje_dm` si tipo=DM. **Params `p_campos_capturar jsonb` añadido 2026-05-25 (F2.3)** — spec de campos del form en FM/FW (ignorado en BD/DM). **Params `p_activador text` y `p_mensaje_dm text` añadidos 2026-05-25 (F2.5c)** — keyword + texto del DM cuando tipo=DM.
 - `ficha_email_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_diseno_drive, p_link_ghl_workflow, p_estado)` — emails NO tienen columna codigo; el código display se deriva en frontend via `emailCode(camp, email)`. `p_orden NULL` = server asigna max+1. **Display orden recalculado per-scope 2026-05-25**: `n` en el código `E<n>` cuenta posición entre emails del mismo scope (Compartido vs Específico-X), no orden global.
 - `ficha_whatsapp_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_workflow, p_estado)` — **NUEVO 2026-05-25 (F2.4)**. Clon de `ficha_email_upsert` para `cliente_mensajes_whatsapp`. Display code `whatsappCode()` con letra `WA`.
-- `ficha_creatividad_upsert(p_id, p_campania_id, p_categoria, p_subtipo, p_cantidad, p_duracion_segundos, p_num_slides, p_notas, p_estado, p_orden)` — **NUEVO 2026-05-25 (F2.5 → F2.5c)**. CRUD de `cliente_creatividades` con modelo jerárquico. Validate `categoria IN ('anuncios','rrss','otros')`; CHECK tabla obliga subtipo-categoria coherente + duracion/slides solo cuando aplica. F2.5b retirada misma fecha (eliminado `p_link_brief_drive`). En UPDATE, `subtipo/duracion_segundos/num_slides` se asignan directos (NULL válido al cambiar subtipo).
+- `ficha_creatividad_upsert(p_id, p_trigger_id, p_categoria, p_subtipo, p_duracion_segundos, p_num_slides, p_notas, p_estado, p_orden, p_codigo_override)` — **NUEVO 2026-05-25 (F2.5 → F2.5d)**. CRUD de `cliente_creatividades` con código auto-asignado server-side: `<trigger.codigo><E|R|C|O><n>` per (trigger, subtipo). `p_trigger_id` obligatorio en INSERT, inmutable en UPDATE (regla `.docx` §3.4). `p_cantidad` retirado en F2.5d — 1 fila = 1 pieza; para varias piezas Account llama N veces (1 fila per pieza, codigos E1, E2, E3 generados automáticamente). En UPDATE, `subtipo/duracion_segundos/num_slides` se asignan directos (NULL válido al cambiar subtipo).
 - `ficha_archivar_codigo(p_kind text, p_id uuid)` — genérico para 6 tipos: `'pipeline'|'campania'|'trigger'|'email'|'whatsapp'|'creatividad'` (whatsapp+creatividad añadidos 2026-05-25). Resuelve la diferencia de género ('archivado' vs 'archivada' campañas/creatividades). Regla `.docx` §3.6 + caso 9: nada se borra, sólo se archiva.
 
 "Servidor propone, usuario valida": cada upsert acepta `p_codigo_override`. Si NULL/'' → auto-asigna. Si pasa valor → respeta y valida unicidad vía UNIQUE constraint. El frontend por defecto deja al servidor; el caso "Account quiere override" es raro pero soportado.

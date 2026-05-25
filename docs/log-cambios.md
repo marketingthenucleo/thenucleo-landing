@@ -71,6 +71,28 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.5d: creatividades 1-fila-por-pieza con código vinculado a trigger
+
+- **Commit:** `c23bcc0`. Migration `ficha_creatividades_por_trigger_con_codigo_F2_5d`.
+- **Disparador:** dudas Ben tras F2.5c — "¿cantidad en Carrusel tiene sentido?" + "¿por qué emails llevan E1/E2/E3 pero creatividades no?". Decisión: cada creatividad apunta a un trigger destino (form/BD/DM) y lleva código único, como emails.
+- **Cambio de modelo (de declarativo a per-pieza):**
+  - Antes (F2.5c): 1 fila = 1 declaración "categoria+subtipo × cantidad" sin código. Drive: `PxCx_<subtipo>_v<n>` (v ambiguo entre revisión y pieza).
+  - Ahora (F2.5d): 1 fila = 1 pieza concreta con `codigo` único + `trigger_id` obligatorio. Drive: `<codigo>_v<n>` donde v=revisión inmutable (caso 10 `.docx` claro).
+- **Código:** `<trigger.code><E|R|C|O><n>` per (trigger, subtipo) — `E`=Estático, `R`=Reel, `C`=Carrusel, `O`=Otros. Ejemplos: `P1C1FM1E1`, `P1C1FM1E2` (dos estáticos del anuncio Meta 1), `P1C1DM1R1` (reel del DM 1), `P1C1FW1C1` (carrusel del form web 1). Mismo patrón consistente que emails (`P1C1E1`, `P1C1FM1E1`) y whatsapps (`P1C1WA1`).
+- **Migration atómica:**
+  - DELETE 1 creatividad huérfana en P1C1 (campaña sin triggers — era seed mockup).
+  - ADD cols `trigger_id uuid` + `codigo text`.
+  - Explotar `cantidad>1` a N filas con `cantidad=1` cada una (la fila reel cantidad=3 → 3 filas R1/R2/R3).
+  - Asignar `trigger_id` = primer trigger alfabético de cada campaña (backfill conservador).
+  - Generar `codigo` con `ROW_NUMBER() OVER (PARTITION BY trigger_id, subtipo)`.
+  - NOT NULL + FK + UNIQUE `(campania_id, codigo)` + INDEX `(trigger_id)`.
+  - DROP `cantidad`.
+  - Recrear `ficha_creatividad_upsert` con `p_trigger_id` (sin `p_cantidad`). Codigo auto-asignado server-side igual que en `ficha_trigger_upsert`. Codigo inmutable en UPDATE.
+  - `ficha_pipelines_get` devuelve `code`, `triggerId`, `triggerCode` en cada creatividad.
+- **Frontend:** drawer Nueva Creatividad reescrito — primer paso picker trigger destino (cards con triggers activos de la campaña), después categoria → subtipo + atributos. Sin input cantidad. Si campaña sin triggers activos → callout "crea primero un trigger", save bloqueado. En edit: trigger y código fijos (regla `.docx` §3.4). Detail view añade link clickable al trigger destino. Card view muestra `codeTag(cr.code)` en cada row.
+- **Backfill verde:** 6 filas con códigos `P1C2BD1C1, P1C2BD1E1, P2C1FM1E1, P8C1BD1R1, P8C1BD1R2, P8C1BD1R3`.
+- **Docs sync:** `CLAUDE.md` (raíz) F2.5c → F2.5d; `docs/work/ficha-cliente.md` actualizada; `docs/infra/supabase-schema.md` schema + RPC + sección "Modelo (F2.5d)" actualizados. Manuales account/equipo siguen pendientes.
+
 ### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.5c: creatividades jerárquicas + trigger DM + retirar Brief Drive + buscador plantillas
 
 - **Commits:** `9a28ad5` (buscador plantillas) + `47ff93a` (F2.5c). Migration `ficha_creatividades_modelo_jerarquico_y_trigger_dm`.
