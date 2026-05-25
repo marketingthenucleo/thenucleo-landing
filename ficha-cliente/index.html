@@ -417,6 +417,86 @@
   .catalog-item.archived { opacity: 0.55; }
   .catalog-item.archived .cat-name { text-decoration: line-through; text-decoration-color: var(--text-3); }
 
+  /* Botón "+ Añadir" en el header de un coll-group catalog (F2.7 Sprint 2) */
+  .cat-add-btn {
+    flex-shrink: 0;
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 10px;
+    font-size: 10px; font-weight: 700; color: var(--text-2);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; transition: background 120ms, color 120ms, border-color 120ms;
+  }
+  .cat-add-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Acciones inline en cada catalog-item */
+  .cat-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .cat-item-action {
+    background: none; border: 1px solid var(--line); cursor: pointer;
+    width: 30px; height: 30px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-3); font-size: 14px; line-height: 1;
+    transition: background 120ms, color 120ms, border-color 120ms;
+    padding: 0;
+  }
+  .cat-item-action:hover { color: var(--text); border-color: var(--line-2); background: var(--bg-3); }
+  .cat-item-action.danger:hover { color: var(--bad); border-color: rgba(239,68,68,0.3); }
+
+  /* Form fields (en sheet bottom) */
+  .cat-form-field { margin-bottom: 14px; }
+  .cat-form-label {
+    display: block; font-size: 11px; color: var(--text-3); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+  }
+  .cat-form-label.required::after { content: ' *'; color: var(--bad); }
+  .cat-form-input, .cat-form-textarea, .cat-form-select {
+    width: 100%; background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px;
+    color: var(--text); font-family: inherit; font-size: 14px;
+    box-sizing: border-box;
+  }
+  .cat-form-textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+  .cat-form-input:focus, .cat-form-textarea:focus, .cat-form-select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+  .cat-form-checkbox-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0; cursor: pointer; user-select: none;
+  }
+  .cat-form-checkbox-row input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+  }
+  .cat-form-checkbox-row .lbl {
+    font-size: 13px; color: var(--text); flex: 1;
+  }
+  .cat-form-help {
+    font-size: 11px; color: var(--text-3); margin-top: 6px; line-height: 1.4;
+  }
+  .cat-form-actions {
+    display: flex; gap: 8px; margin-top: 20px;
+    padding-top: 16px; border-top: 1px solid var(--line);
+  }
+  .cat-form-btn {
+    flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg-3); color: var(--text); cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    transition: background 120ms, border-color 120ms, opacity 120ms;
+  }
+  .cat-form-btn:hover { border-color: var(--line-2); }
+  .cat-form-btn.primary {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .cat-form-btn.primary:hover { filter: brightness(1.08); }
+  .cat-form-btn.danger {
+    background: transparent; color: var(--bad); border-color: rgba(239,68,68,0.3);
+  }
+  .cat-form-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cat-form-error {
+    background: var(--warn-bg); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;
+    font-size: 13px; color: var(--warn);
+  }
+
   /* ─── Anomalies ─────────────────────────────────── */
   .anomaly {
     background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(239,68,68,0.04) 100%);
@@ -1385,6 +1465,36 @@ async function rpc(fn, body = {}) {
     const t = await res.text().catch(() => '');
     throw new Error(`RPC ${fn} HTTP ${res.status}: ${t || res.statusText}`);
   }
+  return res.json();
+}
+
+// PostgREST helper para CRUD directo a tabla (RLS la valida).
+// Uso: tableRequest('cliente_catalogo_documento', { method:'POST', body:{...} })
+//      tableRequest('cliente_catalogo_documento', { method:'PATCH', body:{...}, query:'id=eq.<uuid>' })
+async function tableRequest(table, opts = {}) {
+  const { method = 'GET', body = null, query = '' } = opts;
+  const token = accessToken();
+  if (!token) throw new Error('no-session');
+  const url = `${SUPABASE_URL}/rest/v1/${table}${query ? '?' + query : ''}`;
+  const headers = {
+    apikey: ANON,
+    Authorization: 'Bearer ' + token,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+  if (method === 'POST' || method === 'PATCH') {
+    headers.Prefer = 'return=representation';
+  }
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`${method} ${table} HTTP ${res.status}: ${t || res.statusText}`);
+  }
+  if (res.status === 204) return null;
   return res.json();
 }
 
@@ -4161,16 +4271,21 @@ const PIPELINES_MODULE = (() => {
   return { render, init: render, setData, loadFor };
 })();
 
-// ─── CATÁLOGOS MODULE — F2.7 Fase B (lectura via catalogos_cliente_get) ──
-// Lee los 17 catálogos del cliente en 1 fetch y los pinta agrupados en
-// 7 macro-categorías. Read-only en este sprint; el CRUD inline llega
-// en el siguiente. Toggle de cada grupo usa el handler global de
-// [data-coll-toggle] (línea ~1823, delegado al document).
+// ─── CATÁLOGOS MODULE — F2.7 Fase B Sprint 2 (lectura + CRUD) ──────────
+// Lee los 17 catálogos del cliente con 1 fetch agregador (RPC
+// catalogos_cliente_get). CRUD inline: botón "+ Añadir" por catálogo,
+// click en entrada → editar en sheet bottom, botón archivar/desarchivar.
+// INSERTs/UPDATEs van por PostgREST (tableRequest helper); las policies RLS
+// con is_comunidad_admin() ya bloquean a no-admins. Tras cualquier cambio
+// se hace refresh agregado (1 RPC barato) preservando grupos abiertos.
 const CATALOGOS_MODULE = (() => {
   const host = document.getElementById('catalogos-module');
   let data = null;
   let loading = false;
   let errorMsg = null;
+  let currentBubbleId = null;
+  // formState: { catalogoKey, entryId|null, values:{...}, error|null, saving:bool }
+  let formState = null;
 
   // 7 macro-categorías que agrupan los 17 catálogos visualmente
   const MACROS = [
@@ -4183,49 +4298,139 @@ const CATALOGOS_MODULE = (() => {
     { emoji: '🌐', label: 'Webs cliente',       catalogos: ['webs_cliente'] },
   ];
 
-  // Schema de render por catálogo: label, color del dot, extractores de name/meta/url
+  // Opciones de selects reusables (mapean a los CHECK constraints de Supabase)
+  const OPTS = {
+    drive_cat: ['estaticos','videos','briefs','analisis','otros'],
+    doc_tipo: ['brief','analisis','estrategia','contrato','cluster','angulos','otro'],
+    wsp_tipo: ['final_cliente','interna','beta'],
+    meta_plataforma: ['meta','google'],
+    fb_ig: ['facebook','instagram'],
+    pub_tipo: ['custom','lookalike','saved'],
+    canal_pres: ['meta_ads','google_ads','otros'],
+    periodo: ['mensual','trimestral','anual','unico'],
+    lm_tipo: ['pdf','video','audio','otro'],
+    reserva_plataforma: ['bookeo','resos','mindbody','propio','otros'],
+    prod_tipo: ['consulta','sesion','curso','producto_digital','suscripcion','otro'],
+    regla_ambito: ['general','copy','ads','diseno','comunicacion'],
+    regla_sev: ['critica','importante','sugerencia'],
+    web_tipo: ['web_principal','landing','funnel','blog','checkout','thank_you','otro'],
+  };
+
+  // Schema por catálogo: label, dot, table, extractores read-only, fields del form CRUD
   const CATALOGOS = {
     carpetas_drive: {
       label: 'Carpetas Drive', dot: '#3b82f6',
+      table: 'cliente_catalogo_carpeta_drive',
       getName: r => r.nombre, getMeta: r => r.categoria, getUrl: r => r.url,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'url', label:'URL Drive', type:'url', required:true, placeholder:'https://drive.google.com/drive/folders/…' },
+        { key:'categoria', label:'Categoría', type:'select', options: OPTS.drive_cat, default:'otros', required:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     documentos: {
       label: 'Documentos', dot: '#3b82f6',
+      table: 'cliente_catalogo_documento',
       getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.url,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'url', label:'URL del documento', type:'url', required:true, placeholder:'https://docs.google.com/document/d/…' },
+        { key:'tipo', label:'Tipo', type:'select', options: OPTS.doc_tipo, default:'otro', required:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     comunidades_wsp: {
       label: 'Comunidades WhatsApp', dot: '#22c55e',
+      table: 'cliente_catalogo_comunidad_wsp',
       getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.invite_url,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'invite_url', label:'Invite URL', type:'url', required:true, placeholder:'https://chat.whatsapp.com/…' },
+        { key:'tipo', label:'Tipo', type:'select', options: OPTS.wsp_tipo, default:'final_cliente', required:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     emails_remitentes: {
       label: 'Emails remitentes', dot: '#a78bfa',
+      table: 'cliente_catalogo_email_remitente',
       getName: r => r.direccion,
       getMeta: r => [r.display_name, r.principal && 'principal', r.verificado && 'verificado'].filter(Boolean).join(' · '),
+      fields: [
+        { key:'direccion', label:'Dirección', type:'text', required:true, placeholder:'hola@dominio.com' },
+        { key:'display_name', label:'Nombre visible', type:'text', placeholder:'Equipo Cliente' },
+        { key:'principal', label:'Principal (sólo 1 activo por cliente)', type:'checkbox' },
+        { key:'verificado', label:'Verificado', type:'checkbox' },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     etiquetas: {
       label: 'Etiquetas de segmentación', dot: '#a78bfa',
+      table: 'cliente_catalogo_etiqueta',
       getName: r => r.slug, getMeta: r => r.descripcion || '—',
+      fields: [
+        { key:'slug', label:'Slug', type:'text', required:true, placeholder:'lead-cumple-padres' },
+        { key:'descripcion', label:'Descripción', type:'text' },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     cuentas_publicitarias: {
       label: 'Cuentas publicitarias', dot: '#0ea5e9',
+      table: 'cliente_catalogo_cuenta_publicitaria',
       getName: r => r.nombre, getMeta: r => `${r.plataforma} · ${r.account_id_externo}`,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'plataforma', label:'Plataforma', type:'select', options: OPTS.meta_plataforma, required:true },
+        { key:'account_id_externo', label:'Account ID externo', type:'text', required:true, placeholder:'act_xxxxxxx (Meta) o 123-456-7890 (Google)' },
+        { key:'activa', label:'Activa', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     pixels: {
       label: 'Pixels / Datasets', dot: '#0ea5e9',
+      table: 'cliente_catalogo_pixel',
       getName: r => r.nombre, getMeta: r => `${r.plataforma} · ${r.pixel_id_externo}`,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'plataforma', label:'Plataforma', type:'select', options: OPTS.meta_plataforma, required:true },
+        { key:'pixel_id_externo', label:'Pixel ID externo', type:'text', required:true },
+        { key:'eventos_configurados', label:'Eventos configurados', type:'textarea', placeholder:'Lead · Purchase · AddToCart…' },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     paginas_sociales: {
       label: 'Páginas FB / IG', dot: '#0ea5e9',
+      table: 'cliente_catalogo_pagina_social',
       getName: r => r.nombre, getMeta: r => `${r.plataforma} · ${r.page_id_externo}`,
       getUrl: r => r.url_publica,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'plataforma', label:'Plataforma', type:'select', options: OPTS.fb_ig, required:true },
+        { key:'page_id_externo', label:'Page ID externo', type:'text', required:true },
+        { key:'url_publica', label:'URL pública', type:'url', placeholder:'https://facebook.com/… o https://instagram.com/…' },
+        { key:'verificada', label:'Verificada', type:'checkbox' },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     publicos_personalizados: {
       label: 'Públicos personalizados', dot: '#0ea5e9',
+      table: 'cliente_catalogo_publico_personalizado',
       getName: r => r.nombre,
       getMeta: r => `${r.plataforma} · ${r.tipo}${r.tamano_estimado ? ' · ~' + Number(r.tamano_estimado).toLocaleString('es-ES') : ''}`,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'plataforma', label:'Plataforma', type:'select', options: OPTS.meta_plataforma, required:true },
+        { key:'audience_id_externo', label:'Audience ID externo', type:'text', required:true },
+        { key:'tipo', label:'Tipo', type:'select', options: OPTS.pub_tipo, required:true },
+        { key:'tamano_estimado', label:'Tamaño estimado', type:'number' },
+        { key:'fuente', label:'Fuente', type:'text', placeholder:'Pixel · Email list · Engagement…' },
+        { key:'activo', label:'Activo', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     plantillas_form_meta: {
       label: 'Plantillas Form Meta', dot: '#0ea5e9',
+      table: 'cliente_catalogo_plantilla_form_meta',
       getName: r => r.nombre,
       getMeta: r => {
         const cc = r.campos_capturar || {};
@@ -4233,28 +4438,76 @@ const CATALOGOS_MODULE = (() => {
         const e = Array.isArray(cc.extras) ? cc.extras.length : 0;
         return `${d} default${d === 1 ? '' : 's'}${e ? ' + ' + e + ' extra' + (e === 1 ? '' : 's') : ''}`;
       },
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'form_id_meta', label:'Form ID en Meta', type:'text', placeholder:'opcional, ej. 1234567890' },
+        { key:'notas', label:'Notas', type:'textarea' },
+        // campos_capturar jsonb se edita en sprint posterior (UI dedicada con chips)
+      ],
     },
     presupuestos: {
       label: 'Presupuestos', dot: '#f59e0b',
+      table: 'cliente_catalogo_presupuesto',
       getName: r => r.linea,
       getMeta: r => `${r.canal} · ${Number(r.importe_eur).toLocaleString('es-ES')}€ · ${r.periodo}`,
+      fields: [
+        { key:'linea', label:'Línea', type:'text', required:true, placeholder:'Meta Ads · Lanzamiento webinar' },
+        { key:'canal', label:'Canal', type:'select', options: OPTS.canal_pres, required:true },
+        { key:'importe_eur', label:'Importe (€)', type:'number', required:true, step:'0.01' },
+        { key:'periodo', label:'Periodo', type:'select', options: OPTS.periodo, required:true },
+        { key:'fecha_inicio', label:'Fecha inicio', type:'date' },
+        { key:'fecha_fin', label:'Fecha fin', type:'date' },
+        { key:'activo', label:'Activo', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     lead_magnets: {
       label: 'Lead magnets', dot: '#ef4444',
+      table: 'cliente_catalogo_lead_magnet',
       getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.url,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'tipo', label:'Tipo', type:'select', options: OPTS.lm_tipo, required:true },
+        { key:'url', label:'URL del lead magnet', type:'url' },
+        { key:'descripcion', label:'Descripción', type:'textarea' },
+        { key:'activo', label:'Activo', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     webinars: {
       label: 'Webinars', dot: '#ef4444',
+      table: 'cliente_catalogo_webinar',
       getName: r => r.nombre,
       getMeta: r => r.precio_eur != null ? `${Number(r.precio_eur).toLocaleString('es-ES')}€` : (r.descripcion || '—'),
       getUrl: r => r.sales_page_url || r.landing_registro_url,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'descripcion', label:'Descripción', type:'textarea' },
+        { key:'precio_eur', label:'Precio (€)', type:'number', step:'0.01' },
+        { key:'landing_registro_url', label:'URL landing de registro (LP)', type:'url' },
+        { key:'thank_you_url', label:'URL thank you', type:'url' },
+        { key:'sales_page_url', label:'URL página de venta', type:'url' },
+        { key:'reunion_1on1_url', label:'URL booking 1:1', type:'url' },
+        { key:'replay_url', label:'URL replay', type:'url' },
+        { key:'activo', label:'Activo', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+        // FKs comunidad_wsp_id y lead_magnet_id se editan en sprint posterior (pickers)
+      ],
     },
     sistemas_reserva: {
       label: 'Sistemas de reserva', dot: '#ef4444',
+      table: 'cliente_catalogo_sistema_reserva',
       getName: r => r.nombre, getMeta: r => r.plataforma, getUrl: r => r.url_publica_reserva,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'plataforma', label:'Plataforma', type:'select', options: OPTS.reserva_plataforma, required:true },
+        { key:'url_publica_reserva', label:'URL pública de reserva', type:'url' },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     productos_servicios: {
       label: 'Productos / Servicios', dot: '#ef4444',
+      table: 'cliente_catalogo_producto_servicio',
       getName: r => r.nombre,
       getMeta: r => {
         const parts = [r.tipo];
@@ -4263,25 +4516,257 @@ const CATALOGOS_MODULE = (() => {
         return parts.join(' · ');
       },
       getUrl: r => r.url_compra,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'tipo', label:'Tipo', type:'select', options: OPTS.prod_tipo, default:'otro', required:true },
+        { key:'precio_eur', label:'Precio (€)', type:'number', step:'0.01' },
+        { key:'duracion_minutos', label:'Duración (minutos)', type:'number' },
+        { key:'descripcion', label:'Descripción', type:'textarea' },
+        { key:'url_compra', label:'URL de compra', type:'url' },
+        { key:'activo', label:'Activo', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     reglas: {
       label: 'Reglas / Caveats', dot: '#f59e0b',
+      table: 'cliente_catalogo_regla',
       getName: r => r.regla, getMeta: r => `${r.severidad} · ${r.ambito}`,
+      fields: [
+        { key:'regla', label:'Regla', type:'text', required:true, placeholder:'NO PONER JAMÁS VISITAS SUCESIVAS' },
+        { key:'ambito', label:'Ámbito', type:'select', options: OPTS.regla_ambito, default:'general', required:true },
+        { key:'severidad', label:'Severidad', type:'select', options: OPTS.regla_sev, default:'importante', required:true },
+        { key:'descripcion', label:'Descripción / contexto', type:'textarea' },
+        { key:'activa', label:'Activa', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
     webs_cliente: {
       label: 'Webs del cliente', dot: '#06b6d4',
+      table: 'cliente_catalogo_web_cliente',
       getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.url,
+      fields: [
+        { key:'nombre', label:'Nombre', type:'text', required:true },
+        { key:'url', label:'URL', type:'url', required:true, placeholder:'https://…' },
+        { key:'tipo', label:'Tipo', type:'select', options: OPTS.web_tipo, default:'otro', required:true },
+        { key:'descripcion', label:'Descripción', type:'text' },
+        { key:'activa', label:'Activa', type:'checkbox', default:true },
+        { key:'notas', label:'Notas', type:'textarea' },
+      ],
     },
   };
 
-  // Una URL es placeholder si contiene "PENDIENTE" (convención del seed F2.7).
-  // Sirve para marcar entradas que Account debe completar tras importar
-  // datos sin URL real disponible en el PDF de origen.
+  // Una URL es placeholder si contiene "PENDIENTE" (convención del seed F2.7
+  // para entradas importadas sin URL real visible en el PDF de origen).
   function isPlaceholderUrl(url) {
     return typeof url === 'string' && url.indexOf('PENDIENTE') !== -1;
   }
 
-  function renderItem(r, def) {
+  // ─── State helpers ───────────────────────────────────────────────────
+  function emptyValues(def) {
+    const v = {};
+    for (const f of def.fields) {
+      if (f.default !== undefined) v[f.key] = f.default;
+      else if (f.type === 'checkbox') v[f.key] = false;
+      else v[f.key] = '';
+    }
+    return v;
+  }
+  function valuesFromEntry(def, entry) {
+    const v = {};
+    for (const f of def.fields) {
+      const raw = entry[f.key];
+      v[f.key] = raw == null ? (f.type === 'checkbox' ? false : '') : raw;
+    }
+    return v;
+  }
+
+  // ─── Form rendering ──────────────────────────────────────────────────
+  function renderField(f, value) {
+    const v = value ?? (f.type === 'checkbox' ? false : '');
+    const labelHtml = `<label class="cat-form-label${f.required ? ' required' : ''}">${escapeHtml(f.label)}</label>`;
+    if (f.type === 'textarea') {
+      return `<div class="cat-form-field">${labelHtml}
+        <textarea class="cat-form-textarea" data-field="${escapeHtml(f.key)}" placeholder="${escapeHtml(f.placeholder||'')}">${escapeHtml(v||'')}</textarea>
+      </div>`;
+    }
+    if (f.type === 'select') {
+      const opts = (f.options||[]).map(o => `<option value="${escapeHtml(o)}" ${String(o)===String(v)?'selected':''}>${escapeHtml(o)}</option>`).join('');
+      const blank = f.required && (v === '' || v == null) ? '<option value="">— elegir —</option>' : '';
+      return `<div class="cat-form-field">${labelHtml}
+        <select class="cat-form-select" data-field="${escapeHtml(f.key)}">${blank}${opts}</select>
+      </div>`;
+    }
+    if (f.type === 'checkbox') {
+      return `<div class="cat-form-field">
+        <label class="cat-form-checkbox-row">
+          <input type="checkbox" data-field="${escapeHtml(f.key)}" ${v ? 'checked' : ''}>
+          <span class="lbl">${escapeHtml(f.label)}</span>
+        </label>
+      </div>`;
+    }
+    const t = f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : (f.type === 'url' ? 'url' : 'text'));
+    const stepAttr = f.step ? ` step="${escapeHtml(f.step)}"` : '';
+    return `<div class="cat-form-field">${labelHtml}
+      <input type="${t}" class="cat-form-input" data-field="${escapeHtml(f.key)}" value="${escapeHtml(v??'')}" placeholder="${escapeHtml(f.placeholder||'')}"${stepAttr}>
+    </div>`;
+  }
+  function renderForm() {
+    if (!formState) return '';
+    const def = CATALOGOS[formState.catalogoKey];
+    const isEdit = formState.entryId != null;
+    const errorHtml = formState.error ? `<div class="cat-form-error">${escapeHtml(formState.error)}</div>` : '';
+    const fieldsHtml = def.fields.map(f => renderField(f, formState.values[f.key])).join('');
+    const archiveLabel = formState.values.archivada ? 'Desarchivar' : 'Archivar';
+    const archiveBtn = isEdit ? `<button type="button" class="cat-form-btn danger" data-form-archive>${archiveLabel}</button>` : '';
+    return `
+      <form id="cat-form" onsubmit="event.preventDefault();">
+        ${errorHtml}
+        ${fieldsHtml}
+        <div class="cat-form-actions">
+          <button type="button" class="cat-form-btn" data-form-cancel>Cancelar</button>
+          ${archiveBtn}
+          <button type="submit" class="cat-form-btn primary" data-form-save ${formState.saving ? 'disabled' : ''}>${formState.saving ? 'Guardando…' : (isEdit ? 'Guardar' : 'Crear')}</button>
+        </div>
+      </form>
+    `;
+  }
+  function openSheetForm() {
+    const def = CATALOGOS[formState.catalogoKey];
+    const isEdit = formState.entryId != null;
+    const title = isEdit ? `Editar · ${def.label}` : `Nueva · ${def.label}`;
+    const subtitle = isEdit ? 'Edita los campos y pulsa Guardar' : 'Rellena los campos y pulsa Crear';
+    openSheet(title, subtitle, renderForm());
+    setTimeout(() => {
+      const first = document.querySelector('#cat-form [data-field]');
+      if (first) try { first.focus(); } catch {}
+    }, 140);
+  }
+  function refreshSheetForm() {
+    const body = document.getElementById('sheet-body');
+    if (body) body.innerHTML = renderForm();
+  }
+  function openCreateForm(catalogoKey) {
+    const def = CATALOGOS[catalogoKey];
+    if (!def) return;
+    formState = { catalogoKey, entryId: null, values: emptyValues(def), error: null, saving: false };
+    openSheetForm();
+  }
+  function openEditForm(catalogoKey, entryId) {
+    const def = CATALOGOS[catalogoKey];
+    if (!def) return;
+    const entries = (data || {})[catalogoKey] || [];
+    const entry = entries.find(e => e.id === entryId);
+    if (!entry) return;
+    const values = valuesFromEntry(def, entry);
+    values.archivada = !!entry.archivada;
+    formState = { catalogoKey, entryId, values, error: null, saving: false };
+    openSheetForm();
+  }
+  function closeForm() {
+    formState = null;
+    closeSheet();
+  }
+
+  // ─── Form submit / archive ───────────────────────────────────────────
+  function collectFormValues() {
+    const def = CATALOGOS[formState.catalogoKey];
+    const form = document.getElementById('cat-form');
+    if (!form) return null;
+    const out = {};
+    for (const f of def.fields) {
+      const el = form.querySelector(`[data-field="${f.key}"]`);
+      if (!el) continue;
+      if (f.type === 'checkbox') out[f.key] = el.checked;
+      else if (f.type === 'number') out[f.key] = el.value === '' ? null : Number(el.value);
+      else if (f.type === 'date') out[f.key] = el.value || null;
+      else out[f.key] = el.value.trim();
+    }
+    // Validar required
+    for (const f of def.fields) {
+      if (f.required) {
+        const v = out[f.key];
+        if (v === '' || v == null) throw new Error(`Falta el campo "${f.label}"`);
+      }
+    }
+    // Strings vacíos opcionales → null (no machacar defaults DB)
+    for (const f of def.fields) {
+      if ((f.type === 'text' || f.type === 'textarea' || f.type === 'url') && out[f.key] === '') {
+        out[f.key] = null;
+      }
+    }
+    return out;
+  }
+  async function submitForm() {
+    if (!formState || formState.saving) return;
+    let values;
+    try { values = collectFormValues(); }
+    catch (e) { formState.error = e.message; refreshSheetForm(); return; }
+    const def = CATALOGOS[formState.catalogoKey];
+    formState.saving = true; formState.error = null;
+    refreshSheetForm();
+    try {
+      if (formState.entryId == null) {
+        const payload = { ...values, cliente_bubble_id: currentBubbleId };
+        await tableRequest(def.table, { method:'POST', body: payload });
+        showToast(`${def.label}: entrada creada`);
+      } else {
+        await tableRequest(def.table, { method:'PATCH', body: values, query: `id=eq.${formState.entryId}` });
+        showToast(`${def.label}: guardado`);
+      }
+      await refreshAll();
+      closeForm();
+    } catch (e) {
+      console.error('[catalogos] save failed', e);
+      formState.saving = false;
+      formState.error = e.message || String(e);
+      refreshSheetForm();
+    }
+  }
+  async function archiveFromForm() {
+    if (!formState || formState.entryId == null) return;
+    const def = CATALOGOS[formState.catalogoKey];
+    const willArchive = !formState.values.archivada;
+    const verb = willArchive ? 'archivar' : 'desarchivar';
+    if (!confirm(`¿Seguro que quieres ${verb} esta entrada?`)) return;
+    formState.saving = true; refreshSheetForm();
+    try {
+      const body = { archivada: willArchive, archivada_en: willArchive ? new Date().toISOString() : null };
+      await tableRequest(def.table, { method:'PATCH', body, query: `id=eq.${formState.entryId}` });
+      showToast(willArchive ? 'Entrada archivada' : 'Entrada desarchivada');
+      await refreshAll();
+      closeForm();
+    } catch (e) {
+      console.error('[catalogos] archive failed', e);
+      formState.saving = false;
+      formState.error = e.message || String(e);
+      refreshSheetForm();
+    }
+  }
+
+  // Re-fetch agregado preservando grupos abiertos en pantalla
+  async function refreshAll() {
+    if (!currentBubbleId) return;
+    const openGroups = Array.from(host.querySelectorAll('.coll-group.open'))
+      .map(el => el.getAttribute('data-coll'));
+    try {
+      const fresh = await rpc('catalogos_cliente_get', { p_bubble_id: currentBubbleId });
+      if (fresh) data = fresh;
+    } catch (e) {
+      console.error('[catalogos] refresh failed', e);
+    }
+    render();
+    openGroups.forEach(key => {
+      const el = host.querySelector(`.coll-group[data-coll="${key}"]`);
+      if (el) {
+        el.classList.add('open');
+        const header = el.querySelector('[data-coll-toggle]');
+        if (header) header.setAttribute('aria-expanded', 'true');
+      }
+    });
+  }
+
+  // ─── Render lista ────────────────────────────────────────────────────
+  function renderItem(r, def, catalogoKey) {
     const archived = !!r.archivada;
     const name = def.getName(r) || '(sin nombre)';
     const meta = def.getMeta ? def.getMeta(r) : '';
@@ -4289,35 +4774,30 @@ const CATALOGOS_MODULE = (() => {
     const placeholderUrl = isPlaceholderUrl(url);
     const linkable = url && !placeholderUrl && !archived;
     return `
-      <div class="catalog-item${archived ? ' archived' : ''}">
+      <div class="catalog-item${archived ? ' archived' : ''}" data-cat-edit="${escapeHtml(catalogoKey)}" data-entry-id="${escapeHtml(r.id)}" title="Click para editar">
         <div class="cat-info">
           <div class="cat-name">${escapeHtml(name)}</div>
           ${meta ? `<div class="cat-meta">${escapeHtml(meta)}</div>` : ''}
         </div>
-        ${placeholderUrl ? `<span class="cat-pending-badge" title="URL placeholder — pendiente de pegar la real">URL pendiente</span>` : ''}
+        ${placeholderUrl ? `<span class="cat-pending-badge" title="URL placeholder — Account debe pegar la real">URL pendiente</span>` : ''}
         ${archived ? `<span class="cat-archived-badge">🗄 archivada</span>` : ''}
-        ${linkable ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-3);text-decoration:none;font-size:16px;padding:0 4px" title="Abrir en nueva pestaña">↗</a>` : ''}
+        ${linkable ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="cat-item-action" title="Abrir en nueva pestaña" onclick="event.stopPropagation()">↗</a>` : ''}
       </div>
     `;
   }
-
   function renderCatalogo(key, items) {
     const def = CATALOGOS[key];
     if (!def) return '';
     const arr = Array.isArray(items) ? items : [];
     const activas = arr.filter(r => !r.archivada);
-    const nArchivadas = arr.length - activas.length;
+    const nArch = arr.length - activas.length;
     let badgeText, badgeClass;
-    if (arr.length === 0) {
-      badgeText = '0'; badgeClass = 'mock';
-    } else if (nArchivadas > 0) {
-      badgeText = `${activas.length} · 🗄 ${nArchivadas}`; badgeClass = 'ok';
-    } else {
-      badgeText = String(activas.length); badgeClass = 'ok';
-    }
+    if (arr.length === 0) { badgeText = '0'; badgeClass = 'mock'; }
+    else if (nArch > 0) { badgeText = `${activas.length} · 🗄 ${nArch}`; badgeClass = 'ok'; }
+    else { badgeText = String(activas.length); badgeClass = 'ok'; }
     const body = arr.length === 0
-      ? `<div class="cat-empty">Sin entradas todavía.</div>`
-      : arr.map(r => renderItem(r, def)).join('');
+      ? `<div class="cat-empty">Sin entradas todavía. Pulsa "+ Añadir" arriba.</div>`
+      : arr.map(r => renderItem(r, def, key)).join('');
     return `
       <div class="coll-group" data-coll="cat-${key}">
         <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
@@ -4325,12 +4805,12 @@ const CATALOGOS_MODULE = (() => {
           <span class="coll-group-dot" style="background:${def.dot}"></span>
           <span class="coll-group-name">${escapeHtml(def.label)}</span>
           <span class="coll-group-count ${badgeClass}">${badgeText}</span>
+          <button type="button" class="cat-add-btn" data-cat-add="${escapeHtml(key)}" onclick="event.stopPropagation()" title="Añadir nueva entrada">+ Añadir</button>
         </div>
         <div class="coll-group-body">${body}</div>
       </div>
     `;
   }
-
   function renderMacro(macro, data) {
     const totalEntradas = macro.catalogos.reduce((sum, key) => sum + ((data[key] || []).length), 0);
     const totalLabel = totalEntradas === 0
@@ -4347,26 +4827,17 @@ const CATALOGOS_MODULE = (() => {
       </div>
     `;
   }
-
   function render() {
     if (!host) return;
-    if (loading) {
-      host.innerHTML = `<div class="loading-card">Cargando catálogos…</div>`;
-      return;
-    }
-    if (errorMsg) {
-      host.innerHTML = `<div class="empty-card">Error cargando catálogos: ${escapeHtml(errorMsg)}</div>`;
-      return;
-    }
-    if (!data) {
-      host.innerHTML = `<div class="loading-card">—</div>`;
-      return;
-    }
+    if (loading) { host.innerHTML = `<div class="loading-card">Cargando catálogos…</div>`; return; }
+    if (errorMsg) { host.innerHTML = `<div class="empty-card">Error cargando catálogos: ${escapeHtml(errorMsg)}</div>`; return; }
+    if (!data) { host.innerHTML = `<div class="loading-card">—</div>`; return; }
     host.innerHTML = MACROS.map(m => renderMacro(m, data)).join('');
   }
 
   async function loadFor(id) {
     if (!id) return;
+    currentBubbleId = id;
     loading = true; errorMsg = null;
     render();
     try {
@@ -4380,6 +4851,31 @@ const CATALOGOS_MODULE = (() => {
       render();
     }
   }
+
+  // ─── Click handlers delegados ────────────────────────────────────────
+  // No usamos los `data-form-*` con onclick inline para mantener todos los
+  // handlers en el módulo. Se delegan al document igual que coll-toggle.
+  document.addEventListener('click', (e) => {
+    const addBtn = e.target.closest('[data-cat-add]');
+    if (addBtn) {
+      e.preventDefault(); e.stopPropagation();
+      openCreateForm(addBtn.getAttribute('data-cat-add'));
+      return;
+    }
+    if (e.target.closest('[data-form-cancel]')) { e.preventDefault(); closeForm(); return; }
+    if (e.target.closest('[data-form-archive]')) { e.preventDefault(); archiveFromForm(); return; }
+    if (e.target.closest('[data-form-save]'))    { e.preventDefault(); submitForm(); return; }
+
+    // Click en cualquier .catalog-item (no en su link ↗) abre edit
+    const editTarget = e.target.closest('[data-cat-edit]');
+    if (editTarget && !e.target.closest('a, .cat-item-action')) {
+      e.preventDefault();
+      const k = editTarget.getAttribute('data-cat-edit');
+      const id = editTarget.getAttribute('data-entry-id');
+      openEditForm(k, id);
+      return;
+    }
+  });
 
   return { loadFor, render };
 })();
