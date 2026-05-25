@@ -8,6 +8,11 @@
             "type": "command",
             "command": ".claude/scripts/log-reminder-session-start.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": ".claude/scripts/upstream-sync-reminder-session-start.sh",
+            "timeout": 10
           }
         ]
       }

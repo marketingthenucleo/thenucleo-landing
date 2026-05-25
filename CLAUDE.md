@@ -83,6 +83,7 @@ Hooks committeados al repo para que se carguen automáticamente en cada sesión 
 
 **Activos:**
 - `log-reminder-session-start.sh` (SessionStart) — al iniciar sesión, si hay commits en HEAD posteriores al último update de `docs/log-cambios.md`, inyecta `systemMessage` al user + `additionalContext` al modelo con la lista de commits pendientes + el formato del log + la convención de propagación a CLAUDE.md/docs.
+- `upstream-sync-reminder-session-start.sh` (SessionStart) — al iniciar sesión hace `git fetch` del upstream de la rama actual; si HEAD está detrás (`behind > 0`), inyecta `systemMessage` + `additionalContext` con la lista de commits remotos no aplicados y la instrucción de proponer `git pull` (o stash+pull+pop) sin ejecutarlo sin confirmación. Detecta drift cuando se trabaja desde Claude Code on the web/móvil y el clon local no se ha refrescado. Silencioso si está al día / sin upstream / HEAD detached / sin red. JSON vía python (no jq — Ben en Windows no lo tiene en PATH).
 - `log-reminder-stop.sh` (Stop) — counter en `$TMPDIR/claude-thenucleo-log-counter`. Cada turno con cambios en working tree sin tocar `docs/log-cambios.md` incrementa. A los 4 turnos lanza `systemMessage` al user. Resetea al tocar el log o al quedar el tree limpio. Soft nudge — no bloquea.
 
 **Caveat watcher:** la primera carga de `.claude/settings.json` (o cualquier edición) no la detecta el watcher de Claude Code on the web hasta la siguiente sesión. En local, `/hooks` recarga.

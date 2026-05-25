@@ -71,6 +71,16 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [INFRA][OPS] — Hook SessionStart `upstream-sync-reminder` (avisa drift vs origin)
+
+- **Área:** `.claude/scripts/` + `.claude/settings.json` (hooks Claude Code, repo-level).
+- **Qué:** nuevo hook `upstream-sync-reminder-session-start.sh` registrado como segundo entry de `SessionStart` en `.claude/settings.json` (junto al `log-reminder` existente). Al arrancar sesión hace `git fetch --quiet <remote> <branch>` del upstream de la rama actual, calcula `ahead/behind` con `git rev-list --left-right --count` y, si `behind > 0`, inyecta `systemMessage` al user + `additionalContext` al modelo con los commits remotos no aplicados (cap 20) y la instrucción de proponer `git pull` (o stash+pull+pop) sin ejecutarlo sin confirmación. Silencioso si la rama está al día, no tiene upstream, HEAD detached, o no es repo git.
+- **Por qué:** drift detectado en sesión 2026-05-25 — Ben tenía el clon local 31 commits detrás de `origin/main` tras varias sesiones desde Claude Code on the web (móvil) que commitean directo al remoto. Sin aviso visible, abrir el repo en Cursor/Claude Code local arriesga editar sobre base obsoleta y generar merges innecesarios o pisar trabajo. Mismo patrón soft-nudge que `dirty-tree-reminder-stop.sh` (no bloquea, no actúa).
+- **Implementación:** JSON emitido vía `python` (no `jq`) — Ben en Windows local no tiene `jq` en PATH; el patrón python funciona en Windows + en cloud containers. Mismo helper de detección `python3 || python` que `dirty-tree-reminder-stop.sh`. `timeout: 10` en el hook config corta el fetch si la red está lenta. Errores de fetch → `exit 0` silencioso (no entorpece arranque offline).
+- **Test:** `chmod +x` + pipe-test `echo '{}' | ./script.sh` (silencioso, al día) ✅. Verificado JSON con escenario mock `BEHIND=5` vía python directo ✅. `python -m json.tool .claude/settings.json` parsea limpio ✅.
+- **Caveat:** primera carga del `settings.json` editado no la detecta el watcher de Claude Code on the web hasta nueva sesión (igual gotcha que el resto de hooks committeados). En local desktop `/hooks` recarga sin reiniciar.
+- **Refs:** `.claude/scripts/upstream-sync-reminder-session-start.sh` (nuevo, ~55 líneas), `.claude/settings.json` (+5 líneas, segundo entry SessionStart), `CLAUDE.md` raíz sección "Hooks de Claude Code" (+1 bullet en la lista de hooks activos).
+
 ### 2026-05-25 [WORK][DOCS] — Presentación interna Pipelines y Campañas para Account + PM (slides Reveal.js)
 
 - **Área:** `work.thenucleo.com` — nueva ruta admin-only `/presentacion-pipelines/`.
