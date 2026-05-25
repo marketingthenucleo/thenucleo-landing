@@ -71,6 +71,38 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][FEATURE] — Ficha de Cliente F2.7 Fase B: panel Catálogos cableado a Supabase real (lectura + CRUD inline)
+
+- **Disparador:** cerrar Fase B de F2.7. Fase A dejó el schema y la RPC `catalogos_cliente_get` listos + Rock & Climb sembrado con 16 entradas en 6 catálogos. Faltaba pasar el panel de mockup a UI real con CRUD inline.
+- **Sprint 1 (commit `7de0b79`) — Lectura read-only:**
+  - HTML `#panel-catalogos` reducido a `<div id="catalogos-module">` que el JS rellena.
+  - CSS nuevo: `.cat-macro` / `.cat-macro-head` (header de macro-categoría con emoji + total) / `.cat-pending-badge` (badge naranja para URLs con `PENDIENTE`) / `.cat-archived-badge` / `.catalog-item.archived` (opacidad + line-through). ~50 líneas.
+  - `CATALOGOS_MODULE` IIFE en `ficha-cliente/index.html` (~250 líneas) con `MACROS` (7 macros: 📁 Recursos Drive · 💬 Comunicación · 📣 Marketing Meta · 💰 Operativo · 🎯 Producto del cliente · ⚠️ Gobierno · 🌐 Webs cliente) y `CATALOGOS` (17 schemas con `label` + `dot` + extractores `getName/getMeta/getUrl`).
+  - Lectura: `rpc('catalogos_cliente_get', { p_bubble_id })` (1 fetch para los 17).
+  - Reusa el handler global de `[data-coll-toggle]` (línea ~1823 de `index.html`) — no añade nuevos handlers.
+  - Cableado desde `renderCliente(c)` junto a `renderServiciosPanel()` y `PIPELINES_MODULE.loadFor()`.
+- **Sprint 2 (commit `b59e9fd`) — CRUD inline via PostgREST:**
+  - **Helper nuevo `tableRequest(table, opts)`** después de `rpc()`: fetch genérico a `/rest/v1/<tabla>` con `apikey` + `Bearer token` del usuario. `Prefer: return=representation` en POST/PATCH. Maneja 204 No Content. ~25 líneas. No requiere `from()` ni supabase-js — fetch puro alineado con el `rpc()` existente.
+  - **CSS nuevo:** `.cat-add-btn` (botón "+ Añadir" en el header de cada coll-group) · `.cat-item-action` (link ↗ external) · `.cat-form-field` / `.cat-form-label` (con `.required ::after *` rojo) / `.cat-form-input/textarea/select/checkbox-row` / `.cat-form-actions` (Cancelar / Archivar / Guardar/Crear) / `.cat-form-btn` (variantes `primary` + `danger`) / `.cat-form-error` (banner ámbar). ~80 líneas.
+  - **`CATALOGOS_MODULE` ampliado:** cada catálogo declara `table` (tabla Supabase destino) + `fields` (array de `{ key, label, type, required?, default?, placeholder?, options?, step? }`). 14 selects predefinidos en `OPTS` mapean 1:1 los `CHECK` constraints de Supabase (drive_cat, doc_tipo, wsp_tipo, meta_plataforma, fb_ig, pub_tipo, canal_pres, periodo, lm_tipo, reserva_plataforma, prod_tipo, regla_ambito, regla_sev, web_tipo).
+  - **Form genérico:** `renderField()` switch sobre `type` (text/url/number/date/textarea/select/checkbox). `renderForm()` arma errorBanner + fields + actions. `openSheet(title, subtitle, html)` (helper global ya existente) abre el sheet bottom — mismo patrón que el client picker.
+  - **Flujos:**
+    - **Add:** click `+ Añadir` (botón en header coll-group con `data-cat-add="<catalogo>"`) → `openCreateForm(catalogoKey)` → sheet con form vacío + defaults. Submit → `POST /rest/v1/<tabla>` con `cliente_bubble_id` añadido automáticamente desde state.
+    - **Edit:** click en cualquier `.catalog-item` (filtrado para excluir clicks sobre `<a>` o `.cat-item-action`) → `openEditForm(catalogoKey, entryId)` → sheet con valores prellenados desde `data[catalogoKey].find(e => e.id === entryId)`. Submit → `PATCH /rest/v1/<tabla>?id=eq.<uuid>`.
+    - **Archive:** botón "Archivar" / "Desarchivar" en el form de edit → `confirm()` → `PATCH { archivada, archivada_en: now()|null }`.
+  - **Validación client-side:** required check antes del submit (lanza error visible en banner sin enviar). Strings vacíos de campos opcionales (`text`/`textarea`/`url`) se convierten a `null` para no machacar defaults DB.
+  - **Errores Supabase** (CHECK constraint, RLS, UNIQUE parcial, etc.) capturados del `tableRequest` y mostrados en el banner ámbar sin cerrar el sheet — Account corrige y reintenta.
+  - **Refresh tras CRUD:** `refreshAll()` re-fetcha la RPC agregadora (1 RPC barato) + preserva qué `.coll-group.open` estaban abiertos en el viewport antes de re-pintar. UX no salta.
+  - **Toast** vía `showToast()` global tras cada éxito.
+- **Allowlist actualizada a 8 sitios** (ver `docs/work/ficha-cliente.md` para la lista completa). Las 17 tablas `cliente_catalogo_*` NO usan allowlist hardcoded — usan `is_comunidad_admin()` en sus 68 policies, así que añadir admin no requiere editar 68 policies, sólo `comunidad_admins`.
+- **Fuera de scope (Sprint 3 futuro):**
+  - **Pickers FK** para webinar (`comunidad_wsp_id` + `lead_magnet_id`). Hoy esos 2 campos no aparecen en el form de webinar — se rellenan vía SQL si hace falta.
+  - **Editor `campos_capturar` jsonb** en plantillas_form_meta (UI con chips para defaults + extras). Hoy queda como el default del schema (`{"extras":[],"defaults":["nombre","email","telefono"]}`).
+  - **Buscador global** del panel (los 17 catálogos pueden tener muchas entradas).
+  - **Toggle "Ver archivadas"** (hoy se muestran siempre, tachadas y al final).
+  - **Bulk operations** (importar lista, exportar CSV).
+- **Refs:** commits `7de0b79` (Sprint 1) + `b59e9fd` (Sprint 2). Doc canónico del panel: [[../work/ficha-cliente|docs/work/ficha-cliente]] sección "Panel Catálogos". Schema en [[../infra/supabase-schema|docs/infra/supabase-schema]] sección "Catálogos del cliente — F2.7 Fase A". Visión funcional + framing híbrido A+C en [[../portal/ficha-cliente|docs/portal/ficha-cliente]].
+
 ### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.7 Fase A: 17 catálogos del cliente (Supabase)
 
 - **Disparador:** Ben pasa PDF de lanzamiento "Rock and Climb" + 2 lanzamientos más (Dra Neus Muñoz CP, Actualízate Psicología webinar) preguntando cómo Account puede construir esa estructura "de forma dinámica" en el panel Catálogos de `/ficha-cliente/`. Hoy el panel es mockup con 2 grupos placeholder.
@@ -94,6 +126,18 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 - **Pendiente Fase B (UI CRUD):** cablear `/ficha-cliente/` panel Catálogos — pasar de 2 mockups (Emails remitentes + Etiquetas) a 17 `.coll-group` reales agrupados en 5 macro-categorías + buscador.
 - **Pendiente Fase C (cablear Campaña):** sección "Recursos asociados" en Campaña con picker por tipo de recurso del catálogo + 1 plantilla hardcodeada (la del PDF Rock and Climb) + tabla `campania_sesion_webinar` para webinars con N sesiones.
 - **Refs:** SQL revisable en `c:\tmp\catalogos-cliente-f2.7.sql`. Migration aplicada vía MCP Supabase apply_migration. Validación post-deploy: 17 tablas / 68 policies / 17 triggers / 1 RPC. Schema doc actualizado en `docs/infra/supabase-schema.md`.
+
+### 2026-05-25 [PORTAL][INFRA][FEATURE] — Rolling refresh diario de fechas Demo Quasar (CRON 03:00)
+
+- **Problema:** las fechas seed de la agencia Demo (`bea972de-...`) son relativas a `NOW()` del momento de inserción (2026-05-25). Si la demo se enseña dentro de 2 meses, los `clockify_time_entries` caen fuera del filtro "últimos 30 días" del dashboard y las `holded_facturas` salen del rango "últimos 6 meses" → la demo se ve vacía. Decisión Ben: CRON nocturno automático que avance fechas (vs botón manual / regen total / nada).
+- **Solución:** función SQL `demo_rolling_refresh()` (SECURITY DEFINER, grant a `service_role` + `authenticated`) + workflow n8n `Z9Mp78CHNeuEwtCc` (*CRON DEMO — Rolling Refresh Fechas (03:00)*) que la dispara cada noche 03:00 Europe/Madrid.
+- **Lógica de la función:** calcula `delta_days = CURRENT_DATE - max(fecha_inicio::date) FROM clockify Demo`. Si `delta_days <= 0` → no-op (`status=skipped, reason=already_fresh`). Si > 0 → UPDATE en cascada: `clockify_time_entries` + `holded_facturas` (filtrados por `tag='demo'`), `chat_conversations` + `chat_messages` (filtrados por `metadata.seed='demo'` añadido pre-función a las 3 conversations seed), `analisis_wip` (filtro por `cliente_id IN` los 3 notion_ids fake). `holded_metricas` se regenera completamente (DELETE + INSERT 6 últimos meses desde NOW()). Idempotencia confirmada (segunda ejecución manual → `skipped`).
+- **Filtrado seeds vs datos creados:** los datos seed llevan marca distinguible (`tag='demo'` o `metadata.seed='demo'`). Lo que Ben cree durante la demo (chats nuevos, análisis nuevos) NO lleva marca → rolling no los toca, persisten tal cual.
+- **Workflow n8n:** 2 nodos. Schedule Trigger v1.3 (daily, hour=3, minute=0) → HTTP Request v4.4 POST con `$env.SUPABASE_SERVICE_ROLE_KEY` en `apikey` + `Authorization: Bearer ...`. Bug detectado durante setup: el SDK `expr('$env.X')` genera `=$env.X` que n8n NO evalúa como expresión en headers — necesita sintaxis canónica `={{ $env.X }}`. Corregido vía `expr('{{ $env.SUPABASE_SERVICE_ROLE_KEY }}')` y `expr('Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}')`. Re-test post-fix: 200 OK con response `{"reason":"already_fresh","status":"skipped","delta_days":0}`. ACTIVADO.
+- **Pendiente UI:** asignar tag `portal` al workflow `Z9Mp78CHNeuEwtCc` para que entre al backup automático en `marketingthenucleo/n8nthenucleo` (patrón habitual "tag pendiente UI" mencionado en entradas previas).
+- **Disparo manual:** `SELECT demo_rolling_refresh();` desde SQL editor de Supabase. Devuelve JSON con `delta_days` aplicados y filas movidas por tabla.
+- **Refs:** migration `demo_rolling_refresh_function`. Workflow `Z9Mp78CHNeuEwtCc`. Doc actualizada en `docs/portal/demo-quasar.md` sección "Mantenimiento automático".
+- **Iteración misma sesión:** Ben pide bajar frecuencia a 7 días y extender el rolling a Bubble (`fecha_onboarding` + `ultimo_seguimiento`). Implementación pragmática: (a) CRON cambiado a weekly lunes 03:00 (vs daily original) — Ben "tampoco hace falta ir al día"; (b) PATCH puntual ahora a los 3 clientes con fechas relativas coherentes (Quasar Software 6m/7d, Shop 4m/14d, Studio 2m/3d) vía pause `wvHcgVqqjkWJcJDu` + 3 PATCH Bubble Data API + reactivar; (c) refresh Bubble queda **on-demand manual** en vez de incluido en el CRON — razón: PATCH a `bub_clientes` dispara `wvHcgVqqjkWJcJDu` que falla al intentar actualizar Notion page inexistente (UUIDs fake), generaría 3 incidencias semanales en `n8n_incidencias`. Ben puede pedir "refresca fechas Bubble" cuando lo vea raro. Workflow renombrado a *CRON DEMO — Rolling Refresh Fechas (Lunes 03:00)*.
 
 ### 2026-05-25 [PORTAL][INFRA][FEATURE] — Agencia "Demo Quasar" en Bubble LIVE: multitenant convivencia + datos clonados
 

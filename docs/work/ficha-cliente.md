@@ -3,7 +3,7 @@ title: Ficha de Cliente (admin-only)
 dominio: ficha-cliente
 estado: vivo
 actualizado: 2026-05-25
-version_dataset: F2.2 + iteración piloto Mel (tarde 2026-05-24) — edit inline, archivar trigger/email, ⓘ explicativos (12 cuelgues), catálogo plantillas live desde DB con × archivar, auto-create plantilla desde custom, preserveView en saves, fechas dd/mm/yy, emails desde trigger en su detail view. UX 2026-05-25: estado vacío muestra listado inline + buscador en vez de empty card + botón. Deuda menor: link plantilla→campaña en flujo "picker eligió existente".
+version_dataset: F2.2 + iteración piloto Mel (tarde 2026-05-24) + F2.7 Fase A (17 catálogos Supabase + RPC agregadora `catalogos_cliente_get`, seed Rock & Climb 16 entradas) + F2.7 Fase B Sprint 1+2 (panel Catálogos cableado a Supabase real con CRUD inline via PostgREST + sheet bottom + archivado). Deuda menor: link plantilla→campaña en flujo "picker eligió existente"; pickers FK webinar→comunidad_wsp/lead_magnet y editor `campos_capturar` jsonb pendientes (Sprint 3).
 tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 ---
 
@@ -12,6 +12,8 @@ tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 Vista admin-only mobile-first para consultar y operar sobre la ficha de un cliente del portal. Lee `bub_clientes` vía RPCs admin-allowlist sin tocar las policies de la tabla. Incluye el módulo **Pipelines y Campañas** (visión PxCx, ver [[../portal/ficha-cliente]] para el modelo conceptual).
 
 > ✅ **Vivo desde 2026-05-22** en `work.thenucleo.com/ficha-cliente/` (allowlist 5 emails TheNucleo desde 2026-05-25, `noindex`). **Módulo Pipelines y Campañas** vivo (F2.5d cerrada 2026-05-25): triggers `FM/FW/BD/DM` (DM = auto-DM RRSS con keyword + mensaje); creatividades 1-fila-por-pieza con código `<trigger.code><E|R|C|O><n>` (P1C1FM1E1, P1C1DM1R1…) — cada pieza apunta a un trigger destino obligatorio, categoría ANUNCIOS [Estático/Reel] / RRSS [Carrusel/Reel] / OTROS, sin cantidad (para varias piezas similares crear N entradas); sin Brief Drive (retirado por feedback Ben "aquí no tenemos URLs"). Backend completo en Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + `cliente_mensajes_whatsapp` + `cliente_creatividades` + `cliente_campania_plantillas` + RPCs).
+>
+> 🆕 **Módulo Catálogos del cliente (F2.7 Fase A + B Sprint 1+2 — 2026-05-25):** panel Catálogos pasa de mockup a 17 catálogos reales `cliente_catalogo_*` agrupados en 7 macro-categorías (📁 Recursos Drive · 💬 Comunicación · 📣 Marketing Meta · 💰 Operativo · 🎯 Producto del cliente · ⚠️ Gobierno · 🌐 Webs cliente). Lectura via RPC agregadora `catalogos_cliente_get` (1 fetch). CRUD inline via PostgREST + sheet bottom: botón **+ Añadir** por catálogo, click en entrada → editar, botón archivar/desarchivar (soft-delete con badge `🗄`). Seed Rock & Climb 16 entradas. Pendientes Sprint 3: pickers FK webinar→comunidad_wsp + lead_magnet, editor `campos_capturar` jsonb, buscador global, toggle "ver archivadas".
 
 ---
 
@@ -22,7 +24,7 @@ Vista admin-only mobile-first para consultar y operar sobre la ficha de un clien
 - **Auth**: Google OAuth reutilizando el flujo de `/comunidad/entrar/` (mismo `storageKey`). Allowlist 5 emails TheNucleo. Mismo patrón que `/playbook/` y `/fichas-de-producto/`.
 - **URL deep-link**: `?id=<bubble_id>` carga directamente la ficha del cliente. Sin parámetro muestra el listado de clientes activos + buscador **inline** en el panel (fix 2026-05-25, antes era empty card "Elige un cliente" + botón que abría sheet). El botón "Cambiar" del header sigue abriendo el mismo sheet bottom para switch cuando ya hay cliente cargado.
 - **Datos en producción**: 73 clientes activos (filtra `COALESCE(estado,'') <> 'No Activo'`). Selector ordenado alfabético por `nombre_empresas`.
-- **Paneles**: 5 — **Datos** (5 grupos colapsables), **Servicios contratados** (agrupado por categoría), **Pipelines y Campañas** (seed F1), **Catálogos** (MOCKUP), **Anomalías** (MOCKUP plano).
+- **Paneles**: 5 — **Datos** (5 grupos colapsables), **Servicios contratados** (agrupado por categoría), **Pipelines y Campañas** (Supabase real desde F2), **Catálogos** (Supabase real desde F2.7 Fase B — 17 catálogos en 7 macros, CRUD inline), **Anomalías** (MOCKUP plano).
 
 ---
 
@@ -50,7 +52,7 @@ Reutiliza el mismo storageKey `thenucleo-comunidad-auth` que `/comunidad/entrar/
 - `mel.dalmazo@thenucleo.com` (añadida 2026-05-15)
 - `valentina.ramirez@thenucleo.com` (añadida 2026-05-25)
 
-⚠️ **La allowlist vive en 7 sitios** que hay que sincronizar a mano:
+⚠️ **La allowlist vive en 8 sitios** que hay que sincronizar a mano:
 
 - `EDITOR_EMAILS` en `playbook/index.html` (frontend)
 - `EDITOR_EMAILS` en `fichas-de-producto/index.html` (frontend)
@@ -59,6 +61,9 @@ Reutiliza el mismo storageKey `thenucleo-comunidad-auth` que `/comunidad/entrar/
 - Body hardcoded de RPC `playbook_cliente_detalle` (SECURITY DEFINER)
 - Body hardcoded de RPC `ficha_cliente_listar` (SECURITY DEFINER)
 - Body hardcoded de RPC `ficha_cliente_get` (SECURITY DEFINER)
+- Body hardcoded de RPC `catalogos_cliente_get` (SECURITY DEFINER) — **añadida 2026-05-25 con F2.7 Fase A**
+
+> Las **17 tablas `cliente_catalogo_*`** (F2.7) NO usan allowlist hardcoded — usan policies con `is_comunidad_admin()` (la misma función que las tablas `cliente_pipelines`, `cliente_emails`, etc.). Al añadir/retirar admin se gestiona desde `comunidad_admins` (no requiere editar 17 × 4 = 68 policies).
 
 > Nota adyacente — `/casuisticas/`, `/presentacion-pipelines/` y los 5 emails del frontend de `/disponibilidades/` también se sincronizan al mismo tiempo (mismo set), pero usan sus propios mecanismos (3 policies hardcoded `casuisticas_board_*`, copy del gate de presentación, `EDITOR_EMAILS` standalone). Total: 11 sitios frontend+backend al añadir/retirar editor.
 
@@ -131,9 +136,56 @@ Módulo F1 (vivo desde 2026-05-23). Implementación: ver `ficha-cliente/index.ht
 
 **Pendiente F2**: 4 tablas Supabase nuevas (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails`) + RPCs CRUD + RLS por `cliente_id`. La visión completa del modelo está en [[../portal/ficha-cliente]] §10 punto 4.
 
-### Panel "Catálogos"
+### Panel "Catálogos" (F2.7 Fase B Sprint 1+2 — vivo 2026-05-25)
 
-MOCKUP en `.coll-group` (Plantillas de Campaña + Plantillas de Trigger). No se inventan datos — placeholders explícitos. Cableado real depende de la decisión sobre `cliente_plantillas_campania` (ver [[../portal/ficha-cliente]] §4).
+Biblioteca de recursos reutilizables del cliente. **17 catálogos** agrupados visualmente en **7 macro-categorías**. Lectura via RPC agregadora `catalogos_cliente_get` (1 fetch). CRUD inline via PostgREST: las **68 policies** (4×17) con `is_comunidad_admin()` validan cada operación.
+
+**Estructura del panel** (orden visual):
+
+| Macro | Catálogos (tabla Supabase) |
+|---|---|
+| 📁 Recursos Drive | `cliente_catalogo_carpeta_drive` · `cliente_catalogo_documento` |
+| 💬 Comunicación | `cliente_catalogo_comunidad_wsp` · `cliente_catalogo_email_remitente` · `cliente_catalogo_etiqueta` |
+| 📣 Marketing Meta | `cliente_catalogo_cuenta_publicitaria` · `cliente_catalogo_pixel` · `cliente_catalogo_pagina_social` · `cliente_catalogo_publico_personalizado` · `cliente_catalogo_plantilla_form_meta` |
+| 💰 Operativo | `cliente_catalogo_presupuesto` |
+| 🎯 Producto del cliente | `cliente_catalogo_lead_magnet` · `cliente_catalogo_webinar` · `cliente_catalogo_sistema_reserva` · `cliente_catalogo_producto_servicio` |
+| ⚠️ Gobierno | `cliente_catalogo_regla` (caveats tipo "NO PONER JAMÁS…") |
+| 🌐 Webs cliente | `cliente_catalogo_web_cliente` |
+
+Cada catálogo es un `.coll-group` colapsable con:
+- **Dot color** distintivo por macro (azul Drive, púrpura comunicación, cian Meta, ámbar operativo, rojo producto, amarillo gobierno, turquesa webs).
+- **Badge contador** `N` (activas) o `N · 🗄 M` cuando hay archivadas.
+- Botón **+ Añadir** a la derecha del header (abre sheet bottom con form).
+
+**Render de entrada (read-only)** — `.catalog-item`:
+- Nombre + meta (categoria/tipo/plataforma/precio según catálogo).
+- Badge naranja **"URL pendiente"** si la URL contiene la palabra `PENDIENTE` (convención del seed F2.7 para entradas importadas sin URL real visible en el PDF de origen).
+- Badge gris **`🗄 archivada`** + tachado si soft-deleted.
+- Icono **↗** a la derecha si hay URL real (no placeholder, no archivada) — abre en nueva pestaña, NO abre edit.
+
+**CRUD inline (Sprint 2)**:
+
+- **Crear**: botón "+ Añadir" del header → sheet bottom con form generado desde `fields` array del catálogo. Validación required client-side. POST a `/rest/v1/<tabla>` con `cliente_bubble_id` añadido automáticamente.
+- **Editar**: click en cualquier `.catalog-item` (excepto su link ↗) → sheet bottom prellenado con valores actuales. PATCH a `/rest/v1/<tabla>?id=eq.<uuid>`.
+- **Archivar / Desarchivar**: botón "Archivar" dentro del form de edit → `confirm()` + PATCH `archivada: true/false` + `archivada_en: now()` o `null`.
+- **Toast** tras éxito + cierre del sheet.
+- **Errores** Supabase (CHECK constraint, RLS, UNIQUE, etc.) se muestran en banner ámbar dentro del form sin cerrarlo.
+- **Refresh tras CRUD**: re-fetch agregado completo (1 RPC barato) + preserva qué coll-groups estaban abiertos en el viewport. No salta el scroll.
+
+**Tipos de campo soportados en el form** (config `fields`):
+- `text`, `url`, `number` (con step), `date`, `textarea`, `select` (con `options`), `checkbox`.
+- Strings vacíos opcionales se envían `null` para no machacar defaults DB.
+
+**Helpers JS** (en `ficha-cliente/index.html`):
+- `tableRequest(table, opts)` — helper genérico PostgREST con `Prefer: return=representation` en POST/PATCH.
+- `CATALOGOS_MODULE` — IIFE que encapsula `MACROS` (7), `CATALOGOS` (17 con `table` + `fields` + extractores read-only), `OPTS` (selects predefinidos), `loadFor()`, `render()`, `refreshAll()`, handlers de click delegados.
+
+**Pendientes Sprint 3**:
+- Pickers FK en webinar para `comunidad_wsp_id` y `lead_magnet_id` (hoy esos 2 campos no aparecen en el form de webinar).
+- Editor `campos_capturar` jsonb en plantillas_form_meta (UI con chips para defaults + extras). Hoy queda como el default del schema.
+- Buscador global del panel para los 17 catálogos.
+- Toggle "Ver archivadas" (hoy se muestran siempre, tachadas y al final del orden).
+- Bulk operations (importar lista, exportar CSV).
 
 ### Panel "Anomalías"
 
@@ -158,6 +210,19 @@ Pinta entre 1 y 5 chips según los datos del cliente:
 ---
 
 ## Fixes y cambios recientes
+
+### 2026-05-25 — F2.7 Fase B Sprint 2: CRUD inline en panel Catálogos
+Commits `b59e9fd` (frontend). Reemplaza el panel mockup por CRUD completo via PostgREST (`tableRequest()` helper) + sheet bottom reutilizado (`openSheet/closeSheet`). Cada uno de los 17 catálogos declara `table` + array `fields` (text/url/number/date/textarea/select/checkbox) consumido por un render genérico. Validación required client-side. Strings vacíos opcionales → `null`. Archive desde form con `confirm()`. Tras CRUD: re-fetch agregado preservando grupos abiertos.
+
+Fuera de scope (Sprint 3): pickers FK `comunidad_wsp_id` + `lead_magnet_id` en webinar; editor `campos_capturar` jsonb en plantillas_form_meta; buscador global del panel; toggle "ver archivadas".
+
+### 2026-05-25 — F2.7 Fase B Sprint 1: panel Catálogos cableado read-only
+Commit `7de0b79` (frontend). Reemplaza el HTML mockup (2 grupos placeholder) por container que el módulo JS llena con los 17 catálogos reales agrupados en 7 macro-categorías. CSS nuevo: `.cat-macro` / `.cat-macro-head` / `.cat-pending-badge` (URL placeholder) / `.cat-archived-badge` / `.catalog-item.archived`. `CATALOGOS_MODULE` IIFE con `MACROS` (7) + `CATALOGOS` (17) + `loadFor()` + `render()`. Lectura via RPC `catalogos_cliente_get` (1 fetch). Reusa el handler global `[data-coll-toggle]` para abrir/cerrar grupos.
+
+### 2026-05-25 — F2.7 Fase A: schema Supabase de 17 catálogos
+Commit `27a661d` (docs). Migration `f2_7_catalogos_cliente` aplicada vía MCP Supabase: 17 tablas `cliente_catalogo_*` + 36 indexes + 68 policies + 17 triggers + RPC agregadora `catalogos_cliente_get(p_bubble_id)` SECURITY DEFINER con allowlist 5 emails. Convenciones reusadas de `cliente_pipelines`/`cliente_emails`: PK uuid, `cliente_bubble_id` FK lógica, audit fields, `update_updated_at()` trigger, RLS con `is_comunidad_admin()`. Soft-delete con `archivada boolean + archivada_en timestamptz` (en lugar de `estado` text — biblioteca de recursos ≠ entidad con ciclo de vida).
+
+**Seed Rock & Climb** (bubble_id `1778244949886x…`): 16 entradas en 6 catálogos derivadas del PDF de lanzamiento (2 carpetas drive con URL placeholder, 3 documentos —1 URL real + 2 placeholder—, 1 comunidad WSP real, 1 plantilla form Meta, 1 presupuesto Meta Ads 300€ único, 8 productos/servicios del calendario mensual de talleres 15-45€).
 
 ### Fix 2026-05-23 — Chip "Pipelines · mockup" retirado
 Hardcoded en `ficha-cliente/index.html:1392`. Retirado en commit `48af7c8` porque el módulo Pipelines ya no es mockup (seed F1 funcional). Anomalías sigue con su chip porque sí es MOCKUP plano.
