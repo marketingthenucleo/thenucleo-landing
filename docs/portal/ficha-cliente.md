@@ -148,13 +148,14 @@ Sub-bloque dentro de la Campaña, paralelo a Email.
 
 **Por qué hermano de Email y no unificado:** copy/tono/longitud distintos por canal — secuencias independientes son lo natural. Permite añadir columnas específicas (link_workflow vs link_ghl_workflow) sin contaminar. Tabla DB separada `cliente_mensajes_whatsapp` con shape idéntico a `cliente_emails`.
 
-#### Creatividades — declarativas por Campaña (NUEVO 2026-05-25, F2.5)
+#### Creatividades — declarativas por Campaña (NUEVO 2026-05-25, F2.5 + F2.5b)
 
 Sub-bloque dentro de la Campaña. Cubre `caso 10 .docx` (creatividades cuelgan de `PxCx`, no de `E` ni `FM`).
 
 - `tipo` — `estatico` / `reel` / `carrusel` / `copy_RRSS` / `video` / `otro`.
 - `cantidad` (int ≥1) — cuántas piezas de ese tipo se necesitan.
-- `notas` — texto libre (variantes, briefing, etc).
+- `notas` — texto libre (variantes, ángulos, referencias, copy ideas).
+- `link_brief_drive` (NUEVO F2.5b, opcional) — URL del brief específico de esta declaración (mood board, guion, referencias). Por-row, no por-campaña: tipos distintos llevan briefs distintos (mood board para estáticos, guion para reels). Distinto del briefing macro de la Campaña (`link_briefing_drive` en `cliente_campanias`), que cubre la estrategia general.
 - `estado` — `declarada` / `en-produccion` / `lista` / `aprobada` / `archivada`.
 
 **Modelo:** 1 fila = 1 declaración tipo-cantidad. Account declara "necesitamos 3 estáticos + 2 reels". El equipo produce y nombra los archivos en Drive como `PxCx_<tipo>_v<n>` (caso 10 .docx). La ficha solo tracks la declaración + estado del grupo. La versión v1 es el original, cada revisión sube como v(n+1) — **nunca se borran versiones**. La extensión la pone Drive automáticamente al guardar (no se incluye en el nombre del archivo).

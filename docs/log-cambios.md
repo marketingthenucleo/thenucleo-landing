@@ -71,6 +71,21 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][UX] — Ficha de Cliente: link brief en creatividades (F2.5b) + reescritura de 14 tooltips con voz Account
+
+- **Commit:** `f194643`. Migration `ficha_cliente_creatividades_link_brief`.
+- **F2.5b — link_brief_drive en creatividades:** cada declaración puede llevar su propio brief en Drive (mood board, guion, referencias). Por-row, no por-campaña — tipos distintos llevan briefs distintos. El brief macro de la Campaña sigue en `cliente_campanias.link_briefing_drive`.
+  - `ALTER TABLE cliente_creatividades ADD COLUMN link_brief_drive text` (nullable).
+  - `ficha_creatividad_upsert` añade `p_link_brief_drive text` (8 params total).
+  - `ficha_pipelines_get` devuelve `linkBrief` por creatividad.
+  - Drawer Nueva Creatividad: input `type=url` opcional después de Notas + hint explicativo ("Si tienes un brief específico, pega aquí el link; si no, déjalo vacío y el equipo se guía por las notas + briefing macro").
+  - Detail view: si hay link → "📄 Abrir brief" clickable (target=_blank); si no → fallback explicando que el equipo se guía por notas + briefing macro de Campaña.
+- **Reescritura tooltips ⓘ con voz Account (14 entradas en `INFO_CONTENT`):** feedback Ben — los copies eran demasiado técnicos para Account (Mel). Placeholders `<código campaña>`, `<tipo>`, `v<n>`, jerga "subset", footers `Ref: .docx §X` confundían al lector no-dev. Reescritos en lenguaje operativo, con framing "por qué importa esto a mí como Account", ejemplos reales en prosa (no solo code blocks), y casos concretos del día a día.
+  - Reescritos: `pipeline`, `campania`, `trigger-tipos`, `trigger-bd-fecha`, `objetivo-negocio`, `triggers-aplicables` (el del modelo simplificado), `plantilla`, `briefing-drive`, `estado-fino`, `codigo-inmutable`, `archivar`, `versionado`, `whatsapp-vs-email`, `campos-capturar`, `creatividades-naming` (el del screenshot original — explicación de las 3 piezas del nombre PxCx_tipo_vn sin `<placeholders>`).
+  - Footers `Ref: .docx §X` retirados de todos los tooltips — su sitio natural es la doc canónica (`docs/portal/ficha-cliente.md`), no la UI que ve Account.
+- **Test:** build Eleventy verde (55 archivos). JS parsea limpio (148KB). Smoke RPC: `ficha_pipelines_get` devuelve `linkBrief` correcto.
+- **Refs:** `supabase/migrations/20260525_ficha_cliente_creatividades_link_brief.sql` (nuevo), `ficha-cliente/index.html` (~300 líneas modificadas — 60 nuevas para link brief + 240 reescritura tooltips).
+
 ### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente: modelo emails simplificado + WhatsApp + Creatividades + Campos a capturar + 10 fixes
 
 - **Área:** `work.thenucleo.com/ficha-cliente/` + 3 migrations Supabase (`cliente_triggers` col nueva, 2 tablas nuevas).

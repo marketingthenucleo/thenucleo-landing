@@ -608,16 +608,20 @@ INDEX cliente_mensajes_whatsapp_campania_idx (campania_id)
 **Códigos display (frontend):** `P1C1WA1` (Compartido) o `P1C1FM1WA1` (Específico FM1). Mismo modelo per-scope que emails (caso 5 .docx simplificado).
 **Decisión:** NO unificar como `cliente_mensajes` con discriminador `canal`. Razones: copy/tono/longitud distintos por canal, secuencias independientes naturalmente, permite añadir columnas específicas (WA → `link_workflow` Evolution; Email → `link_ghl_workflow`) sin contaminar.
 
-#### `cliente_creatividades` — declaración de piezas por Campaña (NUEVO 2026-05-25, F2.5)
+#### `cliente_creatividades` — declaración de piezas por Campaña (NUEVO 2026-05-25, F2.5 + F2.5b)
 ```
-id           uuid PK
-campania_id  uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
-tipo         text NOT NULL CHECK (tipo IN ('estatico','reel','carrusel','copy_RRSS','video','otro'))
-cantidad     int NOT NULL DEFAULT 1 CHECK (cantidad > 0)
-notas        text
-estado       text NOT NULL DEFAULT 'declarada'
-             CHECK (estado IN ('declarada','en-produccion','lista','aprobada','archivada'))
-orden        int NOT NULL DEFAULT 0
+id                uuid PK
+campania_id       uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
+tipo              text NOT NULL CHECK (tipo IN ('estatico','reel','carrusel','copy_RRSS','video','otro'))
+cantidad          int NOT NULL DEFAULT 1 CHECK (cantidad > 0)
+notas             text
+link_brief_drive  text                                  -- F2.5b 2026-05-25. URL del brief específico
+                                                         -- de esta declaración (mood board, guion, refs).
+                                                         -- Opcional, por-row. Distinto del briefing macro
+                                                         -- de Campaña (cliente_campanias.link_briefing_drive).
+estado            text NOT NULL DEFAULT 'declarada'
+                  CHECK (estado IN ('declarada','en-produccion','lista','aprobada','archivada'))
+orden             int NOT NULL DEFAULT 0
 created_at, updated_at, created_by
 INDEX cliente_creatividades_campania_idx (campania_id)
 ```
@@ -640,7 +644,7 @@ INDEX cliente_creatividades_campania_idx (campania_id)
 - `ficha_trigger_upsert(p_id, p_campania_id, p_tipo, p_descripcion, p_link_externo, p_fecha_lanzamiento, p_estado, p_codigo_override, p_campos_capturar)` — auto-código `<campCodigo><tipo><N>` per (campaña, tipo). CHECK `tipo IN ('FM','FW','BD')`. La CHECK de tabla obliga `fecha_lanzamiento` si tipo=BD. **Param `p_campos_capturar jsonb` añadido 2026-05-25 (F2.3)** — spec de campos del form en FM/FW (ignorado en BD).
 - `ficha_email_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_diseno_drive, p_link_ghl_workflow, p_estado)` — emails NO tienen columna codigo; el código display se deriva en frontend via `emailCode(camp, email)`. `p_orden NULL` = server asigna max+1. **Display orden recalculado per-scope 2026-05-25**: `n` en el código `E<n>` cuenta posición entre emails del mismo scope (Compartido vs Específico-X), no orden global.
 - `ficha_whatsapp_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_workflow, p_estado)` — **NUEVO 2026-05-25 (F2.4)**. Clon de `ficha_email_upsert` para `cliente_mensajes_whatsapp`. Display code `whatsappCode()` con letra `WA`.
-- `ficha_creatividad_upsert(p_id, p_campania_id, p_tipo, p_cantidad, p_notas, p_estado, p_orden)` — **NUEVO 2026-05-25 (F2.5)**. CRUD de `cliente_creatividades`. Validate `tipo IN ('estatico','reel','carrusel','copy_RRSS','video','otro')`.
+- `ficha_creatividad_upsert(p_id, p_campania_id, p_tipo, p_cantidad, p_notas, p_estado, p_orden, p_link_brief_drive)` — **NUEVO 2026-05-25 (F2.5 + F2.5b)**. CRUD de `cliente_creatividades`. Validate `tipo IN ('estatico','reel','carrusel','copy_RRSS','video','otro')`. Param `p_link_brief_drive` añadido en F2.5b (8 params total).
 - `ficha_archivar_codigo(p_kind text, p_id uuid)` — genérico para 6 tipos: `'pipeline'|'campania'|'trigger'|'email'|'whatsapp'|'creatividad'` (whatsapp+creatividad añadidos 2026-05-25). Resuelve la diferencia de género ('archivado' vs 'archivada' campañas/creatividades). Regla `.docx` §3.6 + caso 9: nada se borra, sólo se archiva.
 
 "Servidor propone, usuario valida": cada upsert acepta `p_codigo_override`. Si NULL/'' → auto-asigna. Si pasa valor → respeta y valida unicidad vía UNIQUE constraint. El frontend por defecto deja al servidor; el caso "Account quiere override" es raro pero soportado.
