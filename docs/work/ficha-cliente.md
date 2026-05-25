@@ -290,6 +290,79 @@ Vista lanzada. Antes era un mockup con datos inventados. Migration RPCs `ficha_c
     - "Editar" en los detail views — hoy los views son read-only. Habilitar inline edit que llame al upsert correspondiente con `p_id` pasado (ya soportado por las RPCs, sólo falta la UI).
 3. **Piloto con Melina sobre Neus** — sentarse 30 min y declarar los 4 pipelines reales en el módulo (cuando #2 esté listo). Validar si el modelo aguanta.
 4. **Migrar 5 clientes más activos** al modelo en sesiones acompañadas con Account.
-5. **Panel Catálogos cableado** — depende de las RPCs F2.
-6. **Panel Anomalías** — integrar `n8n_incidencias` filtradas por cliente + checks operativos derivados (servicios sin Drive, campañas sin briefing).
-7. **Allowlist en tabla `playbook_editors(email)`** cuando crezca a 5+ editores.
+5. ~~**Panel Catálogos cableado**~~ ✅ **Cerrado 2026-05-25 (F2.7 Fase A + B Sprint 1+2+3).** 17 tablas `cliente_catalogo_*` + tabla auxiliar `cliente_catalogo_visibilidad` + RPC agregadora `catalogos_cliente_get` con allowlist. Frontend: panel con 7 macros + 17 catálogos, CRUD inline via PostgREST (helper `tableRequest`), archivado soft-delete, visibilidad opt-in por cliente con cascada al activar macro. Seed Rock & Climb 16 entradas. Ver sección "Panel Catálogos" arriba para detalle.
+6. **F2.7 Fase B Sprint 4 (mejoras del panel Catálogos)** — pendiente. Scope:
+    - **Pickers FK** para webinar (`comunidad_wsp_id` + `lead_magnet_id`). Hoy esos 2 campos no salen en el form de webinar — quien quiera relacionar un webinar con su comunidad WSP o lead magnet tiene que hacerlo vía SQL en Supabase Studio.
+    - **Editor `campos_capturar` jsonb** en plantillas Form Meta (UI con chips para defaults + extras). Hoy queda como el default del schema `{"extras":[],"defaults":["nombre","email","telefono"]}`.
+    - **Buscador global** del panel — los 17 catálogos pueden llenarse de entradas. Filtrar por nombre/tipo/URL en una sola caja.
+    - **Toggle "Ver archivadas"** — hoy las archivadas se muestran SIEMPRE tachadas con badge `🗄`. Opción para ocultarlas y limpiar el ruido visual.
+    - **Bulk operations** — importar lista (CSV/JSON), exportar CSV.
+7. **F2.7 Fase C (cablear Campaña → Catálogo)** — pendiente. Scope:
+    - Sección "Recursos asociados" dentro del detalle de Campaña.
+    - Picker por tipo de recurso que muestra las entradas activas+visibles del catálogo del cliente.
+    - Modelo de referencia: `recurso_id uuid` + `nombre_snapshot text` (decisión 2026-05-25 "snapshot+vivo": entrada archivada → snapshot con `🗄`; entrada activa → lee vivo del catálogo).
+    - 1 plantilla de Campaña hardcodeada (la del PDF Rock and Climb) que declare qué refs pide. Cuando haya 3-4 plantillas reales, abrir builder.
+    - Tabla nueva `campania_sesion_webinar` para webinars con N sesiones específicas (PDF3 Actualízate tiene 3 masterclass V/S/D con Meet links y horarios — son temporales del lanzamiento, NO recursos del catálogo).
+8. **Panel Anomalías** — integrar `n8n_incidencias` filtradas por cliente + checks operativos derivados (servicios sin Drive, campañas sin briefing).
+9. **Allowlist en tabla `playbook_editors(email)`** cuando crezca a 5+ editores. Hoy son 5 + ya hay 8 sitios (frontend × 3 + RLS policies × 3 + RPCs × 4). Cuando llegue el 6º editor, migrar.
+
+---
+
+## Estado del módulo Catálogos al cierre de sesión 2026-05-25
+
+Snapshot consolidado para retomar la próxima sesión sin tener que reconstruir contexto.
+
+### ✅ Lo que funciona hoy en producción
+
+**Backend (Supabase project `cbixhqjsnpuhcrcjppah`):**
+- 17 tablas `cliente_catalogo_*` (carpeta_drive, documento, comunidad_wsp, email_remitente, etiqueta, cuenta_publicitaria, pixel, pagina_social, publico_personalizado, plantilla_form_meta, presupuesto, lead_magnet, webinar, sistema_reserva, producto_servicio, regla, web_cliente) con RLS + 68 policies + 17 triggers `updated_at`.
+- 1 tabla auxiliar `cliente_catalogo_visibilidad` (macro/catalogo × oculto bool) con RLS + 4 policies + 1 trigger.
+- RPC `catalogos_cliente_get(p_bubble_id)` SECURITY DEFINER con allowlist 5 emails. Devuelve jsonb con **18 keys**: 17 catálogos + `visibilidad`.
+- Migrations aplicadas: `f2_7_catalogos_cliente` + `f2_7_sprint3_catalogos_visibilidad`.
+
+**Frontend (`ficha-cliente/index.html`):**
+- Panel Catálogos cableado a la RPC (1 fetch para el panel entero).
+- Botón **+ Añadir** en cada uno de los 17 catálogos → sheet bottom con form generado dinámicamente desde el array `fields` del catálogo (text/url/number/date/textarea/select/checkbox). Validación required client-side. POST vía PostgREST con `cliente_bubble_id` añadido automáticamente.
+- **Click en cualquier entrada** → form en sheet bottom prellenado. PATCH vía PostgREST.
+- Botón **Archivar/Desarchivar** dentro del form de edit. Soft-delete con badge `🗄` (las archivadas siguen visibles tachadas). Sin DELETE duro a propósito.
+- Botón **⚙️ Gestionar catálogos** arriba del panel → sheet bottom con toggles ON/OFF por cada macro (7) y catálogo (17 agrupados por macro). **Default opt-in (decisión Ben "Valentina elige"):** sin row en `cliente_catalogo_visibilidad` = oculto. Account activa lo que aplica. **Cascada:** activar una macro envía array UPSERT con la macro + todos sus catálogos en `oculto=false`.
+- Refresh tras CRUD preservando coll-groups abiertos. Helper `tableRequest()` para POST/PATCH/DELETE genérico con `prefer` opcional.
+
+**Datos seed:**
+- Rock & Climb (bubble_id `1778244949886x259108771172188160`): 16 entradas en 6 catálogos derivadas del PDF de lanzamiento. 5 URLs marcadas placeholder ("PENDIENTE") con badge naranja.
+- Resto de clientes activos (72): catálogos vacíos.
+
+### 📋 Decisiones tomadas y documentadas
+
+| Decisión | Valor | Razón |
+|---|---|---|
+| Cliente vs Usuario | Visibilidad vive en Supabase (es del cliente, no del usuario) | Si Mel oculta algo para Rock & Climb, Ben también lo ve oculto |
+| Default visibilidad | **Opt-in** (sin row = oculto) | Iteración misma sesión 2026-05-25: "Valentina elige" |
+| Política borrado | Solo archivar (soft-delete), NO DELETE duro desde UI | Trazabilidad + protege Fase C cuando Campaña referencie catálogo |
+| Datos al ocultar | Preservados | Ocultar afecta solo visibilidad, no datos |
+| Schema customizable | No (descartado schema builder) | Híbrido A+C: tipos cerrados por nosotros, entradas y visibilidad por cliente |
+| Snapshot vs vivo (Fase C) | Híbrido: FK live + `nombre_snapshot` para histórico | Stripe/GitHub pattern. Para cuando se cablee Campaña→Catálogo |
+
+### 🚧 Lo que falta (orden sugerido)
+
+1. **Sprint 4 — Mejoras del panel** (estimado ~1 día): pickers FK webinar, editor `campos_capturar`, buscador global, toggle ver archivadas, bulk import. Ver ítem 6 arriba.
+2. **Fase C — Cablear Campaña→Catálogo** (estimado ~3-5 días): sección Recursos asociados en Campaña + picker + 1 plantilla hardcodeada + tabla `campania_sesion_webinar`. Ver ítem 7 arriba.
+3. **(Adyacente)** — Panel Anomalías + migración allowlist a tabla.
+
+### 🐛 Bugs ya cerrados en la misma sesión (referencia)
+
+| Commit | Bug | Causa | Fix |
+|---|---|---|---|
+| `5fa8363` | Botón "+ Añadir" no respondía | `onclick="stopPropagation()"` inline bloqueaba el delegate handler que vivía en `document` | Quitar el onclick + guard `closest('[data-cat-add]')` en handler de `[data-coll-toggle]` |
+| `d8fd260` | Checkbox visibilidad mostraba "Error" pese a guardar OK | `Prefer: return=minimal` devuelve 201 con body vacío → `res.json()` lanza SyntaxError | Helper `tableRequest` tolera body vacío + `toggleVisibility` usa `return=representation` |
+| `64440ea` | Cambio semántica visibilidad de opt-out a opt-in | Decisión de Ben "todas sin seleccionar, las elegirá Valentina" | `isHidden()` default true + cascada al activar macro |
+
+### 📁 Mapa de archivos tocados (commits 7de0b79 → 64440ea)
+
+- **Frontend único:** `ficha-cliente/index.html` (módulo `CATALOGOS_MODULE` + helper `tableRequest` + CSS catalogos-controls/cat-form-*/vis-*).
+- **Docs canónicos:**
+  - [`CLAUDE.md`](../../CLAUDE.md) raíz — sección `/ficha-cliente/` línea 128.
+  - [`docs/work/ficha-cliente.md`](ficha-cliente.md) — este archivo. Sección "Panel Catálogos" + "Visibilidad por cliente" + "Política de borrado" + esta sección de estado.
+  - [`docs/log-cambios.md`](../log-cambios.md) — 2 entradas del 2026-05-25 (Fase A + Fase B Sprint 1+2 + bugfix botón / Sprint 3 + bugfix checkbox + opt-in).
+  - [`docs/infra/supabase-schema.md`](../infra/supabase-schema.md) — sección "Catálogos del cliente — F2.7 Fase A" con tabla de 17 catálogos + sub-sección "Tabla auxiliar `cliente_catalogo_visibilidad`" + RPC ampliada.
+- **SQL revisable** (no commiteado al repo, sirve como referencia): `c:\tmp\catalogos-cliente-f2.7.sql`.
