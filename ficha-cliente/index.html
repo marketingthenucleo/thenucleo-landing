@@ -1934,6 +1934,10 @@ function toggleCollGroup(header) {
   header.setAttribute('aria-expanded', group.classList.contains('open') ? 'true' : 'false');
 }
 document.addEventListener('click', (e) => {
+  // F2.7: clicks en el botón "+ Añadir" del módulo Catálogos están dentro del
+  // header con [data-coll-toggle]. Si no los excluimos aquí, el botón abre/
+  // cierra el coll-group además de su propio handler (registrado más abajo).
+  if (e.target.closest('[data-cat-add]')) return;
   const header = e.target.closest('[data-coll-toggle]');
   if (header) toggleCollGroup(header);
 });
@@ -4805,7 +4809,7 @@ const CATALOGOS_MODULE = (() => {
           <span class="coll-group-dot" style="background:${def.dot}"></span>
           <span class="coll-group-name">${escapeHtml(def.label)}</span>
           <span class="coll-group-count ${badgeClass}">${badgeText}</span>
-          <button type="button" class="cat-add-btn" data-cat-add="${escapeHtml(key)}" onclick="event.stopPropagation()" title="Añadir nueva entrada">+ Añadir</button>
+          <button type="button" class="cat-add-btn" data-cat-add="${escapeHtml(key)}" title="Añadir nueva entrada">+ Añadir</button>
         </div>
         <div class="coll-group-body">${body}</div>
       </div>
