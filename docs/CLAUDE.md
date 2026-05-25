@@ -183,6 +183,7 @@ Ambas SECURITY DEFINER + allowlist hardcoded en body (5 emails TheNucleo desde 2
 - PostgreSQL function params: siempre prefijo `p_` para evitar error 42702.
 - `DROP VIEW IF EXISTS` antes de cualquier rename/type change en columnas de vistas.
 - **GRANTs explícitos obligatorios en tablas nuevas (rollout Supabase 2026-10-30):** toda tabla nueva en `public` consumida por Data API (Bubble API Connector, n8n HTTP `/rest/v1/`, supabase-js en `work.thenucleo.com`) requiere `GRANT` por rol (`anon`/`authenticated`/`service_role`) + `ENABLE ROW LEVEL SECURITY` + policies en el mismo migration. Sin GRANT → PostgREST devuelve `42501`. Tablas actuales conservan grants y no se rompen. RPCs no se ven afectados (siguen con `GRANT EXECUTE`).
+- **Multitenant convivencia desde 2026-05-25 — Agencia "Demo Quasar"** (uuid_supabase `bea972de-...`, bubble_id `1779722662984x...`) vive en LIVE junto a TheNucleo Agency. Filtrado por `agencia_id` está garantizado en las tablas operativas que el Portal consume (`analisis_wip`, `chat_conversations`, `clockify_time_entries`, `holded_*`, etc.). Las 9 tablas single-tenant (`playbook_*` + `cliente_pipelines/campanias/triggers/emails/whatsapp/creatividades`) NO tienen `agencia_id` y solo las usa work.com con allowlist 5 emails — quedan como deuda multitenant para cuando se cableen al Portal. La cuenta Demo (`mvplowcost@gmail.com`) NO debe añadirse a allowlists work.com bajo ninguna circunstancia. Doc en `docs/portal/demo-quasar.md`.
 
 ## Bubble — Patrones clave
 - **API Connector calls** — 59 calls en 12 grupos activos (todas auditadas 2026-05-14, tras cleanups "estados flujos" + "Gestion plantillas" + `POST_MESSAGE`).
@@ -220,6 +221,7 @@ Ambas SECURITY DEFINER + allowlist hardcoded en body (5 emails TheNucleo desde 2
 - ✅ `CNlBtiFCwY69I6Wl` — **CRON BLOG — Zenyx Diario 18:00** (ver sección Blog Zenyx)
 - ✅ `1f6IGS3cGPMVhQInlG7nX` — **CRON TIEMPO — Calcular Horas Reales** (Clockify)
 - ✅ `NMZA404s1agKcHau` — **CRON LOG — Renovar Subscriptions Google Chat (3h)** (activo 2026-05-08, intervalo bajado de 6h→3h el 2026-05-14 tras gap de captura observado). Filtro `status=active AND expire_time < now()` (solo subs en SUSPENDED en Google). POST CREATE idempotente sobre `/v1/subscriptions` con cred Google SA `chat-token-thenucleo` (refactor 2026-05-09 desde `:reactivate`, que falla sobre subs ya borradas). Tag `portal` pendiente UI.
+- ✅ `Z9Mp78CHNeuEwtCc` — **CRON DEMO — Rolling Refresh Fechas (Lunes 03:00)** (creado 2026-05-25). Schedule weekly lunes 03:00 Madrid → POST RPC `demo_rolling_refresh()` que avanza fechas seed de la agencia Demo Quasar (`bea972de-...`) en cbi (clockify+holded+chats+análisis+métricas) para que la demo no quede "atrás en el tiempo" en filtros de dashboard. Idempotente. Refresh fechas Bubble (`fecha_onboarding`, `ultimo_seguimiento`) es on-demand manual (no entra al CRON para evitar ruido en `n8n_incidencias` del sync `wvHcgVqqjkWJcJDu`). Tag `portal` pendiente UI. Doc en `docs/portal/demo-quasar.md`.
 
 ### OPS — Operaciones (tareas, plantillas, ads, CRM)
 - ✅ `eHyXBETcaGSNXqLk` — **OPS TAREAS — Crear desde Formulario Bubble**
@@ -308,6 +310,7 @@ Estructura `docs/` reorganizada por dominio (revisada 2026-05-20):
 - `flujo-registro-saas.md` — Flujo registro/onboarding SaaS (en construcción)
 - `chat-cocreativo-blueprint.md` — Blueprint chats IA co-creativos
 - `notificaciones.md` — Módulo Notificaciones (sección 9)
+- `demo-quasar.md` — Agencia Demo Quasar (multitenant convivencia en LIVE, datos seed clonados desde TheNucleo + anonimizados, rolling refresh semanal automático cbi + on-demand Bubble)
 - `sectores/` — Auditoría por área funcional (Tareas, Clientes, Reconciliaciones, Chats IA, Análisis)
 - `integraciones/` — Sistemas externos que solo alimentan al Portal:
   - `clickup.md` — Multi-provider Notion+ClickUp

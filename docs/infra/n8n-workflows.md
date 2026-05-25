@@ -504,6 +504,39 @@ Recrea las Workspace Events Subscriptions de Google Chat cuando han expirado (TT
 
 ---
 
+### CRON DEMO — Rolling Refresh Fechas (Lunes 03:00)
+**ID:** `Z9Mp78CHNeuEwtCc` · ✅ Activo (creado 2026-05-25)
+**Schedule:** Weekly, lunes 03:00 Europe/Madrid (era daily al crear; cambiado a weekly mismo día por decisión Ben)
+**Folder:** raíz (personal Ben)
+**Error workflow:** (sin asignar)
+**Tag `portal`:** ⏳ pendiente UI (necesario para entrar al backup `marketingthenucleo/n8nthenucleo`)
+
+Mantiene las fechas seed de la agencia Demo Quasar (`bea972de-6499-4086-b8de-57e8ed2d42a7`) actualizadas al `CURRENT_DATE` para que la demo del Portal no quede "atrás en el tiempo" en filtros tipo "últimos 30 días" (Clockify), "últimos 6 meses" (Holded) o "histórico chats Análisis" al pasar el tiempo. Detalle operativo + protocolo de refresh on-demand Bubble en `docs/portal/demo-quasar.md`.
+
+```
+1. Cron lunes 03:00 Madrid (Schedule Trigger v1.3, weeks=1, triggerAtDay=[1], triggerAtHour=3, triggerAtMinute=0)
+2. POST demo_rolling_refresh (HTTP Request v4.4, POST
+   https://cbixhqjsnpuhcrcjppah.supabase.co/rest/v1/rpc/demo_rolling_refresh
+   Headers:
+     apikey: ={{ $env.SUPABASE_SERVICE_ROLE_KEY }}
+     Authorization: =Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}
+     Content-Type: application/json
+   Body: {}
+   Timeout: 30000ms
+   Returns: {status, delta_days, rows: {clockify, holded_facturas, chat_conversations,
+                                       chat_messages, analisis_wip, holded_metricas}})
+```
+
+**RPC consumida:** `demo_rolling_refresh()` SECURITY DEFINER (ver `supabase-schema.md` sección "Demo Quasar"). Idempotente — si `delta_days <= 0` devuelve `{status:'skipped', reason:'already_fresh'}` sin escribir.
+
+**Alcance del CRON automático:** solo tablas cbi (Clockify, Holded, chats, análisis). Las fechas en `bub_clientes` (`fecha_onboarding`, `ultimo_seguimiento`) son espejo desde Bubble y NO se tocan automáticamente — si entraran al CRON, cada PATCH dispararía `wvHcgVqqjkWJcJDu` que intentaría actualizar la página Notion del cliente Demo (que no existe, son UUIDs fake) → ruido semanal en `n8n_incidencias`. Decisión: refresh Bubble es on-demand manual. Ben pide "refresca fechas Bubble Demo" → operador pausa `wvHcgVqqjkWJcJDu` 30s, hace 3 PATCH a Bubble Data API, reactiva.
+
+**Lección setup (gotcha SDK n8n):** la expresión `expr('$env.X')` del SDK genera `=$env.X` que n8n NO evalúa en headers HTTP. Hay que usar `expr('{{ $env.X }}')` para que genere `={{ $env.X }}` (sintaxis canónica). Detectado en el primer test del workflow (401 Invalid API key porque el header `apikey` se mandaba literal). Aplicable a cualquier nodo HTTP Request que lea env vars.
+
+**Cred n8n usada:** ninguna (env var directa). `$env.SUPABASE_SERVICE_ROLE_KEY` ya existía en EasyPanel desde 2026-05-14 (ver log-cambios línea 493).
+
+---
+
 ### BLOG Zenyx — DIARIO 18:00 Madrid
 **ID:** `CNlBtiFCwY69I6Wl`
 **Estado:** ✅ Activo
