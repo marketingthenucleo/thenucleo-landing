@@ -69,7 +69,7 @@ CREATE TABLE public.casuisticas_board (
 -- trigger update_updated_at() en BEFORE UPDATE
 ```
 
-RLS habilitado. Policies SELECT/INSERT/UPDATE restringidas a `auth.email() IN (allowlist 4 emails)` — mismo set que `EDITOR_EMAILS` del HTML. GRANTs explícitos a `authenticated` (SELECT, INSERT, UPDATE) y `service_role` (ALL).
+RLS habilitado. Policies SELECT/INSERT/UPDATE restringidas a `auth.email() IN (allowlist 5 emails)` — mismo set que `EDITOR_EMAILS` del HTML. GRANTs explícitos a `authenticated` (SELECT, INSERT, UPDATE) y `service_role` (ALL).
 
 ### Seed inicial
 
@@ -85,6 +85,7 @@ const EDITOR_EMAILS = new Set([
   "alejandro.lopez@thenucleo.com",
   "marketing.thenucleo@gmail.com",
   "mel.dalmazo@thenucleo.com",
+  "valentina.ramirez@thenucleo.com",
 ]);
 ```
 

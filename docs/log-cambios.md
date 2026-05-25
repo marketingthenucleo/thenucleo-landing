@@ -71,6 +71,18 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][OPS] — Allowlist admin: añadida `valentina.ramirez@thenucleo.com` (4 → 5 editores)
+
+- **Commit:** `ea94393` (frontend) + 2 migrations Supabase.
+- **Frontend (5 archivos en `thenucleo-landing/`):** `casuisticas/`, `disponibilidades/`, `ficha-cliente/`, `fichas-de-producto/`, `presentacion-pipelines/`. `playbook/` ya tenía a Valentina de antes. Contador "4 emails" → "5 emails" actualizado en `CLAUDE.md` (raíz) + copy del gate de `/presentacion-pipelines/`.
+- **Migrations Supabase aplicadas:**
+  - `ficha_cliente_rpcs_allowlist_add_valentina` — `CREATE OR REPLACE FUNCTION` en `ficha_cliente_listar()` y `ficha_cliente_get(p_bubble_id text)` añadiendo el email al array `v_allowlist`. SECURITY DEFINER intacta.
+  - `casuisticas_board_allowlist_add_valentina` — DROP+CREATE de las 3 policies `casuisticas_board_admin_{select,insert,update}` con el array de 5 emails.
+- **Ya tenían a Valentina (no requirieron migration):** RPC `playbook_cliente_detalle` + 3 RLS policies `playbook_progreso_write` / `ptf_editor_all` / `pcs_editor_all`.
+- **Pendiente — `/disponibilidades/`:** las 3 tablas RLS usan `is_comunidad_admin()`. Valentina **no está en `comunidad_admins`** todavía. Frontend la deja pasar, pero las queries devuelven arrays vacíos sin error (síntoma documentado). Pendiente: tras su primer login en `/comunidad/entrar/`, ejecutar `INSERT INTO comunidad_admins (user_id) VALUES ('<auth.uid de Valentina>');`.
+- **Sincronización docs:** `docs/CLAUDE.md` (2 menciones), `docs/work/README.md`, `docs/work/ficha-cliente.md` (3 menciones), `docs/work/casuisticas.md` (2 menciones), `docs/work/disponibilidades.md` (allowlist + nota pendiente comunidad_admins), `docs/work/playbook.md` (lista editores + ejemplo de añadir), `docs/infra/supabase-schema.md` (allowlist RLS casuisticas_board). Frontmatter `actualizado: 2026-05-25` revalidado.
+- **Refs:** [feedback_playbook_allowlist_5_sitios] (ahora son 7 sitios para Ficha/Playbook, 3 más para Casuísticas, 1 más para presentación-pipelines — total ~11 puntos al añadir/retirar editor). Con 5 editores estamos en el umbral del `playbook_editors(email)` table.
+
 ### 2026-05-25 [WORK][INFRA][UX] — Ficha de Cliente: link brief en creatividades (F2.5b) + reescritura de 14 tooltips con voz Account
 
 - **Commit:** `f194643`. Migration `ficha_cliente_creatividades_link_brief`.

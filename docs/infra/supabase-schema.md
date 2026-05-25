@@ -1056,7 +1056,7 @@ GRANT ALL ON public.casuisticas_board TO service_role;
 ```
 
 ### RLS (3 policies)
-Todas: `auth.email() IN (allowlist 4 emails)` — `benjamin.sanchis@thenucleo.com`, `alejandro.lopez@thenucleo.com`, `marketing.thenucleo@gmail.com`, `mel.dalmazo@thenucleo.com`.
+Todas: `auth.email() IN (allowlist 5 emails)` — `benjamin.sanchis@thenucleo.com`, `alejandro.lopez@thenucleo.com`, `marketing.thenucleo@gmail.com`, `mel.dalmazo@thenucleo.com`, `valentina.ramirez@thenucleo.com` (añadida 2026-05-25, migration `casuisticas_board_allowlist_add_valentina`).
 - `casuisticas_board_admin_select` (SELECT)
 - `casuisticas_board_admin_update` (UPDATE, USING + WITH CHECK)
 - `casuisticas_board_admin_insert` (INSERT, WITH CHECK)

@@ -20,13 +20,14 @@ Herramienta interna en cuarentena para gestionar la escaleta operativa de onboar
 - **Frontend**: HTML standalone en `thenucleo-landing/playbook/index.html`. Sin Eleventy templating (passthrough copy), sin framework. Carga Supabase JS desde jsdelivr.
 - **Backend**: 1 tabla Supabase `public.playbook_onboarding` (slug PK, data jsonb). Sin FKs ni dependencias con `bub_*`, `v_tareas_panel` ni workflows n8n.
 - **Auth**: Google OAuth reutilizando el flujo de `/comunidad/entrar/` (mismo storageKey `thenucleo-comunidad-auth`). Allowlist hardcoded en frontend Y RLS Supabase.
-- **Editores actuales** (`Ben + Alex + marketing@ + Mel`):
+- **Editores actuales** (`Ben + Alex + marketing@ + Mel + Valentina`):
   - `benjamin.sanchis@thenucleo.com`
   - `alejandro.lopez@thenucleo.com`
   - `marketing.thenucleo@gmail.com`
   - `mel.dalmazo@thenucleo.com` (añadida 2026-05-15)
+  - `valentina.ramirez@thenucleo.com` (añadida 2026-05-25)
 
-  ⚠️ La allowlist vive en **6 sitios** que hay que sincronizar a mano: `EDITOR_EMAILS` (frontend) + 4 RLS policies Supabase (`playbook_progreso_write`, `playbook_update_editors`, `pcs_editor_all`, `ptf_editor_all`) + 1 gate hardcoded en el body de la RPC `playbook_cliente_detalle` (SECURITY DEFINER, bypasea RLS — el gate es explícito en el SQL). Cuando crezca a 5+ editores migrar a tabla `playbook_editors(email)`.
+  ⚠️ La allowlist vive en **6 sitios** que hay que sincronizar a mano: `EDITOR_EMAILS` (frontend) + 4 RLS policies Supabase (`playbook_progreso_write`, `playbook_update_editors`, `pcs_editor_all`, `ptf_editor_all`) + 1 gate hardcoded en el body de la RPC `playbook_cliente_detalle` (SECURITY DEFINER, bypasea RLS — el gate es explícito en el SQL). Con 5 editores ya estamos en el umbral: cuando crezca a 6+ migrar a tabla `playbook_editors(email)`.
 - **Datos en producción** (desde 2026-05-11 tarde): **84 tareas**, 49 días distintos, 7 fases (Pre-onboarding → Mes 4), 8 miembros (incl. Valeria). Dataset cargado desde CSV "OFERTA SERVICIOS — CONTROL DEFINITIVO V1" (Excel operativo) — reemplazó el primer dataset de 78 que Claude generó como semilla.
 - **Campos por tarea**: 16 (id, day, dayKey, dayLabel, daySub, phase, title, sub, owners[], client, reg, notas, est, **fechaFija** ✨, **automatizable** ✨, **comoAuto** ✨). Los 3 últimos añadidos 2026-05-11 con el CSV V1.
 
@@ -346,6 +347,7 @@ const STATE = {
      "alejandro.lopez@thenucleo.com",
      "marketing.thenucleo@gmail.com",
      "mel.dalmazo@thenucleo.com",
+     "valentina.ramirez@thenucleo.com",
      "nuevo@email.com",
    ]);
    ```

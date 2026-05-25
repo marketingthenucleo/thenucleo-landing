@@ -11,7 +11,7 @@ tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 
 Vista admin-only mobile-first para consultar y operar sobre la ficha de un cliente del portal. Lee `bub_clientes` vía RPCs admin-allowlist sin tocar las policies de la tabla. Incluye el módulo **Pipelines y Campañas** (visión PxCx, ver [[../portal/ficha-cliente]] para el modelo conceptual).
 
-> ✅ **Vivo desde 2026-05-22** en `work.thenucleo.com/ficha-cliente/` (allowlist 4 emails TheNucleo, `noindex`). **Módulo Pipelines y Campañas** vivo desde 2026-05-23 con seed F1 hardcoded de Dra. Neuss. Backend Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + RPCs) es F2 — sesión técnica pendiente.
+> ✅ **Vivo desde 2026-05-22** en `work.thenucleo.com/ficha-cliente/` (allowlist 5 emails TheNucleo desde 2026-05-25, `noindex`). **Módulo Pipelines y Campañas** vivo desde 2026-05-23 con seed F1 hardcoded de Dra. Neuss. Backend Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + RPCs) es F2 — sesión técnica pendiente.
 
 ---
 
@@ -19,7 +19,7 @@ Vista admin-only mobile-first para consultar y operar sobre la ficha de un clien
 
 - **Frontend**: HTML standalone en `thenucleo-landing/ficha-cliente/index.html`. Sin Eleventy templating (passthrough copy), sin framework. Carga Supabase JS desde jsdelivr. Mobile-first con paleta TheNucleo dark + verde, font NewBlack (theme switch).
 - **Backend**: lectura sobre `bub_clientes` (73 filas) + `playbook_cliente_servicios` (199 filas) vía 2 RPCs `SECURITY DEFINER` con allowlist hardcoded. No escribe — operaciones de escritura siguen viviendo en el portal Bubble.
-- **Auth**: Google OAuth reutilizando el flujo de `/comunidad/entrar/` (mismo `storageKey`). Allowlist 4 emails TheNucleo. Mismo patrón que `/playbook/` y `/fichas-de-producto/`.
+- **Auth**: Google OAuth reutilizando el flujo de `/comunidad/entrar/` (mismo `storageKey`). Allowlist 5 emails TheNucleo. Mismo patrón que `/playbook/` y `/fichas-de-producto/`.
 - **URL deep-link**: `?id=<bubble_id>` carga directamente la ficha del cliente. Sin parámetro muestra el listado de clientes activos + buscador **inline** en el panel (fix 2026-05-25, antes era empty card "Elige un cliente" + botón que abría sheet). El botón "Cambiar" del header sigue abriendo el mismo sheet bottom para switch cuando ya hay cliente cargado.
 - **Datos en producción**: 73 clientes activos (filtra `COALESCE(estado,'') <> 'No Activo'`). Selector ordenado alfabético por `nombre_empresas`.
 - **Paneles**: 5 — **Datos** (5 grupos colapsables), **Servicios contratados** (agrupado por categoría), **Pipelines y Campañas** (seed F1), **Catálogos** (MOCKUP), **Anomalías** (MOCKUP plano).
@@ -42,12 +42,13 @@ Vista admin-only mobile-first para consultar y operar sobre la ficha de un clien
 
 Reutiliza el mismo storageKey `thenucleo-comunidad-auth` que `/comunidad/entrar/`. La sesión se comparte entre `/playbook/`, `/fichas-de-producto/`, `/ficha-cliente/`.
 
-**Editores actuales** (4 emails):
+**Editores actuales** (5 emails):
 
 - `benjamin.sanchis@thenucleo.com`
 - `alejandro.lopez@thenucleo.com`
 - `marketing.thenucleo@gmail.com`
 - `mel.dalmazo@thenucleo.com` (añadida 2026-05-15)
+- `valentina.ramirez@thenucleo.com` (añadida 2026-05-25)
 
 ⚠️ **La allowlist vive en 7 sitios** que hay que sincronizar a mano:
 
@@ -59,7 +60,9 @@ Reutiliza el mismo storageKey `thenucleo-comunidad-auth` que `/comunidad/entrar/
 - Body hardcoded de RPC `ficha_cliente_listar` (SECURITY DEFINER)
 - Body hardcoded de RPC `ficha_cliente_get` (SECURITY DEFINER)
 
-Cuando crezca a 5+ editores migrar a tabla `playbook_editors(email)` y reescribir las 3 RPCs + 3 policies para consultarla. Mientras tanto es asumible.
+> Nota adyacente — `/casuisticas/`, `/presentacion-pipelines/` y los 5 emails del frontend de `/disponibilidades/` también se sincronizan al mismo tiempo (mismo set), pero usan sus propios mecanismos (3 policies hardcoded `casuisticas_board_*`, copy del gate de presentación, `EDITOR_EMAILS` standalone). Total: 11 sitios frontend+backend al añadir/retirar editor.
+
+Con 5 editores ya estamos en el umbral: cuando crezca a 6+ migrar a tabla `playbook_editors(email)` y reescribir las 3 RPCs + 3 policies + las de casuisticas para consultarla. Mientras tanto es asumible.
 
 **Gate auth** (frontend): si el email no está en la allowlist, muestra pantalla de bloqueo con botón "Cerrar sesión y volver al login". Si está, pinta el selector / la ficha solicitada.
 
