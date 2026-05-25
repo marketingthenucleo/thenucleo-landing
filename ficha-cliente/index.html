@@ -690,6 +690,165 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ─── Scope Guide (panel contextual "Estás en…") ─ */
+  /* F2.8 (2026-05-25): tarjeta que explica dónde estás y qué puedes
+     hacer en cada vista. Dismiss progresivo tras 5 aperturas/scope.
+     Desktop ≥1280 = panel sticky · resto = FAB + sheet bottom. */
+  .sg-card {
+    position: fixed; top: 168px; right: 24px; width: 300px;
+    z-index: 60; display: none; box-sizing: border-box;
+    background: rgba(18, 20, 27, 0.86);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(34,197,94,0.16);
+    border-left: 3px solid var(--accent);
+    border-radius: 14px; padding: 18px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.32);
+    color: var(--text);
+    animation: sgFadeIn 220ms ease-out;
+  }
+  @keyframes sgFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .sg-card.collapsed .sg-body,
+  .sg-card.collapsed .sg-tip,
+  .sg-card.collapsed .sg-divider,
+  .sg-card.collapsed .sg-link,
+  .sg-card.collapsed .sg-caption { display: none; }
+  .sg-card.collapsed { padding: 12px 16px; }
+
+  .sg-head {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .sg-head-text { flex: 1; min-width: 0; }
+  .sg-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(34,197,94,0.78);
+    margin-bottom: 4px;
+  }
+  .sg-title {
+    font-size: 16px; font-weight: 700; color: var(--text);
+    line-height: 1.25;
+  }
+  .sg-toggle, .sg-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-3); padding: 4px;
+    font-family: inherit; font-size: 14px; line-height: 1;
+    border-radius: 6px;
+    min-width: 28px; min-height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: color 0.15s, background 0.15s;
+  }
+  .sg-toggle:hover, .sg-close:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .sg-toggle:focus-visible, .sg-close:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+
+  .sg-caption {
+    font-size: 13px; font-weight: 500; color: var(--text-2);
+    margin-bottom: 14px; line-height: 1.35;
+  }
+  .sg-body {
+    font-size: 13.5px; font-weight: 400; color: var(--text-2);
+    line-height: 1.55; margin-bottom: 14px;
+  }
+  .sg-body strong { color: var(--text); font-weight: 600; }
+  .sg-body code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px; padding: 1px 5px; border-radius: 4px;
+    background: rgba(255,255,255,0.04); color: var(--text);
+  }
+  .sg-tip {
+    display: flex; gap: 8px; align-items: flex-start;
+    font-size: 12px; font-weight: 500;
+    color: rgba(34,197,94,0.85); line-height: 1.45;
+    margin-bottom: 14px;
+  }
+  .sg-tip-mark { flex-shrink: 0; font-size: 11px; line-height: 1.5; }
+  .sg-divider {
+    height: 1px; background: rgba(255,255,255,0.06);
+    margin: 0 -4px 12px;
+  }
+  .sg-link {
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    background: none; border: none; cursor: pointer;
+    padding: 0; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .sg-link:hover { text-decoration: underline; }
+  .sg-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+  /* FAB de ayuda — más pequeño que el .fab principal, va a su izquierda */
+  .sg-fab {
+    position: fixed; bottom: 24px; right: 84px;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--bg-3);
+    border: 1px solid rgba(34,197,94,0.28);
+    color: var(--accent);
+    cursor: pointer; font-family: inherit;
+    z-index: 49; display: none;
+    align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.42);
+    transition: transform 0.15s, background 0.15s;
+  }
+  .sg-fab:hover { background: var(--bg-2); transform: translateY(-1px); }
+  .sg-fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sg-fab svg { width: 22px; height: 22px; }
+  .sg-fab-dot {
+    position: absolute; top: 6px; right: 6px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #a855f7; box-shadow: 0 0 0 2px var(--bg-3);
+  }
+
+  /* Sheet bottom mobile/tablet */
+  .sg-sheet-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    z-index: 199;
+  }
+  .sg-sheet-backdrop.open { opacity: 1; pointer-events: all; }
+  .sg-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: var(--bg-2);
+    border-top: 1px solid var(--line);
+    border-radius: 20px 20px 0 0;
+    padding: 18px 20px calc(20px + env(safe-area-inset-bottom));
+    transform: translateY(100%); transition: transform 0.25s ease-out;
+    z-index: 200; max-height: 80vh; overflow-y: auto;
+    color: var(--text);
+  }
+  .sg-sheet.open { transform: translateY(0); }
+  .sg-sheet-grip {
+    width: 36px; height: 4px; background: var(--line-2);
+    border-radius: 2px; margin: 0 auto 14px;
+  }
+
+  /* Desktop ≥1280px: panel sticky visible, FAB oculto */
+  @media (min-width: 1280px) {
+    .sg-card.is-visible { display: block; }
+    .sg-fab { display: none !important; }
+  }
+  /* <1280px (tablet + mobile): FAB visible, panel oculto */
+  @media (max-width: 1279.98px) {
+    .sg-card { display: none !important; }
+    .sg-fab.is-visible { display: inline-flex; }
+  }
+  /* Mobile: FAB respeta safe-area en lugar de overlap con action FAB */
+  @media (max-width: 767px) {
+    .sg-fab { bottom: calc(24px + env(safe-area-inset-bottom)); }
+  }
+
+  /* Reduced motion: solo opacidad, sin transforms */
+  @media (prefers-reduced-motion: reduce) {
+    .sg-card { animation: none; }
+    .sg-sheet { transition: none; }
+    .sg-fab { transition: background 0.15s; }
+    .sg-fab:hover { transform: none; }
+  }
+
   /* ─── Picker (selector cliente) ────────────────── */
   .picker-search {
     width: 100%; background: var(--bg-3); border: 1px solid var(--line);
@@ -1313,8 +1472,8 @@
   <button class="tab active" data-panel="datos">Datos</button>
   <button class="tab" data-panel="pipelines">Pipelines</button>
   <button class="tab" data-panel="catalogos">Catálogos</button>
-  <button class="tab" data-panel="servicios">Servicios</button>
-  <button class="tab" data-panel="anomalias">Anomalías</button>
+  <button class="tab" data-panel="servicios" style="display:none">Servicios</button>
+  <button class="tab" data-panel="anomalias" style="display:none">Anomalías</button>
 </nav>
 
 <main class="content">
@@ -1461,6 +1620,21 @@
 
 <!-- ─── Toast ─── -->
 <div class="toast" id="toast">—</div>
+
+<!-- ─── Scope Guide (F2.8) ─── -->
+<aside id="sg-card" class="sg-card" aria-live="polite" aria-labelledby="sg-title"></aside>
+<button id="sg-fab" class="sg-fab" type="button" aria-label="Ayuda contextual">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M9.5 9a2.5 2.5 0 1 1 4 2c-.8.6-1.5 1-1.5 2"/>
+    <circle cx="12" cy="17" r="0.6" fill="currentColor"/>
+  </svg>
+</button>
+<div id="sg-sheet-backdrop" class="sg-sheet-backdrop"></div>
+<div id="sg-sheet" class="sg-sheet" role="dialog" aria-modal="true" aria-labelledby="sg-sheet-title">
+  <div class="sg-sheet-grip"></div>
+  <div id="sg-sheet-body"></div>
+</div>
 
 <script>
   window.__SUPABASE_URL__ = "https://cbixhqjsnpuhcrcjppah.supabase.co";
@@ -1714,7 +1888,7 @@ function renderCliente(c) {
   }
   chips.push(`<span class="chip"><span class="dot"></span>Anomalías · mockup</span>`);
   strip.innerHTML = chips.join('');
-  strip.style.display = '';
+  strip.style.display = 'none'; // ocultado temporalmente (decisión 2026-05-25)
 
   // Panel datos — Identificación
   const dirParts = [c.direccion_fiscal, c.codigo_postal, c.provincia, c.pais].filter(Boolean);
@@ -1779,6 +1953,8 @@ function renderCliente(c) {
   document.getElementById('state-content').style.display = '';
   document.getElementById('state-empty').style.display = 'none';
   document.getElementById('state-loading').style.display = 'none';
+  // F2.8: notificar al SCOPE_GUIDE que ya hay scope visible
+  try { window.dispatchEvent(new Event('ficha:view-changed')); } catch {}
 }
 
 // ─── Servicios contratados — agrupado por categoría + buscador ───
@@ -2010,6 +2186,8 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    // F2.8: refrescar guía contextual al cambiar de panel
+    try { window.dispatchEvent(new Event('ficha:view-changed')); } catch {}
   });
 });
 
@@ -2079,13 +2257,15 @@ const PIPELINES_MODULE = (() => {
         <p><strong>Sin Trigger no es ejecutable.</strong> La campaña queda declarada pero le falta por dónde entran los leads. El sistema te lo recuerda.</p>`
     },
     'trigger-tipos': {
-      title: 'Tipos de Trigger (FM / FW / BD)',
+      title: 'Tipos de Trigger (FM / FW / BD / DM / SD)',
       body: `
-        <p>Un <strong>Trigger</strong> es por dónde entran los leads a la campaña. Hay 3 maneras:</p>
+        <p>Un <strong>Trigger</strong> es por dónde entran los leads a la campaña. Hay 5 maneras:</p>
         <ul>
           <li><strong>FM · Formulario Meta</strong> — el formulario nativo de Instagram o Facebook. El lead lo rellena sin salir de la app. Lo monta <em>Media Buyer</em> cuando configura los anuncios.</li>
           <li><strong>FW · Formulario Web</strong> — un formulario en la web del cliente (landing, popup, contacto…). Cuando el lead lo rellena, los datos llegan a GHL. Lo monta <em>Dev</em> o <em>CRM Manager</em>.</li>
           <li><strong>BD · Enviar a base de datos personalizada</strong> — aquí no captas leads nuevos. Usas una lista que el cliente ya tiene (segmento de GHL, lista de clientes, un CSV importado…) y le mandas la secuencia en una fecha concreta. Lo monta el <em>CRM Manager</em>. Por eso este tipo pide siempre fecha.</li>
+          <li><strong>DM · Mensaje directo RRSS</strong> — auto-respuesta por DM cuando alguien comenta con una keyword en Instagram/Facebook. Lo monta <em>Community Manager</em>.</li>
+          <li><strong>SD · Sin trigger definido</strong> — triggers ajenos a nosotros (broadcast por grupo de WhatsApp, pegar carteles, eventos, boca a boca…). Sirve para declarar que la campaña recibe leads por canales que no controlamos desde el sistema; no pide fecha ni keyword ni campos a capturar.</li>
         </ul>
         <p>Una misma campaña puede tener varios triggers a la vez. Por ejemplo, FM + FW para captar leads desde Instagram y desde la web simultáneamente.</p>`
     },
@@ -2299,10 +2479,10 @@ const PIPELINES_MODULE = (() => {
   }
 
   // Regla .docx caso 5: emails compartidos → código sin trigger;
-  // emails por subset → código con triggers concatenados ordenados FM→FW→BD.
+  // emails por subset → código con triggers concatenados ordenados FM→FW→BD→DM→SD.
   function orderTriggersInCode(codes) {
     return [...codes].sort((a, b) => {
-      const w = c => c.includes('FM') ? 1 : c.includes('FW') ? 2 : c.includes('BD') ? 3 : 9;
+      const w = c => c.includes('FM') ? 1 : c.includes('FW') ? 2 : c.includes('BD') ? 3 : c.includes('DM') ? 4 : c.includes('SD') ? 5 : 9;
       return w(a) - w(b);
     }).join('');
   }
@@ -2340,7 +2520,7 @@ const PIPELINES_MODULE = (() => {
     if (/WA\d+$/.test(code)) return 'tag-whatsapp';
     if (/CR\d+$/.test(code)) return 'tag-creatividad';
     if (/E\d+$/.test(code)) return 'tag-email';
-    if (/FM\d+|FW\d+|BD\d+/.test(code)) return 'tag-trig';
+    if (/FM\d+|FW\d+|BD\d+|DM\d+|SD\d+/.test(code)) return 'tag-trig';
     return '';
   }
   function codeTag(code, sz) {
@@ -2415,6 +2595,38 @@ const PIPELINES_MODULE = (() => {
     if (!r) return;
     r.innerHTML = renderHeader() + renderCurrentView();
     attachAllHandlers();
+    // F2.8: notificar al SCOPE_GUIDE para refrescar la guía contextual
+    try { window.dispatchEvent(new Event('ficha:view-changed')); } catch {}
+  }
+
+  // F2.8: snapshot de la vista actual con el code resuelto. Lo consume
+  // SCOPE_GUIDE para mostrar "Estás en Campaña P1C1" en la tarjeta.
+  function getView() {
+    const v = S.view;
+    if (!v || v.kind === 'list') return { kind: 'list', code: null };
+    const p = S.data.find(x => x.id === v.pId);
+    if (!p) return { kind: v.kind, code: null };
+    if (v.kind === 'pipeline') return { kind: 'pipeline', code: p.code };
+    const c = (p.camps || []).find(x => x.id === v.cId);
+    if (!c) return { kind: v.kind, code: p.code };
+    if (v.kind === 'campaign') return { kind: 'campaign', code: c.code };
+    if (v.kind === 'trigger') {
+      const t = (c.triggers || []).find(x => x.id === v.tId);
+      return { kind: 'trigger', code: t ? `${c.code}${t.code || ''}` : c.code };
+    }
+    if (v.kind === 'email') {
+      const e = (c.emails || []).find(x => x.id === v.eId);
+      return { kind: 'email', code: e ? emailCode(c, e) : c.code };
+    }
+    if (v.kind === 'whatsapp') {
+      const w = (c.whatsapps || []).find(x => x.id === v.wId);
+      return { kind: 'whatsapp', code: w ? whatsappCode(c, w) : c.code };
+    }
+    if (v.kind === 'creatividad') {
+      const cr = (c.creatividades || []).find(x => x.id === v.crId);
+      return { kind: 'creatividad', code: cr && cr.codigo ? cr.codigo : c.code };
+    }
+    return { kind: v.kind, code: c.code };
   }
 
   function renderHeader() {
@@ -2724,7 +2936,8 @@ const PIPELINES_MODULE = (() => {
       t.tipo==='FM' ? 'FM (Formulario Meta)' :
       t.tipo==='FW' ? 'FW (Formulario Web)' :
       t.tipo==='BD' ? 'BD (Enviar a base de datos personalizada)' :
-      t.tipo==='DM' ? 'DM (Mensaje directo RRSS — auto-respuesta a comentario)' : t.tipo;
+      t.tipo==='DM' ? 'DM (Mensaje directo RRSS — auto-respuesta a comentario)' :
+      t.tipo==='SD' ? 'SD (Sin trigger definido — canal ajeno al sistema)' : t.tipo;
     return `
       ${backBtn()}
       ${crumb([
@@ -3478,7 +3691,8 @@ const PIPELINES_MODULE = (() => {
         tipo==='FM' ? 'FM · Formulario Meta' :
         tipo==='FW' ? 'FW · Formulario Web' :
         tipo==='BD' ? 'BD · Enviar a base de datos personalizada' :
-        tipo==='DM' ? 'DM · Mensaje directo desde RRSS (auto-respuesta a comentario)' : '';
+        tipo==='DM' ? 'DM · Mensaje directo desde RRSS (auto-respuesta a comentario)' :
+        tipo==='SD' ? 'SD · Sin trigger definido (canal ajeno al sistema)' : '';
       return `
         <div class="pip-info-callout">
           ${isEdit
@@ -3498,6 +3712,7 @@ const PIPELINES_MODULE = (() => {
               { v:'FW', label:'FW · Formulario Web',  hint:'Form en la web del cliente → GHL' },
               { v:'BD', label:'BD · Enviar a base de datos personalizada', hint:'Lista del cliente con fecha de envío programada' },
               { v:'DM', label:'DM · Mensaje directo RRSS',                hint:'Auto-DM cuando alguien comenta con una keyword en Instagram/Facebook' },
+              { v:'SD', label:'SD · Sin trigger definido',                hint:'Canal ajeno al sistema: broadcast WhatsApp, carteles, eventos, boca a boca…' },
             ].map(opt => `
               <button class="pip-plantilla-card ${tipo===opt.v?'selected':''}" data-pick-tipo="${opt.v}" type="button" style="flex:1;min-width:120px">
                 <div class="pp-name">${escapeHtml(opt.label)}</div>
@@ -3509,7 +3724,7 @@ const PIPELINES_MODULE = (() => {
         ${tipo ? `
           <div class="form-field">
             <label class="form-label" for="nt-desc">Descripción</label>
-            <input class="form-input" id="nt-desc" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':tipo==='BD'?'Ej: Segmento leads frío >60d':'Ej: DM keyword INFO en Instagram'}" autocomplete="off"/>
+            <input class="form-input" id="nt-desc" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':tipo==='BD'?'Ej: Segmento leads frío >60d':tipo==='DM'?'Ej: DM keyword INFO en Instagram':'Ej: Broadcast WhatsApp socios, carteles polígono…'}" autocomplete="off"/>
           </div>
           ${tipo==='BD' ? `
             <div class="form-field">
@@ -3708,7 +3923,7 @@ const PIPELINES_MODULE = (() => {
     if (!isEdit && triggersDisp.length === 0) {
       openSheet('Nueva creatividad', `dentro de ${c.code}`, `
         <div class="pip-info-callout" style="border-color:var(--warn)">
-          ⚠ Esta campaña no tiene triggers activos. Cada creatividad apunta a un trigger destino (form Meta, form web, BD o DM RRSS), así que necesitas crear primero al menos uno.
+          ⚠ Esta campaña no tiene triggers activos. Cada creatividad apunta a un trigger destino (form Meta, form web, BD, DM RRSS o SD sin trigger definido), así que necesitas crear primero al menos uno.
         </div>
         <div class="pip-sheet-actions">
           <button class="btn-secondary" data-pip-close>Cerrar</button>
@@ -3980,7 +4195,7 @@ const PIPELINES_MODULE = (() => {
 
     const renderForm = () => {
       const sortedApl = [...state.aplicables].sort((a,b)=>{
-        const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+        const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:x.includes('DM')?4:x.includes('SD')?5:9;
         return w(a)-w(b);
       });
       const ord = computeOrdenForScope();
@@ -4055,7 +4270,7 @@ const PIPELINES_MODULE = (() => {
     const rebind = () => {
       const buildPreview = () => {
         const sortedApl = [...state.aplicables].sort((a,b)=>{
-          const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+          const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:x.includes('DM')?4:x.includes('SD')?5:9;
           return w(a)-w(b);
         });
         const ord = computeOrdenForScope();
@@ -4171,7 +4386,7 @@ const PIPELINES_MODULE = (() => {
 
     const renderForm = () => {
       const sortedApl = [...state.aplicables].sort((a,b)=>{
-        const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+        const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:x.includes('DM')?4:x.includes('SD')?5:9;
         return w(a)-w(b);
       });
       const ord = computeOrdenForScope();
@@ -4251,7 +4466,7 @@ const PIPELINES_MODULE = (() => {
       // todo el form (preservar inputs ya tecleados — bug piloto 2026-05-24).
       const buildPreview = () => {
         const sortedApl = [...state.aplicables].sort((a,b)=>{
-          const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+          const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:x.includes('DM')?4:x.includes('SD')?5:9;
           return w(a)-w(b);
         });
         const ord = computeOrdenForScope();
@@ -4360,7 +4575,7 @@ const PIPELINES_MODULE = (() => {
     }
   }
 
-  return { render, init: render, setData, loadFor };
+  return { render, init: render, setData, loadFor, getView };
 })();
 
 // ─── CATÁLOGOS MODULE — F2.7 Fase B Sprint 2 (lectura + CRUD) ──────────
@@ -4655,13 +4870,23 @@ const CATALOGOS_MODULE = (() => {
   }
 
   // F2.7 Sprint 3 — Visibilidad por cliente (semántica opt-in desde 2026-05-25).
-  // Si NO existe row en cliente_catalogo_visibilidad → OCULTO (default opt-in:
-  // Account activa lo que aplica). Si existe con oculto=true → oculto. Si existe
-  // con oculto=false → visible. Macro oculta tiene precedencia sobre catálogos.
+  // Si NO existe row en cliente_catalogo_visibilidad → se aplica DEFAULT_VISIBLE
+  // (decisión 2026-05-25: Recursos Drive, Marketing Meta, Operativo y Webs cliente
+  // visibles por defecto; el resto oculto). Si existe row → respeta su `oculto`.
+  // Macro oculta tiene precedencia sobre catálogos.
+  const DEFAULT_VISIBLE_MACROS = new Set(['recursos_drive', 'marketing_meta', 'operativo', 'webs']);
+  function defaultHidden(scopeType, scopeKey) {
+    if (scopeType === 'macro') return !DEFAULT_VISIBLE_MACROS.has(scopeKey);
+    if (scopeType === 'catalogo') {
+      const macro = MACROS.find(m => m.catalogos.includes(scopeKey));
+      return !macro || !DEFAULT_VISIBLE_MACROS.has(macro.key);
+    }
+    return true;
+  }
   function isHidden(scopeType, scopeKey) {
-    if (!data || !Array.isArray(data.visibilidad)) return true;
+    if (!data || !Array.isArray(data.visibilidad)) return defaultHidden(scopeType, scopeKey);
     const row = data.visibilidad.find(v => v.scope_type === scopeType && v.scope_key === scopeKey);
-    return row ? !!row.oculto : true;
+    return row ? !!row.oculto : defaultHidden(scopeType, scopeKey);
   }
 
   // ─── State helpers ───────────────────────────────────────────────────
@@ -5147,6 +5372,338 @@ const CATALOGOS_MODULE = (() => {
   return { loadFor, render };
 })();
 
+// ─── Scope Guide (F2.8) ───────────────────────────
+// Panel contextual "Estás en…". Se ancla al tab activo + S.view del
+// PIPELINES_MODULE para resolver el scope. Dismiss progresivo tras 5
+// aperturas/scope (contador en localStorage). Reactivable por FAB.
+const SCOPE_GUIDE = (() => {
+  const STORAGE_KEY = 'thenucleo-fc-scope-guide-v1';
+  const DISMISS_THRESHOLD = 5;
+  const COLLAPSE_AT = 4;
+  const sessionStartedAt = Date.now();
+
+  const SCOPE_GUIDE_COPY = {
+    'home.cliente-list': {
+      label: 'Estás en',
+      title: 'Elegir cliente',
+      body: 'Selecciona uno de la lista para abrir su ficha. Puedes buscar por nombre, web o categoría.',
+      tip: 'El cliente que abras queda en la URL — puedes compartirla.',
+      moreKey: null,
+    },
+    'cliente.datos': {
+      label: 'Estás en',
+      title: 'Datos del cliente',
+      body: 'Identificación fiscal, contacto, presencia digital, accesos y operaciones internas. Pliega secciones para enfocarte.',
+      tip: 'Badge verde = sección completa. Ámbar = faltan campos.',
+      moreKey: null,
+    },
+    'cliente.servicios': {
+      label: 'Estás en',
+      title: 'Servicios contratados',
+      body: 'Los servicios que este cliente tiene activos según su playbook, agrupados por categoría.',
+      tip: 'Para editar servicios contratados, abre el Playbook del cliente.',
+      moreKey: null,
+    },
+    'cliente.catalogos': {
+      label: 'Estás en',
+      title: 'Catálogos del cliente',
+      body: '7 macro-categorías con recursos, comunicación, ads, operativo, producto y webs. Por defecto está todo oculto — activa lo que necesite este cliente.',
+      tip: 'Usa "⚙️ Gestionar catálogos" para abrir/cerrar macros y catálogos individuales.',
+      moreKey: null,
+    },
+    'cliente.anomalias': {
+      label: 'Estás en',
+      title: 'Anomalías (preview)',
+      body: 'Sección en mockup. Aquí aparecerán alertas automáticas sobre el cliente (pagos pendientes, NPS bajo, falta de actividad, etc.).',
+      tip: 'Por ahora no hay nada accionable aquí.',
+      moreKey: null,
+    },
+    'pipelines.list': {
+      label: 'Estás en',
+      title: 'Pipelines del cliente',
+      body: 'Las líneas de trabajo estables — cosas que viven meses o años (captación B2B, newsletter mensual, reactivación). Cada cliente suele tener entre 1 y 4.',
+      tip: '+ Pipeline arriba a la derecha para crear una nueva línea estratégica.',
+      moreKey: 'pipeline',
+    },
+    'pipelines.pipeline': {
+      label: 'Estás dentro de',
+      title: 'Pipeline {code}',
+      body: 'Una línea estratégica del cliente. Aquí cuelgan las campañas que ejecuta el equipo, cada una con fechas, KPI y briefing propios.',
+      tip: 'Sin campañas activas, el pipeline está declarado pero no produce nada.',
+      moreKey: 'campania',
+    },
+    'pipelines.campaign': {
+      label: 'Estás dentro de',
+      title: 'Campaña {code}',
+      body: 'Aquí montas los 4 ingredientes: Triggers (por dónde entran los leads), Emails, Mensajes WhatsApp y Creatividades.',
+      tip: 'Sin Trigger una campaña no es ejecutable — el sistema te lo recuerda.',
+      moreKey: 'campania',
+    },
+    'pipelines.trigger': {
+      label: 'Estás en',
+      title: 'Trigger {code}',
+      body: 'Por aquí entran los leads a la campaña. Hay 5 tipos: formulario Meta (FM), formulario web (FW), base de datos (BD), DM en redes (DM) y sin trigger (SD).',
+      tip: null,
+      moreKey: 'trigger-tipos',
+    },
+    'pipelines.email': {
+      label: 'Estás en',
+      title: 'Email {code}',
+      body: 'Pieza de copy de la secuencia. El código se calcula solo según el scope: 📡 Compartido = todos los leads · 🎯 Específico = solo los de un trigger.',
+      tip: 'No edites el código a mano — lo recalcula el sistema.',
+      moreKey: 'triggers-aplicables',
+    },
+    'pipelines.whatsapp': {
+      label: 'Estás en',
+      title: 'WhatsApp {code}',
+      body: 'Mensaje que se manda por WhatsApp en paralelo a los emails. No son la traducción de un email — son secuencias propias con tono y longitud distintos.',
+      tip: 'Mismo código que emails, pero con WA en lugar de E.',
+      moreKey: 'whatsapp-vs-email',
+    },
+    'pipelines.creatividad': {
+      label: 'Estás en',
+      title: 'Creatividad {code}',
+      body: 'Una pieza visual: estático, reel, carrusel u otros. Cada pieza apunta a un trigger destino. El nombre en Drive sigue patrón fijo.',
+      tip: 'Las revisiones se suben como v2, v3… nunca se borra una versión anterior.',
+      moreKey: 'creatividades-naming',
+    },
+  };
+
+  // ── Estado persistido ────────────────────────────
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : { opens: {}, manualHide: {}, lastSeen: {} };
+    } catch { return { opens: {}, manualHide: {}, lastSeen: {} }; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch {}
+  }
+
+  // ── Detección de scope ───────────────────────────
+  function currentScope() {
+    const stateContent = document.getElementById('state-content');
+    const stateEmpty = document.getElementById('state-empty');
+    if (stateEmpty && stateEmpty.style.display !== 'none') return { key: 'home.cliente-list', code: null };
+    if (!stateContent || stateContent.style.display === 'none') return null;
+
+    const activeTab = document.querySelector('.tab.active');
+    const panel = activeTab ? activeTab.dataset.panel : 'datos';
+
+    if (panel === 'pipelines') {
+      const v = (typeof PIPELINES_MODULE !== 'undefined' && PIPELINES_MODULE.getView) ? PIPELINES_MODULE.getView() : null;
+      if (!v) return { key: 'pipelines.list', code: null };
+      if (v.kind === 'list') return { key: 'pipelines.list', code: null };
+      const map = { pipeline: 'pipelines.pipeline', campaign: 'pipelines.campaign', trigger: 'pipelines.trigger', email: 'pipelines.email', whatsapp: 'pipelines.whatsapp', creatividad: 'pipelines.creatividad' };
+      return { key: map[v.kind] || 'pipelines.list', code: v.code || null };
+    }
+    return { key: 'cliente.' + panel, code: null };
+  }
+
+  // ── Render del card desktop ──────────────────────
+  function renderCard(scope, host, collapsed) {
+    const copy = SCOPE_GUIDE_COPY[scope.key];
+    if (!copy) { host.classList.remove('is-visible'); return; }
+    const title = (copy.title || '').replace('{code}', scope.code || '');
+    const closeAria = collapsed ? 'Expandir guía' : 'Plegar guía';
+    const toggleIcon = collapsed ? '+' : '−';
+    host.innerHTML = `
+      <div class="sg-head">
+        <div class="sg-head-text">
+          <div class="sg-label">${escapeHtml(copy.label)}</div>
+          <div class="sg-title" id="sg-title">${escapeHtml(title)}</div>
+        </div>
+        <button class="sg-toggle" type="button" data-sg-toggle aria-label="${closeAria}">${toggleIcon}</button>
+        <button class="sg-close" type="button" data-sg-close aria-label="Ocultar guía para esta vista">×</button>
+      </div>
+      ${scope.code ? `<div class="sg-caption">Trabajando en <code>${escapeHtml(scope.code)}</code></div>` : ''}
+      <div class="sg-body">${copy.body}</div>
+      ${copy.tip ? `<div class="sg-tip"><span class="sg-tip-mark">◆</span><span>${copy.tip}</span></div>` : ''}
+      ${copy.moreKey ? `<div class="sg-divider"></div><button class="sg-link" type="button" data-sg-more="${copy.moreKey}">Más sobre ${escapeHtml(copy.title.replace(/\s*\{code\}.*/, '').toLowerCase())} →</button>` : ''}
+    `;
+    host.classList.toggle('collapsed', !!collapsed);
+    host.classList.add('is-visible');
+  }
+
+  // ── Render del sheet bottom ──────────────────────
+  function renderSheet(scope, body) {
+    const copy = SCOPE_GUIDE_COPY[scope.key];
+    if (!copy) { body.innerHTML = ''; return; }
+    const title = (copy.title || '').replace('{code}', scope.code || '');
+    body.innerHTML = `
+      <div class="sg-label">${escapeHtml(copy.label)}</div>
+      <div class="sg-title" id="sg-sheet-title" style="margin-bottom:14px">${escapeHtml(title)}</div>
+      ${scope.code ? `<div class="sg-caption">Trabajando en <code>${escapeHtml(scope.code)}</code></div>` : ''}
+      <div class="sg-body">${copy.body}</div>
+      ${copy.tip ? `<div class="sg-tip"><span class="sg-tip-mark">◆</span><span>${copy.tip}</span></div>` : ''}
+      ${copy.moreKey ? `<div class="sg-divider"></div><button class="sg-link" type="button" data-sg-more="${copy.moreKey}">Más sobre ${escapeHtml(copy.title.replace(/\s*\{code\}.*/, '').toLowerCase())} →</button>` : ''}
+    `;
+  }
+
+  // ── refresh: re-evalúa scope y pinta ─────────────
+  function refresh() {
+    const scope = currentScope();
+    const card = document.getElementById('sg-card');
+    const fab = document.getElementById('sg-fab');
+    if (!card || !fab) return;
+
+    if (!scope || !SCOPE_GUIDE_COPY[scope.key]) {
+      card.classList.remove('is-visible');
+      fab.classList.remove('is-visible');
+      return;
+    }
+
+    const state = loadState();
+    const opens = state.opens[scope.key] || 0;
+    const manuallyHidden = !!state.manualHide[scope.key];
+    const autoDismissed = opens >= DISMISS_THRESHOLD;
+    const collapsed = opens >= COLLAPSE_AT && opens < DISMISS_THRESHOLD;
+
+    // FAB siempre disponible cuando hay scope guide; dot violeta si está oculto
+    fab.classList.add('is-visible');
+    const existingDot = fab.querySelector('.sg-fab-dot');
+    if (manuallyHidden || autoDismissed) {
+      if (!existingDot) {
+        const dot = document.createElement('span');
+        dot.className = 'sg-fab-dot';
+        fab.appendChild(dot);
+      }
+    } else if (existingDot) {
+      existingDot.remove();
+    }
+
+    if (manuallyHidden || autoDismissed) {
+      card.classList.remove('is-visible');
+      return;
+    }
+
+    // Contar apertura (1 vez por scope.key+code combo por sesión)
+    const seenKey = scope.key + '|' + (scope.code || '');
+    if (state.lastSeen[seenKey] !== sessionStartedAt) {
+      state.lastSeen[seenKey] = sessionStartedAt;
+      state.opens[scope.key] = opens + 1;
+      saveState(state);
+    }
+
+    renderCard(scope, card, collapsed);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function openSheet() {
+    const scope = currentScope();
+    if (!scope || !SCOPE_GUIDE_COPY[scope.key]) return;
+    const sheet = document.getElementById('sg-sheet');
+    const bdrop = document.getElementById('sg-sheet-backdrop');
+    const body = document.getElementById('sg-sheet-body');
+    if (!sheet || !bdrop || !body) return;
+    // Si estaba auto-dismissed o manualmente oculto, reactivar contador
+    const state = loadState();
+    if (state.manualHide[scope.key]) {
+      delete state.manualHide[scope.key];
+      state.opens[scope.key] = 0;
+      saveState(state);
+    } else if ((state.opens[scope.key] || 0) >= DISMISS_THRESHOLD) {
+      state.opens[scope.key] = 0;
+      saveState(state);
+    }
+    renderSheet(scope, body);
+    bdrop.classList.add('open');
+    sheet.classList.add('open');
+    // Refresca el card desktop por si el reactivar lo hizo visible
+    refresh();
+  }
+  function closeSgSheet() {
+    document.getElementById('sg-sheet')?.classList.remove('open');
+    document.getElementById('sg-sheet-backdrop')?.classList.remove('open');
+  }
+
+  // ── Handlers ─────────────────────────────────────
+  document.addEventListener('click', (e) => {
+    const toggle = e.target.closest('[data-sg-toggle]');
+    if (toggle) {
+      const card = document.getElementById('sg-card');
+      card?.classList.toggle('collapsed');
+      const collapsed = card?.classList.contains('collapsed');
+      toggle.textContent = collapsed ? '+' : '−';
+      toggle.setAttribute('aria-label', collapsed ? 'Expandir guía' : 'Plegar guía');
+      return;
+    }
+    const close = e.target.closest('[data-sg-close]');
+    if (close) {
+      const scope = currentScope();
+      if (scope) {
+        const state = loadState();
+        state.manualHide[scope.key] = true;
+        saveState(state);
+      }
+      document.getElementById('sg-card')?.classList.remove('is-visible');
+      // Marcar dot en FAB
+      refresh();
+      showToast('Guía oculta. Pulsa ? para reactivar.');
+      return;
+    }
+    const more = e.target.closest('[data-sg-more]');
+    if (more) {
+      const key = more.getAttribute('data-sg-more');
+      if (typeof window.openFichaInfo === 'function') window.openFichaInfo(key);
+      return;
+    }
+    if (e.target.closest('#sg-fab')) {
+      // En mobile/tablet abre sheet. En desktop ≥1280 muestra/oculta panel.
+      if (window.matchMedia('(min-width: 1280px)').matches) {
+        const scope = currentScope();
+        if (!scope) return;
+        const state = loadState();
+        if (state.manualHide[scope.key] || (state.opens[scope.key] || 0) >= DISMISS_THRESHOLD) {
+          delete state.manualHide[scope.key];
+          state.opens[scope.key] = 0;
+          saveState(state);
+          refresh();
+          showToast('Guía activada para esta vista');
+        } else {
+          // Toggle collapsed
+          const card = document.getElementById('sg-card');
+          card?.classList.toggle('collapsed');
+        }
+      } else {
+        openSheet();
+      }
+      return;
+    }
+    if (e.target.closest('#sg-sheet-backdrop')) {
+      closeSgSheet();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSgSheet();
+  });
+
+  // Refrescar cuando cambia la vista de Pipelines o se cambia de tab
+  window.addEventListener('ficha:view-changed', refresh);
+
+  // Cuando hay otro sheet (pickers) abierto, ocultar FAB
+  const sheetEl = document.getElementById('sheet');
+  if (sheetEl) {
+    const mo = new MutationObserver(() => {
+      const fab = document.getElementById('sg-fab');
+      if (!fab) return;
+      const open = sheetEl.classList.contains('open');
+      fab.style.opacity = open ? '0' : '';
+      fab.style.pointerEvents = open ? 'none' : '';
+    });
+    mo.observe(sheetEl, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  return { refresh };
+})();
+
 // ─── Nav dropdown ──────────────────────────────────
 (function initNavDropdown() {
   const navBtn = document.getElementById('nav-btn');
@@ -5207,6 +5764,7 @@ function getUrlClientId() {
     document.getElementById('state-loading').style.display = 'none';
     document.getElementById('state-empty').style.display = '';
     showEmptyClientList();
+    try { window.dispatchEvent(new Event('ficha:view-changed')); } catch {}
     return;
   }
 
@@ -5216,6 +5774,7 @@ function getUrlClientId() {
       document.getElementById('state-loading').style.display = 'none';
       document.getElementById('state-empty').style.display = '';
       showEmptyClientList('Cliente no encontrado. Elige otro de la lista.');
+      try { window.dispatchEvent(new Event('ficha:view-changed')); } catch {}
       return;
     }
     STATE.cliente = c;
