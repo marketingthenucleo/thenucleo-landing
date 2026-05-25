@@ -1866,7 +1866,7 @@ const PIPELINES_MODULE = (() => {
         <ul>
           <li><strong>FM — Formulario Meta</strong>. Form nativo de Instagram/Facebook que captura el lead dentro de la plataforma. Lo crea Media Buyer.</li>
           <li><strong>FW — Formulario Web</strong>. Form en la web del cliente (landing/popup) que envía el lead a GHL. Lo crea CRM Manager o Dev.</li>
-          <li><strong>BD — Base de Datos</strong>. Lista existente a la que se lanza una secuencia en fecha programada. Lo crea CRM Manager. <strong>Requiere fecha de lanzamiento.</strong></li>
+          <li><strong>BD — Enviar a base de datos personalizada</strong>. Lista existente del cliente (segmento GHL, fichero CSV importado…) a la que se lanza una secuencia en fecha programada. Lo crea CRM Manager. <strong>Requiere fecha de lanzamiento.</strong></li>
         </ul>
         <p>Los códigos son <code>P1C1FM1</code>, <code>P1C1FW1</code>, <code>P1C1BD1</code> y van por tipo independiente (FM2 puede existir aunque no haya FW2).</p>
         <div class="info-pop-ref">Ref: .docx §3</div>`
@@ -1880,22 +1880,42 @@ const PIPELINES_MODULE = (() => {
         <div class="info-pop-ref">Ref: .docx §4 (caso 4)</div>`
     },
     'objetivo-negocio': {
-      title: 'Objetivo de negocio',
+      title: 'Objetivo estratégico del Pipeline',
       body: `
-        <p>Una <strong>frase corta</strong> describiendo qué problema del cliente resuelve este Pipeline.</p>
-        <p>No es un KPI numérico (eso va en cada Campaña). Es el "por qué" estratégico.</p>
+        <p><strong>No</strong> es el objetivo del cliente en general (ese vive en su brand book/análisis). Es el <strong>por qué de ESTE Pipeline</strong> en concreto.</p>
+        <p>Una <strong>frase corta</strong> describiendo qué problema del cliente resuelve esta línea estratégica.</p>
+        <p>Tampoco es un KPI numérico — eso va en cada Campaña.</p>
         <p>Ejemplos: <em>"Monetizar el infoproducto Curso Suplementación a tráfico frío"</em>, <em>"Nutrir BBDD con leads cualificados para futuras ofertas"</em>.</p>`
     },
-    'triggers-aplicables': {
-      title: 'Triggers aplicables',
+    'creatividades-naming': {
+      title: 'Nomenclatura de creatividades',
       body: `
-        <p>Marca qué triggers de la campaña <strong>disparan este email</strong>. Mínimo uno.</p>
-        <p>El código del email se forma con los marcados en <strong>orden FM → FW → BD</strong>:</p>
+        <p>El nombre se compone de <strong>3 partes</strong> separadas por guion bajo:</p>
         <ul>
-          <li>Marcas <code>FM1</code> → email = <code>P1C1FM1E2</code></li>
-          <li>Marcas <code>FM1 + FW1</code> → email = <code>P1C1FM1FW1E2</code></li>
+          <li><code>&lt;código campaña&gt;</code> — ej. <code>P1C1</code>. Lo asigna el sistema, no se toca.</li>
+          <li><code>&lt;tipo&gt;</code> — texto informativo libre describiendo qué es la pieza: <code>estatico</code>, <code>reel</code>, <code>carrusel</code>, <code>copy_RRSS</code>, <code>video_guion</code>… Lo escribe quien sube el archivo.</li>
+          <li><code>v&lt;n&gt;</code> — versión secuencial. <code>v1</code> = original. <code>v2</code> = primera revisión. <strong>Nunca se borran versiones</strong>: cada cambio sube como <code>v(n+1)</code>.</li>
         </ul>
-        <p>Si la campaña tiene <strong>un solo trigger</strong>, se asocia automáticamente (no hay nada que elegir).</p>
+        <p>La extensión (<code>.png</code>, <code>.mp4</code>, <code>.docx</code>…) la pone Drive automáticamente al guardar. <strong>No la escribas tú</strong> — confundía al sistema cuando aparecía duplicada.</p>
+        <p>Ejemplos válidos: <code>P1C1_estatico_v1</code>, <code>P1C1_reel_v2</code>, <code>P1C1_copy_RRSS_v1</code>.</p>
+        <div class="info-pop-ref">Ref: .docx caso 10</div>`
+    },
+    'triggers-aplicables': {
+      title: 'A quién aplica este email',
+      body: `
+        <p>Solo hay <strong>2 modos</strong> — nunca un "subset" intermedio (eso genera huecos en la secuencia tipo <code>FM1FM2E2 sin FM1FM2E1</code>):</p>
+        <ul>
+          <li><strong>📡 Compartido</strong> — lo reciben los leads de <em>todos</em> los triggers (presentes y futuros). Código sin prefijo: <code>P1C1E1</code>.</li>
+          <li><strong>🎯 Específico</strong> — lo reciben SOLO los leads de UN trigger concreto. Código con prefijo: <code>P1C1FM1E1</code>.</li>
+        </ul>
+        <p>La numeración <code>E1, E2, E3</code> es <strong>independiente por modo</strong>:</p>
+        <ul>
+          <li><code>P1C1E1, P1C1E2, P1C1E3</code> — secuencia compartida (3 emails consecutivos).</li>
+          <li><code>P1C1FM1E1, P1C1FM1E2</code> — secuencia exclusiva FM1.</li>
+          <li><code>P1C1FM2E1</code> — secuencia exclusiva FM2 (1 email solo).</li>
+        </ul>
+        <p>Cada secuencia es como una <strong>rama del workflow GHL</strong> con su propio ritmo.</p>
+        <p>¿Y si quiero un email común a FM1+FW1 pero no a BD1? La nomenclatura no contempla subsets — <strong>duplica el email</strong> (uno por trigger) o márcalo Compartido. Es deliberado: evita códigos huérfanos.</p>
         <div class="info-pop-ref">Ref: .docx §5</div>`
     },
     'plantilla': {
@@ -2016,16 +2036,28 @@ const PIPELINES_MODULE = (() => {
     }).join('');
   }
   function emailCode(camp, email) {
-    // Cambio 2026-05-24 (sesión piloto): retirada la lógica "vacío = todos
-    // → código sin trigger" (regla .docx caso 5 original). Confundía cuando
-    // la campaña tiene 1 trigger único — P1C1E1 sugiere email huérfano.
-    // Nuevo modelo: el código SIEMPRE incluye los triggers que disparan el
-    // email, concatenados en orden FM→FW→BD. Si triggers_aplicables viene
-    // vacío (data legacy o campaña sin triggers), fallback al formato sin
-    // prefijo para no romper render.
+    // Cambio 2026-05-25 (modelo simplificado): solo 2 modos válidos.
+    // - apl=[] → modo Compartido. Código sin prefijo: P1C1E<n>.
+    // - apl=[X] → modo Específico para X. Código: P1C1XE<n>.
+    // - apl=[X,Y,…] → modo legacy multi-trigger (UI no permite crearlos
+    //   nuevos, solo se muestran como están).
+    //
+    // El número <n> NO es el `orden` DB global de la campaña — es la
+    // posición de este email DENTRO de su mismo scope (compartido vs
+    // específico-de-X), respetando caso 9 .docx: incluimos archivados
+    // en el count para no reutilizar números.
     const apl = email.triggersAplicables || [];
-    if (apl.length === 0) return `${camp.code}E${email.orden}`;
-    return `${camp.code}${orderTriggersInCode(apl)}E${email.orden}`;
+    const scopeKey = apl.length === 0 ? '__shared__' : orderTriggersInCode(apl);
+    const sameScopeSorted = (camp.emails || [])
+      .filter(e => {
+        const ea = e.triggersAplicables || [];
+        const ek = ea.length === 0 ? '__shared__' : orderTriggersInCode(ea);
+        return ek === scopeKey;
+      })
+      .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    const n = sameScopeSorted.findIndex(e => e.id === email.id) + 1;
+    if (apl.length === 0) return `${camp.code}E${n}`;
+    return `${camp.code}${orderTriggersInCode(apl)}E${n}`;
   }
 
   function tagClass(code) {
@@ -2133,10 +2165,21 @@ const PIPELINES_MODULE = (() => {
   }
 
   function crumb(parts) {
+    // Fix 2026-05-25: emitir data-attrs alineados con cada handler. Antes
+    // `crumb` escribía siempre `data-id="${p.pid}"`, lo que funciona para
+    // `open-pipeline` (lee dataset.id) pero rompe `open-campaign` (lee
+    // dataset.pid/cid). Pulsar PxCx en el breadcrumb desde la vista
+    // trigger/email no navegaba.
     return `<div class="pip-breadcrumb">${parts.map((p, i) => {
       const sep = i > 0 ? `<span class="sep">›</span>` : '';
-      if (p.action) return `${sep}<a data-action="${p.action}"${p.pid?` data-id="${p.pid}"`:''}${p.cid?` data-cid="${p.cid}"`:''}>${escapeHtml(p.label)}</a>`;
-      return `${sep}<span>${escapeHtml(p.label)}</span>`;
+      if (!p.action) return `${sep}<span>${escapeHtml(p.label)}</span>`;
+      let attrs = '';
+      if (p.action === 'open-pipeline') {
+        attrs = ` data-id="${p.pid}"`;
+      } else if (p.action === 'open-campaign') {
+        attrs = ` data-pid="${p.pid}" data-cid="${p.cid}"`;
+      }
+      return `${sep}<a data-action="${p.action}"${attrs}>${escapeHtml(p.label)}</a>`;
     }).join('')}</div>`;
   }
 
@@ -2187,7 +2230,7 @@ const PIPELINES_MODULE = (() => {
       ${crumb([{ label:'Pipelines', action:'goto-list' }, { label: p.code }])}
       <div class="pip-detail-head">${codeTag(p.code, 'lg')} ${stateBadge(p.estado)}</div>
       <h2 class="pip-detail-title">${escapeHtml(p.name)}</h2>
-      <p class="pip-detail-sub ${!p.obj?'empty':''}">${escapeHtml(p.obj || 'Sin objetivo de negocio.')}</p>
+      <p class="pip-detail-sub ${!p.obj?'empty':''}">${escapeHtml(p.obj || 'Sin objetivo estratégico definido.')}</p>
 
       <div class="field-list">
         ${fieldStatic('Responsable account', p.account)}
@@ -2216,7 +2259,6 @@ const PIPELINES_MODULE = (() => {
             </div>
             <div class="pip-card-meta">
               <span>${escapeHtml(dmy(c.desde))} → ${escapeHtml(dmy(c.hasta) || 'sin fin')}</span>
-              <span>${c.presup}€</span>
               <span>${escapeHtml(c.kpi)}</span>
               <span>${c.triggers.length}T · ${c.emails.length}E</span>
             </div>
@@ -2244,7 +2286,6 @@ const PIPELINES_MODULE = (() => {
     if (!c) return backBtn() + `<div class="empty-card">Campaña no encontrada.</div>`;
     const plantilla = findPlantilla(c.plantillaSlug);
     const hasTriggers = c.triggers.length > 0;
-    const allShared = c.emails.every(e => !e.triggersAplicables || e.triggersAplicables.length === 0 || e.triggersAplicables.length === c.triggers.length);
     const hasMissingBD = c.triggers.some(t => t.tipo === 'BD' && !t.fechaLanzamiento);
 
     return `
@@ -2277,7 +2318,6 @@ const PIPELINES_MODULE = (() => {
       <div class="pip-section-head"><span>Datos básicos</span></div>
       <div class="field-list">
         ${fieldStatic('Fechas', `${dmy(c.desde) || '—'} → ${dmy(c.hasta) || 'sin fin'}`)}
-        ${fieldStatic('Presupuesto', `${c.presup} €`)}
         ${fieldStatic('KPI objetivo', c.kpi)}
         ${fieldBriefing(c)}
       </div>
@@ -2293,7 +2333,6 @@ const PIPELINES_MODULE = (() => {
             ${codeTag(t.code)}
             <div class="pip-row-main">
               <div class="pip-row-name">${escapeHtml(t.name)}</div>
-              <div class="pip-row-sub">${escapeHtml(t.ext)}</div>
             </div>
             ${t.tipo==='BD' && t.fechaLanzamiento ? `<span class="pip-row-meta">📅 ${escapeHtml(dmy(t.fechaLanzamiento))}</span>` : ''}
             ${stateBadge(t.estado)}
@@ -2307,9 +2346,7 @@ const PIPELINES_MODULE = (() => {
       </div>
       ${hasTriggers && c.emails.length > 0 ? `
         <div class="pip-mode-note">
-          ${allShared
-            ? 'Modo <strong>compartido</strong>: todos los emails aplican a todos los triggers, el código del email omite el trigger (regla .docx caso 5).'
-            : 'Modo <strong>por trigger</strong>: hay emails con triggers específicos, el código incluye los triggers concatenados (regla .docx casos 3 y 5).'}
+          Cada email es <strong>📡 Compartido</strong> (lo reciben todos los triggers) o <strong>🎯 Específico</strong> de un trigger único. La numeración E1, E2… es independiente por modo — no hay subsets (.docx §5).
         </div>
       ` : ''}
       ${c.emails.length === 0
@@ -2331,8 +2368,8 @@ const PIPELINES_MODULE = (() => {
         }).join('')}
 
       <div class="pip-creatividades-note">
-        <strong>🎨 Creatividades de esta Campaña</strong>
-        Estáticos, reels, carruseles, copies RRSS, vídeos: viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;tipo&gt;_v&lt;n&gt;.&lt;ext&gt;</code> (regla .docx caso 10). No se listan aquí — abre la subcarpeta Drive de la campaña.
+        <strong>🎨 Creatividades de esta Campaña</strong> ${infoIcon('creatividades-naming')}
+        Estáticos, reels, carruseles, copies RRSS, vídeos: viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;tipo&gt;_v&lt;n&gt;</code> (regla .docx caso 10). No se listan aquí — abre la subcarpeta Drive de la campaña.
       </div>
 
       ${S.role==='account' ? `
@@ -2355,7 +2392,7 @@ const PIPELINES_MODULE = (() => {
     const c = p && p.camps.find(x => x.id === cId);
     const t = c && c.triggers.find(x => x.id === tId);
     if (!t) return backBtn() + `<div class="empty-card">Trigger no encontrado.</div>`;
-    const tipoFull = t.tipo==='FM' ? 'FM (Formulario Meta)' : t.tipo==='FW' ? 'FW (Formulario Web)' : 'BD (Base de datos)';
+    const tipoFull = t.tipo==='FM' ? 'FM (Formulario Meta)' : t.tipo==='FW' ? 'FW (Formulario Web)' : 'BD (Enviar a base de datos personalizada)';
     return `
       ${backBtn()}
       ${crumb([
@@ -2368,7 +2405,6 @@ const PIPELINES_MODULE = (() => {
       <h2 class="pip-detail-title">${escapeHtml(t.name)}</h2>
       <div class="field-list">
         ${fieldStatic('Tipo', tipoFull)}
-        ${fieldStatic('Link externo / referencia', t.ext, { mono: true })}
         ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', dmy(t.fechaLanzamiento) || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
       </div>
 
@@ -2434,16 +2470,20 @@ const PIPELINES_MODULE = (() => {
       <h2 class="pip-detail-title">${escapeHtml(e.name)}</h2>
       <p class="pip-detail-sub ${!e.objetivo?'empty':''}">${escapeHtml(e.objetivo || 'Sin objetivo.')}</p>
       <div class="field-list">
-        ${fieldStatic('Orden / Espera', `${e.orden} · ${e.espera}`)}
+        ${fieldStatic('Espera', e.espera || '—')}
         <div class="field" style="cursor:default">
           <div style="flex:1;min-width:0">
-            <div class="field-label">Triggers aplicables ${infoIcon('triggers-aplicables')}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+            <div class="field-label">¿A quién aplica? ${infoIcon('triggers-aplicables')}</div>
+            <div style="margin-top:8px;line-height:1.5">
               ${allCodes.length === 0
                 ? `<span class="field-value empty">La campaña no tiene triggers.</span>`
-                : allCodes.map(tc => `<span class="pip-pill-trigger ${aplSet.has(tc)?'selected':''}">${escapeHtml(tc)}</span>`).join('')}
+                : aplSet.size === 0
+                  ? `<span class="field-value">📡 <strong>Compartido</strong> — lo reciben los leads de todos los triggers de la campaña.</span>`
+                  : aplSet.size === 1
+                    ? `<span class="field-value">🎯 <strong>Específico</strong> — solo los leads de ${codeTag([...aplSet][0])}</span>`
+                    : `<span class="field-value" style="color:var(--warn)">⚠ Modo legacy multi-trigger: ${[...aplSet].map(s => codeTag(s)).join(' + ')}.<br><span style="font-size:11px;color:var(--text-3)">El modelo simplificado no permite subsets. Edita el email para reasignarlo a <strong>Compartido</strong> o <strong>Específico</strong> a uno solo (.docx §5).</span></span>`
+              }
             </div>
-            <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">El código del email refleja los triggers marcados (orden FM→FW→BD).</div>
           </div>
         </div>
         ${fieldStatic('Versionado', 'v1 — original · sin revisiones registradas', { info: 'versionado' })}
@@ -2587,8 +2627,8 @@ const PIPELINES_MODULE = (() => {
         <input class="form-input" id="np-name" value="${escapeHtml(editing?.name || '')}" placeholder="Ej: Captación B2B colegios" autocomplete="off"/>
       </div>
       <div class="form-field">
-        <label class="form-label" for="np-obj">Objetivo de negocio ${infoIcon('objetivo-negocio')}</label>
-        <textarea class="form-textarea" id="np-obj" placeholder="Qué problema del cliente resuelve este Pipeline.">${escapeHtml(editing?.obj || '')}</textarea>
+        <label class="form-label" for="np-obj">Objetivo estratégico del Pipeline ${infoIcon('objetivo-negocio')}</label>
+        <textarea class="form-textarea" id="np-obj" placeholder="Qué problema del cliente resuelve este Pipeline (no el negocio en general).">${escapeHtml(editing?.obj || '')}</textarea>
       </div>
       ${isEdit ? `
         <div class="form-field">
@@ -2686,9 +2726,9 @@ const PIPELINES_MODULE = (() => {
             <div class="form-field"><label class="form-label" for="nc-desde">Desde</label><input class="form-input" type="date" id="nc-desde" value="${isEdit ? dateVal(editing.desde) : ''}"/></div>
             <div class="form-field"><label class="form-label" for="nc-hasta">Hasta</label><input class="form-input" type="date" id="nc-hasta" value="${isEdit ? dateVal(editing.hasta) : ''}"/></div>
           </div>
-          <div class="form-row">
-            <div class="form-field"><label class="form-label" for="nc-presup">Presupuesto (€)</label><input class="form-input" type="number" id="nc-presup" value="${isEdit ? (editing.presup ?? '') : (plantilla ? (plantilla.defaults.presup || '') : '')}"/></div>
-            <div class="form-field"><label class="form-label" for="nc-kpi">KPI objetivo</label><input class="form-input" id="nc-kpi" value="${escapeHtml(isEdit ? (editing.kpi || '') : (plantilla ? plantilla.defaults.kpi : ''))}"/></div>
+          <div class="form-field">
+            <label class="form-label" for="nc-kpi">KPI objetivo</label>
+            <input class="form-input" id="nc-kpi" value="${escapeHtml(isEdit ? (editing.kpi || '') : (plantilla ? plantilla.defaults.kpi : ''))}"/>
           </div>
           <div class="form-field">
             <label class="form-label" for="nc-brief">Link briefing Drive ${infoIcon('briefing-drive')}</label>
@@ -2779,7 +2819,6 @@ const PIPELINES_MODULE = (() => {
         if (!name) { showToast('Falta el nombre de la campaña'); return; }
         const desde  = document.getElementById('nc-desde')?.value || null;
         const hasta  = document.getElementById('nc-hasta')?.value || null;
-        const presup = parseFloat(document.getElementById('nc-presup')?.value);
         const kpi    = document.getElementById('nc-kpi')?.value.trim() || null;
         const brief  = document.getElementById('nc-brief')?.value.trim() || null;
         const notas  = document.getElementById('nc-notas')?.value.trim() || null;
@@ -2795,7 +2834,7 @@ const PIPELINES_MODULE = (() => {
             p_plantilla_id:        null,
             p_fecha_inicio:        desde,
             p_fecha_fin:           hasta,
-            p_presupuesto_eur:     isNaN(presup) ? null : presup,
+            p_presupuesto_eur:     null,
             p_kpi_objetivo:        kpi,
             p_link_briefing_drive: brief,
             p_notas_account:       notas,
@@ -2910,7 +2949,7 @@ const PIPELINES_MODULE = (() => {
     const renderForm = () => {
       const tipo = state.tipo;
       const next = isEdit ? editing.code : (tipo ? nextFor(tipo) : '?');
-      const tipoLabelFull = tipo==='FM' ? 'FM · Formulario Meta' : tipo==='FW' ? 'FW · Formulario Web' : tipo==='BD' ? 'BD · Base de datos' : '';
+      const tipoLabelFull = tipo==='FM' ? 'FM · Formulario Meta' : tipo==='FW' ? 'FW · Formulario Web' : tipo==='BD' ? 'BD · Enviar a base de datos personalizada' : '';
       return `
         <div class="pip-info-callout">
           ${isEdit
@@ -2928,7 +2967,7 @@ const PIPELINES_MODULE = (() => {
             ${[
               { v:'FM', label:'FM · Formulario Meta', hint:'Form nativo de Instagram/Facebook' },
               { v:'FW', label:'FW · Formulario Web',  hint:'Form en la web del cliente → GHL' },
-              { v:'BD', label:'BD · Base de datos',   hint:'Segmento existente con fecha programada' },
+              { v:'BD', label:'BD · Enviar a base de datos personalizada', hint:'Lista del cliente con fecha de envío programada' },
             ].map(opt => `
               <button class="pip-plantilla-card ${tipo===opt.v?'selected':''}" data-pick-tipo="${opt.v}" type="button" style="flex:1;min-width:120px">
                 <div class="pp-name">${escapeHtml(opt.label)}</div>
@@ -2941,10 +2980,6 @@ const PIPELINES_MODULE = (() => {
           <div class="form-field">
             <label class="form-label" for="nt-desc">Descripción</label>
             <input class="form-input" id="nt-desc" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':'Ej: Segmento leads frío >60d'}" autocomplete="off"/>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="nt-ext">${tipo==='FM'?'Form ID Meta':tipo==='FW'?'URL del formulario':'Segmento / Tag GHL'}</label>
-            <input class="form-input" id="nt-ext" value="${escapeHtml(isEdit ? (editing.ext || '') : '')}" autocomplete="off"/>
           </div>
           ${tipo==='BD' ? `
             <div class="form-field">
@@ -2991,13 +3026,11 @@ const PIPELINES_MODULE = (() => {
             // el re-render es necesario; restauramos los valores tras).
             const snap = {
               desc: document.getElementById('nt-desc')?.value || '',
-              ext:  document.getElementById('nt-ext')?.value  || '',
               fecha: document.getElementById('nt-fecha')?.value || '',
             };
             state.tipo = newTipo;
             document.getElementById('sheet-body').innerHTML = renderForm();
             if (snap.desc)  { const el = document.getElementById('nt-desc');  if (el) el.value = snap.desc; }
-            if (snap.ext)   { const el = document.getElementById('nt-ext');   if (el) el.value = snap.ext; }
             if (snap.fecha) { const el = document.getElementById('nt-fecha'); if (el) el.value = snap.fecha; }
             rebind();
           });
@@ -3007,19 +3040,20 @@ const PIPELINES_MODULE = (() => {
         const btn = document.getElementById('nt-save');
         if (!btn || btn.disabled) return;
         const desc   = document.getElementById('nt-desc')?.value.trim();
-        const ext    = document.getElementById('nt-ext')?.value.trim() || null;
         const fecha  = document.getElementById('nt-fecha')?.value || null;
         const estado = isEdit ? document.getElementById('nt-estado')?.value : null;
         if (!desc) { showToast('Falta la descripción del trigger'); return; }
         if (state.tipo === 'BD' && !fecha) { showToast('Tipo BD requiere fecha de lanzamiento'); return; }
         btn.disabled = true;
         try {
+          // p_link_externo retirado de la UI 2026-05-25 (este es el iniciador,
+          // no la ficha del form). Preserva valor histórico en edit; null en create.
           const row = await rpc('ficha_trigger_upsert', {
             p_id:                isEdit ? editing.id : null,
             p_campania_id:       isEdit ? null : c.id,
             p_tipo:              isEdit ? null : state.tipo,
             p_descripcion:       desc,
-            p_link_externo:      ext,
+            p_link_externo:      isEdit ? (editing?.ext || null) : null,
             p_fecha_lanzamiento: fecha,
             p_estado:            estado,
           });
@@ -3037,18 +3071,22 @@ const PIPELINES_MODULE = (() => {
   }
 
   // ── F2.2.2.B.6: Drawer "Nuevo Email" ────────────────────────────
+  // Modelo simplificado 2026-05-25: el scope solo admite 2 valores válidos —
+  // Compartido (set vacío) o Específico para 1 trigger (set tamaño 1).
+  // No hay subsets; eso evita huecos en la secuencia tipo `FM1FM2E2 sin
+  // FM1FM2E1` que el modelo anterior permitía crear.
   function openNewEmailSheet(pId, cId, editing) {
     const p = S.data.find(x => x.id === pId);
     const c = p && p.camps.find(x => x.id === cId);
     if (!c) return;
     const isEdit = !!editing;
-    // En edit, conserva el orden actual. En create, propone next = max+1.
-    const ordenInicial = isEdit ? editing.orden : (c.emails.length + 1);
     const allSubcodes = c.triggers.map(t => t.code.replace(c.code, ''));
     // Pre-selección:
-    //   - Edit: lo que tenga el email actual en triggersAplicables.
-    //   - Create + 1 trigger único: ese trigger.
-    //   - Create + 2+ triggers: vacío, el usuario elige.
+    //   - Edit: lo que tenga el email actual en triggersAplicables (puede
+    //     ser legacy con size>1: lo respetamos hasta que el user reasigne).
+    //   - Create + 1 trigger único: pre-selecciona "Específico" para él.
+    //   - Create + 2+ triggers: pre-selecciona "Compartido" (set vacío).
+    //   - Create + 0 triggers: el form muestra mensaje y desactiva save.
     const state = {
       aplicables: new Set(
         isEdit ? (editing.triggersAplicables || [])
@@ -3056,14 +3094,46 @@ const PIPELINES_MODULE = (() => {
       )
     };
 
+    // Posición del email dentro de su scope (Compartido o Específico-X),
+    // contando archivados (regla caso 9 .docx — códigos no se reutilizan).
+    const computeOrdenForScope = () => {
+      if (isEdit) {
+        // En edit, el "n" del código se recalcula al guardar+recargar.
+        // Para el preview en vivo, usamos la posición actual del email
+        // entre los de su scope nuevo (puede cambiar si reasigna scope).
+        const apl = [...state.aplicables];
+        const scopeKey = apl.length === 0 ? '__shared__' : orderTriggersInCode(apl);
+        const sameScope = (c.emails || [])
+          .filter(e => {
+            const ea = e.triggersAplicables || [];
+            const ek = ea.length === 0 ? '__shared__' : orderTriggersInCode(ea);
+            return ek === scopeKey;
+          })
+          .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+        // Si este email ya tenía ese scope, su posición; si lo cambió, irá al final.
+        const idx = sameScope.findIndex(e => e.id === editing.id);
+        return idx === -1 ? sameScope.length + 1 : idx + 1;
+      }
+      const apl = [...state.aplicables];
+      const scopeKey = apl.length === 0 ? '__shared__' : orderTriggersInCode(apl);
+      return (c.emails || []).filter(e => {
+        const ea = e.triggersAplicables || [];
+        const ek = ea.length === 0 ? '__shared__' : orderTriggersInCode(ea);
+        return ek === scopeKey;
+      }).length + 1;
+    };
+
     const renderForm = () => {
       const sortedApl = [...state.aplicables].sort((a,b)=>{
         const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
         return w(a)-w(b);
       });
+      const ord = computeOrdenForScope();
       const previewCode = sortedApl.length === 0
-        ? `${c.code}E${ordenInicial}`
-        : `${c.code}${sortedApl.join('')}E${ordenInicial}`;
+        ? `${c.code}E${ord}`
+        : `${c.code}${sortedApl.join('')}E${ord}`;
+      const isLegacyMulti = state.aplicables.size > 1;
+      const sharedSelected = state.aplicables.size === 0;
       return `
         <div class="pip-info-callout">
           ${isEdit
@@ -3083,18 +3153,25 @@ const PIPELINES_MODULE = (() => {
           <textarea class="form-textarea" id="ne-obj" placeholder="Una frase: qué consigue este email.">${escapeHtml(isEdit ? (editing.objetivo || '') : '')}</textarea>
         </div>
         <div class="form-field">
-          <label class="form-label">Triggers aplicables ${infoIcon('triggers-aplicables')}</label>
+          <label class="form-label">¿A quién aplica este email? ${infoIcon('triggers-aplicables')}</label>
           ${allSubcodes.length === 0
             ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. Añade al menos uno antes de crear emails.</div>`
-            : allSubcodes.length === 1 && !isEdit
-              ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-                  ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger selected" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
-                </div>
-                <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Único trigger de la campaña — el email se asocia a <strong>${escapeHtml(allSubcodes[0])}</strong> automáticamente.</div>`
-              : `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-                  ${allSubcodes.map(sub => `<button type="button" class="pip-pill-trigger ${state.aplicables.has(sub)?'selected':''}" data-toggle-trig="${escapeHtml(sub)}">${escapeHtml(sub)}</button>`).join('')}
-                </div>
-                <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Marca al menos uno. El código del email refleja los triggers seleccionados en orden FM→FW→BD.</div>`}
+            : `<div style="display:grid;gap:8px;margin-top:4px">
+                <button type="button" class="pip-plantilla-card ${sharedSelected ? 'selected' : ''}" data-pick-scope="__shared__" style="text-align:left">
+                  <div class="pp-name">📡 Compartido</div>
+                  <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">Lo reciben los leads de TODOS los triggers de la campaña. Código sin prefijo de trigger.</div>
+                </button>
+                ${allSubcodes.map(sub => `
+                  <button type="button" class="pip-plantilla-card ${state.aplicables.size === 1 && state.aplicables.has(sub) ? 'selected' : ''}" data-pick-scope="${escapeHtml(sub)}" style="text-align:left">
+                    <div class="pp-name">🎯 Solo ${escapeHtml(sub)}</div>
+                    <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">Solo leads que entraron por ${escapeHtml(sub)}. Código con prefijo ${escapeHtml(sub)}.</div>
+                  </button>
+                `).join('')}
+                ${isLegacyMulti ? `
+                  <div style="font-size:11px;color:var(--warn);padding:8px;border:1px solid var(--warn);border-radius:8px;line-height:1.4">⚠ Email legacy con múltiples triggers (${[...state.aplicables].join(' + ')}). Al guardar se mantiene tal cual; elige Compartido o un trigger específico arriba para simplificar.</div>
+                ` : ''}
+              </div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">La numeración E1, E2… es independiente por scope. No hay subsets (.docx §5).</div>`}
         </div>
         ${isEdit ? `
           <div class="form-field">
@@ -3123,25 +3200,30 @@ const PIPELINES_MODULE = (() => {
     );
 
     const rebind = () => {
-      // Fix 2026-05-24: en vez de re-renderizar todo el form al togglear
-      // un chip (lo cual reseteaba inputs como ne-name que el usuario ya
-      // había tecleado — bug reportado en piloto), actualización in-place:
-      // toggle la clase del chip + reescribir solo el <strong data-preview-code>.
+      // Actualización in-place al cambiar de scope: re-aplica clases
+      // `selected` y refresca el preview del código sin re-renderizar
+      // todo el form (preservar inputs ya tecleados — bug piloto 2026-05-24).
       const buildPreview = () => {
         const sortedApl = [...state.aplicables].sort((a,b)=>{
           const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
           return w(a)-w(b);
         });
+        const ord = computeOrdenForScope();
         return sortedApl.length === 0
-          ? `${c.code}E${ordenInicial}`
-          : `${c.code}${sortedApl.join('')}E${ordenInicial}`;
+          ? `${c.code}E${ord}`
+          : `${c.code}${sortedApl.join('')}E${ord}`;
       };
-      document.querySelectorAll('[data-toggle-trig]').forEach(b => {
+      document.querySelectorAll('[data-pick-scope]').forEach(b => {
         b.addEventListener('click', () => {
-          const sub = b.dataset.toggleTrig;
-          if (state.aplicables.has(sub)) state.aplicables.delete(sub);
-          else state.aplicables.add(sub);
-          b.classList.toggle('selected');
+          const v = b.dataset.pickScope;
+          state.aplicables.clear();
+          if (v !== '__shared__') state.aplicables.add(v);
+          document.querySelectorAll('[data-pick-scope]').forEach(x => {
+            const xv = x.dataset.pickScope;
+            const matches = (xv === '__shared__' && state.aplicables.size === 0)
+                          || state.aplicables.has(xv);
+            x.classList.toggle('selected', matches);
+          });
           const previewEl = document.querySelector('#sheet-body [data-preview-code]');
           if (previewEl) previewEl.textContent = buildPreview();
         });
@@ -3154,8 +3236,11 @@ const PIPELINES_MODULE = (() => {
         const obj    = document.getElementById('ne-obj')?.value.trim() || null;
         const estado = isEdit ? document.getElementById('ne-estado')?.value : null;
         if (!name) { showToast('Falta el nombre del email'); return; }
-        if (allSubcodes.length > 0 && state.aplicables.size === 0) {
-          showToast('Marca al menos un trigger que dispare este email');
+        // Sin validación de scope: Compartido (size=0) es válido. Solo
+        // bloqueamos si la campaña no tiene triggers (UI ya muestra el
+        // mensaje, pero defensa extra).
+        if (allSubcodes.length === 0) {
+          showToast('La campaña no tiene triggers todavía');
           return;
         }
         const apl = [...state.aplicables];
@@ -3188,21 +3273,9 @@ const PIPELINES_MODULE = (() => {
   function setData(arr, opts) {
     opts = opts || {};
     S.data = Array.isArray(arr) ? arr : [];
-    // Normalización 2026-05-24: emails con triggersAplicables vacío + campaña
-    // con triggers son orphans (legacy o estado degenerado). emailCode
-    // antes los renderizaba como "P1C1E1" sin prefijo de trigger →
-    // visual debt reportada por Mel. Auto-apply ALL triggers en memoria
-    // para que el código se vea consistente. La DB se sincroniza la
-    // primera vez que se edita el email (el upsert manda el array
-    // efectivo). No persistimos en el load para evitar writes silenciosos.
-    S.data.forEach(p => (p.camps || []).forEach(c => {
-      const allSubs = (c.triggers || []).map(t => t.code.replace(c.code, ''));
-      (c.emails || []).forEach(e => {
-        if (allSubs.length > 0 && (!e.triggersAplicables || e.triggersAplicables.length === 0)) {
-          e.triggersAplicables = [...allSubs];
-        }
-      });
-    }));
+    // Retirada 2026-05-25 la normalización "[]→todos los triggers": en el
+    // nuevo modelo simplificado [] significa explícitamente Compartido
+    // (P1C1En sin prefijo). Auto-rellenar todos rompía ese modo.
     S.loadStatus = 'ready';
     S.loadError = null;
     // Si preserveView=true (refresh tras save), conservamos S.view y S.stack
