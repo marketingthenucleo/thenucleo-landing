@@ -546,14 +546,18 @@ UNIQUE (pipeline_id, codigo)
 INDEX cliente_campanias_pipeline_idx (pipeline_id)
 ```
 
-#### `cliente_triggers` — FM / FW / BD / DM por campaña
+#### `cliente_triggers` — FM / FW / BD / DM / SD por campaña
 ```
 id                  uuid PK
 campania_id         uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
-codigo              text NOT NULL                          -- 'P1C1FM1' / 'P1C1DM1'
-tipo                text NOT NULL CHECK (tipo IN ('FM','FW','BD','DM'))
+codigo              text NOT NULL                          -- 'P1C1FM1' / 'P1C1DM1' / 'P1C1SD1'
+tipo                text NOT NULL CHECK (tipo IN ('FM','FW','BD','DM','SD'))
                                                             -- DM añadido 2026-05-25 (F2.5c). Auto-DM RRSS
                                                             -- cuando se comenta con la keyword en IG/FB.
+                                                            -- SD añadido 2026-05-25 (F2.5e). "Sin trigger definido":
+                                                            -- canal ajeno al sistema (broadcast WhatsApp, carteles,
+                                                            -- eventos, boca a boca). Solo declarativo, sin requisitos
+                                                            -- extra (no fecha, no activador, no campos_capturar).
 descripcion         text
 link_externo        text                                   -- form id Meta, URL FW, segmento GHL
                                                             -- ⚠️ retirado de UI 2026-05-25 (este es el iniciador, no
@@ -656,7 +660,7 @@ INDEX cliente_creatividades_campania_idx (campania_id)
 
 - `ficha_pipeline_upsert(p_id, p_cliente_bubble_id, p_nombre, p_objetivo_negocio, p_estado, p_responsable_account, p_notas, p_orden, p_codigo_override)` — `p_id NULL` = INSERT con auto-código `P<N>` (regex sobre max actual del cliente), `p_id` dado = UPDATE (no toca codigo, regla `.docx` §3.4).
 - `ficha_campania_upsert(p_id, p_pipeline_id, p_nombre, p_plantilla_id, p_estado, p_fecha_inicio, p_fecha_fin, p_presupuesto_eur, p_canal_principal, p_kpi_objetivo, p_responsable_pm, p_notas_account, p_codigo_override)` — auto-código `P<N>C<M>` resolviendo prefix vía JOIN al pipeline. **Params `p_link_briefing_drive` y `p_briefing_nombre` retirados 2026-05-25 (F2.5c) — Brief Drive eliminado.**
-- `ficha_trigger_upsert(p_id, p_campania_id, p_tipo, p_descripcion, p_link_externo, p_fecha_lanzamiento, p_estado, p_codigo_override, p_campos_capturar, p_activador, p_mensaje_dm)` — auto-código `<campCodigo><tipo><N>` per (campaña, tipo). CHECK `tipo IN ('FM','FW','BD','DM')`. La CHECK de tabla obliga `fecha_lanzamiento` si tipo=BD; obliga `activador+mensaje_dm` si tipo=DM. **Params `p_campos_capturar jsonb` añadido 2026-05-25 (F2.3)** — spec de campos del form en FM/FW (ignorado en BD/DM). **Params `p_activador text` y `p_mensaje_dm text` añadidos 2026-05-25 (F2.5c)** — keyword + texto del DM cuando tipo=DM.
+- `ficha_trigger_upsert(p_id, p_campania_id, p_tipo, p_descripcion, p_link_externo, p_fecha_lanzamiento, p_estado, p_codigo_override, p_campos_capturar, p_activador, p_mensaje_dm)` — auto-código `<campCodigo><tipo><N>` per (campaña, tipo). CHECK `tipo IN ('FM','FW','BD','DM','SD')`. La CHECK de tabla obliga `fecha_lanzamiento` si tipo=BD; obliga `activador+mensaje_dm` si tipo=DM. **Params `p_campos_capturar jsonb` añadido 2026-05-25 (F2.3)** — spec de campos del form en FM/FW (ignorado en BD/DM). **Params `p_activador text` y `p_mensaje_dm text` añadidos 2026-05-25 (F2.5c)** — keyword + texto del DM cuando tipo=DM. **Tipo `SD` añadido 2026-05-25 (F2.5e)** — "Sin trigger definido": canal ajeno al sistema (broadcast WhatsApp, carteles, eventos, boca a boca); solo declarativo, sin requisitos extra.
 - `ficha_email_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_diseno_drive, p_link_ghl_workflow, p_estado)` — emails NO tienen columna codigo; el código display se deriva en frontend via `emailCode(camp, email)`. `p_orden NULL` = server asigna max+1. **Display orden recalculado per-scope 2026-05-25**: `n` en el código `E<n>` cuenta posición entre emails del mismo scope (Compartido vs Específico-X), no orden global.
 - `ficha_whatsapp_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_workflow, p_estado)` — **NUEVO 2026-05-25 (F2.4)**. Clon de `ficha_email_upsert` para `cliente_mensajes_whatsapp`. Display code `whatsappCode()` con letra `WA`.
 - `ficha_creatividad_upsert(p_id, p_trigger_id, p_categoria, p_subtipo, p_duracion_segundos, p_num_slides, p_notas, p_estado, p_orden, p_codigo_override)` — **NUEVO 2026-05-25 (F2.5 → F2.5d)**. CRUD de `cliente_creatividades` con código auto-asignado server-side: `<trigger.codigo><E|R|C|O><n>` per (trigger, subtipo). `p_trigger_id` obligatorio en INSERT, inmutable en UPDATE (regla `.docx` §3.4). `p_cantidad` retirado en F2.5d — 1 fila = 1 pieza; para varias piezas Account llama N veces (1 fila per pieza, codigos E1, E2, E3 generados automáticamente). En UPDATE, `subtipo/duracion_segundos/num_slides` se asignan directos (NULL válido al cambiar subtipo).

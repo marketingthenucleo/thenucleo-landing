@@ -67,6 +67,26 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
+## 2026-05-25 [WORK][INFRA][FEATURE] — Ficha cliente: 5º tipo de trigger `SD` (Sin trigger definido)
+
+- **Área:** Supabase + Frontend `work.thenucleo.com/ficha-cliente/` + Docs.
+- **Qué:** añadido tipo `SD` al módulo Pipelines → Campaña → Triggers. Sirve para declarar canales de captación ajenos al sistema (broadcast WhatsApp, carteles físicos, eventos, boca a boca, etc.). Solo declarativo, sin requisitos extra — no pide fecha (como BD) ni activador+mensaje (como DM) ni campos a capturar (como FM/FW). La descripción libre del trigger basta para anotar el canal real.
+- **Por qué:** Account necesitaba declarar campañas con tracción off-system sin forzarlas a uno de los 4 tipos existentes (que las dejaban incompletas/incorrectas). Mantiene la regla "Sin Trigger no es ejecutable" sin obligar a inventar un FM/FW/BD/DM falso.
+- **Cambios Supabase (migration `ficha_trigger_tipo_sd_sin_definir`):**
+  - `cliente_triggers.tipo` CHECK ampliado a `('FM','FW','BD','DM','SD')`.
+  - RPC `ficha_trigger_upsert` actualizada: validación `p_tipo IN ('FM','FW','BD','DM','SD')`. Resto de constraints intactas (`fecha_lanzamiento` sigue obligada solo para BD; `activador+mensaje_dm` solo para DM).
+- **Cambios frontend `ficha-cliente/index.html`:**
+  - Help docs `trigger-tipos`: título y body extendidos a 5 tipos.
+  - Selector de tipo en el sheet "Nuevo trigger" incluye tarjeta SD.
+  - `tipoLabelFull` + `renderTriggerView` label muestran "SD · Sin trigger definido (canal ajeno al sistema)".
+  - Placeholder de descripción para SD: "Ej: Broadcast WhatsApp socios, carteles polígono…".
+  - `orderTriggersInCode` y `w` weight functions (5 sitios) actualizadas: FM=1, FW=2, BD=3, DM=4, SD=5 (DM y SD faltaban — añadidos por coherencia).
+  - `tagClass` regex `/FM\d+|FW\d+|BD\d+|DM\d+|SD\d+/` para que `P1C1SD1` reciba la clase `tag-trig`.
+  - Aviso "Esta campaña no tiene triggers activos" actualizado para listar los 5 tipos.
+  - No se añade task de setup en `applyPlantilla` (SD no requiere configuración técnica — el canal vive fuera del sistema).
+- **Impacto:** Account puede crear triggers SD sin trabar la ejecución de la campaña; emails y creatividades pueden apuntarles igual que a cualquier otro tipo (1 fila = 1 pieza con código `P1C1SD1E1`, `P1C1SD1R1`, etc.).
+- **Refs:** migration `ficha_trigger_tipo_sd_sin_definir`; archivos `ficha-cliente/index.html`, `docs/infra/supabase-schema.md`, `CLAUDE.md` raíz.
+
 Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el historial narrativo queda como estaba).
 
 ---

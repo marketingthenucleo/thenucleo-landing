@@ -93,31 +93,36 @@ Campos:
 - `responsable_pm` — quién distribuye al equipo.
 - `notas_account` — texto libre corto. Contexto que no encaja en el briefing Drive.
 
-Una Campaña **siempre tiene al menos un Trigger** (FM, FW o BD). Si no tiene Trigger, está incompleta — está declarada pero no ejecutable.
+Una Campaña **siempre tiene al menos un Trigger** (FM, FW, BD, DM o SD). Si no tiene Trigger, está incompleta — está declarada pero no ejecutable.
 
 Una Campaña **puede tener 0 o N Emails**. Una Venta Directa puede no tener Emails (anuncio → checkout y punto). Una Captación de Leads suele tener 3-5.
 
-#### Trigger (FM / FW / BD)
+#### Trigger (FM / FW / BD / DM / SD)
 
 Sub-bloque dentro de la Campaña.
 
-| Tipo | Qué es | Quién lo crea | Campo obligatorio especial |
+| Tipo | Qué es | Quién lo crea | Campos obligatorios especiales |
 |---|---|---|---|
 | **FM** — Formulario Meta | Form nativo Instagram/Facebook que captura lead dentro de la plataforma | Media Buyer | — |
 | **FW** — Formulario Web | Form en la web del cliente (landing/popup) que envía lead a GHL | CRM Manager o Dev | — |
-| **BD** — Base de Datos | Lista existente a la que se lanza secuencia en fecha programada | CRM Manager | `fecha_lanzamiento` obligatoria |
+| **BD** — Enviar a base de datos personalizada | Lista existente a la que se lanza secuencia en fecha programada | CRM Manager | `fecha_lanzamiento` obligatoria |
+| **DM** — Mensaje directo RRSS (F2.5c, 2026-05-25) | Auto-DM cuando alguien comenta una keyword en Instagram/Facebook | Community Manager | `activador` (keyword) + `mensaje_dm` (texto del DM) obligatorios |
+| **SD** — Sin trigger definido (F2.5e, 2026-05-25) | Canal de captación ajeno al sistema: broadcast WhatsApp, carteles físicos, eventos, boca a boca. Solo declarativo (la campaña reconoce que recibe leads por canales no controlados) | Account | — |
 
 Campos:
 
-- `codigo` — `FM1`, `FW1`, `BD1`… secuencial dentro de la Campaña.
-- `tipo` — `FM` / `FW` / `BD`.
+- `codigo` — `FM1`, `FW1`, `BD1`, `DM1`, `SD1`… secuencial dentro de la Campaña per (campaña, tipo).
+- `tipo` — `FM` / `FW` / `BD` / `DM` / `SD`.
 - `descripcion` corta.
 - `link_externo` — ID del formulario Meta, URL del FW en web, nombre del segmento GHL del BD. **⚠️ Retirado de UI 2026-05-25** — Account es el iniciador, no la ficha del form. Lo monta Media Buyer (FM) o Dev/CRM (FW). La columna queda en DB para histórico.
 - `fecha_lanzamiento` — obligatoria solo si `tipo='BD'`.
+- `activador`, `mensaje_dm` — obligatorios solo si `tipo='DM'`.
 - `estado` — `declarado` / `creado` / `monitorizando`.
-- `campos_capturar` (jsonb, F2.3 — 2026-05-25) — spec de campos del formulario. Forma `{"defaults":["nombre","email","telefono"], "extras":["edad","ciudad",…]}`. Account marca defaults + añade extras. Solo aplica en FM/FW (Media Buyer / Dev lo monta en Meta Ads Manager / web del cliente). En BD se ignora — la lista ya viene hecha.
+- `campos_capturar` (jsonb, F2.3 — 2026-05-25) — spec de campos del formulario. Forma `{"defaults":["nombre","email","telefono"], "extras":["edad","ciudad",…]}`. Account marca defaults + añade extras. Solo aplica en FM/FW (Media Buyer / Dev lo monta en Meta Ads Manager / web del cliente). En BD/DM/SD se ignora — la lista/keyword/canal ya están fuera del form.
 
 **BD renombrado en UI:** "Enviar a base de datos personalizada" (en lugar de "Base de datos" genérico). Refleja la acción: enviar una secuencia a una lista existente del cliente con fecha programada.
+
+**SD** existe para no obligar a Account a inventar un FM/FW/BD/DM falso cuando la captación llega por un canal off-system. La descripción libre debe nombrar el canal real ("Broadcast WhatsApp socios", "Carteles polígono", "Networking evento sectorial", etc.). Mantiene la regla "Sin Trigger no es ejecutable" sin distorsionar la nomenclatura.
 
 #### Email (E)
 
