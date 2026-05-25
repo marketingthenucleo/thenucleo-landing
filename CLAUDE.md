@@ -127,6 +127,7 @@ Repo: `marketingthenucleo/thenucleo-landing`
   - `/ficha-cliente/` y `/ficha-cliente/?id=<bubble_id>` — ficha cliente cableada con `bub_clientes` vía RPCs `ficha_cliente_listar` + `ficha_cliente_get` (desde 2026-05-22). Servicios contratados leídos desde `playbook_cliente_servicios` agrupados por categoría + buscador (fix 2026-05-22). Datos y Catálogos compartimentados en grupos colapsables `.coll-group` con badge `rellenos/total` por sección (fix 2026-05-23)
   - `/casuisticas/` — tablero kanban admin
   - `/disponibilidades/` — calendario laboral equipo
+  - `/presentacion-pipelines/` — slides Reveal.js sintetizando `pipelines-presentacion.md` + manuales Account/PM para sesión de ejecución (audiencia Account + PM). 29 secciones, mockups HTML/CSS reproduciendo UI real de `/ficha-cliente/` + flujo end-to-end mermaid. Mismo allowlist 4 emails. Creada 2026-05-25.
 - **Vercel fallback:** https://app-landing-thenucleo.vercel.app/
 - **Dev:** `npm run dev` → `http://localhost:8080`
 

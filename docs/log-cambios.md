@@ -71,6 +71,15 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][DOCS] — Presentación interna Pipelines y Campañas para Account + PM (slides Reveal.js)
+
+- **Área:** `work.thenucleo.com` — nueva ruta admin-only `/presentacion-pipelines/`.
+- **Qué:** página HTML standalone con 29 slides Reveal.js (CDN 5.1) + Mermaid (CDN 10.9) sintetizando `pipelines-presentacion.md` + `ficha-cliente.md` + `account-manual-pipelines.md` + `pm-manual-pipelines.md` para sesión de ejecución con Account (Melina) y PM. Mockups HTML/CSS inline que reproducen la UI real de `/ficha-cliente/` (sidebar árbol, panel detalle, drawer "Crear tareas Notion", switch Account/PM) sin necesidad de screenshots. Diagrama mermaid del flujo end-to-end Account→PM→equipo.
+- **Estructura:** Portada · El problema (caso Neus) · Modelo (3 capas + dirección postal + 7 reglas + casuísticas) · Flujo Account (cuándo abrir + crear Pipeline + crear Campaña con plantilla + catálogo 7 plantillas seed) · Flujo PM (modo PM + drawer crear tareas + cheat sheet de reparto por rol + verificación viernes) · Cómo encaja (Notion + Drive + GHL) · Ejemplo Neus + 3 reglas que nadie rompe · Calendario del cambio · Recursos.
+- **Auth:** mismo patrón allowlist 4 emails (`benjamin.sanchis`, `alejandro.lopez`, `marketing.thenucleo`, `mel.dalmazo`) leyendo `localStorage['thenucleo-comunidad-auth']` que ya usan `/disponibilidades/` y `/ficha-cliente/`. Sin Supabase calls (la presentación no necesita datos). Redirect a `/comunidad/entrar/?next=/presentacion-pipelines/`. `noindex,nofollow`.
+- **Eleventy:** registrada como `addPassthroughCopy("presentacion-pipelines")` en `.eleventy.js`. Build de 53 → 55 archivos sin warnings.
+- **Refs:** `presentacion-pipelines/index.html` (nuevo, 1216 líneas, 70 KB), `.eleventy.js` (+1 línea), `CLAUDE.md` (raíz, +1 referencia). Fuentes en `docs/portal/pipelines-presentacion.md`, `docs/portal/ficha-cliente.md`, `docs/portal/account-manual-pipelines.md`, `docs/portal/pm-manual-pipelines.md`. Branch `claude/customer-pipeline-presentation-TPH1w`.
+
 ### 2026-05-24 [WORK][INFRA][BUGFIX] — Ficha de Cliente: RPCs plantillas a SECURITY DEFINER (fix RLS bub_clientes)
 
 - **Commit:** `78c7276`. Migration `ficha_cliente_plantillas_rpcs_security_definer_fix_bub_clientes_rls`. SQL en `supabase/migrations/`.

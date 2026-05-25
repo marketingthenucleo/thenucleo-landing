@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipelines y Campañas · Presentación Account + PM · TheNucleo</title>
+<meta name="robots" content="noindex,nofollow">
+
+<script>
+(function () { document.documentElement.classList.add('locked-mode'); })();
+</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+<style>
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Light.woff2') format('woff2'); font-weight:300; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+@font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+
+:root {
+  --bg-base:#090a0f; --bg-card:#12141b; --bg-elevated:#1a1d27; --bg-hover:#1e2130;
+  --border-subtle:#1e2130; --border-default:#2a2d3e; --border-strong:#363a4e;
+  --text-primary:#edeef3; --text-secondary:#8b8fa8; --text-tertiary:#5c6078; --text-inverse:#090a0f;
+  --accent:#22c55e; --accent-hover:#16a34a; --accent-muted:rgba(34,197,94,0.12);
+  --info:#3b82f6; --info-muted:rgba(59,130,246,0.12);
+  --warn:#f59e0b; --warn-muted:rgba(245,158,11,0.10);
+  --error:#ef4444; --error-muted:rgba(239,68,68,0.10);
+  --violet:#8b5cf6; --violet-muted:rgba(139,92,246,0.10);
+  --pink:#ec4899; --pink-muted:rgba(236,72,153,0.10);
+  --neutral:#6b7280; --neutral-muted:rgba(107,114,128,0.10);
+}
+
+html, body { background:var(--bg-base); color:var(--text-primary); }
+body { font-family:'NewBlack',-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+
+html.locked-mode .reveal { visibility:hidden; }
+html.locked-mode .gate { display:flex !important; }
+
+/* ============================== GATE ============================== */
+.gate {
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:var(--bg-base); flex-direction:column; align-items:center; justify-content:center;
+  gap:18px; padding:24px; text-align:center;
+}
+.gate-icon { font-size:56px; opacity:.5; }
+.gate h1 { font-size:22px; font-weight:600; }
+.gate p { color:var(--text-secondary); max-width:440px; line-height:1.55; font-size:14px; }
+.gate-actions { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; justify-content:center; }
+.gate-btn-primary {
+  background:var(--accent); color:var(--text-inverse); border:0;
+  padding:10px 22px; border-radius:8px; font-weight:600; font-size:14px; font-family:inherit;
+  cursor:pointer; transition:background .15s;
+}
+.gate-btn-primary:hover { background:var(--accent-hover); }
+.gate-btn-ghost {
+  background:transparent; color:var(--text-secondary); border:1px solid var(--border-default);
+  padding:10px 22px; border-radius:8px; font-size:14px; text-decoration:none;
+}
+.gate-btn-ghost:hover { color:var(--text-primary); border-color:var(--border-strong); }
+
+/* ============================== REVEAL OVERRIDES ============================== */
+.reveal { font-family:'NewBlack',-apple-system,system-ui,sans-serif; font-size:24px; color:var(--text-primary); }
+.reveal .slides { text-align:left; }
+.reveal section { font-weight:400; }
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 { color:var(--text-primary); font-weight:600; line-height:1.2; text-transform:none; letter-spacing:-0.01em; margin:0 0 14px; }
+.reveal h1 { font-size:1.8em; }
+.reveal h2 { font-size:1.4em; }
+.reveal h3 { font-size:1.1em; color:var(--text-primary); }
+.reveal h4 { font-size:0.95em; color:var(--text-secondary); font-weight:500; }
+.reveal p { line-height:1.55; margin:.5em 0; color:var(--text-primary); }
+.reveal strong { color:var(--text-primary); font-weight:600; }
+.reveal em { color:var(--accent); font-style:normal; font-weight:500; }
+.reveal a { color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(34,197,94,.35); }
+.reveal a:hover { border-bottom-color:var(--accent); }
+.reveal ul, .reveal ol { margin:.4em 0 .4em 1.1em; }
+.reveal li { margin:.3em 0; line-height:1.5; }
+.reveal code { font-family:'JetBrains Mono','SF Mono',Consolas,monospace; font-size:.85em; background:var(--bg-card); padding:2px 7px; border-radius:4px; border:1px solid var(--border-subtle); color:var(--accent); }
+.reveal pre { font-size:.55em; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:8px; }
+.reveal pre code { background:transparent; border:0; padding:14px 18px; display:block; line-height:1.55; color:var(--text-primary); }
+.reveal table { font-size:.7em; border-collapse:collapse; width:100%; }
+.reveal table th, .reveal table td { border-bottom:1px solid var(--border-subtle); padding:8px 10px; text-align:left; vertical-align:top; }
+.reveal table th { color:var(--text-secondary); font-weight:500; text-transform:uppercase; font-size:.75em; letter-spacing:.05em; }
+.reveal table tr:hover td { background:var(--bg-hover); }
+.reveal .controls { color:var(--accent); }
+.reveal .progress { color:var(--accent); height:3px; }
+.reveal .slide-number { color:var(--text-tertiary); background:transparent; font-family:inherit; font-size:13px; }
+
+/* ============================== COMPONENT CLASSES ============================== */
+.eyebrow { display:inline-block; font-size:.55em; text-transform:uppercase; letter-spacing:.1em; color:var(--accent); font-weight:600; padding:4px 10px; background:var(--accent-muted); border-radius:99px; margin-bottom:14px; }
+.eyebrow.info { color:var(--info); background:var(--info-muted); }
+.eyebrow.warn { color:var(--warn); background:var(--warn-muted); }
+.eyebrow.violet { color:var(--violet); background:var(--violet-muted); }
+.eyebrow.pink { color:var(--pink); background:var(--pink-muted); }
+
+.lead { font-size:1.15em; color:var(--text-secondary); line-height:1.55; max-width:90%; }
+.tiny { font-size:.55em; color:var(--text-tertiary); }
+.small { font-size:.7em; color:var(--text-secondary); }
+.mono { font-family:'JetBrains Mono','SF Mono',Consolas,monospace; }
+
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+
+.card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:18px 20px; }
+.card h3 { font-size:.95em; color:var(--accent); margin:0 0 8px; }
+.card .small { font-size:.65em; }
+.card-warn { background:var(--warn-muted); border-color:rgba(245,158,11,.3); }
+.card-warn h3 { color:var(--warn); }
+.card-error { background:var(--error-muted); border-color:rgba(239,68,68,.3); }
+.card-error h3 { color:var(--error); }
+.card-info { background:var(--info-muted); border-color:rgba(59,130,246,.3); }
+.card-info h3 { color:var(--info); }
+
+.badge { display:inline-block; font-size:.6em; font-weight:600; padding:3px 9px; border-radius:99px; text-transform:lowercase; letter-spacing:.02em; }
+.badge.b-declarada { background:var(--neutral-muted); color:var(--text-secondary); border:1px solid var(--border-default); }
+.badge.b-produccion { background:var(--accent-muted); color:var(--accent); border:1px solid rgba(34,197,94,.35); }
+.badge.b-archivada { background:var(--bg-elevated); color:var(--text-tertiary); border:1px solid var(--border-subtle); }
+.badge.b-warn { background:var(--warn-muted); color:var(--warn); border:1px solid rgba(245,158,11,.35); }
+
+.code-chip { display:inline-block; font-family:'JetBrains Mono','SF Mono',Consolas,monospace; font-size:.85em; padding:3px 10px; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:6px; color:var(--accent); font-weight:500; }
+
+/* Code dissection: each piece colored */
+.code-dissect { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:1.6em; font-weight:600; justify-content:center; margin:20px 0; flex-wrap:wrap; }
+.code-piece { padding:8px 16px; border-radius:8px; border:2px solid currentColor; }
+.cp-p { color:#22c55e; background:rgba(34,197,94,.12); }
+.cp-c { color:#3b82f6; background:rgba(59,130,246,.12); }
+.cp-t { color:#f59e0b; background:rgba(245,158,11,.12); }
+.cp-e { color:#8b5cf6; background:rgba(139,92,246,.12); }
+
+.legend { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; font-size:.7em; }
+.legend > div { padding:10px 12px; border-radius:8px; border-left:3px solid; }
+.legend .lg-p { border-color:#22c55e; background:rgba(34,197,94,.05); }
+.legend .lg-c { border-color:#3b82f6; background:rgba(59,130,246,.05); }
+.legend .lg-t { border-color:#f59e0b; background:rgba(245,158,11,.05); }
+.legend .lg-e { border-color:#8b5cf6; background:rgba(139,92,246,.05); }
+.legend strong { display:block; font-size:1.1em; margin-bottom:3px; }
+
+/* Mock UI (sidebar tree, panel) */
+.mock { background:var(--bg-card); border:1px solid var(--border-default); border-radius:12px; padding:14px; font-size:.62em; box-shadow:0 8px 30px rgba(0,0,0,.3); }
+.mock-head { display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid var(--border-subtle); margin-bottom:12px; }
+.mock-head .title { font-weight:600; color:var(--text-primary); }
+.mock-head .url { font-family:monospace; color:var(--text-tertiary); font-size:.85em; }
+
+.mock-layout { display:grid; grid-template-columns:240px 1fr; gap:14px; }
+.mock-sidebar { background:var(--bg-elevated); border-radius:8px; padding:12px; }
+.mock-sidebar .switch { display:flex; gap:4px; padding:3px; background:var(--bg-base); border-radius:6px; margin-bottom:10px; font-size:.85em; }
+.mock-sidebar .switch span { flex:1; text-align:center; padding:4px 0; border-radius:4px; color:var(--text-tertiary); cursor:default; }
+.mock-sidebar .switch span.on { background:var(--accent); color:var(--text-inverse); font-weight:600; }
+.mock-sidebar h4 { font-size:.9em; text-transform:uppercase; letter-spacing:.05em; color:var(--text-tertiary); margin:0 0 8px; font-weight:500; }
+.mock-tree { font-family:monospace; line-height:1.7; font-size:.95em; }
+.mock-tree .pl { color:var(--accent); font-weight:600; }
+.mock-tree .cm { color:var(--info); padding-left:14px; }
+.mock-tree .tr { color:var(--warn); padding-left:28px; }
+.mock-tree .em { color:var(--violet); padding-left:28px; }
+.mock-tree .arch { color:var(--text-tertiary); opacity:.6; }
+
+.mock-panel { background:var(--bg-elevated); border-radius:8px; padding:14px; min-height:240px; }
+.mock-panel .panel-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.mock-panel .panel-head .left { display:flex; align-items:center; gap:8px; }
+.mock-panel .panel-head .title { font-weight:600; color:var(--text-primary); font-size:1.05em; }
+.mock-panel .panel-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--border-subtle); }
+.mock-panel .panel-row:last-child { border:0; }
+.mock-panel .panel-row .key { color:var(--text-tertiary); }
+.mock-panel .panel-row .val { color:var(--text-primary); font-family:monospace; }
+.mock-cta { display:inline-block; background:var(--accent); color:var(--text-inverse); padding:6px 14px; border-radius:6px; font-weight:600; font-size:.95em; margin-top:8px; }
+.mock-btn { display:inline-block; background:var(--bg-base); border:1px solid var(--border-default); color:var(--text-primary); padding:5px 12px; border-radius:6px; font-size:.9em; margin-right:6px; }
+
+/* Drawer mockup (right side modal) */
+.mock-drawer { background:var(--bg-card); border:1px solid var(--border-default); border-radius:12px; padding:18px; box-shadow:0 10px 40px rgba(0,0,0,.45); font-size:.62em; }
+.mock-drawer h4 { font-size:.95em; color:var(--text-primary); margin:0 0 12px; font-weight:600; }
+.mock-row-task {
+  display:grid; grid-template-columns:18px 1fr auto; gap:10px;
+  align-items:center; padding:8px 10px; background:var(--bg-elevated);
+  border:1px solid var(--border-subtle); border-radius:6px; margin-bottom:6px;
+}
+.mock-row-task .check { width:14px; height:14px; border:1.5px solid var(--accent); border-radius:3px; background:var(--accent); display:flex; align-items:center; justify-content:center; color:var(--text-inverse); font-size:11px; line-height:1; font-weight:700; }
+.mock-row-task .title { font-family:monospace; color:var(--text-primary); }
+.mock-row-task .area { font-size:.85em; padding:2px 8px; border-radius:99px; background:var(--bg-base); color:var(--text-secondary); border:1px solid var(--border-default); }
+.mock-row-task .area.am { color:var(--info); border-color:rgba(59,130,246,.3); }
+.mock-row-task .area.dis { color:var(--violet); border-color:rgba(139,92,246,.3); }
+.mock-row-task .area.copy { color:var(--accent); border-color:rgba(34,197,94,.3); }
+.mock-row-task .area.crm { color:var(--pink); border-color:rgba(236,72,153,.3); }
+.mock-row-task .area.estr { color:var(--warn); border-color:rgba(245,158,11,.3); }
+
+/* Before/after comparison */
+.ba { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.ba .before, .ba .after { padding:16px; border-radius:10px; font-size:.7em; }
+.ba .before { background:var(--error-muted); border:1px solid rgba(239,68,68,.25); }
+.ba .after { background:var(--accent-muted); border:1px solid rgba(34,197,94,.3); }
+.ba h3 { margin:0 0 10px; font-size:1em; }
+.ba .before h3 { color:var(--error); }
+.ba .after h3 { color:var(--accent); }
+.ba ul { margin:0; padding-left:18px; line-height:1.65; }
+.ba code { font-size:.85em; }
+
+/* Roles cheat sheet */
+.role-row { display:grid; grid-template-columns:140px 1fr 130px; align-items:center; gap:14px; padding:10px 0; border-bottom:1px solid var(--border-subtle); font-size:.75em; }
+.role-row:last-child { border:0; }
+.role-row .role-name { font-weight:600; }
+.role-row .role-code { font-family:monospace; color:var(--text-secondary); font-size:.95em; }
+.role-row .role-area { text-align:center; }
+
+/* Stage colors per role */
+.role-strat { color:var(--warn); }
+.role-copy { color:var(--accent); }
+.role-design { color:var(--violet); }
+.role-media { color:var(--info); }
+.role-crm { color:var(--pink); }
+
+/* Mermaid */
+.mermaid { background:transparent !important; font-family:'NewBlack',sans-serif !important; }
+.reveal .mermaid svg { max-height:520px; }
+
+/* Footer per slide */
+.foot { position:absolute; bottom:18px; left:0; right:0; text-align:center; color:var(--text-tertiary); font-size:.5em; }
+
+/* Quote block */
+.quote { font-size:1.15em; line-height:1.45; padding:20px 26px; border-left:4px solid var(--accent); background:var(--bg-card); border-radius:0 12px 12px 0; color:var(--text-primary); margin:14px 0; }
+
+/* Calendar timeline */
+.timeline { display:grid; grid-template-columns:auto 1fr; gap:14px 22px; font-size:.75em; }
+.timeline .when { font-weight:600; color:var(--accent); white-space:nowrap; padding-top:2px; }
+.timeline .what { padding-top:2px; }
+
+/* Cover slide */
+.cover { text-align:center; padding:40px 20px; }
+.cover .logo-dot { display:inline-block; width:14px; height:14px; border-radius:50%; background:var(--accent); margin-right:10px; vertical-align:middle; }
+.cover h1 { font-size:2.4em; margin-bottom:6px; }
+.cover .sub { font-size:1.1em; color:var(--text-secondary); margin-bottom:20px; }
+.cover .meta { font-size:.65em; color:var(--text-tertiary); letter-spacing:.05em; text-transform:uppercase; }
+.cover .audience-pill { display:inline-block; padding:6px 16px; background:var(--accent-muted); color:var(--accent); border-radius:99px; font-size:.7em; font-weight:600; margin-top:14px; }
+
+/* Section divider */
+.divider { text-align:center; }
+.divider .big { font-size:4em; color:var(--accent); font-weight:700; opacity:.4; line-height:1; }
+.divider h1 { font-size:1.9em; margin:14px 0 6px; }
+.divider .sub { color:var(--text-secondary); font-size:.85em; }
+
+/* Mobile */
+@media (max-width:720px) {
+  .grid-2, .grid-3, .grid-4, .ba { grid-template-columns:1fr; }
+  .mock-layout { grid-template-columns:1fr; }
+  .reveal { font-size:18px; }
+  .code-dissect { font-size:1.1em; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================== AUTH GATE ============================== -->
+<div class="gate" id="gate" style="display:none;">
+  <div class="gate-icon">🔒</div>
+  <h1 id="gate-title">Acceso restringido</h1>
+  <p id="gate-msg">Esta presentación es material interno del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.</p>
+  <div class="gate-actions">
+    <button class="gate-btn-primary" id="gate-login">Iniciar sesión</button>
+    <a class="gate-btn-ghost" href="/">Volver al inicio</a>
+  </div>
+</div>
+
+<!-- ============================== SLIDES ============================== -->
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ========== 1. PORTADA ========== -->
+    <section data-state="cover">
+      <div class="cover">
+        <div class="meta"><span class="logo-dot"></span>TheNucleo · Sistema operativo del cliente</div>
+        <h1>Pipelines y Campañas</h1>
+        <div class="sub">El mapa único del cliente. Para Account y PM.</div>
+        <div class="audience-pill">Pase de ejecución · Account + PM</div>
+        <p class="tiny" style="margin-top:30px; max-width:580px; margin-left:auto; margin-right:auto;">
+          Vivo en <span class="mono">work.thenucleo.com/ficha-cliente/</span> desde 2026-05-23 con datos seed de Dra. Neuss. Backend Supabase = F2.
+        </p>
+      </div>
+      <div class="foot">Navega con ←/→ o espacio · ESC para vista general</div>
+    </section>
+
+    <!-- ========== 2. EL PROBLEMA (CASO NEUS) ========== -->
+    <section>
+      <span class="eyebrow warn">Punto de partida</span>
+      <h2>Por qué necesitamos esto · caso Dra. Neuss</h2>
+      <p class="lead">Marzo→mayo 2026, 60 tareas en Notion sin estructura paraguas. Síntomas medidos en <span class="mono">bub_tareas_notion</span>:</p>
+      <div class="grid-2" style="margin-top:18px;">
+        <div class="card card-error">
+          <h3>🔁 Tareas duplicadas en la misma semana</h3>
+          <ul class="small">
+            <li><code>Píxel de conversión</code></li>
+            <li><code>Investigar pixel de conversión</code></li>
+            <li><code>Pixel de seguimiento ventas</code></li>
+          </ul>
+          <p class="small" style="margin-top:8px; color:var(--text-tertiary);">3 tareas distintas. Mismo píxel. Tres personas tirando del hilo.</p>
+        </div>
+        <div class="card card-error">
+          <h3>🤷 Nombres ambiguos sin contexto</h3>
+          <ul class="small">
+            <li><code>Lanzamiento de campañas</code> × 3 en fechas distintas</li>
+            <li><code>Briefing Mayo</code> Newsletter + <code>Briefing Mayo</code> RRSS</li>
+            <li><code>OUTPUT NEUS</code>, <code>12/5 || Input 2DO Lanzamiento</code></li>
+          </ul>
+        </div>
+        <div class="card card-error">
+          <h3>🏷 Áreas duplicadas para la misma persona</h3>
+          <p class="small"><code>PAID MEDIA</code> · <code>Meta Ads</code> · <code>Media Buyer</code> = los tres son Damian.</p>
+        </div>
+        <div class="card card-error">
+          <h3>🌫 Pipelines latentes sin declarar</h3>
+          <p class="small">≥4 líneas de negocio operando en paralelo (Venta curso, Captación leads, Reactivación, Newsletter) sin que nadie las haya escrito en ningún sitio.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 3. EL CAMBIO EN UNA FRASE ========== -->
+    <section>
+      <span class="eyebrow">El cambio</span>
+      <h2>Una frase</h2>
+      <div class="quote">
+        Account vuelca el mapa <strong>en la ficha</strong>. PM reparte con <strong>código en la tarea</strong>. El equipo consume <strong>sin preguntar</strong>.
+      </div>
+      <div class="grid-3" style="margin-top:24px;">
+        <div class="card">
+          <h3>Account</h3>
+          <p class="small">Crea Pipelines, Campañas, Triggers y Emails en <code>/ficha-cliente/</code>. Pega el link del briefing Drive. Es el único que asigna códigos.</p>
+        </div>
+        <div class="card">
+          <h3>PM</h3>
+          <p class="small">Abre la ficha en modo PM, pulsa <em>"Crear tareas Notion"</em> por Campaña. Las tareas salen con código, área canónica y responsable sugerido.</p>
+        </div>
+        <div class="card">
+          <h3>Equipo</h3>
+          <p class="small">Recibe tarea Notion <em>con código en el título</em> + briefing en Drive (subcarpeta nombrada igual). No entra a la ficha.</p>
+        </div>
+      </div>
+      <p class="tiny" style="margin-top:26px;">No hay tarea sin código. No hay código sin Account. No hay Account inventando dos veces lo mismo.</p>
+    </section>
+
+    <!-- ========== 4. DIVIDER MODELO ========== -->
+    <section data-state="divider">
+      <div class="divider">
+        <div class="big">01</div>
+        <h1>El modelo mental</h1>
+        <div class="sub">3 capas · 1 dirección postal · 7 reglas</div>
+      </div>
+    </section>
+
+    <!-- ========== 5. LAS 3 CAPAS ========== -->
+    <section>
+      <span class="eyebrow">Modelo</span>
+      <h2>Las 3 capas anidadas</h2>
+      <p class="lead">Como un libro con 3 niveles. Cada capa tiene su unidad, su responsable y su vida útil.</p>
+      <div class="grid-3" style="margin-top:20px;">
+        <div class="card" style="border-left:4px solid var(--text-secondary);">
+          <h4 style="color:var(--text-secondary);">Capa</h4>
+          <h3 style="color:var(--text-primary);">Cliente</h3>
+          <p class="small">Una por cliente. Ya existe en <code>bub_clientes</code>. Identidad, contactos, accesos, Drive. <strong>No la tocas tú aquí.</strong></p>
+          <p class="tiny" style="margin-top:8px;">Vida útil: años.</p>
+        </div>
+        <div class="card" style="border-left:4px solid #22c55e;">
+          <h4 style="color:#22c55e;">Capa</h4>
+          <h3>Pipeline (P)</h3>
+          <p class="small"><strong>1-4 por cliente.</strong> Línea estratégica de negocio. <em>Si tiene fecha de fin concreta, no es Pipeline — es Campaña.</em></p>
+          <p class="tiny" style="margin-top:8px;">Vida útil: meses–años.</p>
+        </div>
+        <div class="card" style="border-left:4px solid #3b82f6;">
+          <h4 style="color:#3b82f6;">Capa</h4>
+          <h3>Campaña (C)</h3>
+          <p class="small"><strong>N por Pipeline.</strong> Acción concreta con objetivo medible. <em>La unidad real de trabajo del equipo.</em></p>
+          <p class="tiny" style="margin-top:8px;">Vida útil: semanas–meses · puede ser recurrente.</p>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:18px;">
+        <div class="card" style="border-left:4px solid #f59e0b;">
+          <h4 style="color:#f59e0b;">Dentro de cada Campaña</h4>
+          <h3>Triggers · FM / FW / BD</h3>
+          <p class="small">
+            <strong>FM</strong> Formulario Meta · <strong>FW</strong> Formulario Web · <strong>BD</strong> Base de Datos<br>
+            Una Campaña <strong>siempre tiene al menos un Trigger</strong>. Si no, está incompleta.
+          </p>
+        </div>
+        <div class="card" style="border-left:4px solid #8b5cf6;">
+          <h4 style="color:#8b5cf6;">Dentro de cada Campaña</h4>
+          <h3>Emails · E1, E2, E3…</h3>
+          <p class="small">0–N emails. Una Venta Directa puede no tener emails. Una Captación de Leads suele tener 3–5.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 6. DIRECCIÓN POSTAL (P1C1FM1E1) ========== -->
+    <section>
+      <span class="eyebrow">Nomenclatura PxCx</span>
+      <h2>La dirección postal de cada cosa</h2>
+      <p class="lead">Cada cosa que producimos tiene una dirección que dice exactamente dónde encaja. Como Madrid&nbsp;&gt;&nbsp;Salamanca&nbsp;&gt;&nbsp;Velázquez&nbsp;&gt;&nbsp;5.</p>
+      <div class="code-dissect">
+        <span class="code-piece cp-p">P1</span>
+        <span style="color:var(--text-tertiary);">·</span>
+        <span class="code-piece cp-c">C1</span>
+        <span style="color:var(--text-tertiary);">·</span>
+        <span class="code-piece cp-t">FM1</span>
+        <span style="color:var(--text-tertiary);">·</span>
+        <span class="code-piece cp-e">E1</span>
+      </div>
+      <div class="legend">
+        <div class="lg-p"><strong>P1</strong> Pipeline 1 del cliente (su línea de negocio).</div>
+        <div class="lg-c"><strong>C1</strong> Campaña 1 dentro de ese Pipeline.</div>
+        <div class="lg-t"><strong>FM1</strong> Formulario Meta #1 de esa Campaña.</div>
+        <div class="lg-e"><strong>E1</strong> Email 1 de la secuencia.</div>
+      </div>
+      <p class="small" style="margin-top:18px;">Este mismo string viaja idéntico por <code>Drive</code> → <code>Notion</code> → <code>GHL</code> → <code>Meta Ads</code> → chats del equipo. Si cambia entre sistemas, se rompe la cadena.</p>
+    </section>
+
+    <!-- ========== 7. 7 REGLAS DE ORO ========== -->
+    <section>
+      <span class="eyebrow">Nomenclatura</span>
+      <h2>Las 7 reglas que no se rompen nunca</h2>
+      <div class="grid-4" style="margin-top:10px;">
+        <div class="card"><h3>1</h3><p class="small">Toda nomenclatura <strong>empieza por P</strong>. Nunca dices <code>FM1</code> suelto.</p></div>
+        <div class="card"><h3>2</h3><p class="small"><strong>Orden fijo</strong>: P → C → FM/FW/BD → E. Nunca al revés.</p></div>
+        <div class="card"><h3>3</h3><p class="small"><strong>Secuencial por contexto</strong>. El <code>C1</code> de un Pipeline no es el <code>C1</code> de otro.</p></div>
+        <div class="card"><h3>4</h3><p class="small"><strong>Los números no se reutilizan.</strong> Si archivas <code>C2</code>, la siguiente es <code>C3</code>.</p></div>
+        <div class="card"><h3>5</h3><p class="small"><strong>Solo Account asigna códigos.</strong> El equipo los consume, no los crea.</p></div>
+        <div class="card"><h3>6</h3><p class="small"><strong>Los códigos no caducan.</strong> Cuando algo deja de funcionar, <em>se archiva, no se borra</em>.</p></div>
+        <div class="card"><h3>7</h3><p class="small"><strong>Mismo código en todos lados</strong>: ficha · Notion · Drive · GHL · Meta · chats.</p></div>
+        <div class="card card-info"><h3>+</h3><p class="small">Si dudas si algo es Pipeline o Campaña: <em>¿tiene fecha de fin?</em> → Campaña.</p></div>
+      </div>
+    </section>
+
+    <!-- ========== 8. CASUÍSTICAS ========== -->
+    <section>
+      <span class="eyebrow">Casos reales</span>
+      <h2>Cuándo el código lleva trigger y cuándo no</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Si todos los triggers envían los mismos emails</h3>
+          <p class="small">El email <strong>no lleva trigger</strong> en su código.</p>
+          <p class="mono small" style="margin-top:10px; line-height:2;">
+            <span class="code-chip">P1C1FM1</span> · <span class="code-chip">P1C1FW1</span> · <span class="code-chip">P1C1BD1</span><br>
+            ↓<br>
+            <span class="code-chip">P1C1E1</span> · <span class="code-chip">P1C1E2</span> · <span class="code-chip">P1C1E3</span>
+          </p>
+        </div>
+        <div class="card">
+          <h3>Si cada trigger tiene variantes de email</h3>
+          <p class="small">El email <strong>lleva los triggers concatenados</strong> en orden <span class="mono">FM → FW → BD</span>.</p>
+          <p class="mono small" style="margin-top:10px; line-height:2;">
+            <span class="code-chip">P1C1FM1E1</span> (email para anuncio Meta)<br>
+            <span class="code-chip">P1C1FW1E1</span> (email para form web)<br>
+            <span class="code-chip">P1C1FM1FW1E1</span> (email para los dos)
+          </p>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:18px;">
+        <div class="card card-info"><h3>Caso 7 · Cliente pide cambiar un email</h3><p class="small">No se crea código nuevo. <code>P1C1E2</code> mantiene su código. Se versiona en Drive (<code>P1C1E2_v2_copy.docx</code>).</p></div>
+        <div class="card card-info"><h3>Caso 8 · Cliente pide añadir un cuarto email</h3><p class="small">Account añade <code>E4</code>. No se renumera nada anterior.</p></div>
+        <div class="card card-info"><h3>Caso 9 · Campaña que deja de usarse</h3><p class="small">Se marca <strong>archivada</strong>. El código sigue existiendo. Si vuelve, se crea <code>C5</code>, nunca se reutiliza <code>C2</code>.</p></div>
+      </div>
+    </section>
+
+    <!-- ========== 9. DIVIDER ACCOUNT ========== -->
+    <section data-state="divider">
+      <div class="divider">
+        <div class="big" style="color:#22c55e;">02</div>
+        <h1>Flujo de Account</h1>
+        <div class="sub">Volcar el mapa · 30 min cliente nuevo · 2–5 min por cambio</div>
+      </div>
+    </section>
+
+    <!-- ========== 10. WHEN ACCOUNT OPENS ========== -->
+    <section>
+      <span class="eyebrow">Account</span>
+      <h2>Cuándo abres la ficha</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>📥 Cliente nuevo (primera vez)</h3>
+          <p class="small">Te preguntas: <em>¿qué líneas de negocio distintas tiene?</em> Cada respuesta es un Pipeline.</p>
+          <p class="small" style="margin-top:8px;">Pulsas <code>+ Pipeline</code> por cada uno y declaras sus Campañas iniciales.</p>
+          <p class="tiny" style="margin-top:10px;">⏱ 30 min la primera vez.</p>
+        </div>
+        <div class="card">
+          <h3>💬 Cliente pide algo nuevo</h3>
+          <p class="small">¿Encaja en un Pipeline existente? → solo Campaña.<br>¿Es algo nuevo? → Pipeline + Campaña.</p>
+          <p class="small" style="margin-top:8px;">Eliges <strong>plantilla</strong> del catálogo, rellenas KPI + briefing Drive.</p>
+          <p class="tiny" style="margin-top:10px;">⏱ 2–5 min.</p>
+        </div>
+        <div class="card">
+          <h3>✏️ Cliente pide cambio</h3>
+          <p class="small">¿Modifica un email existente? <strong>No creas código nuevo.</strong></p>
+          <p class="small" style="margin-top:8px;">¿Añade email a una secuencia? <code>+ Email</code> → <code>E4</code>. No renumeras.</p>
+          <p class="small" style="margin-top:8px;">¿Desactiva campaña? <strong>Archivar</strong>, no borrar.</p>
+        </div>
+      </div>
+      <div class="quote" style="margin-top:24px; font-size:.95em;">
+        Tú solo declaras la estructura. <strong>Nunca</strong> abres Notion. <strong>Nunca</strong> rellenas el briefing largo en la ficha — eso vive en el Doc/PDF de Drive como hasta ahora.
+      </div>
+    </section>
+
+    <!-- ========== 11. CREAR PIPELINE (MOCKUP) ========== -->
+    <section>
+      <span class="eyebrow">Account · Pantalla</span>
+      <h2>Crear Pipeline · sidebar izquierdo</h2>
+      <div class="mock">
+        <div class="mock-head">
+          <span class="title">Ficha Dra. Neuss</span>
+          <span class="url">work.thenucleo.com/ficha-cliente/?id=…</span>
+        </div>
+        <div class="mock-layout">
+          <div class="mock-sidebar">
+            <div class="switch"><span class="on">Account</span><span>PM</span></div>
+            <h4>Pipelines y Campañas</h4>
+            <div class="mock-tree">
+              <div class="pl">▼ P1 · Venta directa Curso</div>
+              <div class="cm">└─ C1 · Curso Suplementación 75€</div>
+              <div class="pl">▼ P2 · Captación de leads</div>
+              <div class="cm">└─ C1 · Captación leads</div>
+              <div class="pl">▶ P3 · Reactivación leads</div>
+              <div class="pl">▶ P4 · Newsletter mensual</div>
+            </div>
+            <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border-subtle);">
+              <span class="mock-cta">+ Pipeline</span>
+            </div>
+            <div style="margin-top:10px; font-size:.9em; color:var(--text-tertiary);">
+              <label style="display:flex; align-items:center; gap:6px;">
+                <span style="display:inline-block;width:24px;height:14px;background:var(--bg-base);border-radius:10px;position:relative;border:1px solid var(--border-default);"><span style="position:absolute;left:2px;top:1px;width:10px;height:10px;border-radius:50%;background:var(--text-tertiary);"></span></span>
+                Mostrar archivados
+              </label>
+            </div>
+          </div>
+          <div class="mock-panel">
+            <div class="panel-head">
+              <div class="left"><span class="code-chip">P2</span><span class="title">Captación de leads</span></div>
+              <span class="badge b-produccion">en producción</span>
+            </div>
+            <div class="panel-row"><span class="key">Objetivo de negocio</span><span class="val" style="text-align:right;max-width:60%;">Nutrir BBDD con leads cualificados…</span></div>
+            <div class="panel-row"><span class="key">Responsable Account</span><span class="val">Melina</span></div>
+            <div class="panel-row"><span class="key">Estado</span><span class="val">activo</span></div>
+            <div class="panel-row"><span class="key">Campañas</span><span class="val">1 declarada</span></div>
+            <div style="margin-top:10px;">
+              <span class="mock-cta">+ Campaña en P2</span>
+              <span class="mock-btn">Archivar Pipeline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="tiny" style="margin-top:14px;">El árbol vive en el sidebar. El detalle del elemento seleccionado vive a la derecha. Misma pantalla todo el rato.</p>
+    </section>
+
+    <!-- ========== 12. CREAR CAMPAÑA CON PLANTILLA (MOCKUP) ========== -->
+    <section>
+      <span class="eyebrow">Account · Drawer</span>
+      <h2>Crear Campaña · modal con plantilla del catálogo</h2>
+      <div class="grid-2">
+        <div class="mock-drawer">
+          <h4>Nueva Campaña en <span class="code-chip">P2</span></h4>
+          <div style="margin-bottom:12px;">
+            <div style="font-size:.85em; color:var(--text-tertiary); margin-bottom:4px;">PLANTILLA DEL CATÁLOGO</div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--accent); border-radius:6px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:var(--accent); font-weight:600;">Captación leads vía FM</span>
+              <span class="badge b-produccion">elegida</span>
+            </div>
+            <div style="margin-top:6px; font-size:.85em; color:var(--text-tertiary);">
+              · 1 FM (formulario Meta)<br>
+              · E1 bienvenida (Día 0) · E2 valor (Día +2) · E3 oferta (Día +5)<br>
+              · KPI sugerido: leads / CPL
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:.85em; color:var(--text-tertiary); margin-bottom:4px;">NOMBRE</div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:6px; padding:7px 10px;">Captación junio</div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div>
+              <div style="font-size:.85em; color:var(--text-tertiary); margin-bottom:4px;">PRESUPUESTO</div>
+              <div style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:6px; padding:7px 10px;">300 €</div>
+            </div>
+            <div>
+              <div style="font-size:.85em; color:var(--text-tertiary); margin-bottom:4px;">KPI</div>
+              <div style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:6px; padding:7px 10px;">50 leads / CPL ≤ 6 €</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <div style="font-size:.85em; color:var(--text-tertiary); margin-bottom:4px;">LINK BRIEFING DRIVE</div>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:6px; padding:7px 10px; font-family:monospace; font-size:.8em; color:var(--info);">drive.google.com/.../P2C1 — Captación junio/briefing.docx</div>
+          </div>
+          <div style="margin-top:14px; display:flex; gap:8px; justify-content:flex-end;">
+            <span class="mock-btn">Cancelar</span>
+            <span class="mock-cta">Crear Campaña</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Qué pasa al pulsar "Crear Campaña"</h3>
+          <ul class="small" style="line-height:1.65;">
+            <li>Se crea <code>P2C1</code> con los <strong>Triggers y Emails pre-cargados</strong> según la plantilla (un FM1 + tres Emails).</li>
+            <li>Pega el link al briefing → la PM y el equipo lo encuentran solos.</li>
+            <li>Si la plantilla no encaja al 100%, eliges <em>"Sin plantilla / custom"</em>. Si detectas un patrón nuevo, pulsa <code>+ Nueva plantilla</code> y créala para todos.</li>
+          </ul>
+          <p class="tiny" style="margin-top:10px;">El catálogo es <strong>abierto</strong>: lo mantiene Account, no Ben.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 13. CATÁLOGO PLANTILLAS ========== -->
+    <section>
+      <span class="eyebrow">Account · Catálogo</span>
+      <h2>Las 7 plantillas seed</h2>
+      <table>
+        <thead>
+          <tr><th>Plantilla</th><th>Triggers típicos</th><th>Emails típicos</th><th>KPI</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Venta Directa con anuncio Meta</strong></td><td>FM1 (anuncio→checkout)</td><td>0 o E1 recuperación carrito</td><td>Ventas</td></tr>
+          <tr><td><strong>Captación leads vía FM</strong></td><td>FM1</td><td>E1 bienvenida · E2 valor · E3 oferta</td><td>Leads / CPL</td></tr>
+          <tr><td><strong>Captación leads vía FW</strong></td><td>FW1</td><td>E1 bienvenida · E2 valor · E3 oferta</td><td>Leads / CPL</td></tr>
+          <tr><td><strong>Reactivación BBDD</strong></td><td>BD1 (fecha obligatoria)</td><td>E1 reactivación · E2 oferta · E3 cierre</td><td>Conversiones</td></tr>
+          <tr><td><strong>Newsletter recurrente</strong></td><td>BD1 (cadencia semanal/mensual)</td><td>E1 edición por envío</td><td>Apertura / Clicks</td></tr>
+          <tr><td><strong>Lanzamiento multicanal</strong></td><td>FM1 + FW1 + BD1</td><td>E1–E5 (pre / lanzamiento / post)</td><td>Ventas</td></tr>
+          <tr><td><strong>Evento</strong></td><td>FW1</td><td>E1 confirmación · E2 recordatorio</td><td>Inscripciones</td></tr>
+        </tbody>
+      </table>
+      <p class="tiny" style="margin-top:14px;">Cada plantilla precarga campos, Triggers, Emails y roles sugeridos. Account ajusta lo que haga falta — la plantilla es punto de partida, no jaula. Si tres clientes piden lo mismo (ej. "Sorteo en Instagram"), pasa a ser plantilla nueva.</p>
+    </section>
+
+    <!-- ========== 14. DIVIDER PM ========== -->
+    <section data-state="divider">
+      <div class="divider">
+        <div class="big" style="color:#3b82f6;">03</div>
+        <h1>Flujo de PM</h1>
+        <div class="sub">10 min cada mañana · 5 min por Campaña que reparte</div>
+      </div>
+    </section>
+
+    <!-- ========== 15. PM CADA MAÑANA ========== -->
+    <section>
+      <span class="eyebrow info">PM · Cada mañana</span>
+      <h2>Modo PM en la ficha · 10 min</h2>
+      <div class="grid-2">
+        <div class="mock">
+          <div class="mock-layout">
+            <div class="mock-sidebar">
+              <div class="switch"><span>Account</span><span class="on">PM</span></div>
+              <h4>Pipelines y Campañas</h4>
+              <div class="mock-tree">
+                <div class="pl">▼ P1 · Venta curso</div>
+                <div class="cm">└─ C1 <span class="badge b-produccion">en producción</span></div>
+                <div class="pl">▼ P2 · Captación leads</div>
+                <div class="cm">└─ C1 <span class="badge b-declarada">declarada</span></div>
+                <div class="pl">▼ P3 · Reactivación</div>
+                <div class="cm">└─ C1 <span class="badge b-warn">⚠ sin fecha BD</span></div>
+                <div class="pl">▼ P4 · Newsletter</div>
+                <div class="cm">└─ C1 <span class="badge b-produccion">en producción</span></div>
+              </div>
+            </div>
+            <div class="mock-panel">
+              <div class="panel-head">
+                <div class="left"><span class="code-chip">P2C1</span><span class="title">Captación leads</span></div>
+                <span class="badge b-declarada">declarada</span>
+              </div>
+              <div class="panel-row"><span class="key">Briefing Drive</span><span class="val" style="color:var(--info);">drive.google.com/…</span></div>
+              <div class="panel-row"><span class="key">Presupuesto</span><span class="val">300 €</span></div>
+              <div class="panel-row"><span class="key">KPI</span><span class="val">50 leads · CPL ≤ 6€</span></div>
+              <div class="panel-row"><span class="key">Triggers</span><span class="val">1 (FM1)</span></div>
+              <div class="panel-row"><span class="key">Emails</span><span class="val">3 (E1, E2, E3)</span></div>
+              <div style="margin-top:14px; padding:12px; background:var(--accent-muted); border:1px solid rgba(34,197,94,.3); border-radius:8px; text-align:center;">
+                <span class="mock-cta" style="font-size:1.05em; padding:8px 18px;">✨ Crear tareas Notion</span>
+                <div style="font-size:.85em; color:var(--text-tertiary); margin-top:6px;">12 tareas pre-rellenadas con código + área + responsable sugerido</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>Trabajo pendiente</h3>
+            <ul class="small">
+              <li><strong>"Declarada"</strong> sin tareas Notion → tienes que generarlas.</li>
+              <li><strong>"En producción"</strong> que el cliente pidió ampliar → revisar nuevos Emails/Triggers.</li>
+            </ul>
+          </div>
+          <div class="card card-warn" style="margin-top:12px;">
+            <h3>Gaps que reportas a Account</h3>
+            <ul class="small">
+              <li>Campaña sin link briefing Drive (aviso ámbar).</li>
+              <li>Trigger tipo BD sin fecha de lanzamiento.</li>
+              <li>Campaña sin KPI claro.</li>
+            </ul>
+            <p class="tiny" style="margin-top:6px;">Objetivo: que tienda a cero. Significa que Account va al ritmo del cliente.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 16. DRAWER CREAR TAREAS NOTION ========== -->
+    <section>
+      <span class="eyebrow info">PM · Acción</span>
+      <h2>Drawer "Crear tareas Notion" para <span class="code-chip">P2C1</span></h2>
+      <div class="grid-2">
+        <div class="mock-drawer">
+          <h4>12 tareas para Campaña <span class="code-chip">P2C1 — Captación leads</span></h4>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1_briefing — Dra. Neuss</span><span class="area estr">Estrategia</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1_angulos — Dra. Neuss</span><span class="area estr">Estrategia</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1FM1_form — Dra. Neuss</span><span class="area am">Meta Ads</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1FM1_pixel — Dra. Neuss</span><span class="area am">Meta Ads</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1_estatico_v1 — Dra. Neuss</span><span class="area dis">Diseño</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1E1_copy — Dra. Neuss</span><span class="area copy">Copy</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1E1_diseno — Dra. Neuss</span><span class="area dis">Diseño</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1E1_montaje — Dra. Neuss</span><span class="area crm">CRM</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1_ghl — Dra. Neuss</span><span class="area crm">CRM</span></div>
+          <div class="mock-row-task"><span class="check">✓</span><span class="title">P2C1_lanzar — Dra. Neuss</span><span class="area am">Meta Ads</span></div>
+          <div style="font-size:.85em; color:var(--text-tertiary); margin-top:6px; text-align:center;">… +2 tareas más</div>
+          <div style="margin-top:14px; display:flex; gap:8px; justify-content:flex-end;">
+            <span class="mock-btn">Cancelar</span>
+            <span class="mock-cta">Crear 12 tareas</span>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>Qué viene cableado por defecto</h3>
+            <ul class="small">
+              <li><strong>Código en el título</strong> (forzado, no editable).</li>
+              <li><strong>Área canónica</strong> Notion (sin duplicados <code>PAID MEDIA</code> / <code>Meta Ads</code> / <code>Media Buyer</code>).</li>
+              <li><strong>Responsable sugerido</strong> por plantilla:<br>copy → Valentin · diseño → Joaquin · form → Damian · GHL → Camilo.</li>
+              <li><strong>Deep-link a la Campaña</strong> en la descripción → el equipo abre la ficha y va al briefing sin preguntarte.</li>
+            </ul>
+          </div>
+          <div class="card card-info" style="margin-top:12px;">
+            <h3>Si Account no encaja</h3>
+            <p class="small">Reasignas a mano antes de pulsar "Crear". <strong>La plantilla sugiere, no impone.</strong> Si Account no ha pegado briefing → no generes tareas: ping a Account primero.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 17. CHEAT SHEET DE REPARTO ========== -->
+    <section>
+      <span class="eyebrow info">PM · Cheat sheet</span>
+      <h2>Tabla maestra — qué código va a qué rol</h2>
+      <p class="lead" style="font-size:.95em;">El drawer las genera con este mapping. Si tienes que crear una a mano, úsalo para no equivocarte.</p>
+      <div style="margin-top:14px;">
+        <div class="role-row">
+          <div class="role-name role-strat">Estratega creativo</div>
+          <div class="role-code">PxCx_briefing · _angulos · _cluster · _briefing_estaticos · _briefing_video</div>
+          <div class="role-area"><span class="area estr badge b-warn" style="background:var(--warn-muted); color:var(--warn);">Estrategia</span></div>
+        </div>
+        <div class="role-row">
+          <div class="role-name role-copy">Copy</div>
+          <div class="role-code">PxCxEn_copy · PxCx_copy_RRSS_vN · PxCx_copy_estaticos</div>
+          <div class="role-area"><span class="badge b-produccion">Copy · Newsletter</span></div>
+        </div>
+        <div class="role-row">
+          <div class="role-name role-design">Diseño</div>
+          <div class="role-code">PxCxEn_diseno · PxCx_estatico_vN · PxCx_reel_vN · PxCx_carrusel_vN · PxCx_video</div>
+          <div class="role-area"><span class="badge" style="background:var(--violet-muted); color:var(--violet); border:1px solid rgba(139,92,246,.35);">Diseño</span></div>
+        </div>
+        <div class="role-row">
+          <div class="role-name role-media">Media Buyer</div>
+          <div class="role-code">PxCxFMn_form · _pixel · _estaticos_subir · PxCx_lanzar</div>
+          <div class="role-area"><span class="badge" style="background:var(--info-muted); color:var(--info); border:1px solid rgba(59,130,246,.35);">Meta Ads</span></div>
+        </div>
+        <div class="role-row">
+          <div class="role-name role-crm">CRM Manager</div>
+          <div class="role-code">PxCxFWn_form · PxCxBDn_segmento · PxCx_ghl · PxCxEn_montaje</div>
+          <div class="role-area"><span class="badge" style="background:var(--pink-muted); color:var(--pink); border:1px solid rgba(236,72,153,.35);">CRM</span></div>
+        </div>
+      </div>
+      <div class="card card-warn" style="margin-top:18px;">
+        <h3>Orden de ejecución (importante)</h3>
+        <p class="small"><strong>Estratega → Copy → Diseño → Media Buyer / CRM.</strong> No generes tareas de la fase N hasta que la fase N−1 esté Lista. Si quieres forzarlo, declara primero los briefings como "Declarada" y deja los emails como "Declarada" — solo creas tareas del Estratega hasta cierre.</p>
+      </div>
+    </section>
+
+    <!-- ========== 18. VERIFICACIÓN VIERNES ========== -->
+    <section>
+      <span class="eyebrow info">PM · Viernes</span>
+      <h2>Verificación semanal y nueva métrica</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Viernes a última hora · 15 min</h3>
+          <ol class="small">
+            <li>Recorre los clientes activos en la ficha.</li>
+            <li>Por cada Campaña <strong>"En producción"</strong>, verifica entregables Drive con su código:
+              <pre style="font-size:1em; margin-top:6px;"><code>/Cliente/Campañas/P1C1 — Nombre/
+   P1C1E1_copy.docx     ✓
+   P1C1E1_diseno.png    ✓
+   P1C1E2_copy.docx     ✓
+   P1C1E2_diseno.png    ✗ falta</code></pre>
+            </li>
+            <li>Si falta algo, abre la tarea Notion correspondiente y persigue.</li>
+            <li>Si una Campaña ya no se usa, ping a Account para que la archive.</li>
+          </ol>
+        </div>
+        <div>
+          <div class="card card-info">
+            <h3>Tu nueva métrica de éxito</h3>
+            <p class="small">
+              <strong>Tareas creadas sin código en clientes con Pipelines declarados.</strong><br>
+              <span style="color:var(--accent); font-size:1.4em; font-weight:700;">→ objetivo: 0</span>
+            </p>
+            <p class="small" style="margin-top:6px;">Si esto pasa, el sistema se rompe.</p>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <h3>Lo que NO tienes que hacer</h3>
+            <ul class="small">
+              <li>Inventar códigos.</li>
+              <li>Editar Pipelines / Campañas / Triggers / Emails (eso es de Account).</li>
+              <li>Crear plantillas nuevas (catálogo = Account).</li>
+              <li>Crear tareas individuales con código en Notion — usa el drawer.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 19. DIVIDER INTEGRACIÓN ========== -->
+    <section data-state="divider">
+      <div class="divider">
+        <div class="big" style="color:#8b5cf6;">04</div>
+        <h1>Cómo encaja con el resto</h1>
+        <div class="sub">Notion · Drive · GHL — un solo código viaja por todo</div>
+      </div>
+    </section>
+
+    <!-- ========== 20. FLUJO END-TO-END (MERMAID) ========== -->
+    <section>
+      <span class="eyebrow violet">Flujo end-to-end</span>
+      <h2>El código viaja de Account → equipo · sin renombrar</h2>
+      <pre class="mermaid" style="font-size:1em; text-align:center; background:transparent; border:0; padding:0;">
+flowchart TD
+  Cliente([Cliente pide algo]) --> Account
+  Account -->|declara P / C / FM·FW·BD / E + pega link briefing Drive| Ficha[(Ficha pública&lt;br/&gt;work.thenucleo.com)]
+  Ficha -->|cada mañana| PM[PM Melina]
+  PM -->|drawer 'Crear tareas Notion'| Tareas[(Tareas Notion&lt;br/&gt;código forzado)]
+  Tareas --> R1[Estratega creativo]
+  Tareas --> R2[Copy]
+  Tareas --> R3[Diseño]
+  Tareas --> R4[Media Buyer]
+  Tareas --> R5[CRM Manager]
+  R1 --> Drive[(Drive&lt;br/&gt;/Cliente/Campañas/PxCx/)]
+  R2 --> Drive
+  R3 --> Drive
+  R4 -.->|objetos Meta nombrados igual| Meta[(Meta Ads)]
+  R5 -.->|workflow GHL nombrado igual| GHL[(GHL)]
+  R4 --> Drive
+  R5 --> Drive
+  Drive -->|viernes verificación| PM
+  PM -.->|ping si falta algo| Account
+  classDef src fill:#22c55e22,stroke:#22c55e,color:#edeef3;
+  classDef sys fill:#3b82f622,stroke:#3b82f6,color:#edeef3;
+  classDef role fill:#1a1d27,stroke:#363a4e,color:#edeef3;
+  class Account,PM src
+  class Ficha,Tareas,Drive,Meta,GHL sys
+  class R1,R2,R3,R4,R5 role
+      </pre>
+      <p class="tiny" style="text-align:center;">El equipo NO entra a la ficha. Trabaja con tarea Notion + Drive (carpeta con el código).</p>
+    </section>
+
+    <!-- ========== 21. NOTION ========== -->
+    <section>
+      <span class="eyebrow">Cómo encaja</span>
+      <h2>Notion · título con código + área canónica</h2>
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <h3>Título de tarea (siempre con código)</h3>
+            <p class="mono small">P1C1E2 — Copy Dra. Neuss</p>
+            <p class="small" style="margin-top:6px;">El formulario "Crear tarea" de Bubble (futuro F2) obliga a elegir un código del catálogo del cliente. Sin código → no se crea.</p>
+          </div>
+          <div class="card" style="margin-top:14px;">
+            <h3>Áreas canónicas (cero duplicados)</h3>
+            <p class="small mono">
+              Estrategia · Copy · Newsletter · Diseño<br>
+              Meta Ads · Google Ads · CRM · RRSS<br>
+              Project Manager · Account
+            </p>
+            <p class="tiny" style="margin-top:6px;">Se acabaron <code>PAID MEDIA</code>, <code>Meta Ads</code> y <code>Media Buyer</code> como 3 áreas distintas para Damian.</p>
+          </div>
+        </div>
+        <div>
+          <div class="ba">
+            <div class="before">
+              <h3>Antes (caos Neus)</h3>
+              <ul>
+                <li><code>Píxel de conversión</code> × 3</li>
+                <li><code>Lanzamiento de campañas</code> × 3</li>
+                <li><code>Briefing Mayo</code> Newsletter + RRSS</li>
+                <li><code>Maquetar email</code> (¿cuál?)</li>
+                <li><code>OUTPUT NEUS</code></li>
+              </ul>
+            </div>
+            <div class="after" style="grid-column:1 / -1;">
+              <h3>Después (con código)</h3>
+              <ul>
+                <li><code>P1C1FM1_pixel</code> (1 sola tarea — las otras 2 ya no se pueden crear)</li>
+                <li><code>P1C1FM1_lanzar</code> · <code>P2C1FM1_lanzar</code> · <code>P4C1BD1_lanzar</code></li>
+                <li><code>P4C1_briefing</code></li>
+                <li><code>P4C1E1_maquetar</code></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 22. DRIVE ========== -->
+    <section>
+      <span class="eyebrow">Cómo encaja</span>
+      <h2>Drive · subcarpeta por Campaña + archivos con código</h2>
+      <div class="grid-2">
+        <div>
+          <pre style="font-size:.7em;"><code>/Dra. Neuss/
+├── Campañas/
+│   ├── P1C1 — Curso Suplementación 75€/
+│   │   ├── briefing.docx
+│   │   ├── P1C1FM1_form.json
+│   │   ├── P1C1FM1_estatico_v1.png
+│   │   ├── P1C1FM1_estatico_v2.png
+│   │   └── P1C1FM1_lanzar.docx
+│   │
+│   ├── P2C1 — Captación leads/
+│   │   ├── briefing.docx
+│   │   ├── P2C1_angulos.docx
+│   │   ├── P2C1E1_copy.docx
+│   │   ├── P2C1E1_diseno.png
+│   │   ├── P2C1E2_copy.docx
+│   │   └── P2C1E3_copy.docx
+│   │
+│   └── P4C1 — Newsletter mayo/
+│       ├── briefing.docx
+│       └── P4C1E1_copy.docx
+└── …</code></pre>
+        </div>
+        <div>
+          <div class="card">
+            <h3>Reglas Drive</h3>
+            <ul class="small">
+              <li><strong>Subcarpeta por Campaña</strong>: la crea Account al declarar. Ruta <code>/Cliente/Campañas/PxCx — Nombre/</code>.</li>
+              <li><strong>Nombres de archivo</strong> llevan siempre el código: <code>P1C1E2_copy.docx</code>, <code>P1C1_estatico_v1.png</code>.</li>
+              <li><strong>Versionado</strong>: si el cliente pide cambio, no se renombra el código — se añade <code>_v2</code>, <code>_v3</code> al final del archivo.</li>
+            </ul>
+          </div>
+          <div class="card card-info" style="margin-top:12px;">
+            <h3>Creatividades RRSS no se listan en la ficha</h3>
+            <p class="small">Estáticos, reels, carruseles, copies RRSS viven en Drive con <code>PxCx_&lt;tipo&gt;_vN</code> y no aparecen en el árbol de la ficha. Decisión consciente: la ficha es para Pipelines / Campañas / Triggers / Emails.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 23. GHL ========== -->
+    <section>
+      <span class="eyebrow">Cómo encaja</span>
+      <h2>GHL · una Campaña = un workflow</h2>
+      <div class="grid-2">
+        <div>
+          <pre style="font-size:.75em; line-height:1.7;"><code>GHL workflow: "P1C1"
+├── Entrada:
+│   ├── P1C1FM1   (form Meta)
+│   ├── P1C1FW1   (form web)
+│   └── P1C1BD1   (segmento BBDD)
+│
+└── Acciones email:
+    ├── P1C1E1    (Día 0)
+    ├── P1C1E2    (Día +2)
+    └── P1C1E3    (Día +5)</code></pre>
+        </div>
+        <div>
+          <div class="card">
+            <h3>Cuando alguien pregunta…</h3>
+            <p class="small">"¿En qué workflow vive <code>P1C1E1</code>?"</p>
+            <p class="small" style="margin-top:6px;">Respuesta: <strong>en <code>P1C1</code></strong>. Un solo sitio. Cualquiera de los 3 triggers lo dispara.</p>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <h3>Cuando los emails varían por trigger</h3>
+            <p class="small">El workflow <code>P1C1</code> tiene ramas internas. Las acciones se llaman <code>P1C1FM1E1</code>, <code>P1C1FW1E1</code>, etc. Cada rama ejecuta solo sus emails.</p>
+          </div>
+        </div>
+      </div>
+      <p class="tiny" style="margin-top:18px; text-align:center;">Misma regla en Meta Ads: los objetos (ad sets, ads, custom audiences) se nombran con el código → cero ambigüedad al cruzar dashboards.</p>
+    </section>
+
+    <!-- ========== 24. DIVIDER NEUS ========== -->
+    <section data-state="divider">
+      <div class="divider">
+        <div class="big" style="color:#f59e0b;">05</div>
+        <h1>Ejemplo Neus · cierre</h1>
+        <div class="sub">Antes vs después · 3 reglas que nadie rompe</div>
+      </div>
+    </section>
+
+    <!-- ========== 25. ÁRBOL NEUS DESPUÉS ========== -->
+    <section>
+      <span class="eyebrow">Estado objetivo</span>
+      <h2>Ficha de Dra. Neuss · después</h2>
+      <pre style="font-size:.65em; line-height:1.5;"><code>DRA. NEUSS
+│
+├── P1 — Venta directa Curso Suplementación
+│   │  Objetivo: monetizar el infoproducto 75€ a tráfico frío
+│   │  Estado: activo · Account: Melina
+│   │
+│   └── P1C1 — Curso Suplementación 75€      [Plantilla: Venta Directa con anuncio Meta]
+│       │  Presupuesto: 500€ Meta · KPI: 30 ventas/mes
+│       │  Briefing: drive.google.com/.../P1C1/briefing.pdf
+│       │
+│       └── P1C1FM1 — Anuncio Meta → checkout GHL
+│           (sin Emails declarados — venta directa sin secuencia post-compra)
+│
+├── P2 — Captación de clientes potenciales
+│   └── P2C1 — Captación leads                [Plantilla: Captación leads vía FM]
+│       ├── P2C1FM1 — Formulario Meta "clientes potenciales"
+│       ├── P2C1E1 — Bienvenida + valor       (Día 0)
+│       ├── P2C1E2 — Educación                (Día +2)
+│       └── P2C1E3 — Oferta curso suplementación  (Día +5)
+│
+├── P3 — Reactivación leads
+│   └── P3C1 — Relanzamiento                  [Plantilla: Reactivación BBDD]
+│       ├── P3C1BD1 — Segmento "sin conversión &gt;60d" · fecha: 25-may
+│       └── P3C1E1 — Reactivación
+│
+└── P4 — Newsletter mensual
+    └── P4C1 — Newsletter mayo                [Plantilla: Newsletter recurrente]
+        ├── P4C1BD1 — BBDD activa · cadencia mensual
+        └── P4C1E1 — Edición mayo</code></pre>
+      <p class="tiny" style="margin-top:12px;">4 Pipelines + 4 Campañas + 6 Triggers + 5 Emails. <strong>Tiempo estimado para que Account vuelque esto en la ficha: 30 minutos.</strong></p>
+    </section>
+
+    <!-- ========== 26. LAS 3 REGLAS QUE NADIE ROMPE ========== -->
+    <section>
+      <span class="eyebrow warn">Disciplina</span>
+      <h2>Las 3 reglas que nadie rompe</h2>
+      <div class="grid-3" style="margin-top:18px;">
+        <div class="card card-warn">
+          <h3 style="font-size:1.4em;">1</h3>
+          <p><strong>Si no está en la ficha, no existe.</strong></p>
+          <p class="small" style="margin-top:8px;">Lo que se queda en un chat o en la cabeza de alguien se pierde. Punto.</p>
+        </div>
+        <div class="card card-warn">
+          <h3 style="font-size:1.4em;">2</h3>
+          <p><strong>Quien necesita una dirección nueva la pide a Account.</strong></p>
+          <p class="small" style="margin-top:8px;">El equipo no inventa códigos. La PM no inventa códigos. Solo Account los crea.</p>
+        </div>
+        <div class="card card-warn">
+          <h3 style="font-size:1.4em;">3</h3>
+          <p><strong>Una dirección no se borra ni se reutiliza.</strong></p>
+          <p class="small" style="margin-top:8px;">Si una Campaña deja de funcionar, se archiva. El número avanza, nunca retrocede.</p>
+        </div>
+      </div>
+      <div class="quote" style="margin-top:24px;">
+        No hay versión light de esto. <strong>O lo seguimos todos o no funciona.</strong>
+      </div>
+    </section>
+
+    <!-- ========== 27. CALENDARIO DEL CAMBIO ========== -->
+    <section>
+      <span class="eyebrow">Roadmap</span>
+      <h2>Calendario del cambio</h2>
+      <div class="timeline" style="margin-top:14px;">
+        <div class="when">Ya · vivo</div>
+        <div class="what">Módulo Pipelines y Campañas en frontend con datos seed de Dra. Neuss en <code>work.thenucleo.com/ficha-cliente/?id=…</code>. Schema Supabase aplicado 2026-05-24.</div>
+
+        <div class="when">Esta semana</div>
+        <div class="what">Account vuelca el mapa real de 3–5 clientes piloto. <strong>Neus el primero.</strong> Validación con Melina (PM) en 15 min: ¿entiende cómo se rellena sin preguntar?</div>
+
+        <div class="when">Próxima semana</div>
+        <div class="what">PM empieza a crear tareas Notion con código en el título (manualmente, sin dropdown forzado todavía).</div>
+
+        <div class="when">Cuando salga F2</div>
+        <div class="what">Backend Supabase + 7 RPCs cableados (<code>ficha_pipelines_get</code>, 5×<code>upsert</code>, <code>ficha_archivar_codigo</code>) + dropdown forzado en el formulario "Crear tarea" de Bubble (workflow <code>eHyXBETcaGSNXqLk</code>).</div>
+
+        <div class="when">Cuando F2 esté validado</div>
+        <div class="what">Catálogo abierto de Plantillas + creación de plantillas nuevas + migración de los 5 clientes más activos en sesiones acompañadas con Account.</div>
+      </div>
+    </section>
+
+    <!-- ========== 28. RECURSOS ========== -->
+    <section>
+      <span class="eyebrow">Recursos</span>
+      <h2>Dónde está cada cosa</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>📖 Documentación</h3>
+          <ul class="small" style="line-height:1.9;">
+            <li><strong>Presentación 1 página</strong> · <span class="mono">docs/portal/pipelines-presentacion.md</span></li>
+            <li><strong>Visión operacional completa</strong> · <span class="mono">docs/portal/ficha-cliente.md</span></li>
+            <li><strong>Manual Account paso a paso</strong> · <span class="mono">docs/portal/account-manual-pipelines.md</span></li>
+            <li><strong>Manual PM paso a paso</strong> · <span class="mono">docs/portal/pm-manual-pipelines.md</span></li>
+            <li><strong>Manual del equipo</strong> · <span class="mono">docs/portal/equipo-manual-pipelines.md</span></li>
+            <li><strong>Nomenclatura original (12 casos, 7 reglas)</strong> · <span class="mono">TheNucleoNomenclatura2.docx</span> (Drive)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>🔧 Producto</h3>
+          <ul class="small" style="line-height:1.9;">
+            <li><strong>Ficha pública</strong> · <a href="https://work.thenucleo.com/ficha-cliente/" target="_blank" rel="noopener">work.thenucleo.com/ficha-cliente/</a></li>
+            <li><strong>Ejemplo Neus</strong> · <span class="mono">/ficha-cliente/?id=1773847038522x983519237604638700</span></li>
+            <li><strong>Playbook onboarding</strong> · <a href="https://work.thenucleo.com/playbook/" target="_blank" rel="noopener">work.thenucleo.com/playbook/</a></li>
+            <li><strong>Catálogo de fichas</strong> · <a href="https://work.thenucleo.com/fichas-de-producto/" target="_blank" rel="noopener">work.thenucleo.com/fichas-de-producto/</a></li>
+          </ul>
+          <p class="tiny" style="margin-top:14px;">Las páginas admin tienen allowlist (4 emails TheNucleo). Si tu sesión no aparece, ping a Ben.</p>
+        </div>
+      </div>
+      <div class="card card-warn" style="margin-top:18px;">
+        <h3>Si algo no encaja</h3>
+        <p class="small">Habla con Ben. <strong>No inventes una solución por tu cuenta</strong> — apunta el caso y se evalúa. La nomenclatura está pensada para casos típicos. Las excepciones se diseñan, no se improvisan.</p>
+      </div>
+    </section>
+
+    <!-- ========== 29. CIERRE ========== -->
+    <section data-state="cover">
+      <div class="cover">
+        <h1>Gracias</h1>
+        <div class="sub" style="max-width:700px; margin:14px auto 0;">El sistema solo funciona si todos seguimos las 3 reglas. <em>Si no está en la ficha, no existe.</em></div>
+        <div class="meta" style="margin-top:40px;">TheNucleo · Pipelines y Campañas · 2026-05-25</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ============================== JS ============================== -->
+<script type="module">
+import Reveal from "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.esm.js";
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs";
+
+const AUTH_KEY = "thenucleo-comunidad-auth";
+const ALLOWED_EMAILS = new Set([
+  "benjamin.sanchis@thenucleo.com",
+  "alejandro.lopez@thenucleo.com",
+  "marketing.thenucleo@gmail.com",
+  "mel.dalmazo@thenucleo.com",
+]);
+
+function readStoredSession() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s?.expires_at && s.expires_at * 1000 < Date.now()) return null;
+    return s ?? null;
+  } catch { return null; }
+}
+function currentUser() { return readStoredSession()?.user ?? null; }
+function isAdmin() {
+  const u = currentUser();
+  return !!(u && u.email && ALLOWED_EMAILS.has(u.email.toLowerCase()));
+}
+
+function showGate(kind) {
+  const gate = document.getElementById('gate');
+  const title = document.getElementById('gate-title');
+  const msg = document.getElementById('gate-msg');
+  const btn = document.getElementById('gate-login');
+  if (kind === 'no-admin') {
+    title.textContent = 'Tu cuenta no tiene acceso';
+    msg.textContent = `${currentUser()?.email || 'Tu cuenta'} no está en la allowlist del equipo. Si crees que es un error, contacta con Ben.`;
+    btn.textContent = 'Cambiar de cuenta';
+  } else {
+    title.textContent = 'Acceso restringido';
+    msg.textContent = 'Esta presentación es material interno del equipo TheNucleo. Inicia sesión con tu cuenta corporativa para acceder.';
+    btn.textContent = 'Iniciar sesión';
+  }
+  gate.style.display = 'flex';
+  document.documentElement.classList.add('locked-mode');
+}
+
+document.getElementById('gate-login').addEventListener('click', () => {
+  if (currentUser()) {
+    try { localStorage.removeItem(AUTH_KEY); } catch {}
+  }
+  location.assign('/comunidad/entrar/?next=' + encodeURIComponent('/presentacion-pipelines/'));
+});
+
+function boot() {
+  const user = currentUser();
+  if (!user) { showGate('anon'); return; }
+  if (!isAdmin()) { showGate('no-admin'); return; }
+
+  document.documentElement.classList.remove('locked-mode');
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      background: '#090a0f',
+      primaryColor: '#1a1d27',
+      primaryBorderColor: '#363a4e',
+      primaryTextColor: '#edeef3',
+      lineColor: '#5c6078',
+      secondaryColor: '#22c55e',
+      tertiaryColor: '#3b82f6',
+      fontFamily: 'NewBlack, sans-serif',
+      fontSize: '14px'
+    }
+  });
+
+  const deck = new Reveal({
+    hash: true,
+    slideNumber: 'c/t',
+    controls: true,
+    progress: true,
+    transition: 'slide',
+    width: 1280,
+    height: 800,
+    margin: 0.06,
+    minScale: 0.4,
+    maxScale: 1.6,
+    plugins: []
+  });
+
+  deck.initialize().then(async () => {
+    await mermaid.run({ querySelector: '.mermaid' });
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

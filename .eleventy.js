@@ -11,6 +11,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("assets");
   eleventyConfig.addPassthroughCopy("arquetipo");
   eleventyConfig.addPassthroughCopy("playbook");
+  eleventyConfig.addPassthroughCopy("presentacion-pipelines");
   eleventyConfig.addPassthroughCopy("dpt");
 
   eleventyConfig.addFilter("dateES", (d) => {
