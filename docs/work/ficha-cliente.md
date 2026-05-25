@@ -176,9 +176,11 @@ Cada catálogo es un `.coll-group` colapsable con:
 - `text`, `url`, `number` (con step), `date`, `textarea`, `select` (con `options`), `checkbox`.
 - Strings vacíos opcionales se envían `null` para no machacar defaults DB.
 
-**Visibilidad por cliente (Sprint 3, decisión 2026-05-25):**
+**Visibilidad por cliente (Sprint 3, decisión 2026-05-25 + iteración misma sesión: opt-in):**
 
-Tabla nueva `cliente_catalogo_visibilidad` con `(cliente_bubble_id, scope_type CHECK ('macro','catalogo'), scope_key, oculto bool, audit)` + UNIQUE compuesta. Si NO existe row → visible (default). Si existe con `oculto=true` → oculto. Macro oculta tiene **precedencia**: aunque sus catálogos estén marcados visibles individualmente, no se renderizan.
+Tabla nueva `cliente_catalogo_visibilidad` con `(cliente_bubble_id, scope_type CHECK ('macro','catalogo'), scope_key, oculto bool, audit)` + UNIQUE compuesta. **Semántica opt-in:** si NO existe row → **OCULTO** por defecto (decisión Ben: "todas las macros sin seleccionar y ya las elegirá Valentina"). Si existe con `oculto=true` → oculto. Si existe con `oculto=false` → visible. Macro oculta tiene **precedencia**: aunque sus catálogos estén marcados visibles individualmente, no se renderizan.
+
+**Cascada al activar macro:** cuando Account toggle ON una macro, el frontend envía un array UPSERT en una sola request: 1 row para la macro + N rows para todos sus catálogos (todos con `oculto=false`). Al desactivar la macro solo se actualiza la macro — los catálogos individuales mantienen su estado (irrelevante visualmente porque la macro está oculta y la precedencia oculta el bloque entero).
 
 - **UI:** botón "⚙️ Gestionar catálogos" arriba del panel (`.catalogos-controls` + `.cat-manage-btn`). Abre sheet bottom con 2 secciones: **Macros** (7 switches) + **Catálogos individuales** (17 switches agrupados por su macro, con `disabled` cuando la macro padre está oculta).
 - **UPSERT** via `tableRequest('cliente_catalogo_visibilidad', { method:'POST', query:'on_conflict=cliente_bubble_id,scope_type,scope_key', prefer:'resolution=merge-duplicates,return=minimal', body:{...} })`. El helper acepta ahora `prefer` custom (Sprint 3 amplía el helper original).
@@ -229,9 +231,9 @@ Pinta entre 1 y 5 chips según los datos del cliente:
 ## Fixes y cambios recientes
 
 ### 2026-05-25 — F2.7 Fase B Sprint 3: visibilidad de macros/catálogos por cliente
-Commit `7eef03f` (frontend) + migration Supabase `f2_7_sprint3_catalogos_visibilidad`. Tabla nueva `cliente_catalogo_visibilidad` + RLS con `is_comunidad_admin()` + RPC `catalogos_cliente_get` ampliada para devolver array `visibilidad`. Frontend: botón "⚙️ Gestionar catálogos" abre sheet bottom con switches por macro (7) + catálogo (17 agrupados). UPSERT vía PostgREST `on_conflict=...&prefer:resolution=merge-duplicates`. Auto-hide de macros con todos sus catálogos ocultos. Datos preservados al ocultar.
+Commits `7eef03f` (lectura+UPSERT inicial) + `d8fd260` (fix checkbox "Error" por body vacío con return=minimal) + **iteración misma sesión** (cambio a semántica opt-in: default oculto + cascada al activar macro). Migration Supabase `f2_7_sprint3_catalogos_visibilidad`. Tabla nueva `cliente_catalogo_visibilidad` + RLS con `is_comunidad_admin()` + RPC `catalogos_cliente_get` ampliada para devolver array `visibilidad`. Frontend: botón "⚙️ Gestionar catálogos" abre sheet bottom con switches por macro (7) + catálogo (17 agrupados). UPSERT vía PostgREST `on_conflict=cliente_bubble_id,scope_type,scope_key` + `Prefer: resolution=merge-duplicates,return=representation`. Cascada al activar macro: envía array UPSERT con macro + todos sus catálogos. Auto-hide de macros con todos sus catálogos ocultos. Datos preservados al ocultar.
 
-Helper `tableRequest()` ampliado: ahora acepta `prefer` opcional (compat retro — si no se pasa, mantiene el `Prefer: return=representation` previo en POST/PATCH).
+Helper `tableRequest()` ampliado: ahora acepta `prefer` opcional (compat retro — si no se pasa, mantiene el `Prefer: return=representation` previo en POST/PATCH). Además tolera body vacío en cualquier respuesta (lee como text primero; si vacío → null; si no, JSON.parse con try/catch).
 
 ### 2026-05-25 — Fix botón "+ Añadir" del panel Catálogos
 Commit `5fa8363`. El `onclick="event.stopPropagation()"` inline del botón rompía el delegate handler del módulo (vivía en `document`). Fix: quitar el onclick + añadir guard `if (e.target.closest('[data-cat-add]')) return;` en el handler de `[data-coll-toggle]` (línea ~1823).

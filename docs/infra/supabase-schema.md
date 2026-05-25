@@ -735,14 +735,21 @@ INDEX  (cliente_bubble_id)
 INDEX  (cliente_bubble_id) WHERE oculto = true
 ```
 
-**Semántica:** si NO existe row → visible (default). Si existe con `oculto=true` → oculto. Macro oculta tiene **precedencia** sobre catálogos visibles individualmente. RLS + 4 policies con `is_comunidad_admin()`. Trigger `update_updated_at()`.
+**Semántica (opt-in desde 2026-05-25, iteración misma sesión):** si NO existe row → **OCULTO** por defecto. Si existe con `oculto=true` → oculto. Si existe con `oculto=false` → visible. Macro oculta tiene **precedencia** sobre catálogos visibles individualmente. RLS + 4 policies con `is_comunidad_admin()`. Trigger `update_updated_at()`. La columna `oculto` mantiene su nombre y significado literal — lo que cambia respecto a la versión inicial del Sprint 3 es solo la INTERPRETACIÓN del caso "sin row".
 
-**Escritura desde frontend** vía PostgREST UPSERT:
+**Escritura desde frontend** vía PostgREST UPSERT (puede ser row única o array para cascada):
 ```
 POST /rest/v1/cliente_catalogo_visibilidad?on_conflict=cliente_bubble_id,scope_type,scope_key
-Prefer: resolution=merge-duplicates,return=minimal
-{ cliente_bubble_id, scope_type, scope_key, oculto }
+Prefer: resolution=merge-duplicates,return=representation
+{ cliente_bubble_id, scope_type, scope_key, oculto }            -- una row
+[ { ..., scope_type:'macro', oculto:false },                    -- array (cascada)
+  { ..., scope_type:'catalogo', scope_key:'carpetas_drive', oculto:false },
+  ... ]
 ```
+
+**Cascada al activar macro:** cuando Account activa una macro (toggle ON → `oculto=false`), el frontend manda un array UPSERT en una sola request con la macro + todos sus catálogos en `oculto=false`. Razón: si solo se activase la macro, los catálogos seguirían ocultos por el default opt-in y no se vería nada. Al desactivar la macro solo se persiste esa row (los catálogos individuales mantienen su estado, irrelevante mientras la macro esté oculta por la regla de precedencia).
+
+**`Prefer: return=representation`** y NO `return=minimal`: PostgREST con `return=minimal` devuelve HTTP 201 con body vacío, lo que rompía el `res.json()` del helper `tableRequest` con `SyntaxError`. Fix aplicado: el helper ahora tolera body vacío (lee como text primero) y `toggleVisibility` usa `return=representation` para que el body siempre llegue con la row guardada.
 
 **Lectura:** integrada en la RPC `catalogos_cliente_get` (ver abajo) — devuelve array `visibilidad: [{scope_type, scope_key, oculto}]` además de los 17 catálogos.
 

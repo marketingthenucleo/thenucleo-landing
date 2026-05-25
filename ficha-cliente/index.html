@@ -4654,14 +4654,14 @@ const CATALOGOS_MODULE = (() => {
     return typeof url === 'string' && url.indexOf('PENDIENTE') !== -1;
   }
 
-  // F2.7 Sprint 3 — Visibilidad por cliente.
-  // Si NO existe row en cliente_catalogo_visibilidad → visible (default).
-  // Si existe con oculto=true → oculto. Macro oculta tiene precedencia sobre
-  // sus catálogos (aunque estén marcados como visibles individualmente).
+  // F2.7 Sprint 3 — Visibilidad por cliente (semántica opt-in desde 2026-05-25).
+  // Si NO existe row en cliente_catalogo_visibilidad → OCULTO (default opt-in:
+  // Account activa lo que aplica). Si existe con oculto=true → oculto. Si existe
+  // con oculto=false → visible. Macro oculta tiene precedencia sobre catálogos.
   function isHidden(scopeType, scopeKey) {
-    if (!data || !Array.isArray(data.visibilidad)) return false;
+    if (!data || !Array.isArray(data.visibilidad)) return true;
     const row = data.visibilidad.find(v => v.scope_type === scopeType && v.scope_key === scopeKey);
-    return row ? !!row.oculto : false;
+    return row ? !!row.oculto : true;
   }
 
   // ─── State helpers ───────────────────────────────────────────────────
@@ -4949,7 +4949,7 @@ const CATALOGOS_MODULE = (() => {
     `;
     const macrosHtml = MACROS.map(m => renderMacro(m, data)).join('');
     const emptyMsg = macrosHtml.trim() === ''
-      ? `<div class="empty-card">Todas las macros están ocultas para este cliente. Pulsa "⚙️ Gestionar catálogos" para reactivar.</div>`
+      ? `<div class="empty-card">Ninguna macro activada todavía para este cliente. Pulsa "⚙️ Gestionar catálogos" para elegir qué quieres ver.</div>`
       : '';
     host.innerHTML = controls + emptyMsg + macrosHtml;
   }
@@ -5001,7 +5001,7 @@ const CATALOGOS_MODULE = (() => {
 
     return `
       <div class="vis-help">
-        Activa o desactiva qué <strong>macros</strong> (carpetas grandes) y <strong>catálogos</strong> quieres ver para este cliente. Los datos NO se borran al ocultar — se vuelven a ver en cuanto reactives el toggle.
+        Por defecto <strong>todo está oculto</strong>. Activa las <strong>macros</strong> que apliquen a este cliente — al activar una macro se activan también sus catálogos. Puedes desactivar catálogos individuales si no los necesitas. Los datos NO se borran al ocultar.
       </div>
       <div class="vis-section">
         <div class="vis-section-title">Macros (carpetas grandes)</div>
@@ -5040,23 +5040,37 @@ const CATALOGOS_MODULE = (() => {
 
   async function toggleVisibility(scopeType, scopeKey, willHide) {
     if (!currentBubbleId) return;
+    // Cascada: si Account ACTIVA una macro (willHide=false), también activamos
+    // todos sus catálogos (default opt-in significaría que no se vería nada).
+    // Si DESACTIVA, dejamos los catálogos como están (su estado individual no
+    // tiene efecto visual mientras la macro esté oculta — precedencia).
+    let payload;
+    if (scopeType === 'macro' && willHide === false) {
+      const macro = MACROS.find(m => m.key === scopeKey);
+      payload = [{ cliente_bubble_id: currentBubbleId, scope_type: 'macro', scope_key: scopeKey, oculto: false }];
+      if (macro) {
+        macro.catalogos.forEach(catKey => {
+          payload.push({ cliente_bubble_id: currentBubbleId, scope_type: 'catalogo', scope_key: catKey, oculto: false });
+        });
+      }
+    } else {
+      payload = { cliente_bubble_id: currentBubbleId, scope_type: scopeType, scope_key: scopeKey, oculto: willHide };
+    }
     try {
       await tableRequest('cliente_catalogo_visibilidad', {
         method: 'POST',
         query: 'on_conflict=cliente_bubble_id,scope_type,scope_key',
         prefer: 'resolution=merge-duplicates,return=representation',
-        body: {
-          cliente_bubble_id: currentBubbleId,
-          scope_type: scopeType,
-          scope_key: scopeKey,
-          oculto: willHide,
-        },
+        body: payload,
       });
       // Actualizar estado local sin re-fetch
       if (!Array.isArray(data.visibilidad)) data.visibilidad = [];
-      const idx = data.visibilidad.findIndex(v => v.scope_type === scopeType && v.scope_key === scopeKey);
-      if (idx === -1) data.visibilidad.push({ scope_type: scopeType, scope_key: scopeKey, oculto: willHide });
-      else data.visibilidad[idx].oculto = willHide;
+      const rows = Array.isArray(payload) ? payload : [payload];
+      rows.forEach(r => {
+        const idx = data.visibilidad.findIndex(v => v.scope_type === r.scope_type && v.scope_key === r.scope_key);
+        if (idx === -1) data.visibilidad.push({ scope_type: r.scope_type, scope_key: r.scope_key, oculto: r.oculto });
+        else data.visibilidad[idx].oculto = r.oculto;
+      });
       // Re-render sheet (para reflejar disabled al togglear macro) + panel detrás
       refreshVisibilitySheet();
       renderPreservingOpen();
