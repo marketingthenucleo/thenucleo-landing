@@ -2,7 +2,7 @@
 title: Schema Supabase
 dominio: supabase
 estado: activo
-actualizado: 2026-05-22
+actualizado: 2026-05-25
 tags: [supabase, schema, db]
 ---
 
@@ -677,6 +677,59 @@ INDEX cliente_creatividades_campania_idx (campania_id)
 **Backfill plantillas:** las 5 plantillas que vivían inicialmente como seed mínimo (solo agencia_id/slug/nombre/estado/orden) fueron UPDATE-eadas con todo el detalle que vivía en el JS const PLANTILLAS retirado: `triggers_tipicos jsonb` (array `{tipo, nombre}`), `emails_tipicos jsonb` (array `{nombre, espera}`), `kpi_default`, `presupuesto_default`, `briefing_master_url`, `roles_default jsonb` (rol → persona). DB es ahora fuente de verdad completa del catálogo. Las 2 plantillas que no encajan con el workflow TheNucleo (`lanz`, `evento`) fueron DELETE definitivo en la misma sesión.
 
 **Deuda menor abierta:** link plantilla→campaña en el flujo "picker eligió plantilla existente" sigue pasando `p_plantilla_id: null` (deuda B.3). Para resolverlo basta con leer `S.plantillas.find(p => p.slug === state.pickedSlug)?.id` en el save del campaign drawer.
+
+### Catálogos del cliente — F2.7 Fase A (desde 2026-05-25)
+
+Biblioteca de **recursos reutilizables del cliente** que las Campañas referencian (Fase C). 17 tablas `cliente_catalogo_*` con schema cerrado por tipo y entradas abiertas que la Account mantiene. Migration `f2_7_catalogos_cliente`. Visión funcional + framing híbrido A+C en [[../portal/ficha-cliente]].
+
+**Convención común (las 17 tablas):**
+```
+id                 uuid PK default gen_random_uuid()
+cliente_bubble_id  text NOT NULL                  -- FK lógica a bub_clientes.bubble_id
+…campos del tipo…
+archivada          boolean NOT NULL DEFAULT false  -- soft-delete (snapshot-friendly)
+archivada_en       timestamptz
+created_at         timestamptz NOT NULL DEFAULT now()
+updated_at         timestamptz NOT NULL DEFAULT now()
+created_by         text DEFAULT auth.email()
+```
+Cada tabla lleva: index `(cliente_bubble_id)` + index parcial `(cliente_bubble_id) WHERE archivada=false` + trigger `BEFORE UPDATE EXECUTE FUNCTION update_updated_at()` + RLS ON + 4 policies `(SELECT/INSERT/UPDATE/DELETE) TO authenticated USING/WITH CHECK is_comunidad_admin()`. Total: **17 tablas / 36 indexes / 68 policies / 17 triggers**.
+
+**Los 17 tipos (5 macro-categorías):**
+
+| # | Tabla | Campos específicos clave |
+|---|---|---|
+| 1 | `cliente_catalogo_carpeta_drive` | nombre · url · categoria CHECK (estaticos/videos/briefs/analisis/otros) · notas |
+| 2 | `cliente_catalogo_documento` | nombre · url · tipo CHECK (brief/analisis/estrategia/contrato/cluster/angulos/otro) · notas |
+| 3 | `cliente_catalogo_comunidad_wsp` | nombre · invite_url · tipo CHECK (final_cliente/interna/beta) · notas |
+| 4 | `cliente_catalogo_email_remitente` | direccion · display_name · principal bool · verificado bool · notas. UNIQUE parcial `(cliente)` WHERE principal=true AND archivada=false (1 principal activo) |
+| 5 | `cliente_catalogo_etiqueta` | slug · descripcion · notas. UNIQUE parcial `(cliente, slug)` WHERE archivada=false |
+| 6 | `cliente_catalogo_cuenta_publicitaria` | nombre · plataforma CHECK (meta/google) · account_id_externo · activa bool · notas. UNIQUE parcial por (cliente, plataforma, account_id_externo) entre activas |
+| 7 | `cliente_catalogo_pixel` | nombre · plataforma · pixel_id_externo · eventos_configurados · notas. UNIQUE parcial por externo |
+| 8 | `cliente_catalogo_pagina_social` | nombre · plataforma CHECK (facebook/instagram) · page_id_externo · url_publica · verificada bool. UNIQUE parcial por externo |
+| 9 | `cliente_catalogo_publico_personalizado` | nombre · plataforma · audience_id_externo · tamano_estimado int · tipo CHECK (custom/lookalike/saved) · fuente · activo bool. UNIQUE parcial por externo |
+| 10 | `cliente_catalogo_plantilla_form_meta` | nombre · form_id_meta · `campos_capturar` jsonb DEFAULT `{"extras":[],"defaults":["nombre","email","telefono"]}` · notas |
+| 11 | `cliente_catalogo_presupuesto` | linea · canal CHECK (meta_ads/google_ads/otros) · importe_eur numeric NOT NULL · periodo CHECK (mensual/trimestral/anual/unico) · fecha_inicio · fecha_fin · activo bool · notas |
+| 12 | `cliente_catalogo_lead_magnet` | nombre · tipo CHECK (pdf/video/audio/otro) · url · descripcion · activo bool · notas |
+| 13 | `cliente_catalogo_webinar` | nombre · descripcion · precio_eur · landing_registro_url · thank_you_url · sales_page_url · reunion_1on1_url · replay_url · **comunidad_wsp_id** uuid REFERENCES #3 ON DELETE RESTRICT · **lead_magnet_id** uuid REFERENCES #12 ON DELETE RESTRICT · activo bool |
+| 14 | `cliente_catalogo_sistema_reserva` | nombre · plataforma CHECK (bookeo/resos/mindbody/propio/otros) · url_publica_reserva · notas |
+| 15 | `cliente_catalogo_producto_servicio` | nombre · tipo CHECK (consulta/sesion/curso/producto_digital/suscripcion/otro) · precio_eur · duracion_minutos int · descripcion · url_compra · activo bool. **Oferta evergreen del cliente** — no confundir con `playbook_cliente_servicios` (servicios que TheNucleo presta al cliente) |
+| 16 | `cliente_catalogo_regla` | regla NOT NULL · ambito CHECK (copy/ads/diseno/comunicacion/general) · severidad CHECK (critica/importante/sugerencia) · descripcion · activa bool. Caveats tipo "NO PONER JAMÁS VISITAS SUCESIVAS" |
+| 17 | `cliente_catalogo_web_cliente` | nombre · url · tipo CHECK (web_principal/landing/funnel/blog/checkout/thank_you/otro) · descripcion · activa bool |
+
+**Relaciones FK entre catálogos:** solo `cliente_catalogo_webinar` → (`#3 comunidad_wsp_id`, `#12 lead_magnet_id`) ambos `ON DELETE RESTRICT`. Si Account intenta borrar duro una comunidad WSP o lead magnet referenciado por un webinar, falla — debe archivar el webinar primero o desvincular. El soft-delete (`archivada=true`) sí está permitido y NO bloquea (la FK uuid sigue válida).
+
+**RPC agregadora — `catalogos_cliente_get(p_bubble_id text) RETURNS jsonb`**
+
+SECURITY DEFINER + `SET search_path = public, pg_temp` + allowlist hardcoded 5 emails (`benjamin.sanchis`, `camilo.carvajal`, `damian.gomez`, `joaquin.almeida`, `valentina.ramirez` @thenucleo.com) que RAISE `forbidden` ERRCODE `42501` si email no autorizado. GRANT EXECUTE TO authenticated. Devuelve jsonb con 17 keys (`carpetas_drive`, `documentos`, `comunidades_wsp`, `emails_remitentes`, `etiquetas`, `cuentas_publicitarias`, `pixels`, `paginas_sociales`, `publicos_personalizados`, `plantillas_form_meta`, `presupuestos`, `lead_magnets`, `webinars`, `sistemas_reserva`, `productos_servicios`, `reglas`, `webs_cliente`), cada uno con `jsonb_agg(to_jsonb(t.*))` ordenado por `archivada` (activas primero) + un campo natural del tipo. Frontend hace **1 fetch en lugar de 17**.
+
+⚠️ **Allowlist ahora en 8 sitios** (frontend playbook/fichas-de-producto/ficha-cliente + RLS policies playbook_progreso/playbook_task_feedback/playbook_cliente_servicios + RPCs `playbook_cliente_detalle` + `ficha_cliente_listar` + `ficha_cliente_get` + esta nueva `catalogos_cliente_get`). Al añadir/retirar admin, sincronizar todos. Casuísticas mantiene su allowlist propia (3 policies).
+
+**Modelo snapshot vs vivo (cuando llegue Fase C):** las referencias Campaña→Catálogo guardarán `recurso_id uuid` + `nombre_snapshot text`. Renderizado: si la entrada del catálogo está archivada → frontend usa `nombre_snapshot` + etiqueta `🗄`; si activa → lee vivo del catálogo (URLs cambian = la realidad cambió, queremos propagación; nombres pueden renombrarse por motivos cosméticos, el snapshot da estabilidad visual). Patrón validado contra Stripe payment_link archived + GitHub deleted-user "ghost".
+
+**Fases pendientes (no en esta migration):**
+- **Fase B — UI CRUD:** cablear `/ficha-cliente/` panel Catálogos pasando de 2 mockups (Emails remitentes + Etiquetas) a 17 `.coll-group` reales agrupados en 5 macro-categorías + buscador.
+- **Fase C — cablear Campaña:** sección "Recursos asociados" en Campaña con picker por tipo + 1 plantilla hardcodeada (la del PDF Rock and Climb) + tabla nueva `campania_sesion_webinar` para webinars con N sesiones específicas (PDF3 Actualízate tiene 3 masterclass V/S/D). Estas sesiones son temporales del lanzamiento, NO recursos catálogo.
 
 ### `agencia_integraciones_config` — Credenciales cifradas (desde 2026-05-04)
 

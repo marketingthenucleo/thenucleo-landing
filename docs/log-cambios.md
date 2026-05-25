@@ -71,6 +71,51 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.7 Fase A: 17 catálogos del cliente (Supabase)
+
+- **Disparador:** Ben pasa PDF de lanzamiento "Rock and Climb" + 2 lanzamientos más (Dra Neus Muñoz CP, Actualízate Psicología webinar) preguntando cómo Account puede construir esa estructura "de forma dinámica" en el panel Catálogos de `/ficha-cliente/`. Hoy el panel es mockup con 2 grupos placeholder.
+- **Framing acordado:** **Híbrido A + C** — biblioteca de recursos del cliente (catálogos cerrados, entradas abiertas) + plantillas de Campaña (`cliente_campania_plantillas` ya existente). Las URLs sueltas que F2.5c retiró de Campaña ("aquí no tenemos URLs") viven ahora en Catálogos, y Campaña referencia entradas por ID (Fase C).
+- **Migration `f2_7_catalogos_cliente`:** 17 tablas `cliente_catalogo_*` + 36 indexes (cliente + activa parcial + únicos parciales) + 68 policies (4×17 con `is_comunidad_admin()`) + 17 triggers `updated_at` + 1 RPC agregadora `catalogos_cliente_get(p_bubble_id)` SECURITY DEFINER con allowlist 5 emails (mismo patrón que `ficha_cliente_get`).
+- **Los 17 tipos (5 macro-categorías UI propuestas):**
+  - 📁 **Recursos Drive:** `cliente_catalogo_carpeta_drive` (categoria estaticos/videos/briefs/analisis/otros), `cliente_catalogo_documento` (tipo brief/analisis/estrategia/contrato/cluster/angulos/otro).
+  - 💬 **Comunicación:** `cliente_catalogo_comunidad_wsp` (tipo final_cliente/interna/beta), `cliente_catalogo_email_remitente` (UNIQUE 1 principal activo), `cliente_catalogo_etiqueta` (UNIQUE slug activa).
+  - 📣 **Marketing Meta:** `cliente_catalogo_cuenta_publicitaria`, `cliente_catalogo_pixel`, `cliente_catalogo_pagina_social`, `cliente_catalogo_publico_personalizado`, `cliente_catalogo_plantilla_form_meta` (`campos_capturar` jsonb).
+  - 💰 **Operativo:** `cliente_catalogo_presupuesto` (canal meta_ads/google_ads/otros × periodo mensual/trim/anual/único).
+  - 🎯 **Producto del cliente:** `cliente_catalogo_lead_magnet`, `cliente_catalogo_webinar` (LP_registro+thank_you+sales_page+reunion_1on1+replay + FK a comunidad_wsp y lead_magnet `ON DELETE RESTRICT`), `cliente_catalogo_sistema_reserva` (Bookeo/Resos/Mindbody/propio/otros), `cliente_catalogo_producto_servicio` (consulta/sesion/curso/producto_digital/suscripcion).
+  - ⚠️ **Gobierno:** `cliente_catalogo_regla` (caveats tipo "NO PONER JAMÁS VISITAS SUCESIVAS" del PDF Dra Neus; ámbito copy/ads/diseno/comunicacion/general × severidad critica/importante/sugerencia).
+  - 🌐 **Webs cliente:** `cliente_catalogo_web_cliente` (web_principal/landing/funnel/blog/checkout/thank_you).
+- **Convenciones reusadas** (verificadas contra `cliente_pipelines/cliente_emails/cliente_creatividades`): PK uuid `gen_random_uuid()`, FK al cliente `cliente_bubble_id text NOT NULL` (apunta a `bub_clientes.bubble_id`), audit `created_at/updated_at/created_by DEFAULT auth.email()`, soft-delete `archivada boolean + archivada_en timestamptz` (en lugar de `estado` text — biblioteca de recursos ≠ entidad con ciclo de vida), trigger reusa función existente `update_updated_at()`, RLS reusa función existente `is_comunidad_admin()`.
+- **Decisión snapshot vs vivo:** referencias guardarán FK + `nombre_snapshot` cuando Fase C cablee Campaña→Catálogo (Stripe payment_link / GitHub deleted-user pattern). Entrada archivada → frontend usa snapshot con etiqueta `🗄`; entrada activa → lee vivo del catálogo (cambios reales propagan, drift cero).
+- **Out of scope deliberado:**
+  - **Sesiones específicas de webinar** (PDF3 Actualízate tiene 3 masterclass en V/S/D) van en Campaña (futura tabla `campania_sesion_webinar`), no catálogo — son temporales del lanzamiento concreto, no recursos evergreen.
+  - **Secuencia de 25 emails GHL** (PDF3) ya está cubierta por `cliente_emails` existente (Pipelines F2). No requiere catálogo nuevo.
+  - **Ofertas temporales** ("699€ hasta el 26") quedan como campo de Campaña, no catálogo.
+- **Fase A (cerrada):** schema + RPC. Frontend puede leer 17 catálogos en 1 fetch.
+- **Pendiente Fase B (UI CRUD):** cablear `/ficha-cliente/` panel Catálogos — pasar de 2 mockups (Emails remitentes + Etiquetas) a 17 `.coll-group` reales agrupados en 5 macro-categorías + buscador.
+- **Pendiente Fase C (cablear Campaña):** sección "Recursos asociados" en Campaña con picker por tipo de recurso del catálogo + 1 plantilla hardcodeada (la del PDF Rock and Climb) + tabla `campania_sesion_webinar` para webinars con N sesiones.
+- **Refs:** SQL revisable en `c:\tmp\catalogos-cliente-f2.7.sql`. Migration aplicada vía MCP Supabase apply_migration. Validación post-deploy: 17 tablas / 68 policies / 17 triggers / 1 RPC. Schema doc actualizado en `docs/infra/supabase-schema.md`.
+
+### 2026-05-25 [PORTAL][INFRA][FEATURE] — Agencia "Demo Quasar" en Bubble LIVE: multitenant convivencia + datos clonados
+
+- **Disparador:** Ben pide montar una DEMO del producto (Portal Bubble + work.com unidos) que conviva con TheNucleo Agency en LIVE, con datos reales anonimizados. Objetivo: enseñar el portal sin contaminar la operativa real.
+- **Decisión de alcance:** la audit reveló que el Portal Bubble HOY consume solo tablas que YA tienen `agencia_id` (`analisis_wip`, `chat_conversations`, `chat_messages`, `clockify_time_entries`, `holded_facturas`, `holded_metricas`, `newsletter_wip`, `bub_*` espejo). Las 9 tablas single-tenant (`playbook_*` x3 + `cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + `cliente_mensajes_whatsapp` + `cliente_creatividades`) solo las usa `work.com/ficha-cliente/` y `work.com/playbook/` vía RPCs SECURITY DEFINER + allowlist 5 emails — quedan **out of scope** para esta demo (deuda multitenant para cuando se cableen al Portal). Demo se reduce de "refactor + clonado" (~8.5h) a "solo clonado" (~3h).
+- **Agencia Demo en Bubble LIVE (via Data API REST):** POST `/api/1.1/obj/agencia` con `Nombre=Demo Quasar`, `Uuid Supabase=bea972de-6499-4086-b8de-57e8ed2d42a7`, `Pagina Web=www.demoquasar.com`. Bubble_id resultante: `1779722662984x539340237197417400`. Espejo a Supabase OK (`_synced_at` ~2s).
+- **3 clientes Demo via Data API:** Quasar Software (SaaS, B12345674, mid-market), Quasar Shop (Infoproductos, B98765431, escalado ads), Quasar Studio (Agencia de Marketing, B45678912, branding). Datos fake desde origen (razón social, CIF, emails @demo.local, tel +34 600 X00 X00, contactos Ana/Marcos/Carla Demo, direcciones genéricas). Bubble_ids `1779722839720x...`, `1779722940492x...`, `1779722945472x...`.
+- **Workflow `wvHcgVqqjkWJcJDu` (SYNC CLIENTES Bubble→Notion+Drive) pausado** 2 veces ventana ~30s cada una (durante POST inicial + durante PATCH notion_ids) para evitar crear Drive folders y páginas Notion reales en TheNucleo. Reactivado tras cada ventana, verificado.
+- **PATCH 3 clientes con notion_id fake** (UUIDs `e83410ee-...`, `b5ddc58a-...`, `b97dcd3e-...`) → necesarios para enlazar análisis y facturas Holded al cliente correcto en el dashboard del Portal.
+- **Clonado de datos operativos (4 bloques INSERT, agencia_id=`bea972de-...`):**
+  - 3 `chat_conversations` (1 por cliente, tipo `analisis_<notion>`, estado `active`).
+  - 3 `analisis_wip` (briefing 12 secciones prellenadas + 4 segmentos buyer persona, estado `completado`).
+  - 15 `chat_messages` (5 por conv, sintéticos: greeting agent → user reto → agent estructura → user diferencial → agent buyer persona). **Cero copia de content real** para evitar fuga PII.
+  - 75 `clockify_time_entries` (25 por cliente, distribuidos en 30d, 5 usuarios Demo, ~24h por cliente, mezcla facturable/no).
+  - 18 `holded_facturas` (6 por cliente, 6 meses, mezcla paid/pending/overdue, numeración `DEMO-XXXX`, total ~45.000€).
+  - 6 `holded_metricas` (1 por mes, MRR 5.500→7.750€, 3 clientes activos, gastos detallados herramientas/freelancers/ads/oficina).
+- **Validación aislamiento:** SELECT count por agencia confirma TheNucleo intacta (78/15/6/855/38/8) + Demo poblada (3/3/3/75/18/6). RPC `finanzas_metricas_mes(bea972de-...)` devuelve datos Demo correctos (MRR 7.750€, ingresos 11.276€, margen 4.050€).
+- **Pendiente Ben (manual, Bubble UI):** crear user `demo.admin@demoquasar.com` con `agencia_id` del bubble_id Demo, `rol=Admin_agencia`, `nivel_acceso=4`. Bubble Data API no permite crear users con password vía `POST /obj/user`. Después: login en `portal.thenucleo.com` con esas credenciales.
+- **Riesgo activo documentado:** no añadir `demo.admin@demoquasar.com` al allowlist de work.com (5 sitios HTML + 7 RPCs/policies SECURITY DEFINER). La cuenta Demo opera EXCLUSIVAMENTE en Bubble — work.com queda bloqueado por allowlist (intencional, separa la operativa interna de la demo).
+- **Pre-requisito #1 resuelto** (auth Bubble→Supabase): escenario B confirmado por doc — Bubble usa `anon_key` fijo en API Connectors, sin JWT per-user. Aislamiento multitenant vive en filtrado client-side de Bubble (`?agencia_id=eq.X`) + RLS de tablas con `agencia_id` requerido. No requirió rewriting de RLS para esta demo.
+- **Refs:** plan completo en `~/.claude/plans/necesito-que-lo-planifiques-memoized-torvalds.md`. Doc operacional + reset/rollback en nueva `docs/portal/demo-quasar.md`. Workflow espejo `FGxG67I24POOUeHW` (pasó la nueva agencia + 3 clientes a Supabase). Workflow `wvHcgVqqjkWJcJDu` (pausado/reactivado 2 veces sin incidencias). RPCs `finanzas_metricas_mes`, `clockify_resumen` validadas con uuid Demo.
+
 ### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.5d: creatividades 1-fila-por-pieza con código vinculado a trigger
 
 - **Commit:** `c23bcc0`. Migration `ficha_creatividades_por_trigger_con_codigo_F2_5d`.
