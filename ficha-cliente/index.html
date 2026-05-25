@@ -2153,18 +2153,39 @@ const PIPELINES_MODULE = (() => {
 
   // Creatividades — tabla declarativa por Campaña (caso 10 .docx).
   // 1 fila = 1 grupo (tipo + cantidad). Versiones individuales en Drive.
-  const CREATIVIDAD_TIPOS = {
-    'estatico':   { emoji: '🖼️', label: 'Estático',   plural: 'estáticos' },
-    'reel':       { emoji: '🎬', label: 'Reel',        plural: 'reels' },
-    'carrusel':   { emoji: '📑', label: 'Carrusel',    plural: 'carruseles' },
-    'copy_RRSS':  { emoji: '✍️', label: 'Copy RRSS',   plural: 'copies RRSS' },
-    'video':      { emoji: '🎥', label: 'Vídeo',       plural: 'vídeos' },
-    'otro':       { emoji: '📎', label: 'Otro',        plural: 'otras piezas' },
+  // Modelo jerárquico (2026-05-25): categoria → subtipo + atributos.
+  // ANUNCIOS y RRSS comparten 'reel' como key pero con contexto distinto.
+  // OTROS no tiene subtipos — sólo notas.
+  const CREATIVIDAD_CATEGORIAS = {
+    anuncios: {
+      label: 'Anuncios', emoji: '🎯',
+      subtipos: {
+        estatico: { label: 'Estático', plural: 'estáticos' },
+        reel:     { label: 'Reel',     plural: 'reels', tieneDuracion: true },
+      },
+    },
+    rrss: {
+      label: 'RRSS', emoji: '📱',
+      subtipos: {
+        carrusel: { label: 'Carrusel', plural: 'carruseles', tieneSlides: true },
+        reel:     { label: 'Reel',     plural: 'reels',      tieneDuracion: true },
+      },
+    },
+    otros: { label: 'Otros', emoji: '📎', subtipos: null },
   };
-  function creatividadLabel(tipo, cantidad) {
-    const cfg = CREATIVIDAD_TIPOS[tipo] || CREATIVIDAD_TIPOS.otro;
-    const noun = cantidad === 1 ? cfg.label.toLowerCase() : cfg.plural;
-    return `${cfg.emoji} ${cantidad} ${noun}`;
+  function creatividadLabel(cr) {
+    const cat = CREATIVIDAD_CATEGORIAS[cr.categoria] || CREATIVIDAD_CATEGORIAS.otros;
+    if (cr.categoria === 'otros' || !cat.subtipos) {
+      const noun = cr.cantidad === 1 ? 'pieza' : 'piezas';
+      return `${cat.emoji} ${cr.cantidad} ${noun}`;
+    }
+    const sub = cat.subtipos[cr.subtipo];
+    if (!sub) return `${cat.emoji} ${cr.cantidad} pieza${cr.cantidad===1?'':'s'}`;
+    const noun = cr.cantidad === 1 ? sub.label.toLowerCase() : sub.plural;
+    let extras = '';
+    if (sub.tieneDuracion && cr.duracionSegundos) extras = ` · ${cr.duracionSegundos}s`;
+    if (sub.tieneSlides   && cr.numSlides)         extras = ` · ${cr.numSlides} slides`;
+    return `${cat.emoji} ${cr.cantidad} ${noun}${extras}`;
   }
   function stateBadge(s) {
     return `<span class="state-badge ${s}">${STATE_LABELS[s] || s}</span>`;
@@ -2279,28 +2300,6 @@ const PIPELINES_MODULE = (() => {
     `;
   }
 
-  function fieldBriefing(c) {
-    if (c.briefingUrl) {
-      return `
-        <div class="field" data-action="briefing" data-name="${escapeHtml(c.briefingName)}">
-          <div style="flex:1;min-width:0">
-            <div class="field-label">Link briefing Drive</div>
-            <div class="field-value" style="color:var(--info);text-decoration:underline">📄 ${escapeHtml(c.briefingName)}</div>
-            <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">Account duplica el template del briefing al Drive del cliente.</div>
-          </div>
-        </div>
-      `;
-    }
-    return `
-      <div class="field" style="cursor:default">
-        <div style="flex:1;min-width:0">
-          <div class="field-label">Link briefing Drive</div>
-          <div class="field-value" style="color:var(--warn)">⚠ ${escapeHtml(c.briefingName)}</div>
-        </div>
-      </div>
-    `;
-  }
-
   function renderPipelineView(pId) {
     const p = S.data.find(x => x.id === pId);
     if (!p) return backBtn() + `<div class="empty-card">Pipeline no encontrado.</div>`;
@@ -2399,7 +2398,6 @@ const PIPELINES_MODULE = (() => {
       <div class="field-list">
         ${fieldStatic('Fechas', `${dmy(c.desde) || '—'} → ${dmy(c.hasta) || 'sin fin'}`)}
         ${fieldStatic('KPI objetivo', c.kpi)}
-        ${fieldBriefing(c)}
       </div>
 
       <div class="pip-section-head">
@@ -2415,6 +2413,7 @@ const PIPELINES_MODULE = (() => {
               <div class="pip-row-name">${escapeHtml(t.name)}</div>
             </div>
             ${t.tipo==='BD' && t.fechaLanzamiento ? `<span class="pip-row-meta">📅 ${escapeHtml(dmy(t.fechaLanzamiento))}</span>` : ''}
+            ${t.tipo==='DM' && t.activador ? `<span class="pip-row-meta">🔑 ${escapeHtml(t.activador)}</span>` : ''}
             ${stateBadge(t.estado)}
           </div>
         `).join('')}
@@ -2478,14 +2477,14 @@ const PIPELINES_MODULE = (() => {
         : c.creatividades.filter(visible).map(cr => `
           <div class="pip-row ${(cr.estado||'').startsWith('archiv')?'archived':''}" data-action="open-creatividad" data-pid="${p.id}" data-cid="${c.id}" data-crid="${cr.id}" role="button" tabindex="0">
             <div class="pip-row-main">
-              <div class="pip-row-name">${escapeHtml(creatividadLabel(cr.tipo, cr.cantidad))}</div>
+              <div class="pip-row-name">${escapeHtml(creatividadLabel(cr))}</div>
               ${cr.notas ? `<div class="pip-row-sub">${escapeHtml(cr.notas)}</div>` : ''}
             </div>
             ${stateBadge(cr.estado)}
           </div>
         `).join('')}
       <div class="pip-creatividades-note" style="margin-top:8px">
-        📁 Los archivos finales viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;tipo&gt;_v&lt;n&gt;</code> · cada versión es una revisión (no se borran).
+        📁 Los archivos finales viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;subtipo&gt;_v&lt;n&gt;</code> · cada versión es una revisión (no se borran).
       </div>
 
       ${S.role==='account' ? `
@@ -2508,7 +2507,11 @@ const PIPELINES_MODULE = (() => {
     const c = p && p.camps.find(x => x.id === cId);
     const t = c && c.triggers.find(x => x.id === tId);
     if (!t) return backBtn() + `<div class="empty-card">Trigger no encontrado.</div>`;
-    const tipoFull = t.tipo==='FM' ? 'FM (Formulario Meta)' : t.tipo==='FW' ? 'FW (Formulario Web)' : 'BD (Enviar a base de datos personalizada)';
+    const tipoFull =
+      t.tipo==='FM' ? 'FM (Formulario Meta)' :
+      t.tipo==='FW' ? 'FW (Formulario Web)' :
+      t.tipo==='BD' ? 'BD (Enviar a base de datos personalizada)' :
+      t.tipo==='DM' ? 'DM (Mensaje directo RRSS — auto-respuesta a comentario)' : t.tipo;
     return `
       ${backBtn()}
       ${crumb([
@@ -2522,6 +2525,8 @@ const PIPELINES_MODULE = (() => {
       <div class="field-list">
         ${fieldStatic('Tipo', tipoFull)}
         ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', dmy(t.fechaLanzamiento) || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
+        ${t.tipo==='DM' ? fieldStatic('Activador (keyword)', t.activador || 'Falta keyword', { warn: !t.activador, mono: true }) : ''}
+        ${t.tipo==='DM' ? fieldStatic('Mensaje del DM', t.mensajeDm || 'Falta mensaje', { warn: !t.mensajeDm }) : ''}
         ${(t.tipo === 'FM' || t.tipo === 'FW') ? (() => {
           const cc = t.camposCapturar || { defaults: [], extras: [] };
           const defs = cc.defaults || [];
@@ -2594,30 +2599,27 @@ const PIPELINES_MODULE = (() => {
     const c = p && p.camps.find(x => x.id === cId);
     const cr = c && (c.creatividades || []).find(x => x.id === crId);
     if (!cr) return backBtn() + `<div class="empty-card">Creatividad no encontrada.</div>`;
-    const cfg = CREATIVIDAD_TIPOS[cr.tipo] || CREATIVIDAD_TIPOS.otro;
+    const cat = CREATIVIDAD_CATEGORIAS[cr.categoria] || CREATIVIDAD_CATEGORIAS.otros;
+    const sub = (cat.subtipos && cr.subtipo) ? cat.subtipos[cr.subtipo] : null;
+    const subSlug = cr.subtipo || 'pieza';
     return `
       ${backBtn()}
       ${crumb([
         { label:'Pipelines', action:'goto-list' },
         { label: p.code, action:'open-pipeline', pid: p.id },
         { label: c.code, action:'open-campaign', pid: p.id, cid: c.id },
-        { label: `${cfg.emoji} ${cfg.label}` }
+        { label: `${cat.emoji} ${cat.label}${sub?' · '+sub.label:''}` }
       ])}
       <div class="pip-detail-head">${stateBadge(cr.estado)}</div>
-      <h2 class="pip-detail-title">${escapeHtml(creatividadLabel(cr.tipo, cr.cantidad))}</h2>
+      <h2 class="pip-detail-title">${escapeHtml(creatividadLabel(cr))}</h2>
       <p class="pip-detail-sub ${!cr.notas?'empty':''}">${escapeHtml(cr.notas || 'Sin notas.')}</p>
       <div class="field-list">
-        ${fieldStatic('Tipo', cfg.label)}
+        ${fieldStatic('Categoría', cat.label)}
+        ${sub ? fieldStatic('Subtipo', sub.label) : ''}
         ${fieldStatic('Cantidad', String(cr.cantidad))}
-        ${cr.linkBrief
-          ? `<div class="field" style="cursor:default">
-              <div style="flex:1;min-width:0">
-                <div class="field-label">Brief en Drive</div>
-                <div class="field-value"><a href="${escapeHtml(cr.linkBrief)}" target="_blank" rel="noopener" style="color:var(--info);text-decoration:underline">📄 Abrir brief</a></div>
-              </div>
-            </div>`
-          : fieldStatic('Brief en Drive', 'Sin brief específico — el equipo se guía por las notas + el briefing macro de la Campaña.')}
-        ${fieldStatic('Cómo se nombrarán los archivos en Drive', `${c.code}_${cr.tipo}_v<n>`, { mono: true, info: 'creatividades-naming' })}
+        ${sub && sub.tieneDuracion ? fieldStatic('Duración', cr.duracionSegundos ? `${cr.duracionSegundos} s` : '—') : ''}
+        ${sub && sub.tieneSlides   ? fieldStatic('Nº slides', cr.numSlides ? String(cr.numSlides) : '—') : ''}
+        ${fieldStatic('Cómo se nombrarán los archivos en Drive', `${c.code}_${subSlug}_v<n>`, { mono: true, info: 'creatividades-naming' })}
       </div>
       ${S.role === 'account' ? `
         <div class="pip-action-row">
@@ -2626,7 +2628,7 @@ const PIPELINES_MODULE = (() => {
       ` : ''}
       ${S.role === 'account' && cr.estado !== 'archivada' ? `
         <div class="pip-action-row">
-          <button class="pip-archive-btn" data-action="archive" data-kind="creatividad" data-id="${cr.id}" data-code="${cfg.label} ×${cr.cantidad}">Archivar</button>
+          <button class="pip-archive-btn" data-action="archive" data-kind="creatividad" data-id="${cr.id}" data-code="${cat.label}${sub?' '+sub.label:''} ×${cr.cantidad}">Archivar</button>
           ${infoIcon('archivar')}
         </div>
       ` : ''}
@@ -2986,13 +2988,8 @@ const PIPELINES_MODULE = (() => {
             <input class="form-input" id="nc-kpi" value="${escapeHtml(isEdit ? (editing.kpi || '') : (plantilla ? plantilla.defaults.kpi : ''))}"/>
           </div>
           <div class="form-field">
-            <label class="form-label" for="nc-brief">Link briefing Drive ${infoIcon('briefing-drive')}</label>
-            <input class="form-input" id="nc-brief" value="${escapeHtml(isEdit ? (editing.briefingUrl || '') : '')}" placeholder="${plantilla ? escapeHtml(plantilla.briefingMaster) : 'https://drive.google.com/…'}" autocomplete="off"/>
-            <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">${plantilla ? 'Duplica el template master al Drive del cliente y pega el link aquí.' : 'Pega el link al briefing que vivirá en Drive.'}</div>
-          </div>
-          <div class="form-field">
             <label class="form-label" for="nc-notas">Notas Account</label>
-            <textarea class="form-textarea" id="nc-notas" placeholder="Contexto corto que no encaja en el briefing largo.">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
+            <textarea class="form-textarea" id="nc-notas" placeholder="Contexto corto: ángulos, dolencias, gancho, restricciones del cliente…">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
           </div>
           ${isEdit ? `
             <div class="form-field">
@@ -3092,7 +3089,6 @@ const PIPELINES_MODULE = (() => {
         const desde  = document.getElementById('nc-desde')?.value || null;
         const hasta  = document.getElementById('nc-hasta')?.value || null;
         const kpi    = document.getElementById('nc-kpi')?.value.trim() || null;
-        const brief  = document.getElementById('nc-brief')?.value.trim() || null;
         const notas  = document.getElementById('nc-notas')?.value.trim() || null;
         const estado = isEdit ? document.getElementById('nc-estado')?.value : null;
         btn.disabled = true;
@@ -3100,17 +3096,16 @@ const PIPELINES_MODULE = (() => {
           // p_plantilla_id queda NULL — el picker de plantilla sirve sólo
           // para precargar el form (UX). Linkar slug → uuid es deuda menor.
           const row = await rpc('ficha_campania_upsert', {
-            p_id:                  isEdit ? editing.id : null,
-            p_pipeline_id:         isEdit ? null : p.id,
-            p_nombre:              name,
-            p_plantilla_id:        null,
-            p_fecha_inicio:        desde,
-            p_fecha_fin:           hasta,
-            p_presupuesto_eur:     null,
-            p_kpi_objetivo:        kpi,
-            p_link_briefing_drive: brief,
-            p_notas_account:       notas,
-            p_estado:              estado,
+            p_id:              isEdit ? editing.id : null,
+            p_pipeline_id:     isEdit ? null : p.id,
+            p_nombre:          name,
+            p_plantilla_id:    null,
+            p_fecha_inicio:    desde,
+            p_fecha_fin:       hasta,
+            p_presupuesto_eur: null,
+            p_kpi_objetivo:    kpi,
+            p_notas_account:   notas,
+            p_estado:          estado,
           });
           // Si la campaña era custom (sin plantilla del picker) y es nueva,
           // auto-creamos plantilla en el catálogo con su metadata. Aparece
@@ -3149,6 +3144,7 @@ const PIPELINES_MODULE = (() => {
         if (t.tipo === 'FM') tasks.push({ c: code+'_form', d: 'Crear formulario Meta', a: 'Meta Ads', who: plantilla.roles.meta || plantilla.roles.formulario || 'Equipo' });
         if (t.tipo === 'FW') tasks.push({ c: code+'_form', d: 'Montar form en web', a: 'CRM', who: plantilla.roles.form || plantilla.roles.ghl || 'Equipo' });
         if (t.tipo === 'BD') tasks.push({ c: code+'_segmento', d: 'Crear segmento BBDD', a: 'CRM', who: plantilla.roles.ghl || 'Equipo' });
+        if (t.tipo === 'DM') tasks.push({ c: code+'_dm', d: 'Configurar auto-DM en RRSS (Meta Business Suite o herramienta)', a: 'Community', who: plantilla.roles.community || plantilla.roles.rrss || 'Equipo' });
       });
       plantilla.emails.forEach((e, i) => {
         const ec = `${c.code}E${i+1}`;
@@ -3257,7 +3253,11 @@ const PIPELINES_MODULE = (() => {
     const renderForm = () => {
       const tipo = state.tipo;
       const next = isEdit ? editing.code : (tipo ? nextFor(tipo) : '?');
-      const tipoLabelFull = tipo==='FM' ? 'FM · Formulario Meta' : tipo==='FW' ? 'FW · Formulario Web' : tipo==='BD' ? 'BD · Enviar a base de datos personalizada' : '';
+      const tipoLabelFull =
+        tipo==='FM' ? 'FM · Formulario Meta' :
+        tipo==='FW' ? 'FW · Formulario Web' :
+        tipo==='BD' ? 'BD · Enviar a base de datos personalizada' :
+        tipo==='DM' ? 'DM · Mensaje directo desde RRSS (auto-respuesta a comentario)' : '';
       return `
         <div class="pip-info-callout">
           ${isEdit
@@ -3276,6 +3276,7 @@ const PIPELINES_MODULE = (() => {
               { v:'FM', label:'FM · Formulario Meta', hint:'Form nativo de Instagram/Facebook' },
               { v:'FW', label:'FW · Formulario Web',  hint:'Form en la web del cliente → GHL' },
               { v:'BD', label:'BD · Enviar a base de datos personalizada', hint:'Lista del cliente con fecha de envío programada' },
+              { v:'DM', label:'DM · Mensaje directo RRSS',                hint:'Auto-DM cuando alguien comenta con una keyword en Instagram/Facebook' },
             ].map(opt => `
               <button class="pip-plantilla-card ${tipo===opt.v?'selected':''}" data-pick-tipo="${opt.v}" type="button" style="flex:1;min-width:120px">
                 <div class="pp-name">${escapeHtml(opt.label)}</div>
@@ -3287,13 +3288,24 @@ const PIPELINES_MODULE = (() => {
         ${tipo ? `
           <div class="form-field">
             <label class="form-label" for="nt-desc">Descripción</label>
-            <input class="form-input" id="nt-desc" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':'Ej: Segmento leads frío >60d'}" autocomplete="off"/>
+            <input class="form-input" id="nt-desc" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="${tipo==='FM'?'Ej: Anuncio Meta → checkout':tipo==='FW'?'Ej: Form home cliente':tipo==='BD'?'Ej: Segmento leads frío >60d':'Ej: DM keyword INFO en Instagram'}" autocomplete="off"/>
           </div>
           ${tipo==='BD' ? `
             <div class="form-field">
               <label class="form-label" for="nt-fecha">Fecha de lanzamiento <span style="color:var(--warn)">*</span> ${infoIcon('trigger-bd-fecha')}</label>
               <input class="form-input" type="date" id="nt-fecha" value="${isEdit ? dateVal(editing.fechaLanzamiento) : ''}"/>
               <div style="font-size:11px;color:var(--text-3);margin-top:6px">Obligatoria para tipo BD (regla .docx caso 4).</div>
+            </div>
+          ` : ''}
+          ${tipo==='DM' ? `
+            <div class="form-field">
+              <label class="form-label" for="nt-activador">Activador (keyword) <span style="color:var(--warn)">*</span></label>
+              <input class="form-input" id="nt-activador" value="${escapeHtml(isEdit ? (editing.activador || '') : '')}" placeholder="Ej: INFO, PRECIO, RESERVA" autocomplete="off"/>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">Palabra (o frase) que cuando aparece en un comentario dispara el DM automático. Sin distinguir mayúsculas. Una keyword por trigger.</div>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="nt-mensaje-dm">Mensaje del DM <span style="color:var(--warn)">*</span></label>
+              <textarea class="form-textarea" id="nt-mensaje-dm" placeholder="Texto exacto que recibe el usuario por DM cuando se activa la keyword. Puede llevar emojis y enlace.">${escapeHtml(isEdit ? (editing.mensajeDm || '') : '')}</textarea>
             </div>
           ` : ''}
           ${(tipo === 'FM' || tipo === 'FW') ? `
@@ -3363,14 +3375,18 @@ const PIPELINES_MODULE = (() => {
             // campos FM/FW), así que re-renderizamos pero preservamos lo
             // ya tecleado.
             const snap = {
-              desc: document.getElementById('nt-desc')?.value || '',
-              fecha: document.getElementById('nt-fecha')?.value || '',
+              desc:      document.getElementById('nt-desc')?.value || '',
+              fecha:     document.getElementById('nt-fecha')?.value || '',
+              activador: document.getElementById('nt-activador')?.value || '',
+              mensajeDm: document.getElementById('nt-mensaje-dm')?.value || '',
             };
             snapshotCampos();  // persiste state.campos (defaults + extras)
             state.tipo = newTipo;
             document.getElementById('sheet-body').innerHTML = renderForm();
-            if (snap.desc)  { const el = document.getElementById('nt-desc');  if (el) el.value = snap.desc; }
-            if (snap.fecha) { const el = document.getElementById('nt-fecha'); if (el) el.value = snap.fecha; }
+            if (snap.desc)      { const el = document.getElementById('nt-desc');       if (el) el.value = snap.desc; }
+            if (snap.fecha)     { const el = document.getElementById('nt-fecha');      if (el) el.value = snap.fecha; }
+            if (snap.activador) { const el = document.getElementById('nt-activador');  if (el) el.value = snap.activador; }
+            if (snap.mensajeDm) { const el = document.getElementById('nt-mensaje-dm'); if (el) el.value = snap.mensajeDm; }
             rebind();
           });
         });
@@ -3415,7 +3431,13 @@ const PIPELINES_MODULE = (() => {
         const estado = isEdit ? document.getElementById('nt-estado')?.value : null;
         if (!desc) { showToast('Falta la descripción del trigger'); return; }
         if (state.tipo === 'BD' && !fecha) { showToast('Tipo BD requiere fecha de lanzamiento'); return; }
-        // Snapshot campos antes de enviar. Solo aplica si FM/FW; en BD se
+        const activador = document.getElementById('nt-activador')?.value.trim() || null;
+        const mensajeDm = document.getElementById('nt-mensaje-dm')?.value.trim() || null;
+        if (state.tipo === 'DM') {
+          if (!activador) { showToast('Tipo DM requiere keyword activadora'); return; }
+          if (!mensajeDm) { showToast('Tipo DM requiere texto del mensaje'); return; }
+        }
+        // Snapshot campos antes de enviar. Solo aplica si FM/FW; en BD/DM se
         // manda null (la columna mantiene su default).
         snapshotCampos();
         const camposToSend = (state.tipo === 'FM' || state.tipo === 'FW') ? state.campos : null;
@@ -3432,6 +3454,8 @@ const PIPELINES_MODULE = (() => {
             p_fecha_lanzamiento: fecha,
             p_estado:            estado,
             p_campos_capturar:   camposToSend,
+            p_activador:         state.tipo === 'DM' ? activador : null,
+            p_mensaje_dm:        state.tipo === 'DM' ? mensajeDm : null,
           });
           closeSheet();
           await loadFor(S.bubbleId, { preserveView: true });
@@ -3447,52 +3471,89 @@ const PIPELINES_MODULE = (() => {
   }
 
   // ── Drawer "Nueva Creatividad" ────────────────────────────────────
+  // Modelo 2 niveles (2026-05-25):
+  //   categoria ∈ {anuncios, rrss, otros}
+  //   subtipo:
+  //     anuncios → {estatico, reel(duracion)}
+  //     rrss     → {carrusel(slides), reel(duracion)}
+  //     otros    → null (solo notas)
   function openNewCreatividadSheet(pId, cId, editing) {
     const p = S.data.find(x => x.id === pId);
     const c = p && p.camps.find(x => x.id === cId);
     if (!c) return;
     const isEdit = !!editing;
     const state = {
-      tipo:     isEdit ? editing.tipo : 'estatico',
-      cantidad: isEdit ? editing.cantidad : 1,
+      categoria: isEdit ? (editing.categoria || 'otros') : 'anuncios',
+      subtipo:   isEdit ? (editing.subtipo || null)      : 'estatico',
+      cantidad:  isEdit ? editing.cantidad               : 1,
+      duracion:  isEdit ? (editing.duracionSegundos || null) : null,
+      slides:    isEdit ? (editing.numSlides || null)        : null,
     };
+    // Si el subtipo guardado no corresponde a la categoría (caso edge),
+    // lo reseteamos al primer subtipo de la categoría.
+    const subsActuales = CREATIVIDAD_CATEGORIAS[state.categoria]?.subtipos;
+    if (subsActuales && !(state.subtipo in subsActuales)) {
+      state.subtipo = Object.keys(subsActuales)[0];
+    }
+    if (!subsActuales) state.subtipo = null;
 
     const renderForm = () => {
-      const cfg = CREATIVIDAD_TIPOS[state.tipo] || CREATIVIDAD_TIPOS.otro;
+      const cat = CREATIVIDAD_CATEGORIAS[state.categoria];
+      const sub = (cat.subtipos && state.subtipo) ? cat.subtipos[state.subtipo] : null;
+      const subSlug = state.subtipo || 'pieza';
       return `
         <div class="pip-info-callout">
           ${isEdit
-            ? `Editando creatividad en ${escapeHtml(c.code)}. Tipo y cantidad declaran qué necesita producir el equipo.`
-            : `Nueva creatividad en <strong>${escapeHtml(c.code)}</strong>. Declara qué piezas necesita esta campaña.`}
+            ? `Editando creatividad en ${escapeHtml(c.code)}. Categoría, subtipo y cantidad declaran qué necesita producir el equipo.`
+            : `Nueva creatividad en <strong>${escapeHtml(c.code)}</strong>. Elige categoría y subtipo, declara cantidad y cualquier atributo específico (duración, slides).`}
         </div>
 
         <div class="form-field">
-          <label class="form-label">Tipo de pieza</label>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:4px">
-            ${Object.entries(CREATIVIDAD_TIPOS).map(([k, t]) => `
-              <button type="button" class="pip-plantilla-card ${state.tipo===k?'selected':''}" data-pick-creatividad="${k}" style="text-align:left;padding:10px">
+          <label class="form-label">Categoría</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px">
+            ${Object.entries(CREATIVIDAD_CATEGORIAS).map(([k, t]) => `
+              <button type="button" class="pip-plantilla-card ${state.categoria===k?'selected':''}" data-pick-categoria="${k}" style="text-align:left;padding:10px">
                 <div class="pp-name">${t.emoji} ${t.label}</div>
               </button>
             `).join('')}
           </div>
         </div>
 
+        ${cat.subtipos ? `
+          <div class="form-field">
+            <label class="form-label">Subtipo</label>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:4px">
+              ${Object.entries(cat.subtipos).map(([k, t]) => `
+                <button type="button" class="pip-plantilla-card ${state.subtipo===k?'selected':''}" data-pick-subtipo="${k}" style="text-align:left;padding:10px">
+                  <div class="pp-name">${t.label}</div>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
         <div class="form-row">
           <div class="form-field">
             <label class="form-label" for="ncr-cantidad">Cantidad</label>
             <input class="form-input" type="number" id="ncr-cantidad" min="1" value="${state.cantidad || 1}"/>
           </div>
+          ${sub && sub.tieneDuracion ? `
+            <div class="form-field">
+              <label class="form-label" for="ncr-duracion">Duración (segundos)</label>
+              <input class="form-input" type="number" id="ncr-duracion" min="1" value="${state.duracion || ''}" placeholder="Ej: 15"/>
+            </div>
+          ` : ''}
+          ${sub && sub.tieneSlides ? `
+            <div class="form-field">
+              <label class="form-label" for="ncr-slides">Nº de slides</label>
+              <input class="form-input" type="number" id="ncr-slides" min="2" value="${state.slides || ''}" placeholder="Ej: 5"/>
+            </div>
+          ` : ''}
         </div>
 
         <div class="form-field">
-          <label class="form-label" for="ncr-notas">Notas (opcional)</label>
-          <textarea class="form-textarea" id="ncr-notas" placeholder="Lo que el equipo necesita saber para producir estas piezas: variantes, ángulos, referencias visuales, copy idea…">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label" for="ncr-brief">Brief en Drive (opcional)</label>
-          <input class="form-input" id="ncr-brief" type="url" value="${escapeHtml(isEdit ? (editing.linkBrief || '') : '')}" placeholder="https://drive.google.com/…" autocomplete="off"/>
-          <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">Si tienes un brief específico para estas piezas (mood board, guion, referencias), pega aquí el link de Drive. Si no, déjalo vacío y el equipo se guía por las notas + el briefing macro de la Campaña.</div>
+          <label class="form-label" for="ncr-notas">Notas${state.categoria==='otros'?'':' (opcional)'}</label>
+          <textarea class="form-textarea" id="ncr-notas" placeholder="${state.categoria==='otros' ? 'Describe qué pieza es y qué necesita el equipo para producirla.' : 'Lo que el equipo necesita saber para producir estas piezas: variantes, ángulos, referencias visuales, copy idea…'}">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
         </div>
 
         ${isEdit ? `
@@ -3509,7 +3570,7 @@ const PIPELINES_MODULE = (() => {
         ` : ''}
 
         <div class="pip-info-callout" style="margin-top:14px;font-size:11px;line-height:1.5">
-          📁 Los archivos finales se nombrarán <code>${escapeHtml(c.code)}_${escapeHtml(state.tipo)}_v&lt;n&gt;</code> en Drive · v1 es la original, cada revisión sube como v(n+1) (nunca se borran versiones). ${infoIcon('creatividades-naming')}
+          📁 Los archivos finales se nombrarán <code>${escapeHtml(c.code)}_${escapeHtml(subSlug)}_v&lt;n&gt;</code> en Drive · v1 es la original, cada revisión sube como v(n+1) (nunca se borran versiones). ${infoIcon('creatividades-naming')}
         </div>
 
         <div class="pip-sheet-actions">
@@ -3525,44 +3586,80 @@ const PIPELINES_MODULE = (() => {
       renderForm()
     );
 
+    const snapshot = () => {
+      state.cantidad = parseInt(document.getElementById('ncr-cantidad')?.value, 10) || 1;
+      const dEl = document.getElementById('ncr-duracion');
+      if (dEl) state.duracion = parseInt(dEl.value, 10) || null;
+      const sEl = document.getElementById('ncr-slides');
+      if (sEl) state.slides = parseInt(sEl.value, 10) || null;
+    };
+
     const rebind = () => {
-      document.querySelectorAll('[data-pick-creatividad]').forEach(b => {
+      document.querySelectorAll('[data-pick-categoria]').forEach(b => {
         b.addEventListener('click', () => {
-          const newTipo = b.dataset.pickCreatividad;
-          if (newTipo === state.tipo) return;
-          // Snapshot inputs antes del re-render — solo afecta al callout de
-          // nomenclatura (incluye el tipo en el path).
-          const cantSnap  = document.getElementById('ncr-cantidad')?.value || '1';
-          const notSnap   = document.getElementById('ncr-notas')?.value || '';
-          const briefSnap = document.getElementById('ncr-brief')?.value || '';
-          state.tipo = newTipo;
-          state.cantidad = parseInt(cantSnap, 10) || 1;
+          const newCat = b.dataset.pickCategoria;
+          if (newCat === state.categoria) return;
+          const notSnap = document.getElementById('ncr-notas')?.value || '';
+          snapshot();
+          state.categoria = newCat;
+          const subs = CREATIVIDAD_CATEGORIAS[newCat]?.subtipos;
+          state.subtipo = subs ? Object.keys(subs)[0] : null;
+          // limpiar atributos que ya no aplican
+          const sub = subs ? subs[state.subtipo] : null;
+          if (!sub || !sub.tieneDuracion) state.duracion = null;
+          if (!sub || !sub.tieneSlides)   state.slides = null;
           document.getElementById('sheet-body').innerHTML = renderForm();
           const ne = document.getElementById('ncr-notas');
           if (ne && notSnap) ne.value = notSnap;
-          const be = document.getElementById('ncr-brief');
-          if (be && briefSnap) be.value = briefSnap;
+          rebind();
+        });
+      });
+      document.querySelectorAll('[data-pick-subtipo]').forEach(b => {
+        b.addEventListener('click', () => {
+          const newSub = b.dataset.pickSubtipo;
+          if (newSub === state.subtipo) return;
+          const notSnap = document.getElementById('ncr-notas')?.value || '';
+          snapshot();
+          state.subtipo = newSub;
+          const sub = CREATIVIDAD_CATEGORIAS[state.categoria].subtipos[newSub];
+          if (!sub.tieneDuracion) state.duracion = null;
+          if (!sub.tieneSlides)   state.slides = null;
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          const ne = document.getElementById('ncr-notas');
+          if (ne && notSnap) ne.value = notSnap;
           rebind();
         });
       });
       document.getElementById('ncr-save')?.addEventListener('click', async () => {
         const btn = document.getElementById('ncr-save');
         if (!btn || btn.disabled) return;
-        const cantidad = parseInt(document.getElementById('ncr-cantidad')?.value, 10);
+        snapshot();
         const notas    = document.getElementById('ncr-notas')?.value.trim() || null;
-        const brief    = document.getElementById('ncr-brief')?.value.trim() || null;
         const estado   = isEdit ? document.getElementById('ncr-estado')?.value : null;
-        if (!cantidad || cantidad < 1) { showToast('Cantidad debe ser ≥1'); return; }
+        if (!state.cantidad || state.cantidad < 1) { showToast('Cantidad debe ser ≥1'); return; }
+        // Validaciones de atributos
+        const sub = (CREATIVIDAD_CATEGORIAS[state.categoria].subtipos || {})[state.subtipo];
+        if (sub && sub.tieneDuracion && (!state.duracion || state.duracion < 1)) {
+          showToast('Indica la duración en segundos'); return;
+        }
+        if (sub && sub.tieneSlides && (!state.slides || state.slides < 2)) {
+          showToast('Indica el nº de slides (mínimo 2)'); return;
+        }
+        if (state.categoria === 'otros' && !notas) {
+          showToast('Para "Otros" las notas son obligatorias'); return;
+        }
         btn.disabled = true;
         try {
           await rpc('ficha_creatividad_upsert', {
-            p_id:               isEdit ? editing.id : null,
-            p_campania_id:      isEdit ? null : c.id,
-            p_tipo:             state.tipo,
-            p_cantidad:         cantidad,
-            p_notas:            notas,
-            p_estado:           estado,
-            p_link_brief_drive: brief,
+            p_id:                isEdit ? editing.id : null,
+            p_campania_id:       isEdit ? null : c.id,
+            p_categoria:         state.categoria,
+            p_subtipo:           state.subtipo,
+            p_cantidad:          state.cantidad,
+            p_duracion_segundos: sub && sub.tieneDuracion ? state.duracion : null,
+            p_num_slides:        sub && sub.tieneSlides   ? state.slides   : null,
+            p_notas:             notas,
+            p_estado:            estado,
           });
           closeSheet();
           await loadFor(S.bubbleId, { preserveView: true });
