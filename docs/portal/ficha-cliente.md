@@ -1,9 +1,9 @@
 ---
 title: Ficha de Cliente — visión operacional
 dominio: portal
-estado: vivo (frontend con seed) · backend F2 pendiente
-actualizado: 2026-05-23
-tags: [ficha-cliente, pipelines, campañas, nomenclatura, account, pm, briefing]
+estado: vivo (frontend + backend cableados, F2.5 cerrada)
+actualizado: 2026-05-25
+tags: [ficha-cliente, pipelines, campañas, nomenclatura, account, pm, briefing, whatsapp, creatividades, campos-form]
 ---
 
 # Ficha de Cliente — visión operacional
@@ -112,9 +112,12 @@ Campos:
 - `codigo` — `FM1`, `FW1`, `BD1`… secuencial dentro de la Campaña.
 - `tipo` — `FM` / `FW` / `BD`.
 - `descripcion` corta.
-- `link_externo` — ID del formulario Meta, URL del FW en web, nombre del segmento GHL del BD.
+- `link_externo` — ID del formulario Meta, URL del FW en web, nombre del segmento GHL del BD. **⚠️ Retirado de UI 2026-05-25** — Account es el iniciador, no la ficha del form. Lo monta Media Buyer (FM) o Dev/CRM (FW). La columna queda en DB para histórico.
 - `fecha_lanzamiento` — obligatoria solo si `tipo='BD'`.
 - `estado` — `declarado` / `creado` / `monitorizando`.
+- `campos_capturar` (jsonb, F2.3 — 2026-05-25) — spec de campos del formulario. Forma `{"defaults":["nombre","email","telefono"], "extras":["edad","ciudad",…]}`. Account marca defaults + añade extras. Solo aplica en FM/FW (Media Buyer / Dev lo monta en Meta Ads Manager / web del cliente). En BD se ignora — la lista ya viene hecha.
+
+**BD renombrado en UI:** "Enviar a base de datos personalizada" (en lugar de "Base de datos" genérico). Refleja la acción: enviar una secuencia a una lista existente del cliente con fecha programada.
 
 #### Email (E)
 
@@ -124,11 +127,37 @@ Sub-bloque dentro de la Campaña.
 - `orden` — 1, 2, 3…
 - `espera_desde_anterior` — texto operativo: "Día 0", "Día +1", "Día +3", "1 semana".
 - `objetivo` — texto corto: "Bienvenida + catálogo", "Agitar dolor", "Oferta descuento", "Recordatorio".
-- `triggers_aplicables` — multi-select de los FM/FW/BD declarados. Vacío = se aplica a todos los triggers de la Campaña (caso típico).
+- `triggers_aplicables` — text[] de subcódigos. **Modelo simplificado 2026-05-25**: solo 2 valores válidos vía UI — `[]` = **Compartido** (todos los triggers) o `[X]` = **Específico** para 1 solo trigger. No hay subsets (`[FM1, FM2]` queda como legacy display-only, sin UI para crear nuevos). Razón: evita huecos en la secuencia tipo `FM1FM2E2 sin FM1FM2E1`.
 - `link_copy_drive`, `link_diseno_drive`, `link_ghl_workflow` — entregables.
 - `estado` — `declarado` / `copy listo` / `diseño listo` / `montado GHL` / `activo`.
 
-**Cuándo poner el trigger en el código del Email:** solo cuando hace falta distinguir. Si los 3 triggers envían los mismos Emails, los Emails se nombran sin trigger (`P1C1E1`). Si cada trigger envía emails distintos, se incluye (`P1C1FM1E1`, `P1C1FW1E1`).
+**Modelo simplificado de scope (2026-05-25):**
+- **📡 Compartido** (`triggers_aplicables = []`) — lo reciben los leads de TODOS los triggers (presentes y futuros). Código `P1C1E1`, `P1C1E2`, `P1C1E3`.
+- **🎯 Específico** (`triggers_aplicables = ['FM1']`) — lo reciben SOLO los leads de UN trigger. Código `P1C1FM1E1`, `P1C1FM1E2`.
+- La numeración `E1, E2, E3` es **independiente por scope** (cada secuencia tiene su propio orden, alineado con §7 — cada rama del workflow GHL su ritmo).
+- Si Account necesita un email común a 2 triggers pero no a un 3º → duplica el email (o lo declara Compartido si acepta que llegue al 3º).
+
+#### Mensaje WhatsApp (WA) — secuencia hermana de Email (NUEVO 2026-05-25, F2.4)
+
+Sub-bloque dentro de la Campaña, paralelo a Email.
+
+- `codigo` (display) — `WA1`, `WA2`… secuencial dentro de la Campaña, con mismo modelo de scope (Compartido/Específico). Códigos `P1C1WA1` o `P1C1FM1WA1`.
+- `orden`, `nombre`, `espera_desde_anterior`, `objetivo`, `triggers_aplicables` — idéntico a Email.
+- `link_copy_drive`, `link_workflow` — entregables (el workflow puede ser Evolution API, n8n flow, GHL, etc — agnóstico).
+- `estado` — `declarado` / `copy-listo` / `montado-ghl` / `activo` / `archivado` (5, sin `diseño-listo` porque WhatsApp no lleva diseño visual).
+
+**Por qué hermano de Email y no unificado:** copy/tono/longitud distintos por canal — secuencias independientes son lo natural. Permite añadir columnas específicas (link_workflow vs link_ghl_workflow) sin contaminar. Tabla DB separada `cliente_mensajes_whatsapp` con shape idéntico a `cliente_emails`.
+
+#### Creatividades — declarativas por Campaña (NUEVO 2026-05-25, F2.5)
+
+Sub-bloque dentro de la Campaña. Cubre `caso 10 .docx` (creatividades cuelgan de `PxCx`, no de `E` ni `FM`).
+
+- `tipo` — `estatico` / `reel` / `carrusel` / `copy_RRSS` / `video` / `otro`.
+- `cantidad` (int ≥1) — cuántas piezas de ese tipo se necesitan.
+- `notas` — texto libre (variantes, briefing, etc).
+- `estado` — `declarada` / `en-produccion` / `lista` / `aprobada` / `archivada`.
+
+**Modelo:** 1 fila = 1 declaración tipo-cantidad. Account declara "necesitamos 3 estáticos + 2 reels". El equipo produce y nombra los archivos en Drive como `PxCx_<tipo>_v<n>` (caso 10 .docx). La ficha solo tracks la declaración + estado del grupo. La versión v1 es el original, cada revisión sube como v(n+1) — **nunca se borran versiones**. La extensión la pone Drive automáticamente al guardar (no se incluye en el nombre del archivo).
 
 ## 3. La nomenclatura PxCx
 

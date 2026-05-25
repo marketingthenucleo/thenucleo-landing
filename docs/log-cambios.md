@@ -71,6 +71,68 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente: modelo emails simplificado + WhatsApp + Creatividades + Campos a capturar + 10 fixes
+
+- **Área:** `work.thenucleo.com/ficha-cliente/` + 3 migrations Supabase (`cliente_triggers` col nueva, 2 tablas nuevas).
+- **Iniciador:** feedback Ben 2026-05-25 sobre la ficha de Neus (1773847038522x983519237604638700).
+- **Commits:** `076fdf0` (bug + copy + emails model) + commit pendiente (3 migrations + UI nuevas).
+
+**A. Bug + 8 fixes copy (commit `076fdf0`):**
+- **Bug breadcrumb:** `crumb()` emitía `data-id="${p.pid}"` siempre pero `open-campaign` lee `dataset.pid/cid`. Pulsar `P6C1` en el breadcrumb desde vista trigger/email no navegaba. Fix: emitir data-attrs alineados con cada handler.
+- Quitado Presupuesto de Campaña (card pipeline view + Datos básicos detail + form Nueva campaña + upsert `presupuesto_eur=null`). No es por-campaña.
+- Quitado Form ID Meta / URL form / Tag GHL del Nuevo trigger (Account no monta forms, es el iniciador). `link_externo` preserva legacy en edit; null en create.
+- Quitado Link externo de la vista detalle del trigger.
+- BD renombrado → "Enviar a base de datos personalizada" (tooltip + vista detalle + header form + picker card).
+- Creatividades: nombre sin `.<ext>` (Drive pone extensión auto) + ⓘ explicando `<código>_<tipo>_v<n>` con "nunca borrar versiones".
+- "Objetivo de negocio" → "Objetivo estratégico del Pipeline" (placeholder aclara que no es del negocio en general).
+
+**B. Modelo emails simplificado (commit `076fdf0`, frontend-only):**
+- Solo 2 modos válidos: **📡 Compartido** (apl=[], código sin prefijo `P1C1En`) o **🎯 Específico** (apl=[X], código `P1C1XEn`). No hay subsets — evita huecos `FM1FM2E2 sin FM1FM2E1` que el modelo anterior permitía crear.
+- `emailCode()` calcula el `n` display **per-scope** (no usa `orden` DB global), contando archivados (caso 9 .docx).
+- Drawer Nuevo Email: picker single-select con tarjetas (Compartido + una por trigger). Legacy multi-trigger se muestra con warning "edita para simplificar".
+- `renderEmailView`: scope explícito (Compartido / Específico / legacy).
+- `setData` retira normalización `[]→todos los triggers` que rompía el modo Compartido nuevo.
+
+**C. Campos a capturar en triggers FM/FW (Migration `ficha_cliente_triggers_campos_capturar`):**
+- `ALTER TABLE cliente_triggers ADD COLUMN campos_capturar jsonb DEFAULT '{"defaults":["nombre","email","telefono"],"extras":[]}'`. Backfilled a 11 triggers existentes.
+- Reemplazada `ficha_trigger_upsert` para aceptar `p_campos_capturar jsonb` (signatura cambia → 9 params).
+- `ficha_pipelines_get` incluye `camposCapturar` por trigger.
+- UI: en drawer Nuevo Trigger, cuando tipo es FM o FW, sección con checkboxes (`nombre`/`email`/`telefono`) marcados por defecto + lista editable de extras con add/remove. En BD no aplica.
+- Vista detalle del trigger pinta los campos (verde = default seleccionado, neutro = extra). Tooltip ⓘ `campos-capturar`.
+
+**D. WhatsApp como hermano de Email (Migration `ficha_cliente_whatsapp_hermano_email`):**
+- Nueva tabla `cliente_mensajes_whatsapp` (idéntica a `cliente_emails` + `link_workflow` en lugar de `link_ghl_workflow`/`link_diseno_drive`). Estados: declarado/copy-listo/montado-ghl/activo/archivado (sin diseno-listo).
+- Nueva RPC `ficha_whatsapp_upsert` (10 params).
+- `ficha_archivar_codigo` añade `kind='whatsapp'` (sigue case-when genérico).
+- `ficha_pipelines_get` incluye `whatsapps[]` por campaña.
+- Códigos display: `P1C1WA1` (compartido), `P1C1FM1WA1` (específico). Numeración independiente por scope, igual que emails.
+- UI: bloque "Mensajes WhatsApp" hermano del bloque Emails en `renderCampaignView`. Drawer `openNewWhatsappSheet` (clon del Email drawer). `renderWhatsappView` (clon del email view). CSS color verde WhatsApp `#25d366` para el code-tag.
+- Decisión: NO unificar como `cliente_mensajes` con `canal`. Razón: copy/longitud/tono distintos por canal — secuencias independientes naturalmente, y permite añadir cols específicas sin contaminar.
+
+**E. Creatividades declarativas por Campaña (Migration `ficha_cliente_creatividades`):**
+- Nueva tabla `cliente_creatividades` con `tipo` (estatico/reel/carrusel/copy_RRSS/video/otro), `cantidad`, `notas`, `estado` (declarada/en-produccion/lista/aprobada/archivada), `orden`.
+- 1 fila = 1 declaración (tipo + cantidad). Las versiones individuales (v1, v2…) viven en Drive (caso 10 .docx).
+- Nueva RPC `ficha_creatividad_upsert` (7 params).
+- `ficha_archivar_codigo` añade `kind='creatividad'`.
+- `ficha_pipelines_get` incluye `creatividades[]` por campaña.
+- UI: bloque "🎨 Creatividades" hermano de Triggers/Emails/WhatsApp en `renderCampaignView`. Drawer `openNewCreatividadSheet` con tipo grid (2×3 cards con emoji + label), cantidad number, notas textarea, estado dropdown (solo edit). `renderCreatividadView` minimal con tipo/cantidad/notas/nomenclatura archivo Drive.
+- Helper `creatividadLabel(tipo, cantidad)` devuelve `🖼️ 3 estáticos`, `🎬 1 reel`, etc (singular/plural).
+- Estado Account: declarada (default). Cuando equipo produce: en-produccion → lista → aprobada. Archivada para soft-delete.
+
+**Impacto:**
+- 3 migrations PROD aplicadas via Supabase MCP. Smoke verde: 11 triggers con campos_capturar populated, 0 wa/cr rows iniciales (tablas nuevas vacías).
+- `ficha_pipelines_get` ahora devuelve 4 sub-arrays por campaña (triggers/emails/whatsapps/creatividades) + camposCapturar en triggers.
+- `ficha_archivar_codigo` cubre 6 kinds (pipeline/campania/trigger/email/whatsapp/creatividad).
+- Frontend: ~600 líneas nuevas en `ficha-cliente/index.html` (3 nuevos drawers + 3 nuevas views + bloques en renderCampaignView). Build Eleventy verde (55 archivos).
+
+**Refs:**
+- `supabase/migrations/20260525_ficha_cliente_triggers_campos_capturar.sql`
+- `supabase/migrations/20260525_ficha_cliente_whatsapp_hermano_email.sql`
+- `supabase/migrations/20260525_ficha_cliente_creatividades.sql`
+- `ficha-cliente/index.html` (frontend).
+- `docs/infra/supabase-schema.md` sección Pipelines actualizada.
+- `docs/portal/ficha-cliente.md` sección §2 (Capa Campaña) actualizada con WhatsApp + Creatividades.
+
 ### 2026-05-25 [WORK][UX] — Ficha de Cliente: listado de clientes inline en estado vacío (en vez de "Elige cliente" + botón)
 
 - **Área:** `work.thenucleo.com/ficha-cliente/` — `ficha-cliente/index.html`.

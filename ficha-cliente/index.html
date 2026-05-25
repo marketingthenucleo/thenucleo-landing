@@ -698,7 +698,11 @@
   .code-tag.tag-camp { color: var(--info); }
   .code-tag.tag-trig { color: var(--warn); }
   .code-tag.tag-email { color: #a78bfa; }
+  .code-tag.tag-whatsapp { color: #25d366; }
+  .code-tag.tag-creatividad { color: #f472b6; }
   [data-theme="light"] .code-tag.tag-email { color: #7c3aed; }
+  [data-theme="light"] .code-tag.tag-whatsapp { color: #128c4d; }
+  [data-theme="light"] .code-tag.tag-creatividad { color: #c026d3; }
 
   .state-badge {
     display: inline-flex; align-items: center; font-size: 9px; font-weight: 700;
@@ -1887,6 +1891,33 @@ const PIPELINES_MODULE = (() => {
         <p>Tampoco es un KPI numérico — eso va en cada Campaña.</p>
         <p>Ejemplos: <em>"Monetizar el infoproducto Curso Suplementación a tráfico frío"</em>, <em>"Nutrir BBDD con leads cualificados para futuras ofertas"</em>.</p>`
     },
+    'whatsapp-vs-email': {
+      title: 'Mensajes WhatsApp vs Email',
+      body: `
+        <p>Cada Campaña puede tener <strong>dos secuencias paralelas</strong> de salida: una de emails y una de WhatsApp. Son independientes — el copy de un canal no aplica al otro.</p>
+        <p>Los mensajes WhatsApp siguen el <strong>mismo modelo</strong> que los emails:</p>
+        <ul>
+          <li><strong>📡 Compartido</strong> — lo reciben los leads de todos los triggers. Código <code>P1C1WA1</code>.</li>
+          <li><strong>🎯 Específico</strong> — lo reciben solo los leads de UN trigger. Código <code>P1C1FM1WA1</code>.</li>
+        </ul>
+        <p>Numeración propia con la letra <code>WA</code> en lugar de <code>E</code>. Cada secuencia (email-shared, email-FM1, wa-shared, wa-FM1…) lleva su orden independiente.</p>
+        <p>Útil cuando la campaña combina email + WhatsApp (típico en pos-venta y nutring) o cuando WhatsApp es el canal principal.</p>`
+    },
+    'campos-capturar': {
+      title: 'Campos a capturar',
+      body: `
+        <p>Account declara <strong>qué campos pide el formulario</strong> al lead. Sirve de spec para quien lo monte:</p>
+        <ul>
+          <li><strong>FM</strong> — Media Buyer lo configura en Meta Ads Manager.</li>
+          <li><strong>FW</strong> — Dev o CRM Manager lo monta en la web del cliente.</li>
+        </ul>
+        <p>2 grupos:</p>
+        <ul>
+          <li><strong>Por defecto</strong> — nombre, email, teléfono. Marcados de inicio porque son lo habitual. Desmarca si el cliente no los necesita.</li>
+          <li><strong>Personalizados</strong> — todo lo demás (edad, ciudad, sector, tipo de empresa…). Añade los que pida el cliente.</li>
+        </ul>
+        <p>En tipo <strong>BD</strong> no aplica — la lista de leads ya viene hecha.</p>`
+    },
     'creatividades-naming': {
       title: 'Nomenclatura de creatividades',
       body: `
@@ -2035,34 +2066,39 @@ const PIPELINES_MODULE = (() => {
       return w(a) - w(b);
     }).join('');
   }
-  function emailCode(camp, email) {
-    // Cambio 2026-05-25 (modelo simplificado): solo 2 modos válidos.
-    // - apl=[] → modo Compartido. Código sin prefijo: P1C1E<n>.
-    // - apl=[X] → modo Específico para X. Código: P1C1XE<n>.
-    // - apl=[X,Y,…] → modo legacy multi-trigger (UI no permite crearlos
-    //   nuevos, solo se muestran como están).
-    //
-    // El número <n> NO es el `orden` DB global de la campaña — es la
-    // posición de este email DENTRO de su mismo scope (compartido vs
-    // específico-de-X), respetando caso 9 .docx: incluimos archivados
-    // en el count para no reutilizar números.
-    const apl = email.triggersAplicables || [];
+  // Helper genérico para códigos display per-scope. Reusado por emailCode
+  // (letra 'E', collection 'emails') y whatsappCode (letra 'WA', collection
+  // 'whatsapps').
+  function scopedMessageCode(camp, msg, letter, collection) {
+    const apl = msg.triggersAplicables || [];
     const scopeKey = apl.length === 0 ? '__shared__' : orderTriggersInCode(apl);
-    const sameScopeSorted = (camp.emails || [])
+    const sameScopeSorted = (camp[collection] || [])
       .filter(e => {
         const ea = e.triggersAplicables || [];
         const ek = ea.length === 0 ? '__shared__' : orderTriggersInCode(ea);
         return ek === scopeKey;
       })
       .sort((a, b) => (a.orden || 0) - (b.orden || 0));
-    const n = sameScopeSorted.findIndex(e => e.id === email.id) + 1;
-    if (apl.length === 0) return `${camp.code}E${n}`;
-    return `${camp.code}${orderTriggersInCode(apl)}E${n}`;
+    const n = sameScopeSorted.findIndex(e => e.id === msg.id) + 1;
+    if (apl.length === 0) return `${camp.code}${letter}${n}`;
+    return `${camp.code}${orderTriggersInCode(apl)}${letter}${n}`;
+  }
+  function whatsappCode(camp, msg) {
+    return scopedMessageCode(camp, msg, 'WA', 'whatsapps');
+  }
+
+  function emailCode(camp, email) {
+    // Modelo simplificado 2026-05-25: solo 2 modos válidos — Compartido
+    // (apl=[]) o Específico (apl=[X]). El "n" es per-scope, no global
+    // (incluyendo archivados, caso 9 .docx). Ver scopedMessageCode.
+    return scopedMessageCode(camp, email, 'E', 'emails');
   }
 
   function tagClass(code) {
     if (/^P\d+$/.test(code)) return '';
     if (/^P\d+C\d+$/.test(code)) return 'tag-camp';
+    if (/WA\d+$/.test(code)) return 'tag-whatsapp';
+    if (/CR\d+$/.test(code)) return 'tag-creatividad';
     if (/E\d+$/.test(code)) return 'tag-email';
     if (/FM\d+|FW\d+|BD\d+/.test(code)) return 'tag-trig';
     return '';
@@ -2087,7 +2123,25 @@ const PIPELINES_MODULE = (() => {
     'copy-listo':    'Copy listo',
     'diseno-listo':  'Diseño listo',
     'montado-ghl':   'Montado GHL',
+    'lista':         'Lista',
+    'aprobada':      'Aprobada',
   };
+
+  // Creatividades — tabla declarativa por Campaña (caso 10 .docx).
+  // 1 fila = 1 grupo (tipo + cantidad). Versiones individuales en Drive.
+  const CREATIVIDAD_TIPOS = {
+    'estatico':   { emoji: '🖼️', label: 'Estático',   plural: 'estáticos' },
+    'reel':       { emoji: '🎬', label: 'Reel',        plural: 'reels' },
+    'carrusel':   { emoji: '📑', label: 'Carrusel',    plural: 'carruseles' },
+    'copy_RRSS':  { emoji: '✍️', label: 'Copy RRSS',   plural: 'copies RRSS' },
+    'video':      { emoji: '🎥', label: 'Vídeo',       plural: 'vídeos' },
+    'otro':       { emoji: '📎', label: 'Otro',        plural: 'otras piezas' },
+  };
+  function creatividadLabel(tipo, cantidad) {
+    const cfg = CREATIVIDAD_TIPOS[tipo] || CREATIVIDAD_TIPOS.otro;
+    const noun = cantidad === 1 ? cfg.label.toLowerCase() : cfg.plural;
+    return `${cfg.emoji} ${cantidad} ${noun}`;
+  }
   function stateBadge(s) {
     return `<span class="state-badge ${s}">${STATE_LABELS[s] || s}</span>`;
   }
@@ -2129,6 +2183,8 @@ const PIPELINES_MODULE = (() => {
     if (v.kind === 'campaign') return renderCampaignView(v.pId, v.cId);
     if (v.kind === 'trigger') return renderTriggerView(v.pId, v.cId, v.tId);
     if (v.kind === 'email') return renderEmailView(v.pId, v.cId, v.eId);
+    if (v.kind === 'whatsapp') return renderWhatsappView(v.pId, v.cId, v.wId);
+    if (v.kind === 'creatividad') return renderCreatividadView(v.pId, v.cId, v.crId);
     return '';
   }
 
@@ -2367,9 +2423,45 @@ const PIPELINES_MODULE = (() => {
           `;
         }).join('')}
 
-      <div class="pip-creatividades-note">
-        <strong>🎨 Creatividades de esta Campaña</strong> ${infoIcon('creatividades-naming')}
-        Estáticos, reels, carruseles, copies RRSS, vídeos: viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;tipo&gt;_v&lt;n&gt;</code> (regla .docx caso 10). No se listan aquí — abre la subcarpeta Drive de la campaña.
+      <div class="pip-section-head">
+        <span>Mensajes WhatsApp · ${(c.whatsapps || []).length} ${infoIcon('whatsapp-vs-email')}</span>
+        ${S.role==='account' ? `<button class="add-link" data-action="new-whatsapp" data-pid="${p.id}" data-cid="${c.id}">+ WHATSAPP</button>` : ''}
+      </div>
+      ${(c.whatsapps || []).length === 0
+        ? `<div class="empty-card">Esta campaña no tiene mensajes WhatsApp.</div>`
+        : c.whatsapps.map(w => {
+          const code = whatsappCode(c, w);
+          return `
+            <div class="pip-row ${(w.estado||'').startsWith('archiv')?'archived':''}" data-action="open-whatsapp" data-pid="${p.id}" data-cid="${c.id}" data-wid="${w.id}" role="button" tabindex="0">
+              <span class="pip-row-order">${w.orden}</span>
+              ${codeTag(code)}
+              <div class="pip-row-main">
+                <div class="pip-row-name">${escapeHtml(w.name)}</div>
+                <div class="pip-row-sub">${escapeHtml(w.objetivo || '')}</div>
+              </div>
+              <span class="pip-row-meta">${escapeHtml(w.espera || '—')}</span>
+              ${stateBadge(w.estado)}
+            </div>
+          `;
+        }).join('')}
+
+      <div class="pip-section-head">
+        <span>🎨 Creatividades · ${(c.creatividades || []).length} ${infoIcon('creatividades-naming')}</span>
+        ${S.role==='account' ? `<button class="add-link" data-action="new-creatividad" data-pid="${p.id}" data-cid="${c.id}">+ CREATIVIDAD</button>` : ''}
+      </div>
+      ${(c.creatividades || []).length === 0
+        ? `<div class="empty-card">Sin creatividades declaradas. Pulsa <strong>+ CREATIVIDAD</strong> para indicar qué piezas necesita producir el equipo.</div>`
+        : c.creatividades.filter(visible).map(cr => `
+          <div class="pip-row ${(cr.estado||'').startsWith('archiv')?'archived':''}" data-action="open-creatividad" data-pid="${p.id}" data-cid="${c.id}" data-crid="${cr.id}" role="button" tabindex="0">
+            <div class="pip-row-main">
+              <div class="pip-row-name">${escapeHtml(creatividadLabel(cr.tipo, cr.cantidad))}</div>
+              ${cr.notas ? `<div class="pip-row-sub">${escapeHtml(cr.notas)}</div>` : ''}
+            </div>
+            ${stateBadge(cr.estado)}
+          </div>
+        `).join('')}
+      <div class="pip-creatividades-note" style="margin-top:8px">
+        📁 Los archivos finales viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;tipo&gt;_v&lt;n&gt;</code> · cada versión es una revisión (no se borran).
       </div>
 
       ${S.role==='account' ? `
@@ -2406,6 +2498,28 @@ const PIPELINES_MODULE = (() => {
       <div class="field-list">
         ${fieldStatic('Tipo', tipoFull)}
         ${t.tipo==='BD' ? fieldStatic('Fecha lanzamiento', dmy(t.fechaLanzamiento) || 'Falta fecha', { warn: !t.fechaLanzamiento, hint: 'Obligatoria para BD (regla .docx).' }) : ''}
+        ${(t.tipo === 'FM' || t.tipo === 'FW') ? (() => {
+          const cc = t.camposCapturar || { defaults: [], extras: [] };
+          const defs = cc.defaults || [];
+          const exts = cc.extras || [];
+          const total = defs.length + exts.length;
+          return `
+            <div class="field" style="cursor:default">
+              <div style="flex:1;min-width:0">
+                <div class="field-label">Campos a capturar ${infoIcon('campos-capturar')}</div>
+                <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;line-height:1.6">
+                  ${total === 0
+                    ? `<span class="field-value empty">Sin campos definidos. Edita el trigger para añadir.</span>`
+                    : `
+                      ${defs.map(f => `<span class="pip-pill-trigger selected" style="font-family:inherit">${escapeHtml(f)}</span>`).join('')}
+                      ${exts.map(f => `<span class="pip-pill-trigger" style="font-family:inherit">${escapeHtml(f)}</span>`).join('')}
+                    `}
+                </div>
+                ${total > 0 ? `<div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4">Verdes = defaults marcados · neutros = personalizados.</div>` : ''}
+              </div>
+            </div>
+          `;
+        })() : ''}
       </div>
 
       ${(() => {
@@ -2444,6 +2558,97 @@ const PIPELINES_MODULE = (() => {
       ${S.role === 'account' && t.estado !== 'archivado' ? `
         <div class="pip-action-row">
           <button class="pip-archive-btn" data-action="archive" data-kind="trigger" data-id="${t.id}" data-code="${t.code}">Archivar trigger ${t.code}</button>
+          ${infoIcon('archivar')}
+        </div>
+      ` : ''}
+    `;
+  }
+
+  // Render Creatividad detail view (minimal — tipo, cantidad, notas, estado).
+  function renderCreatividadView(pId, cId, crId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    const cr = c && (c.creatividades || []).find(x => x.id === crId);
+    if (!cr) return backBtn() + `<div class="empty-card">Creatividad no encontrada.</div>`;
+    const cfg = CREATIVIDAD_TIPOS[cr.tipo] || CREATIVIDAD_TIPOS.otro;
+    return `
+      ${backBtn()}
+      ${crumb([
+        { label:'Pipelines', action:'goto-list' },
+        { label: p.code, action:'open-pipeline', pid: p.id },
+        { label: c.code, action:'open-campaign', pid: p.id, cid: c.id },
+        { label: `${cfg.emoji} ${cfg.label}` }
+      ])}
+      <div class="pip-detail-head">${stateBadge(cr.estado)}</div>
+      <h2 class="pip-detail-title">${escapeHtml(creatividadLabel(cr.tipo, cr.cantidad))}</h2>
+      <p class="pip-detail-sub ${!cr.notas?'empty':''}">${escapeHtml(cr.notas || 'Sin notas.')}</p>
+      <div class="field-list">
+        ${fieldStatic('Tipo', cfg.label)}
+        ${fieldStatic('Cantidad', String(cr.cantidad))}
+        ${fieldStatic('Nomenclatura archivos en Drive', `${c.code}_${cr.tipo}_v<n>`, { mono: true, info: 'creatividades-naming' })}
+      </div>
+      ${S.role === 'account' ? `
+        <div class="pip-action-row">
+          <button class="pip-edit-btn" data-action="edit-creatividad" data-pid="${p.id}" data-cid="${c.id}" data-crid="${cr.id}">Editar creatividad</button>
+        </div>
+      ` : ''}
+      ${S.role === 'account' && cr.estado !== 'archivada' ? `
+        <div class="pip-action-row">
+          <button class="pip-archive-btn" data-action="archive" data-kind="creatividad" data-id="${cr.id}" data-code="${cfg.label} ×${cr.cantidad}">Archivar</button>
+          ${infoIcon('archivar')}
+        </div>
+      ` : ''}
+    `;
+  }
+
+  // Render WhatsApp message detail view. Mirrors renderEmailView pero con
+  // letra WA, sin "Diseño listo" en estados (WA no lleva diseño visual).
+  function renderWhatsappView(pId, cId, wId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    const w = c && (c.whatsapps || []).find(x => x.id === wId);
+    if (!w) return backBtn() + `<div class="empty-card">Mensaje WhatsApp no encontrado.</div>`;
+    const code = whatsappCode(c, w);
+    const allCodes = c.triggers.map(t => t.code.replace(c.code, ''));
+    const aplSet = new Set(w.triggersAplicables || []);
+    return `
+      ${backBtn()}
+      ${crumb([
+        { label:'Pipelines', action:'goto-list' },
+        { label: p.code, action:'open-pipeline', pid: p.id },
+        { label: c.code, action:'open-campaign', pid: p.id, cid: c.id },
+        { label: code }
+      ])}
+      <div class="pip-detail-head">${codeTag(code, 'lg')} ${stateBadge(w.estado)}</div>
+      <h2 class="pip-detail-title">${escapeHtml(w.name)}</h2>
+      <p class="pip-detail-sub ${!w.objetivo?'empty':''}">${escapeHtml(w.objetivo || 'Sin objetivo.')}</p>
+      <div class="field-list">
+        ${fieldStatic('Espera', w.espera || '—')}
+        <div class="field" style="cursor:default">
+          <div style="flex:1;min-width:0">
+            <div class="field-label">¿A quién aplica? ${infoIcon('triggers-aplicables')}</div>
+            <div style="margin-top:8px;line-height:1.5">
+              ${allCodes.length === 0
+                ? `<span class="field-value empty">La campaña no tiene triggers.</span>`
+                : aplSet.size === 0
+                  ? `<span class="field-value">📡 <strong>Compartido</strong> — lo reciben los leads de todos los triggers.</span>`
+                  : aplSet.size === 1
+                    ? `<span class="field-value">🎯 <strong>Específico</strong> — solo los leads de ${codeTag([...aplSet][0])}</span>`
+                    : `<span class="field-value" style="color:var(--warn)">⚠ Modo legacy multi-trigger: ${[...aplSet].map(s => codeTag(s)).join(' + ')}.<br><span style="font-size:11px;color:var(--text-3)">Edita para simplificar.</span></span>`
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      ${S.role === 'account' ? `
+        <div class="pip-action-row">
+          <button class="pip-edit-btn" data-action="edit-whatsapp" data-pid="${p.id}" data-cid="${c.id}" data-wid="${w.id}">Editar ${code}</button>
+          ${infoIcon('codigo-inmutable')}
+        </div>
+      ` : ''}
+      ${S.role === 'account' && w.estado !== 'archivado' ? `
+        <div class="pip-action-row">
+          <button class="pip-archive-btn" data-action="archive" data-kind="whatsapp" data-id="${w.id}" data-code="${code}">Archivar ${code}</button>
           ${infoIcon('archivar')}
         </div>
       ` : ''}
@@ -2548,12 +2753,16 @@ const PIPELINES_MODULE = (() => {
         else if (a === 'open-campaign') go({ kind:'campaign', pId: el.dataset.pid, cId: el.dataset.cid });
         else if (a === 'open-trigger') go({ kind:'trigger', pId: el.dataset.pid, cId: el.dataset.cid, tId: el.dataset.tid });
         else if (a === 'open-email') go({ kind:'email', pId: el.dataset.pid, cId: el.dataset.cid, eId: el.dataset.eid });
+        else if (a === 'open-whatsapp') go({ kind:'whatsapp', pId: el.dataset.pid, cId: el.dataset.cid, wId: el.dataset.wid });
+        else if (a === 'open-creatividad') go({ kind:'creatividad', pId: el.dataset.pid, cId: el.dataset.cid, crId: el.dataset.crid });
         else if (a === 'goto-list') gotoList();
         else if (a === 'back') back();
         else if (a === 'new-pipeline') openNewPipelineSheet();
         else if (a === 'new-campaign') openNewCampaignSheet(el.dataset.pid);
         else if (a === 'new-trigger') openNewTriggerSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'new-email') openNewEmailSheet(el.dataset.pid, el.dataset.cid);
+        else if (a === 'new-whatsapp') openNewWhatsappSheet(el.dataset.pid, el.dataset.cid);
+        else if (a === 'new-creatividad') openNewCreatividadSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'edit-pipeline') {
           const target = S.data.find(x => x.id === el.dataset.id);
           if (target) openNewPipelineSheet(target);
@@ -2575,6 +2784,18 @@ const PIPELINES_MODULE = (() => {
           const ee = cc && cc.emails.find(x => x.id === el.dataset.eid);
           if (ee) openNewEmailSheet(el.dataset.pid, el.dataset.cid, ee);
         }
+        else if (a === 'edit-whatsapp') {
+          const pp = S.data.find(x => x.id === el.dataset.pid);
+          const cc = pp && pp.camps.find(x => x.id === el.dataset.cid);
+          const ww = cc && (cc.whatsapps || []).find(x => x.id === el.dataset.wid);
+          if (ww) openNewWhatsappSheet(el.dataset.pid, el.dataset.cid, ww);
+        }
+        else if (a === 'edit-creatividad') {
+          const pp = S.data.find(x => x.id === el.dataset.pid);
+          const cc = pp && pp.camps.find(x => x.id === el.dataset.cid);
+          const cr = cc && (cc.creatividades || []).find(x => x.id === el.dataset.crid);
+          if (cr) openNewCreatividadSheet(el.dataset.pid, el.dataset.cid, cr);
+        }
         else if (a === 'create-tasks') openTasksSheet(el.dataset.pid, el.dataset.cid);
         else if (a === 'archive') {
           const code = el.dataset.code;
@@ -2586,7 +2807,7 @@ const PIPELINES_MODULE = (() => {
               try {
                 await archiveItem(kind, id);
                 // Si archivamos lo que estamos viendo, volver atrás (cualquier nivel)
-                if (S.view.pId === id || S.view.cId === id || S.view.tId === id || S.view.eId === id) back();
+                if (S.view.pId === id || S.view.cId === id || S.view.tId === id || S.view.eId === id || S.view.wId === id || S.view.crId === id) back();
                 await loadFor(S.bubbleId, { preserveView: true });
                 showToast(`${code} archivado`);
               } catch (e) {
@@ -2938,8 +3159,44 @@ const PIPELINES_MODULE = (() => {
     const isEdit = !!editing;
     // En edit, tipo es inmutable (codigo no se reutiliza). En create, el
     // usuario elige tipo en el paso 1 y el form aparece para el paso 2.
-    const state = { tipo: isEdit ? editing.tipo : null };
+    // campos: defaults nombre/email/telefono pre-marcados + extras editables.
+    // Solo aplica a FM/FW (en BD se ignora).
+    const DEFAULTS_BASE = ['nombre', 'email', 'telefono'];
+    const initCampos = () => {
+      if (isEdit && editing.camposCapturar) {
+        return {
+          defaults: editing.camposCapturar.defaults || [],
+          extras:   editing.camposCapturar.extras   || [],
+        };
+      }
+      return { defaults: [...DEFAULTS_BASE], extras: [] };
+    };
+    const state = {
+      tipo: isEdit ? editing.tipo : null,
+      campos: initCampos(),
+    };
     const dateVal = (v) => (v && typeof v === 'string') ? v.slice(0, 10) : '';
+
+    // Lee el estado actual del DOM hacia state.campos. Se llama antes de
+    // re-renderizar (cambio de tipo) y antes de guardar.
+    const snapshotCampos = () => {
+      const root = document.getElementById('sheet-body');
+      if (!root) return;
+      const defs = [];
+      root.querySelectorAll('[data-default-field] input[type=checkbox]').forEach(cb => {
+        if (cb.checked) {
+          const f = cb.closest('[data-default-field]').dataset.defaultField;
+          if (f) defs.push(f);
+        }
+      });
+      const exts = [];
+      root.querySelectorAll('[data-extra-idx]').forEach(inp => {
+        const v = (inp.value || '').trim();
+        if (v) exts.push(v);
+      });
+      state.campos.defaults = defs;
+      state.campos.extras = exts;
+    };
 
     const nextFor = (tipo) => {
       const n = c.triggers.filter(t => t.tipo === tipo).length + 1;
@@ -2988,6 +3245,36 @@ const PIPELINES_MODULE = (() => {
               <div style="font-size:11px;color:var(--text-3);margin-top:6px">Obligatoria para tipo BD (regla .docx caso 4).</div>
             </div>
           ` : ''}
+          ${(tipo === 'FM' || tipo === 'FW') ? `
+            <div class="form-field">
+              <label class="form-label">Campos a capturar ${infoIcon('campos-capturar')}</label>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;line-height:1.4">Spec para ${tipo==='FM' ? 'Media Buyer (Meta Ads Manager)' : 'Dev / CRM Manager (web)'}.</div>
+
+              <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:6px">Por defecto</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+                ${DEFAULTS_BASE.map(f => {
+                  const checked = state.campos.defaults.includes(f);
+                  return `
+                    <label class="pip-field-default" data-default-field="${f}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line-2);border-radius:999px;cursor:pointer;font-size:13px;background:${checked ? 'var(--accent-muted)' : 'transparent'};color:${checked ? 'var(--accent)' : 'var(--text-2)'}">
+                      <input type="checkbox" ${checked ? 'checked' : ''} style="margin:0"/>
+                      ${f}
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+
+              <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:6px">Personalizados</div>
+              <div id="extras-list" style="display:flex;flex-direction:column;gap:6px">
+                ${(state.campos.extras || []).map((extra, i) => `
+                  <div class="extra-row" style="display:flex;gap:6px;align-items:center">
+                    <input class="form-input" value="${escapeHtml(extra)}" data-extra-idx="${i}" placeholder="Ej: ciudad, sector, edad…" autocomplete="off" style="flex:1"/>
+                    <button type="button" data-extra-remove="${i}" aria-label="Quitar" style="padding:6px 12px;border:1px solid var(--line-2);background:transparent;color:var(--text-2);border-radius:6px;cursor:pointer;font-size:18px;line-height:1">×</button>
+                  </div>
+                `).join('')}
+              </div>
+              <button type="button" data-extra-add style="margin-top:8px;padding:6px 12px;border:1px dashed var(--line-2);background:transparent;color:var(--text-2);border-radius:6px;cursor:pointer;font-size:13px">+ Añadir campo personalizado</button>
+            </div>
+          ` : ''}
           ${isEdit ? `
             <div class="form-field">
               <label class="form-label" for="nt-estado">Estado ${infoIcon('estado-fino')}</label>
@@ -3020,14 +3307,15 @@ const PIPELINES_MODULE = (() => {
           b.addEventListener('click', () => {
             const newTipo = b.dataset.pickTipo;
             if (newTipo === state.tipo) return;  // no-op si pulsas la misma card
-            // Fix 2026-05-24: snapshot inputs antes del re-render para no
-            // perder lo tecleado al cambiar de tipo (el form cambia
-            // estructuralmente — placeholder, label, fecha BD — así que
-            // el re-render es necesario; restauramos los valores tras).
+            // Snapshot inputs antes del re-render — el form cambia
+            // estructuralmente (placeholder, label, fecha BD, sección de
+            // campos FM/FW), así que re-renderizamos pero preservamos lo
+            // ya tecleado.
             const snap = {
               desc: document.getElementById('nt-desc')?.value || '',
               fecha: document.getElementById('nt-fecha')?.value || '',
             };
+            snapshotCampos();  // persiste state.campos (defaults + extras)
             state.tipo = newTipo;
             document.getElementById('sheet-body').innerHTML = renderForm();
             if (snap.desc)  { const el = document.getElementById('nt-desc');  if (el) el.value = snap.desc; }
@@ -3036,6 +3324,38 @@ const PIPELINES_MODULE = (() => {
           });
         });
       }
+
+      // Handlers de campos a capturar (FM/FW). No-op si no están en el DOM.
+      document.querySelectorAll('[data-default-field]').forEach(lbl => {
+        const cb = lbl.querySelector('input[type=checkbox]');
+        if (!cb) return;
+        cb.addEventListener('change', () => {
+          const checked = cb.checked;
+          lbl.style.background = checked ? 'var(--accent-muted)' : 'transparent';
+          lbl.style.color = checked ? 'var(--accent)' : 'var(--text-2)';
+        });
+      });
+      const addExtraRow = (initial = '') => {
+        const list = document.getElementById('extras-list');
+        if (!list) return;
+        const idx = list.children.length;
+        const wrap = document.createElement('div');
+        wrap.className = 'extra-row';
+        wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
+        wrap.innerHTML = `
+          <input class="form-input" value="${escapeHtml(initial)}" data-extra-idx="${idx}" placeholder="Ej: ciudad, sector, edad…" autocomplete="off" style="flex:1"/>
+          <button type="button" data-extra-remove="${idx}" aria-label="Quitar" style="padding:6px 12px;border:1px solid var(--line-2);background:transparent;color:var(--text-2);border-radius:6px;cursor:pointer;font-size:18px;line-height:1">×</button>
+        `;
+        list.appendChild(wrap);
+        wrap.querySelector('[data-extra-remove]').addEventListener('click', () => {
+          wrap.remove();
+        });
+        wrap.querySelector('[data-extra-idx]').focus();
+      };
+      document.querySelectorAll('[data-extra-remove]').forEach(b => {
+        b.addEventListener('click', () => b.closest('.extra-row').remove());
+      });
+      document.querySelector('[data-extra-add]')?.addEventListener('click', () => addExtraRow(''));
       document.getElementById('nt-save')?.addEventListener('click', async () => {
         const btn = document.getElementById('nt-save');
         if (!btn || btn.disabled) return;
@@ -3044,6 +3364,10 @@ const PIPELINES_MODULE = (() => {
         const estado = isEdit ? document.getElementById('nt-estado')?.value : null;
         if (!desc) { showToast('Falta la descripción del trigger'); return; }
         if (state.tipo === 'BD' && !fecha) { showToast('Tipo BD requiere fecha de lanzamiento'); return; }
+        // Snapshot campos antes de enviar. Solo aplica si FM/FW; en BD se
+        // manda null (la columna mantiene su default).
+        snapshotCampos();
+        const camposToSend = (state.tipo === 'FM' || state.tipo === 'FW') ? state.campos : null;
         btn.disabled = true;
         try {
           // p_link_externo retirado de la UI 2026-05-25 (este es el iniciador,
@@ -3056,10 +3380,298 @@ const PIPELINES_MODULE = (() => {
             p_link_externo:      isEdit ? (editing?.ext || null) : null,
             p_fecha_lanzamiento: fecha,
             p_estado:            estado,
+            p_campos_capturar:   camposToSend,
           });
           closeSheet();
           await loadFor(S.bubbleId, { preserveView: true });
           showToast(isEdit ? `${row?.codigo || 'Trigger'} actualizado` : `${row?.codigo || 'Trigger'} creado`);
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    };
+    setTimeout(rebind, 40);
+  }
+
+  // ── Drawer "Nueva Creatividad" ────────────────────────────────────
+  function openNewCreatividadSheet(pId, cId, editing) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    const isEdit = !!editing;
+    const state = {
+      tipo:     isEdit ? editing.tipo : 'estatico',
+      cantidad: isEdit ? editing.cantidad : 1,
+    };
+
+    const renderForm = () => {
+      const cfg = CREATIVIDAD_TIPOS[state.tipo] || CREATIVIDAD_TIPOS.otro;
+      return `
+        <div class="pip-info-callout">
+          ${isEdit
+            ? `Editando creatividad en ${escapeHtml(c.code)}. Tipo y cantidad declaran qué necesita producir el equipo.`
+            : `Nueva creatividad en <strong>${escapeHtml(c.code)}</strong>. Declara qué piezas necesita esta campaña.`}
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Tipo de pieza</label>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:4px">
+            ${Object.entries(CREATIVIDAD_TIPOS).map(([k, t]) => `
+              <button type="button" class="pip-plantilla-card ${state.tipo===k?'selected':''}" data-pick-creatividad="${k}" style="text-align:left;padding:10px">
+                <div class="pp-name">${t.emoji} ${t.label}</div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label" for="ncr-cantidad">Cantidad</label>
+            <input class="form-input" type="number" id="ncr-cantidad" min="1" value="${state.cantidad || 1}"/>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="ncr-notas">Notas (opcional)</label>
+          <textarea class="form-textarea" id="ncr-notas" placeholder="Ej: lifestyle + producto + testimonial · variantes con/sin precio · briefing en Drive">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
+        </div>
+
+        ${isEdit ? `
+          <div class="form-field">
+            <label class="form-label" for="ncr-estado">Estado</label>
+            <select class="form-input" id="ncr-estado">
+              <option value="declarada"     ${editing.estado==='declarada'?'selected':''}>Declarada</option>
+              <option value="en-produccion" ${editing.estado==='en-produccion'?'selected':''}>En producción</option>
+              <option value="lista"         ${editing.estado==='lista'?'selected':''}>Lista</option>
+              <option value="aprobada"      ${editing.estado==='aprobada'?'selected':''}>Aprobada</option>
+              <option value="archivada"     ${editing.estado==='archivada'?'selected':''}>Archivada</option>
+            </select>
+          </div>
+        ` : ''}
+
+        <div class="pip-info-callout" style="margin-top:14px;font-size:11px;line-height:1.5">
+          📁 Los archivos finales se nombrarán <code>${escapeHtml(c.code)}_${escapeHtml(state.tipo)}_v&lt;n&gt;</code> en Drive · v1 es la original, cada revisión sube como v(n+1) (nunca se borran versiones). ${infoIcon('creatividades-naming')}
+        </div>
+
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cancelar</button>
+          <button class="btn-primary" id="ncr-save">${isEdit ? 'Guardar cambios' : 'Crear creatividad'}</button>
+        </div>
+      `;
+    };
+
+    openSheet(
+      isEdit ? 'Editar creatividad' : 'Nueva creatividad',
+      `dentro de ${c.code}`,
+      renderForm()
+    );
+
+    const rebind = () => {
+      document.querySelectorAll('[data-pick-creatividad]').forEach(b => {
+        b.addEventListener('click', () => {
+          const newTipo = b.dataset.pickCreatividad;
+          if (newTipo === state.tipo) return;
+          // Snapshot inputs antes del re-render — solo afecta al callout de
+          // nomenclatura (incluye el tipo en el path).
+          const cantSnap = document.getElementById('ncr-cantidad')?.value || '1';
+          const notSnap  = document.getElementById('ncr-notas')?.value || '';
+          state.tipo = newTipo;
+          state.cantidad = parseInt(cantSnap, 10) || 1;
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          const ne = document.getElementById('ncr-notas');
+          if (ne && notSnap) ne.value = notSnap;
+          rebind();
+        });
+      });
+      document.getElementById('ncr-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('ncr-save');
+        if (!btn || btn.disabled) return;
+        const cantidad = parseInt(document.getElementById('ncr-cantidad')?.value, 10);
+        const notas    = document.getElementById('ncr-notas')?.value.trim() || null;
+        const estado   = isEdit ? document.getElementById('ncr-estado')?.value : null;
+        if (!cantidad || cantidad < 1) { showToast('Cantidad debe ser ≥1'); return; }
+        btn.disabled = true;
+        try {
+          await rpc('ficha_creatividad_upsert', {
+            p_id:          isEdit ? editing.id : null,
+            p_campania_id: isEdit ? null : c.id,
+            p_tipo:        state.tipo,
+            p_cantidad:    cantidad,
+            p_notas:       notas,
+            p_estado:      estado,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId, { preserveView: true });
+          showToast(isEdit ? 'Creatividad actualizada' : 'Creatividad creada');
+        } catch (e) {
+          btn.disabled = false;
+          showToast(`Error: ${e.message || 'no se pudo guardar'}`);
+        }
+      });
+      document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+    };
+    setTimeout(rebind, 40);
+  }
+
+  // ── Drawer "Nuevo WhatsApp" — clon de openNewEmailSheet con letra WA ──
+  function openNewWhatsappSheet(pId, cId, editing) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    const isEdit = !!editing;
+    const allSubcodes = c.triggers.map(t => t.code.replace(c.code, ''));
+    const state = {
+      aplicables: new Set(
+        isEdit ? (editing.triggersAplicables || [])
+               : (allSubcodes.length === 1 ? allSubcodes : [])
+      )
+    };
+
+    const computeOrdenForScope = () => {
+      const apl = [...state.aplicables];
+      const scopeKey = apl.length === 0 ? '__shared__' : orderTriggersInCode(apl);
+      const same = (c.whatsapps || []).filter(e => {
+        const ea = e.triggersAplicables || [];
+        const ek = ea.length === 0 ? '__shared__' : orderTriggersInCode(ea);
+        return ek === scopeKey;
+      });
+      if (isEdit) {
+        const idx = same.sort((a,b)=>(a.orden||0)-(b.orden||0)).findIndex(e => e.id === editing.id);
+        return idx === -1 ? same.length + 1 : idx + 1;
+      }
+      return same.length + 1;
+    };
+
+    const renderForm = () => {
+      const sortedApl = [...state.aplicables].sort((a,b)=>{
+        const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+        return w(a)-w(b);
+      });
+      const ord = computeOrdenForScope();
+      const previewCode = sortedApl.length === 0
+        ? `${c.code}WA${ord}`
+        : `${c.code}${sortedApl.join('')}WA${ord}`;
+      const isLegacyMulti = state.aplicables.size > 1;
+      const sharedSelected = state.aplicables.size === 0;
+      return `
+        <div class="pip-info-callout">
+          ${isEdit
+            ? `Editando WhatsApp <strong data-preview-code>${escapeHtml(previewCode)}</strong> en ${escapeHtml(c.code)}.`
+            : `Nuevo WhatsApp en <strong>${escapeHtml(c.code)}</strong> → código preview <strong data-preview-code>${escapeHtml(previewCode)}</strong>.`}
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="nw-name">Nombre operativo</label>
+          <input class="form-input" id="nw-name" value="${escapeHtml(isEdit ? (editing.name || '') : '')}" placeholder="Ej: Recordatorio cita" autocomplete="off"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="nw-espera">Espera desde el anterior</label>
+          <input class="form-input" id="nw-espera" value="${escapeHtml(isEdit ? (editing.espera || '') : '')}" placeholder="Día 0, +1h, +2 días…" autocomplete="off"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="nw-obj">Objetivo</label>
+          <textarea class="form-textarea" id="nw-obj" placeholder="Una frase: qué consigue este mensaje.">${escapeHtml(isEdit ? (editing.objetivo || '') : '')}</textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label">¿A quién aplica este WhatsApp? ${infoIcon('triggers-aplicables')}</label>
+          ${allSubcodes.length === 0
+            ? `<div class="field-value empty" style="padding:4px 0">La campaña no tiene triggers todavía. Añade al menos uno antes de crear mensajes.</div>`
+            : `<div style="display:grid;gap:8px;margin-top:4px">
+                <button type="button" class="pip-plantilla-card ${sharedSelected ? 'selected' : ''}" data-pick-scope="__shared__" style="text-align:left">
+                  <div class="pp-name">📡 Compartido</div>
+                  <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">Lo reciben los leads de TODOS los triggers de la campaña.</div>
+                </button>
+                ${allSubcodes.map(sub => `
+                  <button type="button" class="pip-plantilla-card ${state.aplicables.size === 1 && state.aplicables.has(sub) ? 'selected' : ''}" data-pick-scope="${escapeHtml(sub)}" style="text-align:left">
+                    <div class="pp-name">🎯 Solo ${escapeHtml(sub)}</div>
+                    <div class="pp-meta" style="font-family:inherit;font-style:normal;color:var(--text-3)">Solo leads que entraron por ${escapeHtml(sub)}.</div>
+                  </button>
+                `).join('')}
+                ${isLegacyMulti ? `
+                  <div style="font-size:11px;color:var(--warn);padding:8px;border:1px solid var(--warn);border-radius:8px;line-height:1.4">⚠ Modo legacy multi-trigger: ${[...state.aplicables].join(' + ')}. Elige Compartido o un trigger específico arriba para simplificar.</div>
+                ` : ''}
+              </div>`}
+        </div>
+        ${isEdit ? `
+          <div class="form-field">
+            <label class="form-label" for="nw-estado">Estado ${infoIcon('estado-fino')}</label>
+            <select class="form-input" id="nw-estado">
+              <option value="declarado"    ${editing.estado==='declarado'?'selected':''}>Declarado</option>
+              <option value="copy-listo"   ${editing.estado==='copy-listo'?'selected':''}>Copy listo</option>
+              <option value="montado-ghl"  ${editing.estado==='montado-ghl'?'selected':''}>Montado GHL</option>
+              <option value="activo"       ${editing.estado==='activo'?'selected':''}>Activo</option>
+              <option value="archivado"    ${editing.estado==='archivado'?'selected':''}>Archivado</option>
+            </select>
+          </div>
+        ` : ''}
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cancelar</button>
+          <button class="btn-primary" id="nw-save">${isEdit ? 'Guardar cambios' : 'Crear WhatsApp'}</button>
+        </div>
+      `;
+    };
+
+    openSheet(
+      isEdit ? `Editar WhatsApp` : 'Nuevo WhatsApp',
+      `dentro de ${c.code}`,
+      renderForm()
+    );
+
+    const rebind = () => {
+      const buildPreview = () => {
+        const sortedApl = [...state.aplicables].sort((a,b)=>{
+          const w = x => x.includes('FM')?1:x.includes('FW')?2:x.includes('BD')?3:9;
+          return w(a)-w(b);
+        });
+        const ord = computeOrdenForScope();
+        return sortedApl.length === 0
+          ? `${c.code}WA${ord}`
+          : `${c.code}${sortedApl.join('')}WA${ord}`;
+      };
+      document.querySelectorAll('[data-pick-scope]').forEach(b => {
+        b.addEventListener('click', () => {
+          const v = b.dataset.pickScope;
+          state.aplicables.clear();
+          if (v !== '__shared__') state.aplicables.add(v);
+          document.querySelectorAll('[data-pick-scope]').forEach(x => {
+            const xv = x.dataset.pickScope;
+            const matches = (xv === '__shared__' && state.aplicables.size === 0)
+                          || state.aplicables.has(xv);
+            x.classList.toggle('selected', matches);
+          });
+          const previewEl = document.querySelector('#sheet-body [data-preview-code]');
+          if (previewEl) previewEl.textContent = buildPreview();
+        });
+      });
+      document.getElementById('nw-save')?.addEventListener('click', async () => {
+        const btn = document.getElementById('nw-save');
+        if (!btn || btn.disabled) return;
+        const name   = document.getElementById('nw-name')?.value.trim();
+        const espera = document.getElementById('nw-espera')?.value.trim() || null;
+        const obj    = document.getElementById('nw-obj')?.value.trim() || null;
+        const estado = isEdit ? document.getElementById('nw-estado')?.value : null;
+        if (!name) { showToast('Falta el nombre del mensaje'); return; }
+        if (allSubcodes.length === 0) {
+          showToast('La campaña no tiene triggers todavía');
+          return;
+        }
+        const apl = [...state.aplicables];
+        btn.disabled = true;
+        try {
+          await rpc('ficha_whatsapp_upsert', {
+            p_id:                    isEdit ? editing.id : null,
+            p_campania_id:           isEdit ? null : c.id,
+            p_nombre:                name,
+            p_orden:                 null,
+            p_espera_desde_anterior: espera,
+            p_objetivo:              obj,
+            p_triggers_aplicables:   apl,
+            p_estado:                estado,
+          });
+          closeSheet();
+          await loadFor(S.bubbleId, { preserveView: true });
+          showToast(isEdit ? 'WhatsApp actualizado' : 'WhatsApp creado');
         } catch (e) {
           btn.disabled = false;
           showToast(`Error: ${e.message || 'no se pudo guardar'}`);
