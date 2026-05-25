@@ -2175,17 +2175,13 @@ const PIPELINES_MODULE = (() => {
   };
   function creatividadLabel(cr) {
     const cat = CREATIVIDAD_CATEGORIAS[cr.categoria] || CREATIVIDAD_CATEGORIAS.otros;
-    if (cr.categoria === 'otros' || !cat.subtipos) {
-      const noun = cr.cantidad === 1 ? 'pieza' : 'piezas';
-      return `${cat.emoji} ${cr.cantidad} ${noun}`;
-    }
+    if (cr.categoria === 'otros' || !cat.subtipos) return `${cat.emoji} ${cat.label}`;
     const sub = cat.subtipos[cr.subtipo];
-    if (!sub) return `${cat.emoji} ${cr.cantidad} pieza${cr.cantidad===1?'':'s'}`;
-    const noun = cr.cantidad === 1 ? sub.label.toLowerCase() : sub.plural;
+    if (!sub) return `${cat.emoji} ${cat.label}`;
     let extras = '';
     if (sub.tieneDuracion && cr.duracionSegundos) extras = ` · ${cr.duracionSegundos}s`;
     if (sub.tieneSlides   && cr.numSlides)         extras = ` · ${cr.numSlides} slides`;
-    return `${cat.emoji} ${cr.cantidad} ${noun}${extras}`;
+    return `${cat.emoji} ${cat.label} · ${sub.label}${extras}`;
   }
   function stateBadge(s) {
     return `<span class="state-badge ${s}">${STATE_LABELS[s] || s}</span>`;
@@ -2473,9 +2469,10 @@ const PIPELINES_MODULE = (() => {
         ${S.role==='account' ? `<button class="add-link" data-action="new-creatividad" data-pid="${p.id}" data-cid="${c.id}">+ CREATIVIDAD</button>` : ''}
       </div>
       ${(c.creatividades || []).length === 0
-        ? `<div class="empty-card">Sin creatividades declaradas. Pulsa <strong>+ CREATIVIDAD</strong> para indicar qué piezas necesita producir el equipo.</div>`
+        ? `<div class="empty-card">Sin creatividades declaradas. Pulsa <strong>+ CREATIVIDAD</strong> para indicar qué piezas necesita producir el equipo (cada pieza apunta a un trigger).</div>`
         : c.creatividades.filter(visible).map(cr => `
           <div class="pip-row ${(cr.estado||'').startsWith('archiv')?'archived':''}" data-action="open-creatividad" data-pid="${p.id}" data-cid="${c.id}" data-crid="${cr.id}" role="button" tabindex="0">
+            ${codeTag(cr.code)}
             <div class="pip-row-main">
               <div class="pip-row-name">${escapeHtml(creatividadLabel(cr))}</div>
               ${cr.notas ? `<div class="pip-row-sub">${escapeHtml(cr.notas)}</div>` : ''}
@@ -2484,7 +2481,7 @@ const PIPELINES_MODULE = (() => {
           </div>
         `).join('')}
       <div class="pip-creatividades-note" style="margin-top:8px">
-        📁 Los archivos finales viven en Drive con nomenclatura <code>${escapeHtml(c.code)}_&lt;subtipo&gt;_v&lt;n&gt;</code> · cada versión es una revisión (no se borran).
+        📁 Cada pieza apunta a un trigger (E=Estático · R=Reel · C=Carrusel · O=Otros). Drive: <code>${escapeHtml(c.code)}&lt;trigger&gt;&lt;letra&gt;&lt;n&gt;_v&lt;n&gt;</code> · v es revisión (no se borran versiones).
       </div>
 
       ${S.role==='account' ? `
@@ -2601,34 +2598,42 @@ const PIPELINES_MODULE = (() => {
     if (!cr) return backBtn() + `<div class="empty-card">Creatividad no encontrada.</div>`;
     const cat = CREATIVIDAD_CATEGORIAS[cr.categoria] || CREATIVIDAD_CATEGORIAS.otros;
     const sub = (cat.subtipos && cr.subtipo) ? cat.subtipos[cr.subtipo] : null;
-    const subSlug = cr.subtipo || 'pieza';
+    const linkedTrigger = c.triggers.find(t => t.id === cr.triggerId);
     return `
       ${backBtn()}
       ${crumb([
         { label:'Pipelines', action:'goto-list' },
         { label: p.code, action:'open-pipeline', pid: p.id },
         { label: c.code, action:'open-campaign', pid: p.id, cid: c.id },
-        { label: `${cat.emoji} ${cat.label}${sub?' · '+sub.label:''}` }
+        { label: cr.code }
       ])}
-      <div class="pip-detail-head">${stateBadge(cr.estado)}</div>
+      <div class="pip-detail-head">${codeTag(cr.code, 'lg')} ${stateBadge(cr.estado)}</div>
       <h2 class="pip-detail-title">${escapeHtml(creatividadLabel(cr))}</h2>
       <p class="pip-detail-sub ${!cr.notas?'empty':''}">${escapeHtml(cr.notas || 'Sin notas.')}</p>
       <div class="field-list">
+        ${linkedTrigger
+          ? `<div class="field" data-action="open-trigger" data-pid="${p.id}" data-cid="${c.id}" data-tid="${linkedTrigger.id}" style="cursor:pointer">
+              <div style="flex:1;min-width:0">
+                <div class="field-label">Trigger destino</div>
+                <div class="field-value" style="color:var(--info)">${codeTag(linkedTrigger.code)} <span style="color:var(--text-2)">${escapeHtml(linkedTrigger.name || '')}</span></div>
+              </div>
+            </div>`
+          : fieldStatic('Trigger destino', cr.triggerCode || '—', { warn: true, hint: 'Trigger no encontrado en esta campaña.' })}
         ${fieldStatic('Categoría', cat.label)}
         ${sub ? fieldStatic('Subtipo', sub.label) : ''}
-        ${fieldStatic('Cantidad', String(cr.cantidad))}
         ${sub && sub.tieneDuracion ? fieldStatic('Duración', cr.duracionSegundos ? `${cr.duracionSegundos} s` : '—') : ''}
         ${sub && sub.tieneSlides   ? fieldStatic('Nº slides', cr.numSlides ? String(cr.numSlides) : '—') : ''}
-        ${fieldStatic('Cómo se nombrarán los archivos en Drive', `${c.code}_${subSlug}_v<n>`, { mono: true, info: 'creatividades-naming' })}
+        ${fieldStatic('Cómo se nombrarán los archivos en Drive', `${cr.code}_v<n>`, { mono: true, info: 'creatividades-naming' })}
       </div>
       ${S.role === 'account' ? `
         <div class="pip-action-row">
           <button class="pip-edit-btn" data-action="edit-creatividad" data-pid="${p.id}" data-cid="${c.id}" data-crid="${cr.id}">Editar creatividad</button>
+          ${infoIcon('codigo-inmutable')}
         </div>
       ` : ''}
       ${S.role === 'account' && cr.estado !== 'archivada' ? `
         <div class="pip-action-row">
-          <button class="pip-archive-btn" data-action="archive" data-kind="creatividad" data-id="${cr.id}" data-code="${cat.label}${sub?' '+sub.label:''} ×${cr.cantidad}">Archivar</button>
+          <button class="pip-archive-btn" data-action="archive" data-kind="creatividad" data-id="${cr.id}" data-code="${cr.code}">Archivar</button>
           ${infoIcon('archivar')}
         </div>
       ` : ''}
@@ -3471,42 +3476,82 @@ const PIPELINES_MODULE = (() => {
   }
 
   // ── Drawer "Nueva Creatividad" ────────────────────────────────────
-  // Modelo 2 niveles (2026-05-25):
-  //   categoria ∈ {anuncios, rrss, otros}
-  //   subtipo:
-  //     anuncios → {estatico, reel(duracion)}
-  //     rrss     → {carrusel(slides), reel(duracion)}
-  //     otros    → null (solo notas)
+  // F2.5d (2026-05-25): cada creatividad pertenece a UN trigger.
+  //   trigger → categoria → subtipo + atributos
+  //   Sin cantidad (1 fila = 1 pieza). Para varios estáticos, crea N creatividades.
+  //   Código: <trigger.code><E|R|C|O><n> (e.g. P1C1FM1E1, P1C1DM1R1).
+  //   En edit: trigger y codigo inmutables (regla .docx §3.4).
   function openNewCreatividadSheet(pId, cId, editing) {
     const p = S.data.find(x => x.id === pId);
     const c = p && p.camps.find(x => x.id === cId);
     if (!c) return;
     const isEdit = !!editing;
+    const triggersDisp = (c.triggers || []).filter(t => !(t.estado || '').startsWith('archiv'));
+
+    // Sin triggers no se pueden crear creatividades (cada pieza necesita destino).
+    if (!isEdit && triggersDisp.length === 0) {
+      openSheet('Nueva creatividad', `dentro de ${c.code}`, `
+        <div class="pip-info-callout" style="border-color:var(--warn)">
+          ⚠ Esta campaña no tiene triggers activos. Cada creatividad apunta a un trigger destino (form Meta, form web, BD o DM RRSS), así que necesitas crear primero al menos uno.
+        </div>
+        <div class="pip-sheet-actions">
+          <button class="btn-secondary" data-pip-close>Cerrar</button>
+        </div>
+      `);
+      setTimeout(() => {
+        document.querySelectorAll('[data-pip-close]').forEach(b => b.addEventListener('click', closeSheet));
+      }, 40);
+      return;
+    }
+
     const state = {
+      triggerId: isEdit ? editing.triggerId : (triggersDisp[0]?.id || null),
       categoria: isEdit ? (editing.categoria || 'otros') : 'anuncios',
       subtipo:   isEdit ? (editing.subtipo || null)      : 'estatico',
-      cantidad:  isEdit ? editing.cantidad               : 1,
       duracion:  isEdit ? (editing.duracionSegundos || null) : null,
       slides:    isEdit ? (editing.numSlides || null)        : null,
     };
-    // Si el subtipo guardado no corresponde a la categoría (caso edge),
-    // lo reseteamos al primer subtipo de la categoría.
     const subsActuales = CREATIVIDAD_CATEGORIAS[state.categoria]?.subtipos;
     if (subsActuales && !(state.subtipo in subsActuales)) {
       state.subtipo = Object.keys(subsActuales)[0];
     }
     if (!subsActuales) state.subtipo = null;
 
+    const subPrefix = () =>
+      state.subtipo === 'estatico' ? 'E' :
+      state.subtipo === 'reel'     ? 'R' :
+      state.subtipo === 'carrusel' ? 'C' : 'O';
+
     const renderForm = () => {
       const cat = CREATIVIDAD_CATEGORIAS[state.categoria];
       const sub = (cat.subtipos && state.subtipo) ? cat.subtipos[state.subtipo] : null;
-      const subSlug = state.subtipo || 'pieza';
+      const chosenTrigger = triggersDisp.find(t => t.id === state.triggerId) || (isEdit ? null : triggersDisp[0]);
+      const previewCode = chosenTrigger ? `${chosenTrigger.code}${subPrefix()}<n>` : '—';
       return `
         <div class="pip-info-callout">
           ${isEdit
-            ? `Editando creatividad en ${escapeHtml(c.code)}. Categoría, subtipo y cantidad declaran qué necesita producir el equipo.`
-            : `Nueva creatividad en <strong>${escapeHtml(c.code)}</strong>. Elige categoría y subtipo, declara cantidad y cualquier atributo específico (duración, slides).`}
+            ? `Editando <strong>${escapeHtml(editing.code)}</strong> en ${escapeHtml(c.code)}. El código y el trigger destino no cambian (regla .docx §3.4).`
+            : `Nueva creatividad en <strong>${escapeHtml(c.code)}</strong>. Elige el trigger destino y la categoría/subtipo de la pieza. Para producir varias piezas similares, crea una entrada por cada una.`}
         </div>
+
+        ${isEdit ? `
+          <div class="form-field">
+            <label class="form-label">Trigger destino</label>
+            <div class="form-input" style="background:var(--bg-3);cursor:default">${codeTag(editing.triggerCode || '?')} <span style="color:var(--text-2)">${escapeHtml((c.triggers.find(t=>t.id===editing.triggerId)?.name) || '')}</span></div>
+          </div>
+        ` : `
+          <div class="form-field">
+            <label class="form-label">Trigger destino</label>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+              ${triggersDisp.map(t => `
+                <button type="button" class="pip-plantilla-card ${state.triggerId===t.id?'selected':''}" data-pick-trigger="${t.id}" style="text-align:left;padding:10px;display:flex;align-items:center;gap:10px">
+                  ${codeTag(t.code)}
+                  <span style="color:var(--text-2);font-family:inherit;font-style:normal">${escapeHtml(t.name || '')}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `}
 
         <div class="form-field">
           <label class="form-label">Categoría</label>
@@ -3532,28 +3577,26 @@ const PIPELINES_MODULE = (() => {
           </div>
         ` : ''}
 
-        <div class="form-row">
-          <div class="form-field">
-            <label class="form-label" for="ncr-cantidad">Cantidad</label>
-            <input class="form-input" type="number" id="ncr-cantidad" min="1" value="${state.cantidad || 1}"/>
+        ${(sub && (sub.tieneDuracion || sub.tieneSlides)) ? `
+          <div class="form-row">
+            ${sub.tieneDuracion ? `
+              <div class="form-field">
+                <label class="form-label" for="ncr-duracion">Duración (segundos)</label>
+                <input class="form-input" type="number" id="ncr-duracion" min="1" value="${state.duracion || ''}" placeholder="Ej: 15"/>
+              </div>
+            ` : ''}
+            ${sub.tieneSlides ? `
+              <div class="form-field">
+                <label class="form-label" for="ncr-slides">Nº de slides</label>
+                <input class="form-input" type="number" id="ncr-slides" min="2" value="${state.slides || ''}" placeholder="Ej: 5"/>
+              </div>
+            ` : ''}
           </div>
-          ${sub && sub.tieneDuracion ? `
-            <div class="form-field">
-              <label class="form-label" for="ncr-duracion">Duración (segundos)</label>
-              <input class="form-input" type="number" id="ncr-duracion" min="1" value="${state.duracion || ''}" placeholder="Ej: 15"/>
-            </div>
-          ` : ''}
-          ${sub && sub.tieneSlides ? `
-            <div class="form-field">
-              <label class="form-label" for="ncr-slides">Nº de slides</label>
-              <input class="form-input" type="number" id="ncr-slides" min="2" value="${state.slides || ''}" placeholder="Ej: 5"/>
-            </div>
-          ` : ''}
-        </div>
+        ` : ''}
 
         <div class="form-field">
           <label class="form-label" for="ncr-notas">Notas${state.categoria==='otros'?'':' (opcional)'}</label>
-          <textarea class="form-textarea" id="ncr-notas" placeholder="${state.categoria==='otros' ? 'Describe qué pieza es y qué necesita el equipo para producirla.' : 'Lo que el equipo necesita saber para producir estas piezas: variantes, ángulos, referencias visuales, copy idea…'}">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
+          <textarea class="form-textarea" id="ncr-notas" placeholder="${state.categoria==='otros' ? 'Describe qué pieza es y qué necesita el equipo para producirla.' : 'Variantes, ángulos, referencias visuales, copy idea, gancho…'}">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
         </div>
 
         ${isEdit ? `
@@ -3569,9 +3612,16 @@ const PIPELINES_MODULE = (() => {
           </div>
         ` : ''}
 
-        <div class="pip-info-callout" style="margin-top:14px;font-size:11px;line-height:1.5">
-          📁 Los archivos finales se nombrarán <code>${escapeHtml(c.code)}_${escapeHtml(subSlug)}_v&lt;n&gt;</code> en Drive · v1 es la original, cada revisión sube como v(n+1) (nunca se borran versiones). ${infoIcon('creatividades-naming')}
-        </div>
+        ${!isEdit ? `
+          <div class="pip-info-callout" style="margin-top:14px;font-size:11px;line-height:1.5">
+            🔖 Código asignado: <code>${escapeHtml(previewCode)}</code> · <code>&lt;n&gt;</code> = siguiente número libre per (trigger, subtipo).<br>
+            📁 Drive: <code>${escapeHtml(previewCode)}_v&lt;n&gt;</code> · v1 = original, cada revisión es v(n+1) (nunca se borran versiones). ${infoIcon('creatividades-naming')}
+          </div>
+        ` : `
+          <div class="pip-info-callout" style="margin-top:14px;font-size:11px;line-height:1.5">
+            📁 Drive: <code>${escapeHtml(editing.code)}_v&lt;n&gt;</code> · v1 = original, cada revisión es v(n+1).
+          </div>
+        `}
 
         <div class="pip-sheet-actions">
           <button class="btn-secondary" data-pip-close>Cancelar</button>
@@ -3581,13 +3631,12 @@ const PIPELINES_MODULE = (() => {
     };
 
     openSheet(
-      isEdit ? 'Editar creatividad' : 'Nueva creatividad',
+      isEdit ? `Editar ${editing.code}` : 'Nueva creatividad',
       `dentro de ${c.code}`,
       renderForm()
     );
 
     const snapshot = () => {
-      state.cantidad = parseInt(document.getElementById('ncr-cantidad')?.value, 10) || 1;
       const dEl = document.getElementById('ncr-duracion');
       if (dEl) state.duracion = parseInt(dEl.value, 10) || null;
       const sEl = document.getElementById('ncr-slides');
@@ -3595,6 +3644,19 @@ const PIPELINES_MODULE = (() => {
     };
 
     const rebind = () => {
+      document.querySelectorAll('[data-pick-trigger]').forEach(b => {
+        b.addEventListener('click', () => {
+          const newId = b.dataset.pickTrigger;
+          if (newId === state.triggerId) return;
+          const notSnap = document.getElementById('ncr-notas')?.value || '';
+          snapshot();
+          state.triggerId = newId;
+          document.getElementById('sheet-body').innerHTML = renderForm();
+          const ne = document.getElementById('ncr-notas');
+          if (ne && notSnap) ne.value = notSnap;
+          rebind();
+        });
+      });
       document.querySelectorAll('[data-pick-categoria]').forEach(b => {
         b.addEventListener('click', () => {
           const newCat = b.dataset.pickCategoria;
@@ -3604,7 +3666,6 @@ const PIPELINES_MODULE = (() => {
           state.categoria = newCat;
           const subs = CREATIVIDAD_CATEGORIAS[newCat]?.subtipos;
           state.subtipo = subs ? Object.keys(subs)[0] : null;
-          // limpiar atributos que ya no aplican
           const sub = subs ? subs[state.subtipo] : null;
           if (!sub || !sub.tieneDuracion) state.duracion = null;
           if (!sub || !sub.tieneSlides)   state.slides = null;
@@ -3636,8 +3697,7 @@ const PIPELINES_MODULE = (() => {
         snapshot();
         const notas    = document.getElementById('ncr-notas')?.value.trim() || null;
         const estado   = isEdit ? document.getElementById('ncr-estado')?.value : null;
-        if (!state.cantidad || state.cantidad < 1) { showToast('Cantidad debe ser ≥1'); return; }
-        // Validaciones de atributos
+        if (!isEdit && !state.triggerId) { showToast('Elige un trigger destino'); return; }
         const sub = (CREATIVIDAD_CATEGORIAS[state.categoria].subtipos || {})[state.subtipo];
         if (sub && sub.tieneDuracion && (!state.duracion || state.duracion < 1)) {
           showToast('Indica la duración en segundos'); return;
@@ -3650,12 +3710,11 @@ const PIPELINES_MODULE = (() => {
         }
         btn.disabled = true;
         try {
-          await rpc('ficha_creatividad_upsert', {
+          const row = await rpc('ficha_creatividad_upsert', {
             p_id:                isEdit ? editing.id : null,
-            p_campania_id:       isEdit ? null : c.id,
+            p_trigger_id:        isEdit ? null : state.triggerId,
             p_categoria:         state.categoria,
             p_subtipo:           state.subtipo,
-            p_cantidad:          state.cantidad,
             p_duracion_segundos: sub && sub.tieneDuracion ? state.duracion : null,
             p_num_slides:        sub && sub.tieneSlides   ? state.slides   : null,
             p_notas:             notas,
@@ -3663,7 +3722,7 @@ const PIPELINES_MODULE = (() => {
           });
           closeSheet();
           await loadFor(S.bubbleId, { preserveView: true });
-          showToast(isEdit ? 'Creatividad actualizada' : 'Creatividad creada');
+          showToast(isEdit ? `${row?.codigo || 'Creatividad'} actualizada` : `${row?.codigo || 'Creatividad'} creada`);
         } catch (e) {
           btn.disabled = false;
           showToast(`Error: ${e.message || 'no se pudo guardar'}`);
