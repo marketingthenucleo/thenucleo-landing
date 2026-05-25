@@ -11,7 +11,7 @@ tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 
 Vista admin-only mobile-first para consultar y operar sobre la ficha de un cliente del portal. Lee `bub_clientes` vía RPCs admin-allowlist sin tocar las policies de la tabla. Incluye el módulo **Pipelines y Campañas** (visión PxCx, ver [[../portal/ficha-cliente]] para el modelo conceptual).
 
-> ✅ **Vivo desde 2026-05-22** en `work.thenucleo.com/ficha-cliente/` (allowlist 5 emails TheNucleo desde 2026-05-25, `noindex`). **Módulo Pipelines y Campañas** vivo desde 2026-05-23 con seed F1 hardcoded de Dra. Neuss. Backend Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + RPCs) es F2 — sesión técnica pendiente.
+> ✅ **Vivo desde 2026-05-22** en `work.thenucleo.com/ficha-cliente/` (allowlist 5 emails TheNucleo desde 2026-05-25, `noindex`). **Módulo Pipelines y Campañas** vivo (F2.5c cerrada 2026-05-25): triggers `FM/FW/BD/DM` (DM = auto-DM RRSS con keyword + mensaje), creatividades jerárquicas `categoria → subtipo + atributos` (ANUNCIOS·Estático/Reel · RRSS·Carrusel/Reel · OTROS), sin Brief Drive (retirado por feedback Ben "aquí no tenemos URLs"). Backend completo en Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + `cliente_mensajes_whatsapp` + `cliente_creatividades` + `cliente_campania_plantillas` + RPCs).
 
 ---
 

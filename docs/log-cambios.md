@@ -71,6 +71,45 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.5c: creatividades jerárquicas + trigger DM + retirar Brief Drive + buscador plantillas
+
+- **Commits:** `9a28ad5` (buscador plantillas) + `47ff93a` (F2.5c). Migration `ficha_creatividades_modelo_jerarquico_y_trigger_dm`.
+- **Disparador:** feedback Valentina + Ben en sesión 2026-05-25 sobre la ficha de Neus. 3 cambios estructurales pedidos en un mensaje.
+
+**A. Buscador plantillas en drawer Nueva Campaña (commit `9a28ad5`):**
+- Input search visible si `S.plantillas.length >= 4`. Filtra in-place por nombre+KPI (lowercase) sin re-render → preserva foco al teclear. La card "Sin plantilla · campaña custom" siempre visible. Mensaje "Sin coincidencias" si query no devuelve nada.
+
+**B. Creatividades — modelo jerárquico (commit `47ff93a`):**
+- `tipo` plano (estatico/reel/carrusel/copy_RRSS/video/otro) → `categoria + subtipo + atributos`:
+  - **ANUNCIOS**: Estático · Reel (duración_segundos)
+  - **RRSS**: Carrusel (num_slides) · Reel (duración_segundos)
+  - **OTROS**: solo notas (obligatorias)
+- Drawer Nueva Creatividad: picker 2 niveles (3 cards categoría → 2 cards subtipo) + inputs atributos contextuales + snapshot al cambiar pivots para no perder lo tecleado.
+- Backfill 5 filas existentes vía SQL: estatico→ANUNCIOS/Estático, reel→ANUNCIOS/Reel 60s, carrusel→RRSS/Carrusel 3 slides, copy_RRSS/otro→OTROS, video→ANUNCIOS/Reel 60s.
+- 3 CHECK constraints jerárquicos (categoria_check, subtipo_check coherente, atributos_check solo cuando aplica).
+- `creatividadLabel(cr)` reescrita con un solo argumento (obj cr) en vez de `(tipo, cantidad)`. Detail view ahora muestra Categoría + Subtipo + atributos (duración/slides) en field-list.
+
+**C. Trigger DM RRSS (commit `47ff93a`):**
+- 4ª opción en picker tipo trigger: `DM · Mensaje directo RRSS` (auto-respuesta a comentario con keyword en Instagram/Facebook).
+- 2 cols nuevas en `cliente_triggers`: `activador text` (keyword) + `mensaje_dm text` (texto del DM).
+- CHECK constraints: tipo en `IN ('FM','FW','BD','DM')` + `(tipo<>'DM' OR (activador IS NOT NULL AND mensaje_dm IS NOT NULL))`.
+- Drawer Nuevo Trigger en modo DM: sin fecha (no aplica), sin campos a capturar (no es form), con keyword + textarea mensaje.
+- Detail view: badges `🔑 <keyword>` en card view + 2 fieldStatic en detail.
+- Tareas Notion: si trigger DM → "Configurar auto-DM en RRSS" asignado a rol `community`.
+
+**D. Brief Drive retirado de Campaña + Creatividad (commit `47ff93a`):**
+- Feedback Ben "aquí no tenemos URLs" → quitar inputs `nc-brief` (Nueva Campaña) y `ncr-brief` (Nueva Creatividad). F2.5b cerrada ayer queda revertida.
+- DROP cols `link_briefing_drive` + `briefing_nombre` de `cliente_campanias` y `link_brief_drive` de `cliente_creatividades`.
+- Función helper `fieldBriefing(c)` eliminada del frontend + ref en detail view de Campaña eliminada.
+
+**RPCs recreadas (1 migration atómica):**
+- `ficha_creatividad_upsert(p_id, p_campania_id, p_categoria, p_subtipo, p_cantidad, p_duracion_segundos, p_num_slides, p_notas, p_estado, p_orden)` — drop ambos overloads anteriores (7 y 8 params), versión nueva con 10 params.
+- `ficha_trigger_upsert(...)` — 11 params (añadidos `p_activador`, `p_mensaje_dm`). Validación DM server-side antes del INSERT.
+- `ficha_campania_upsert(...)` — 13 params (retirados `p_link_briefing_drive`, `p_briefing_nombre`).
+- `ficha_pipelines_get(p_bubble_id)` — output JSONB actualizado: creatividades llevan `categoria/subtipo/duracionSegundos/numSlides` (sin `linkBrief`); triggers llevan `activador/mensajeDm`; campañas sin `briefingUrl/briefingName`.
+
+**Docs sync:** `CLAUDE.md` (raíz) F2.5 → F2.5c en el resumen del módulo; `docs/work/ficha-cliente.md` actualizado el estado; `docs/infra/supabase-schema.md` actualizado schemas `cliente_creatividades`/`cliente_triggers`/`cliente_campanias` + RPCs. Manuales (`docs/portal/equipo-manual-pipelines.md`, `docs/portal/account-manual-pipelines.md`) pendientes — quedan con el modelo viejo hasta sesión dedicada.
+
 ### 2026-05-25 [WORK][INFRA][OPS] — Allowlist admin: añadida `valentina.ramirez@thenucleo.com` (4 → 5 editores)
 
 - **Commit:** `ea94393` (frontend) + 2 migrations Supabase.

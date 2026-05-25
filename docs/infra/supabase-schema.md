@@ -534,11 +534,11 @@ nombre              text NOT NULL
 plantilla_id        uuid REFERENCES cliente_campania_plantillas(id) ON DELETE SET NULL
 estado              text NOT NULL DEFAULT 'declarada' CHECK (estado IN ('declarada','en-produccion','archivada'))
 fecha_inicio, fecha_fin date                               -- NULL fin = recurrente
-presupuesto_eur     numeric
+presupuesto_eur     numeric                                -- ⚠️ retirado de UI 2026-05-25 (no es por-campaña); col preserva legacy.
 canal_principal     text                                   -- Meta/Google/Email/Organico/Mixto
 kpi_objetivo        text
-link_briefing_drive text
-briefing_nombre     text
+                                                            -- ⚠️ link_briefing_drive y briefing_nombre eliminadas 2026-05-25 (F2.5c)
+                                                            --    por feedback Ben "aquí no tenemos URLs". Migration drop.
 responsable_pm      text                                   -- bubble_id de bub_user
 notas_account       text
 created_at, updated_at, created_by
@@ -546,12 +546,14 @@ UNIQUE (pipeline_id, codigo)
 INDEX cliente_campanias_pipeline_idx (pipeline_id)
 ```
 
-#### `cliente_triggers` — FM / FW / BD por campaña
+#### `cliente_triggers` — FM / FW / BD / DM por campaña
 ```
 id                  uuid PK
 campania_id         uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
-codigo              text NOT NULL                          -- 'P1C1FM1' (denormalizado)
-tipo                text NOT NULL CHECK (tipo IN ('FM','FW','BD'))
+codigo              text NOT NULL                          -- 'P1C1FM1' / 'P1C1DM1'
+tipo                text NOT NULL CHECK (tipo IN ('FM','FW','BD','DM'))
+                                                            -- DM añadido 2026-05-25 (F2.5c). Auto-DM RRSS
+                                                            -- cuando se comenta con la keyword en IG/FB.
 descripcion         text
 link_externo        text                                   -- form id Meta, URL FW, segmento GHL
                                                             -- ⚠️ retirado de UI 2026-05-25 (este es el iniciador, no
@@ -561,10 +563,15 @@ estado              text NOT NULL DEFAULT 'declarado' CHECK (estado IN ('declara
 campos_capturar     jsonb NOT NULL DEFAULT
                       '{"defaults":["nombre","email","telefono"],"extras":[]}'
                                                             -- NUEVO 2026-05-25 (F2.3). Spec de campos del form FM/FW.
-                                                            -- En BD se ignora. Account marca defaults + añade extras.
+                                                            -- En BD/DM se ignora. Account marca defaults + añade extras.
+activador           text                                   -- F2.5c 2026-05-25. Keyword que activa el auto-DM (ej: INFO, PRECIO).
+                                                            -- Solo aplica a tipo='DM'. Sin distinguir mayúsculas.
+mensaje_dm          text                                   -- F2.5c 2026-05-25. Texto exacto del DM (admite emojis + link).
+                                                            -- Solo aplica a tipo='DM'.
 created_at, updated_at, created_by
 UNIQUE (campania_id, codigo)
 CHECK (tipo <> 'BD' OR fecha_lanzamiento IS NOT NULL)      -- regla .docx caso 4
+CHECK (tipo <> 'DM' OR (activador IS NOT NULL AND mensaje_dm IS NOT NULL))  -- F2.5c
 INDEX cliente_triggers_campania_idx (campania_id)
 ```
 
@@ -608,24 +615,25 @@ INDEX cliente_mensajes_whatsapp_campania_idx (campania_id)
 **Códigos display (frontend):** `P1C1WA1` (Compartido) o `P1C1FM1WA1` (Específico FM1). Mismo modelo per-scope que emails (caso 5 .docx simplificado).
 **Decisión:** NO unificar como `cliente_mensajes` con discriminador `canal`. Razones: copy/tono/longitud distintos por canal, secuencias independientes naturalmente, permite añadir columnas específicas (WA → `link_workflow` Evolution; Email → `link_ghl_workflow`) sin contaminar.
 
-#### `cliente_creatividades` — declaración de piezas por Campaña (NUEVO 2026-05-25, F2.5 + F2.5b)
+#### `cliente_creatividades` — declaración de piezas por Campaña (NUEVO 2026-05-25, F2.5 → F2.5c)
 ```
 id                uuid PK
 campania_id       uuid NOT NULL REFERENCES cliente_campanias(id) ON DELETE CASCADE
-tipo              text NOT NULL CHECK (tipo IN ('estatico','reel','carrusel','copy_RRSS','video','otro'))
+categoria         text NOT NULL CHECK (categoria IN ('anuncios','rrss','otros'))
+                                                       -- F2.5c 2026-05-25. Reemplaza el `tipo` plano anterior.
+subtipo           text                                 -- F2.5c. anuncios → {estatico,reel} · rrss → {carrusel,reel} · otros → NULL
+duracion_segundos integer                              -- F2.5c. Solo para subtipo='reel'
+num_slides        integer                              -- F2.5c. Solo para subtipo='carrusel'
 cantidad          int NOT NULL DEFAULT 1 CHECK (cantidad > 0)
-notas             text
-link_brief_drive  text                                  -- F2.5b 2026-05-25. URL del brief específico
-                                                         -- de esta declaración (mood board, guion, refs).
-                                                         -- Opcional, por-row. Distinto del briefing macro
-                                                         -- de Campaña (cliente_campanias.link_briefing_drive).
+notas             text                                 -- Obligatoria si categoria='otros' (no en CHECK, validación frontend)
+                                                       -- ⚠️ `link_brief_drive` eliminada 2026-05-25 (F2.5c) — F2.5b revertida.
 estado            text NOT NULL DEFAULT 'declarada'
                   CHECK (estado IN ('declarada','en-produccion','lista','aprobada','archivada'))
 orden             int NOT NULL DEFAULT 0
 created_at, updated_at, created_by
 INDEX cliente_creatividades_campania_idx (campania_id)
 ```
-**Modelo:** 1 fila = 1 declaración tipo-cantidad. Account declara "necesitamos 3 estáticos + 2 reels + 1 copy_RRSS". Las versiones individuales (v1, v2…) viven en Drive con nomenclatura `PxCx_<tipo>_v<n>` (caso 10 .docx). La ficha solo tracks declaración + estado del grupo. Lifecycle: declarada (Account) → en-produccion → lista → aprobada (por equipo).
+**Modelo (F2.5c):** 1 fila = 1 declaración categoria/subtipo + cantidad + atributos. Account elige primero la categoría (ANUNCIOS / RRSS / OTROS) y luego el subtipo (con sus atributos contextuales). Ejemplos: "ANUNCIOS · Reel × 3 · 15s", "RRSS · Carrusel × 1 · 5 slides", "OTROS × 2 · notas obligatorias". Las versiones individuales (v1, v2…) viven en Drive con nomenclatura `PxCx_<subtipo>_v<n>` (caso 10 .docx). Lifecycle: declarada (Account) → en-produccion → lista → aprobada (por equipo).
 
 **Triggers:** `BEFORE UPDATE` en las 7 tablas reusa `public.update_updated_at()`.
 
@@ -640,11 +648,11 @@ INDEX cliente_creatividades_campania_idx (campania_id)
 **RPCs escritura (F2.2.2.A, desde 2026-05-24):** 5 upsert + 1 archivar, todas `SECURITY INVOKER` (RLS gate-ea), `GRANT EXECUTE TO authenticated`:
 
 - `ficha_pipeline_upsert(p_id, p_cliente_bubble_id, p_nombre, p_objetivo_negocio, p_estado, p_responsable_account, p_notas, p_orden, p_codigo_override)` — `p_id NULL` = INSERT con auto-código `P<N>` (regex sobre max actual del cliente), `p_id` dado = UPDATE (no toca codigo, regla `.docx` §3.4).
-- `ficha_campania_upsert(p_id, p_pipeline_id, p_nombre, p_plantilla_id, p_estado, p_fecha_inicio, p_fecha_fin, p_presupuesto_eur, p_canal_principal, p_kpi_objetivo, p_link_briefing_drive, p_briefing_nombre, p_responsable_pm, p_notas_account, p_codigo_override)` — auto-código `P<N>C<M>` resolviendo prefix vía JOIN al pipeline.
-- `ficha_trigger_upsert(p_id, p_campania_id, p_tipo, p_descripcion, p_link_externo, p_fecha_lanzamiento, p_estado, p_codigo_override, p_campos_capturar)` — auto-código `<campCodigo><tipo><N>` per (campaña, tipo). CHECK `tipo IN ('FM','FW','BD')`. La CHECK de tabla obliga `fecha_lanzamiento` si tipo=BD. **Param `p_campos_capturar jsonb` añadido 2026-05-25 (F2.3)** — spec de campos del form en FM/FW (ignorado en BD).
+- `ficha_campania_upsert(p_id, p_pipeline_id, p_nombre, p_plantilla_id, p_estado, p_fecha_inicio, p_fecha_fin, p_presupuesto_eur, p_canal_principal, p_kpi_objetivo, p_responsable_pm, p_notas_account, p_codigo_override)` — auto-código `P<N>C<M>` resolviendo prefix vía JOIN al pipeline. **Params `p_link_briefing_drive` y `p_briefing_nombre` retirados 2026-05-25 (F2.5c) — Brief Drive eliminado.**
+- `ficha_trigger_upsert(p_id, p_campania_id, p_tipo, p_descripcion, p_link_externo, p_fecha_lanzamiento, p_estado, p_codigo_override, p_campos_capturar, p_activador, p_mensaje_dm)` — auto-código `<campCodigo><tipo><N>` per (campaña, tipo). CHECK `tipo IN ('FM','FW','BD','DM')`. La CHECK de tabla obliga `fecha_lanzamiento` si tipo=BD; obliga `activador+mensaje_dm` si tipo=DM. **Params `p_campos_capturar jsonb` añadido 2026-05-25 (F2.3)** — spec de campos del form en FM/FW (ignorado en BD/DM). **Params `p_activador text` y `p_mensaje_dm text` añadidos 2026-05-25 (F2.5c)** — keyword + texto del DM cuando tipo=DM.
 - `ficha_email_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_diseno_drive, p_link_ghl_workflow, p_estado)` — emails NO tienen columna codigo; el código display se deriva en frontend via `emailCode(camp, email)`. `p_orden NULL` = server asigna max+1. **Display orden recalculado per-scope 2026-05-25**: `n` en el código `E<n>` cuenta posición entre emails del mismo scope (Compartido vs Específico-X), no orden global.
 - `ficha_whatsapp_upsert(p_id, p_campania_id, p_nombre, p_orden, p_espera_desde_anterior, p_objetivo, p_triggers_aplicables, p_link_copy_drive, p_link_workflow, p_estado)` — **NUEVO 2026-05-25 (F2.4)**. Clon de `ficha_email_upsert` para `cliente_mensajes_whatsapp`. Display code `whatsappCode()` con letra `WA`.
-- `ficha_creatividad_upsert(p_id, p_campania_id, p_tipo, p_cantidad, p_notas, p_estado, p_orden, p_link_brief_drive)` — **NUEVO 2026-05-25 (F2.5 + F2.5b)**. CRUD de `cliente_creatividades`. Validate `tipo IN ('estatico','reel','carrusel','copy_RRSS','video','otro')`. Param `p_link_brief_drive` añadido en F2.5b (8 params total).
+- `ficha_creatividad_upsert(p_id, p_campania_id, p_categoria, p_subtipo, p_cantidad, p_duracion_segundos, p_num_slides, p_notas, p_estado, p_orden)` — **NUEVO 2026-05-25 (F2.5 → F2.5c)**. CRUD de `cliente_creatividades` con modelo jerárquico. Validate `categoria IN ('anuncios','rrss','otros')`; CHECK tabla obliga subtipo-categoria coherente + duracion/slides solo cuando aplica. F2.5b retirada misma fecha (eliminado `p_link_brief_drive`). En UPDATE, `subtipo/duracion_segundos/num_slides` se asignan directos (NULL válido al cambiar subtipo).
 - `ficha_archivar_codigo(p_kind text, p_id uuid)` — genérico para 6 tipos: `'pipeline'|'campania'|'trigger'|'email'|'whatsapp'|'creatividad'` (whatsapp+creatividad añadidos 2026-05-25). Resuelve la diferencia de género ('archivado' vs 'archivada' campañas/creatividades). Regla `.docx` §3.6 + caso 9: nada se borra, sólo se archiva.
 
 "Servidor propone, usuario valida": cada upsert acepta `p_codigo_override`. Si NULL/'' → auto-asigna. Si pasa valor → respeta y valida unicidad vía UNIQUE constraint. El frontend por defecto deja al servidor; el caso "Account quiere override" es raro pero soportado.
