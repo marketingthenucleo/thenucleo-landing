@@ -497,6 +497,84 @@
     font-size: 13px; color: var(--warn);
   }
 
+  /* Controles superiores del panel Catálogos (F2.7 Sprint 3) */
+  .catalogos-controls {
+    display: flex; justify-content: flex-end; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .cat-manage-btn {
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 14px;
+    font-size: 11px; font-weight: 600; color: var(--text-2);
+    letter-spacing: 0.04em; cursor: pointer;
+    transition: background 120ms, color 120ms, border-color 120ms;
+  }
+  .cat-manage-btn:hover { color: var(--text); border-color: var(--line-2); background: var(--bg); }
+
+  /* Sheet de gestión de visibilidad */
+  .vis-help {
+    font-size: 12px; color: var(--text-3); line-height: 1.5;
+    padding: 10px 12px; margin-bottom: 16px;
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .vis-section { margin-bottom: 22px; }
+  .vis-section:last-child { margin-bottom: 0; }
+  .vis-section-title {
+    font-size: 10px; color: var(--text-3); margin-bottom: 10px;
+    text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700;
+    padding: 0 2px;
+  }
+  .vis-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; margin-bottom: 6px;
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer; user-select: none;
+    transition: border-color 120ms, opacity 120ms;
+  }
+  .vis-row:hover { border-color: var(--line-2); }
+  .vis-row.hidden-row { opacity: 0.55; }
+  .vis-row.hidden-row .vis-label { text-decoration: line-through; text-decoration-color: var(--text-3); }
+  .vis-row.macro-row { padding-left: 14px; }
+  .vis-row.catalogo-row { margin-left: 18px; padding-left: 12px; }
+  .vis-emoji { font-size: 14px; flex-shrink: 0; line-height: 1; }
+  .vis-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .vis-label {
+    flex: 1; min-width: 0; font-size: 13px; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vis-meta {
+    font-size: 10px; color: var(--text-3); flex-shrink: 0;
+    letter-spacing: 0.04em;
+  }
+  /* Toggle switch */
+  .vis-row input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none;
+    position: relative; width: 38px; height: 22px;
+    background: var(--line); border-radius: 999px;
+    cursor: pointer; flex-shrink: 0; margin: 0;
+    transition: background 140ms;
+  }
+  .vis-row input[type="checkbox"]::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; background: #fff; border-radius: 50%;
+    transition: transform 140ms;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .vis-row input[type="checkbox"]:checked {
+    background: var(--accent);
+  }
+  .vis-row input[type="checkbox"]:checked::after {
+    transform: translateX(16px);
+  }
+  .vis-row input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
   /* ─── Anomalies ─────────────────────────────────── */
   .anomaly {
     background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(239,68,68,0.04) 100%);
@@ -1471,8 +1549,11 @@ async function rpc(fn, body = {}) {
 // PostgREST helper para CRUD directo a tabla (RLS la valida).
 // Uso: tableRequest('cliente_catalogo_documento', { method:'POST', body:{...} })
 //      tableRequest('cliente_catalogo_documento', { method:'PATCH', body:{...}, query:'id=eq.<uuid>' })
+//      tableRequest('cliente_catalogo_visibilidad', { method:'POST', body:{...},
+//        query:'on_conflict=cliente_bubble_id,scope_type,scope_key',
+//        prefer:'resolution=merge-duplicates,return=representation' })  ← UPSERT
 async function tableRequest(table, opts = {}) {
-  const { method = 'GET', body = null, query = '' } = opts;
+  const { method = 'GET', body = null, query = '', prefer = null } = opts;
   const token = accessToken();
   if (!token) throw new Error('no-session');
   const url = `${SUPABASE_URL}/rest/v1/${table}${query ? '?' + query : ''}`;
@@ -1482,7 +1563,9 @@ async function tableRequest(table, opts = {}) {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
-  if (method === 'POST' || method === 'PATCH') {
+  if (prefer) {
+    headers.Prefer = prefer;
+  } else if (method === 'POST' || method === 'PATCH') {
     headers.Prefer = 'return=representation';
   }
   const res = await fetch(url, {
@@ -4291,15 +4374,16 @@ const CATALOGOS_MODULE = (() => {
   // formState: { catalogoKey, entryId|null, values:{...}, error|null, saving:bool }
   let formState = null;
 
-  // 7 macro-categorías que agrupan los 17 catálogos visualmente
+  // 7 macro-categorías que agrupan los 17 catálogos visualmente.
+  // El `key` se usa como scope_key en cliente_catalogo_visibilidad (Sprint 3).
   const MACROS = [
-    { emoji: '📁', label: 'Recursos Drive',     catalogos: ['carpetas_drive','documentos'] },
-    { emoji: '💬', label: 'Comunicación',       catalogos: ['comunidades_wsp','emails_remitentes','etiquetas'] },
-    { emoji: '📣', label: 'Marketing Meta',     catalogos: ['cuentas_publicitarias','pixels','paginas_sociales','publicos_personalizados','plantillas_form_meta'] },
-    { emoji: '💰', label: 'Operativo',          catalogos: ['presupuestos'] },
-    { emoji: '🎯', label: 'Producto del cliente', catalogos: ['lead_magnets','webinars','sistemas_reserva','productos_servicios'] },
-    { emoji: '⚠️', label: 'Gobierno',           catalogos: ['reglas'] },
-    { emoji: '🌐', label: 'Webs cliente',       catalogos: ['webs_cliente'] },
+    { key: 'recursos_drive',  emoji: '📁', label: 'Recursos Drive',     catalogos: ['carpetas_drive','documentos'] },
+    { key: 'comunicacion',    emoji: '💬', label: 'Comunicación',       catalogos: ['comunidades_wsp','emails_remitentes','etiquetas'] },
+    { key: 'marketing_meta',  emoji: '📣', label: 'Marketing Meta',     catalogos: ['cuentas_publicitarias','pixels','paginas_sociales','publicos_personalizados','plantillas_form_meta'] },
+    { key: 'operativo',       emoji: '💰', label: 'Operativo',          catalogos: ['presupuestos'] },
+    { key: 'producto',        emoji: '🎯', label: 'Producto del cliente', catalogos: ['lead_magnets','webinars','sistemas_reserva','productos_servicios'] },
+    { key: 'gobierno',        emoji: '⚠️', label: 'Gobierno',           catalogos: ['reglas'] },
+    { key: 'webs',            emoji: '🌐', label: 'Webs cliente',       catalogos: ['webs_cliente'] },
   ];
 
   // Opciones de selects reusables (mapean a los CHECK constraints de Supabase)
@@ -4565,6 +4649,16 @@ const CATALOGOS_MODULE = (() => {
     return typeof url === 'string' && url.indexOf('PENDIENTE') !== -1;
   }
 
+  // F2.7 Sprint 3 — Visibilidad por cliente.
+  // Si NO existe row en cliente_catalogo_visibilidad → visible (default).
+  // Si existe con oculto=true → oculto. Macro oculta tiene precedencia sobre
+  // sus catálogos (aunque estén marcados como visibles individualmente).
+  function isHidden(scopeType, scopeKey) {
+    if (!data || !Array.isArray(data.visibilidad)) return false;
+    const row = data.visibilidad.find(v => v.scope_type === scopeType && v.scope_key === scopeKey);
+    return row ? !!row.oculto : false;
+  }
+
   // ─── State helpers ───────────────────────────────────────────────────
   function emptyValues(def) {
     const v = {};
@@ -4792,6 +4886,7 @@ const CATALOGOS_MODULE = (() => {
   function renderCatalogo(key, items) {
     const def = CATALOGOS[key];
     if (!def) return '';
+    if (isHidden('catalogo', key)) return ''; // F2.7 Sprint 3
     const arr = Array.isArray(items) ? items : [];
     const activas = arr.filter(r => !r.archivada);
     const nArch = arr.length - activas.length;
@@ -4816,7 +4911,12 @@ const CATALOGOS_MODULE = (() => {
     `;
   }
   function renderMacro(macro, data) {
-    const totalEntradas = macro.catalogos.reduce((sum, key) => sum + ((data[key] || []).length), 0);
+    // F2.7 Sprint 3 — macro oculta no se renderiza
+    if (isHidden('macro', macro.key)) return '';
+    // F2.7 Sprint 3 — si todos sus catálogos están ocultos, omitir la macro
+    const visibles = macro.catalogos.filter(k => !isHidden('catalogo', k));
+    if (visibles.length === 0) return '';
+    const totalEntradas = visibles.reduce((sum, key) => sum + ((data[key] || []).length), 0);
     const totalLabel = totalEntradas === 0
       ? 'sin entradas'
       : (totalEntradas === 1 ? '1 entrada' : `${totalEntradas} entradas`);
@@ -4827,7 +4927,7 @@ const CATALOGOS_MODULE = (() => {
           <span class="cat-macro-name">${escapeHtml(macro.label)}</span>
           <span class="cat-macro-total">${totalLabel}</span>
         </div>
-        ${macro.catalogos.map(key => renderCatalogo(key, data[key])).join('')}
+        ${visibles.map(key => renderCatalogo(key, data[key])).join('')}
       </div>
     `;
   }
@@ -4836,7 +4936,130 @@ const CATALOGOS_MODULE = (() => {
     if (loading) { host.innerHTML = `<div class="loading-card">Cargando catálogos…</div>`; return; }
     if (errorMsg) { host.innerHTML = `<div class="empty-card">Error cargando catálogos: ${escapeHtml(errorMsg)}</div>`; return; }
     if (!data) { host.innerHTML = `<div class="loading-card">—</div>`; return; }
-    host.innerHTML = MACROS.map(m => renderMacro(m, data)).join('');
+    // F2.7 Sprint 3 — barra de controles con botón Gestionar (visibilidad)
+    const controls = `
+      <div class="catalogos-controls">
+        <button type="button" class="cat-manage-btn" data-cat-manage title="Activar/desactivar macros y catálogos para este cliente">⚙️ Gestionar catálogos</button>
+      </div>
+    `;
+    const macrosHtml = MACROS.map(m => renderMacro(m, data)).join('');
+    const emptyMsg = macrosHtml.trim() === ''
+      ? `<div class="empty-card">Todas las macros están ocultas para este cliente. Pulsa "⚙️ Gestionar catálogos" para reactivar.</div>`
+      : '';
+    host.innerHTML = controls + emptyMsg + macrosHtml;
+  }
+
+  // ─── Sheet de visibilidad (F2.7 Sprint 3) ───────────────────────────
+  // Render del form: 2 secciones (Macros + Catálogos agrupados por macro).
+  // Cada row es un <label> con checkbox toggle. Toggle ON = visible.
+  // Cuando una macro está oculta, sus checkboxes de catálogos quedan disabled.
+  function renderVisibilityForm() {
+    const macrosHtml = MACROS.map(m => {
+      const oculto = isHidden('macro', m.key);
+      const nCats = m.catalogos.length;
+      return `
+        <label class="vis-row macro-row ${oculto ? 'hidden-row' : ''}" title="${oculto ? 'Activa para ver esta macro' : 'Desactiva para ocultar esta macro'}">
+          <span class="vis-emoji">${m.emoji}</span>
+          <span class="vis-label">${escapeHtml(m.label)}</span>
+          <span class="vis-meta">${nCats} cat${nCats === 1 ? '' : 's'}</span>
+          <input type="checkbox" data-vis-toggle data-scope-type="macro" data-scope-key="${escapeHtml(m.key)}" ${oculto ? '' : 'checked'}>
+        </label>
+      `;
+    }).join('');
+
+    const catalogosHtml = MACROS.map(m => {
+      const macroOculta = isHidden('macro', m.key);
+      const items = m.catalogos.map(catKey => {
+        const def = CATALOGOS[catKey];
+        if (!def) return '';
+        const oculto = isHidden('catalogo', catKey);
+        const visualHidden = oculto || macroOculta;
+        return `
+          <label class="vis-row catalogo-row ${visualHidden ? 'hidden-row' : ''}" title="${macroOculta ? 'La macro está oculta — desbloquéala primero' : (oculto ? 'Activa para ver este catálogo' : 'Desactiva para ocultar este catálogo')}">
+            <span class="vis-dot" style="background:${def.dot}"></span>
+            <span class="vis-label">${escapeHtml(def.label)}</span>
+            <input type="checkbox" data-vis-toggle data-scope-type="catalogo" data-scope-key="${escapeHtml(catKey)}" ${oculto ? '' : 'checked'} ${macroOculta ? 'disabled' : ''}>
+          </label>
+        `;
+      }).join('');
+      return `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 4px 8px;font-size:11px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em">
+            <span>${m.emoji}</span>
+            <span>${escapeHtml(m.label)}</span>
+            ${macroOculta ? `<span style="color:var(--warn);text-transform:none;letter-spacing:0;font-weight:600">· macro oculta</span>` : ''}
+          </div>
+          ${items}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="vis-help">
+        Activa o desactiva qué <strong>macros</strong> (carpetas grandes) y <strong>catálogos</strong> quieres ver para este cliente. Los datos NO se borran al ocultar — se vuelven a ver en cuanto reactives el toggle.
+      </div>
+      <div class="vis-section">
+        <div class="vis-section-title">Macros (carpetas grandes)</div>
+        ${macrosHtml}
+      </div>
+      <div class="vis-section">
+        <div class="vis-section-title">Catálogos individuales</div>
+        ${catalogosHtml}
+      </div>
+    `;
+  }
+
+  function openVisibilitySheet() {
+    openSheet('Gestionar catálogos', 'Activa/desactiva qué ver para este cliente', renderVisibilityForm());
+  }
+
+  function refreshVisibilitySheet() {
+    const body = document.getElementById('sheet-body');
+    if (body) body.innerHTML = renderVisibilityForm();
+  }
+
+  // Re-render del panel principal preservando coll-groups abiertos
+  function renderPreservingOpen() {
+    const openGroups = Array.from(host.querySelectorAll('.coll-group.open'))
+      .map(el => el.getAttribute('data-coll'));
+    render();
+    openGroups.forEach(key => {
+      const el = host.querySelector(`.coll-group[data-coll="${key}"]`);
+      if (el) {
+        el.classList.add('open');
+        const header = el.querySelector('[data-coll-toggle]');
+        if (header) header.setAttribute('aria-expanded', 'true');
+      }
+    });
+  }
+
+  async function toggleVisibility(scopeType, scopeKey, willHide) {
+    if (!currentBubbleId) return;
+    try {
+      await tableRequest('cliente_catalogo_visibilidad', {
+        method: 'POST',
+        query: 'on_conflict=cliente_bubble_id,scope_type,scope_key',
+        prefer: 'resolution=merge-duplicates,return=minimal',
+        body: {
+          cliente_bubble_id: currentBubbleId,
+          scope_type: scopeType,
+          scope_key: scopeKey,
+          oculto: willHide,
+        },
+      });
+      // Actualizar estado local sin re-fetch
+      if (!Array.isArray(data.visibilidad)) data.visibilidad = [];
+      const idx = data.visibilidad.findIndex(v => v.scope_type === scopeType && v.scope_key === scopeKey);
+      if (idx === -1) data.visibilidad.push({ scope_type: scopeType, scope_key: scopeKey, oculto: willHide });
+      else data.visibilidad[idx].oculto = willHide;
+      // Re-render sheet (para reflejar disabled al togglear macro) + panel detrás
+      refreshVisibilitySheet();
+      renderPreservingOpen();
+    } catch (e) {
+      console.error('[catalogos] toggle visibility failed', e);
+      showToast(`Error: ${e.message || String(e)}`);
+      refreshVisibilitySheet();
+    }
   }
 
   async function loadFor(id) {
@@ -4860,6 +5083,13 @@ const CATALOGOS_MODULE = (() => {
   // No usamos los `data-form-*` con onclick inline para mantener todos los
   // handlers en el módulo. Se delegan al document igual que coll-toggle.
   document.addEventListener('click', (e) => {
+    // F2.7 Sprint 3 — botón Gestionar catálogos (abre sheet de visibilidad)
+    if (e.target.closest('[data-cat-manage]')) {
+      e.preventDefault();
+      openVisibilitySheet();
+      return;
+    }
+
     const addBtn = e.target.closest('[data-cat-add]');
     if (addBtn) {
       e.preventDefault(); e.stopPropagation();
@@ -4878,6 +5108,20 @@ const CATALOGOS_MODULE = (() => {
       const id = editTarget.getAttribute('data-entry-id');
       openEditForm(k, id);
       return;
+    }
+  });
+
+  // F2.7 Sprint 3 — change listener para los toggles de visibilidad.
+  // Usamos `change` (no click) porque el browser ya gestiona el flip del
+  // checkbox; aquí solo persistimos el nuevo estado.
+  document.addEventListener('change', (e) => {
+    const visToggle = e.target.closest('[data-vis-toggle]');
+    if (visToggle && visToggle.tagName === 'INPUT') {
+      const scopeType = visToggle.getAttribute('data-scope-type');
+      const scopeKey = visToggle.getAttribute('data-scope-key');
+      // checked=true → "visible" → oculto=false. checked=false → "oculto" → oculto=true.
+      const willHide = !visToggle.checked;
+      toggleVisibility(scopeType, scopeKey, willHide);
     }
   });
 
