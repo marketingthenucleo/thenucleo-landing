@@ -369,6 +369,54 @@
   .coll-group.open .coll-group-body > .catalog-item:last-child { margin-bottom: 0; }
   @keyframes collOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
+  /* Macro-categoría dentro del panel Catálogos (F2.7) */
+  .cat-macro {
+    margin-top: 22px;
+  }
+  .cat-macro:first-child { margin-top: 0; }
+  .cat-macro-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 0.14em;
+    padding: 0 2px 10px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 12px;
+  }
+  .cat-macro-emoji { font-size: 14px; line-height: 1; }
+  .cat-macro-name { flex: 1; min-width: 0; }
+  .cat-macro-total {
+    font-size: 10px; color: var(--text-3); font-weight: 600;
+    letter-spacing: 0.04em; text-transform: none;
+  }
+
+  /* Catálogo vacío dentro de un grupo */
+  .cat-empty {
+    font-size: 12px; color: var(--text-3);
+    padding: 10px 12px; background: var(--bg);
+    border: 1px dashed var(--line); border-radius: 10px;
+    text-align: center;
+  }
+
+  /* Badge cuando una URL es placeholder (PENDIENTE-…) */
+  .cat-pending-badge {
+    flex-shrink: 0;
+    font-size: 9px; font-weight: 700; color: var(--warn);
+    background: var(--warn-bg); border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 999px; padding: 3px 8px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  /* Badge cuando archivada */
+  .cat-archived-badge {
+    flex-shrink: 0;
+    font-size: 9px; font-weight: 700; color: var(--text-3);
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px 8px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  /* Item archivada: opacidad reducida */
+  .catalog-item.archived { opacity: 0.55; }
+  .catalog-item.archived .cat-name { text-decoration: line-through; text-decoration-color: var(--text-3); }
+
   /* ─── Anomalies ─────────────────────────────────── */
   .anomaly {
     background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(239,68,68,0.04) 100%);
@@ -1202,47 +1250,10 @@
       </div>
     </section>
 
-    <!-- PANEL CATÁLOGOS — mockup -->
+    <!-- PANEL CATÁLOGOS — F2.7 Fase B: lectura via RPC catalogos_cliente_get -->
     <section class="panel" id="panel-catalogos">
-
-      <div class="coll-group" data-coll="cat-emails">
-        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
-          <span class="coll-group-caret">▶</span>
-          <span class="coll-group-dot" style="background:var(--info)"></span>
-          <span class="coll-group-name">Emails remitentes</span>
-          <span class="coll-group-count mock">MOCKUP · 1</span>
-        </div>
-        <div class="coll-group-body">
-          <div class="catalog-item">
-            <div class="cat-info">
-              <div class="cat-name">hola@dominiocliente.com</div>
-              <div class="cat-meta">Principal · MOCKUP</div>
-            </div>
-            <span class="status-pill mock">MOCKUP</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="coll-group" data-coll="cat-etiquetas">
-        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
-          <span class="coll-group-caret">▶</span>
-          <span class="coll-group-dot" style="background:#a78bfa"></span>
-          <span class="coll-group-name">Etiquetas de segmentación</span>
-          <span class="coll-group-count mock">MOCKUP · 1</span>
-        </div>
-        <div class="coll-group-body">
-          <div class="catalog-item">
-            <div class="cat-info">
-              <div class="cat-name">lead-cumple-padres</div>
-              <div class="cat-meta">342 contactos · MOCKUP</div>
-            </div>
-            <span class="chevron">›</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="empty-card" style="margin-top:14px">
-        Demo. Los catálogos reales se cablearán cuando se decida el modelo de datos.
+      <div id="catalogos-module">
+        <div class="loading-card">—</div>
       </div>
     </section>
 
@@ -1556,6 +1567,9 @@ function renderCliente(c) {
   // Servicios — desde playbook_cliente_servicios (vía RPC ficha_cliente_get)
   const servicios = Array.isArray(c.servicios) ? c.servicios : [];
   renderServiciosPanel(servicios);
+
+  // Catálogos — F2.7 Fase B: 1 fetch agregador a catalogos_cliente_get
+  CATALOGOS_MODULE.loadFor(c.bubble_id);
 
   // Pipelines — F2.2.1: cargado desde Supabase vía RPC ficha_pipelines_get.
   // init() pinta el árbol vacío inmediatamente; loadFor() trae los datos.
@@ -4145,6 +4159,229 @@ const PIPELINES_MODULE = (() => {
   }
 
   return { render, init: render, setData, loadFor };
+})();
+
+// ─── CATÁLOGOS MODULE — F2.7 Fase B (lectura via catalogos_cliente_get) ──
+// Lee los 17 catálogos del cliente en 1 fetch y los pinta agrupados en
+// 7 macro-categorías. Read-only en este sprint; el CRUD inline llega
+// en el siguiente. Toggle de cada grupo usa el handler global de
+// [data-coll-toggle] (línea ~1823, delegado al document).
+const CATALOGOS_MODULE = (() => {
+  const host = document.getElementById('catalogos-module');
+  let data = null;
+  let loading = false;
+  let errorMsg = null;
+
+  // 7 macro-categorías que agrupan los 17 catálogos visualmente
+  const MACROS = [
+    { emoji: '📁', label: 'Recursos Drive',     catalogos: ['carpetas_drive','documentos'] },
+    { emoji: '💬', label: 'Comunicación',       catalogos: ['comunidades_wsp','emails_remitentes','etiquetas'] },
+    { emoji: '📣', label: 'Marketing Meta',     catalogos: ['cuentas_publicitarias','pixels','paginas_sociales','publicos_personalizados','plantillas_form_meta'] },
+    { emoji: '💰', label: 'Operativo',          catalogos: ['presupuestos'] },
+    { emoji: '🎯', label: 'Producto del cliente', catalogos: ['lead_magnets','webinars','sistemas_reserva','productos_servicios'] },
+    { emoji: '⚠️', label: 'Gobierno',           catalogos: ['reglas'] },
+    { emoji: '🌐', label: 'Webs cliente',       catalogos: ['webs_cliente'] },
+  ];
+
+  // Schema de render por catálogo: label, color del dot, extractores de name/meta/url
+  const CATALOGOS = {
+    carpetas_drive: {
+      label: 'Carpetas Drive', dot: '#3b82f6',
+      getName: r => r.nombre, getMeta: r => r.categoria, getUrl: r => r.url,
+    },
+    documentos: {
+      label: 'Documentos', dot: '#3b82f6',
+      getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.url,
+    },
+    comunidades_wsp: {
+      label: 'Comunidades WhatsApp', dot: '#22c55e',
+      getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.invite_url,
+    },
+    emails_remitentes: {
+      label: 'Emails remitentes', dot: '#a78bfa',
+      getName: r => r.direccion,
+      getMeta: r => [r.display_name, r.principal && 'principal', r.verificado && 'verificado'].filter(Boolean).join(' · '),
+    },
+    etiquetas: {
+      label: 'Etiquetas de segmentación', dot: '#a78bfa',
+      getName: r => r.slug, getMeta: r => r.descripcion || '—',
+    },
+    cuentas_publicitarias: {
+      label: 'Cuentas publicitarias', dot: '#0ea5e9',
+      getName: r => r.nombre, getMeta: r => `${r.plataforma} · ${r.account_id_externo}`,
+    },
+    pixels: {
+      label: 'Pixels / Datasets', dot: '#0ea5e9',
+      getName: r => r.nombre, getMeta: r => `${r.plataforma} · ${r.pixel_id_externo}`,
+    },
+    paginas_sociales: {
+      label: 'Páginas FB / IG', dot: '#0ea5e9',
+      getName: r => r.nombre, getMeta: r => `${r.plataforma} · ${r.page_id_externo}`,
+      getUrl: r => r.url_publica,
+    },
+    publicos_personalizados: {
+      label: 'Públicos personalizados', dot: '#0ea5e9',
+      getName: r => r.nombre,
+      getMeta: r => `${r.plataforma} · ${r.tipo}${r.tamano_estimado ? ' · ~' + Number(r.tamano_estimado).toLocaleString('es-ES') : ''}`,
+    },
+    plantillas_form_meta: {
+      label: 'Plantillas Form Meta', dot: '#0ea5e9',
+      getName: r => r.nombre,
+      getMeta: r => {
+        const cc = r.campos_capturar || {};
+        const d = Array.isArray(cc.defaults) ? cc.defaults.length : 0;
+        const e = Array.isArray(cc.extras) ? cc.extras.length : 0;
+        return `${d} default${d === 1 ? '' : 's'}${e ? ' + ' + e + ' extra' + (e === 1 ? '' : 's') : ''}`;
+      },
+    },
+    presupuestos: {
+      label: 'Presupuestos', dot: '#f59e0b',
+      getName: r => r.linea,
+      getMeta: r => `${r.canal} · ${Number(r.importe_eur).toLocaleString('es-ES')}€ · ${r.periodo}`,
+    },
+    lead_magnets: {
+      label: 'Lead magnets', dot: '#ef4444',
+      getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.url,
+    },
+    webinars: {
+      label: 'Webinars', dot: '#ef4444',
+      getName: r => r.nombre,
+      getMeta: r => r.precio_eur != null ? `${Number(r.precio_eur).toLocaleString('es-ES')}€` : (r.descripcion || '—'),
+      getUrl: r => r.sales_page_url || r.landing_registro_url,
+    },
+    sistemas_reserva: {
+      label: 'Sistemas de reserva', dot: '#ef4444',
+      getName: r => r.nombre, getMeta: r => r.plataforma, getUrl: r => r.url_publica_reserva,
+    },
+    productos_servicios: {
+      label: 'Productos / Servicios', dot: '#ef4444',
+      getName: r => r.nombre,
+      getMeta: r => {
+        const parts = [r.tipo];
+        if (r.precio_eur != null) parts.push(`${Number(r.precio_eur).toLocaleString('es-ES')}€`);
+        if (r.duracion_minutos) parts.push(`${r.duracion_minutos} min`);
+        return parts.join(' · ');
+      },
+      getUrl: r => r.url_compra,
+    },
+    reglas: {
+      label: 'Reglas / Caveats', dot: '#f59e0b',
+      getName: r => r.regla, getMeta: r => `${r.severidad} · ${r.ambito}`,
+    },
+    webs_cliente: {
+      label: 'Webs del cliente', dot: '#06b6d4',
+      getName: r => r.nombre, getMeta: r => r.tipo, getUrl: r => r.url,
+    },
+  };
+
+  // Una URL es placeholder si contiene "PENDIENTE" (convención del seed F2.7).
+  // Sirve para marcar entradas que Account debe completar tras importar
+  // datos sin URL real disponible en el PDF de origen.
+  function isPlaceholderUrl(url) {
+    return typeof url === 'string' && url.indexOf('PENDIENTE') !== -1;
+  }
+
+  function renderItem(r, def) {
+    const archived = !!r.archivada;
+    const name = def.getName(r) || '(sin nombre)';
+    const meta = def.getMeta ? def.getMeta(r) : '';
+    const url = def.getUrl ? def.getUrl(r) : null;
+    const placeholderUrl = isPlaceholderUrl(url);
+    const linkable = url && !placeholderUrl && !archived;
+    return `
+      <div class="catalog-item${archived ? ' archived' : ''}">
+        <div class="cat-info">
+          <div class="cat-name">${escapeHtml(name)}</div>
+          ${meta ? `<div class="cat-meta">${escapeHtml(meta)}</div>` : ''}
+        </div>
+        ${placeholderUrl ? `<span class="cat-pending-badge" title="URL placeholder — pendiente de pegar la real">URL pendiente</span>` : ''}
+        ${archived ? `<span class="cat-archived-badge">🗄 archivada</span>` : ''}
+        ${linkable ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-3);text-decoration:none;font-size:16px;padding:0 4px" title="Abrir en nueva pestaña">↗</a>` : ''}
+      </div>
+    `;
+  }
+
+  function renderCatalogo(key, items) {
+    const def = CATALOGOS[key];
+    if (!def) return '';
+    const arr = Array.isArray(items) ? items : [];
+    const activas = arr.filter(r => !r.archivada);
+    const nArchivadas = arr.length - activas.length;
+    let badgeText, badgeClass;
+    if (arr.length === 0) {
+      badgeText = '0'; badgeClass = 'mock';
+    } else if (nArchivadas > 0) {
+      badgeText = `${activas.length} · 🗄 ${nArchivadas}`; badgeClass = 'ok';
+    } else {
+      badgeText = String(activas.length); badgeClass = 'ok';
+    }
+    const body = arr.length === 0
+      ? `<div class="cat-empty">Sin entradas todavía.</div>`
+      : arr.map(r => renderItem(r, def)).join('');
+    return `
+      <div class="coll-group" data-coll="cat-${key}">
+        <div class="coll-group-header" data-coll-toggle role="button" tabindex="0" aria-expanded="false">
+          <span class="coll-group-caret">▶</span>
+          <span class="coll-group-dot" style="background:${def.dot}"></span>
+          <span class="coll-group-name">${escapeHtml(def.label)}</span>
+          <span class="coll-group-count ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="coll-group-body">${body}</div>
+      </div>
+    `;
+  }
+
+  function renderMacro(macro, data) {
+    const totalEntradas = macro.catalogos.reduce((sum, key) => sum + ((data[key] || []).length), 0);
+    const totalLabel = totalEntradas === 0
+      ? 'sin entradas'
+      : (totalEntradas === 1 ? '1 entrada' : `${totalEntradas} entradas`);
+    return `
+      <div class="cat-macro">
+        <div class="cat-macro-head">
+          <span class="cat-macro-emoji">${macro.emoji}</span>
+          <span class="cat-macro-name">${escapeHtml(macro.label)}</span>
+          <span class="cat-macro-total">${totalLabel}</span>
+        </div>
+        ${macro.catalogos.map(key => renderCatalogo(key, data[key])).join('')}
+      </div>
+    `;
+  }
+
+  function render() {
+    if (!host) return;
+    if (loading) {
+      host.innerHTML = `<div class="loading-card">Cargando catálogos…</div>`;
+      return;
+    }
+    if (errorMsg) {
+      host.innerHTML = `<div class="empty-card">Error cargando catálogos: ${escapeHtml(errorMsg)}</div>`;
+      return;
+    }
+    if (!data) {
+      host.innerHTML = `<div class="loading-card">—</div>`;
+      return;
+    }
+    host.innerHTML = MACROS.map(m => renderMacro(m, data)).join('');
+  }
+
+  async function loadFor(id) {
+    if (!id) return;
+    loading = true; errorMsg = null;
+    render();
+    try {
+      data = await rpc('catalogos_cliente_get', { p_bubble_id: id });
+    } catch (e) {
+      console.error('[ficha-cliente] catalogos_cliente_get failed', e);
+      errorMsg = e.message || String(e);
+      data = null;
+    } finally {
+      loading = false;
+      render();
+    }
+  }
+
+  return { loadFor, render };
 })();
 
 // ─── Nav dropdown ──────────────────────────────────
