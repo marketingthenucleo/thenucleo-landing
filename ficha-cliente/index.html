@@ -1850,162 +1850,185 @@ const PIPELINES_MODULE = (() => {
     'pipeline': {
       title: 'Qué es un Pipeline',
       body: `
-        <p>Un <strong>Pipeline (P1, P2…)</strong> es una <strong>línea estratégica de negocio</strong> del cliente. Estable en el tiempo (vive meses o años) y agrupa todas las acciones de marketing que persiguen un mismo objetivo de negocio.</p>
-        <p>Regla mental: si lo que describes <strong>se acaba en una fecha concreta</strong>, no es un Pipeline — es una Campaña.</p>
-        <p>Ejemplos: "Captación B2B colegios", "Reactivación de clientes antiguos", "Newsletter mensual".</p>
-        <div class="info-pop-ref">Ref: nomenclatura .docx §3</div>`
+        <p>Un <strong>Pipeline</strong> es una línea de trabajo estable del cliente. Algo que vive meses o años, no semanas. Cosas como <em>"captar leads B2B para colegios"</em>, <em>"reactivar clientes antiguos"</em> o <em>"mandar newsletter mensual"</em> son pipelines.</p>
+        <p><strong>¿Cómo lo distingo de una Campaña?</strong> Si lo que describes tiene fecha de fin concreta, no es un Pipeline — es una Campaña dentro de un Pipeline. El Pipeline es la línea estratégica; la Campaña es la acción concreta que metes dentro.</p>
+        <p>Cada cliente suele tener entre 1 y 4 pipelines. La numeración (P1, P2, P3…) la pone el sistema solo, tú no tienes que pensar en ella.</p>`
     },
     'campania': {
       title: 'Qué es una Campaña',
       body: `
-        <p>Una <strong>Campaña (P1<u>C1</u>, P1<u>C2</u>…)</strong> es la <strong>unidad real de trabajo</strong> dentro de un Pipeline. Cuando el equipo monta algo concreto, monta una Campaña.</p>
-        <p>Tiene fechas, presupuesto, KPI, briefing en Drive, y al menos <strong>un Trigger</strong> (FM/FW/BD) que la dispara. Puede llevar 0 o N emails detrás.</p>
-        <p>Una Campaña <strong>siempre tiene ≥1 Trigger</strong>; sin Trigger está incompleta — declarada pero no ejecutable.</p>
-        <div class="info-pop-ref">Ref: nomenclatura .docx §3</div>`
+        <p>Una <strong>Campaña</strong> es lo concreto que monta el equipo dentro de un Pipeline. Si el Pipeline es <em>"captar leads B2B"</em>, una Campaña puede ser <em>"Captación leads junio con 500€ de Meta Ads"</em>.</p>
+        <p>Cada Campaña lleva: fechas, KPI, link al briefing en Drive y al menos un <strong>Trigger</strong> (el formulario o lista por donde entran los leads). Puede tener 0 emails (anuncio directo a checkout) o varios (secuencia de bienvenida y nutring).</p>
+        <p><strong>Sin Trigger no es ejecutable.</strong> La campaña queda declarada pero le falta por dónde entran los leads. El sistema te lo recuerda.</p>`
     },
     'trigger-tipos': {
       title: 'Tipos de Trigger (FM / FW / BD)',
       body: `
-        <p>Un <strong>Trigger</strong> es el mecanismo que hace que entren leads o se dispare la secuencia. Hay 3 tipos:</p>
+        <p>Un <strong>Trigger</strong> es por dónde entran los leads a la campaña. Hay 3 maneras:</p>
         <ul>
-          <li><strong>FM — Formulario Meta</strong>. Form nativo de Instagram/Facebook que captura el lead dentro de la plataforma. Lo crea Media Buyer.</li>
-          <li><strong>FW — Formulario Web</strong>. Form en la web del cliente (landing/popup) que envía el lead a GHL. Lo crea CRM Manager o Dev.</li>
-          <li><strong>BD — Enviar a base de datos personalizada</strong>. Lista existente del cliente (segmento GHL, fichero CSV importado…) a la que se lanza una secuencia en fecha programada. Lo crea CRM Manager. <strong>Requiere fecha de lanzamiento.</strong></li>
+          <li><strong>FM · Formulario Meta</strong> — el formulario nativo de Instagram o Facebook. El lead lo rellena sin salir de la app. Lo monta <em>Media Buyer</em> cuando configura los anuncios.</li>
+          <li><strong>FW · Formulario Web</strong> — un formulario en la web del cliente (landing, popup, contacto…). Cuando el lead lo rellena, los datos llegan a GHL. Lo monta <em>Dev</em> o <em>CRM Manager</em>.</li>
+          <li><strong>BD · Enviar a base de datos personalizada</strong> — aquí no captas leads nuevos. Usas una lista que el cliente ya tiene (segmento de GHL, lista de clientes, un CSV importado…) y le mandas la secuencia en una fecha concreta. Lo monta el <em>CRM Manager</em>. Por eso este tipo pide siempre fecha.</li>
         </ul>
-        <p>Los códigos son <code>P1C1FM1</code>, <code>P1C1FW1</code>, <code>P1C1BD1</code> y van por tipo independiente (FM2 puede existir aunque no haya FW2).</p>
-        <div class="info-pop-ref">Ref: .docx §3</div>`
+        <p>Una misma campaña puede tener varios triggers a la vez. Por ejemplo, FM + FW para captar leads desde Instagram y desde la web simultáneamente.</p>`
     },
     'trigger-bd-fecha': {
       title: 'Por qué BD pide fecha',
       body: `
-        <p>Los triggers <strong>FM y FW</strong> son <em>siempre on</em>: los leads entran cuando llegan al form. No tienen fecha.</p>
-        <p>Un trigger <strong>BD</strong> trabaja sobre una <strong>lista existente</strong>. Hay que programar <strong>cuándo</strong> se le envía la secuencia (no se manda automáticamente).</p>
-        <p>Sin esa fecha la campaña queda inejecutable — por eso es obligatoria.</p>
-        <div class="info-pop-ref">Ref: .docx §4 (caso 4)</div>`
+        <p>Los formularios (<strong>FM</strong> y <strong>FW</strong>) están siempre encendidos: cuando un lead los rellena, entra al instante. Por eso no piden fecha — están listos para captar 24/7.</p>
+        <p>El <strong>BD</strong> es distinto: trabajas sobre una lista que ya existe (no esperas a que entre gente nueva). Hay que decir <strong>qué día mandamos la secuencia</strong> a esa lista — no sale automático.</p>
+        <p>Sin esa fecha la campaña no se puede ejecutar, por eso te la pedimos como obligatoria al crear el BD.</p>`
     },
     'objetivo-negocio': {
       title: 'Objetivo estratégico del Pipeline',
       body: `
-        <p><strong>No</strong> es el objetivo del cliente en general (ese vive en su brand book/análisis). Es el <strong>por qué de ESTE Pipeline</strong> en concreto.</p>
-        <p>Una <strong>frase corta</strong> describiendo qué problema del cliente resuelve esta línea estratégica.</p>
-        <p>Tampoco es un KPI numérico — eso va en cada Campaña.</p>
-        <p>Ejemplos: <em>"Monetizar el infoproducto Curso Suplementación a tráfico frío"</em>, <em>"Nutrir BBDD con leads cualificados para futuras ofertas"</em>.</p>`
+        <p><strong>Cuidado:</strong> esto <em>no</em> es el objetivo del cliente en general. El objetivo macro vive en el análisis estratégico del cliente, no aquí.</p>
+        <p>Aquí escribes el <strong>"por qué" de ESTE Pipeline</strong> en concreto. Una frase corta explicando qué problema del cliente resuelve esta línea de trabajo.</p>
+        <p>Tampoco es un número. Los KPIs (leads, ventas, apertura) van dentro de cada Campaña, no en el Pipeline.</p>
+        <p><strong>Ejemplos buenos:</strong></p>
+        <ul>
+          <li><em>"Monetizar el infoproducto Curso Suplementación a tráfico frío"</em></li>
+          <li><em>"Nutrir base de datos con leads cualificados para futuras ofertas"</em></li>
+          <li><em>"Mantener relación con clientes antiguos vía newsletter mensual"</em></li>
+        </ul>`
     },
     'whatsapp-vs-email': {
       title: 'Mensajes WhatsApp vs Email',
       body: `
-        <p>Cada Campaña puede tener <strong>dos secuencias paralelas</strong> de salida: una de emails y una de WhatsApp. Son independientes — el copy de un canal no aplica al otro.</p>
-        <p>Los mensajes WhatsApp siguen el <strong>mismo modelo</strong> que los emails:</p>
+        <p>Una Campaña puede mandar mensajes por <strong>dos canales a la vez</strong>: emails y WhatsApp. Funcionan en paralelo — no es que un email se mande también por WhatsApp. Son <strong>secuencias distintas con copy distinto</strong>, porque el tono y la longitud no son iguales.</p>
+        <p><strong>¿Cómo funciona?</strong></p>
+        <p>Igual que los emails: cada mensaje WhatsApp es <strong>📡 Compartido</strong> (lo reciben todos los leads) o <strong>🎯 Específico</strong> (solo los leads de un trigger). El código lleva las letras <code>WA</code> en lugar de <code>E</code> para distinguirlo. Por ejemplo: <code>P1C1WA1</code> o <code>P1C1FM1WA1</code>.</p>
+        <p><strong>¿Cuándo lo uso?</strong></p>
         <ul>
-          <li><strong>📡 Compartido</strong> — lo reciben los leads de todos los triggers. Código <code>P1C1WA1</code>.</li>
-          <li><strong>🎯 Específico</strong> — lo reciben solo los leads de UN trigger. Código <code>P1C1FM1WA1</code>.</li>
-        </ul>
-        <p>Numeración propia con la letra <code>WA</code> en lugar de <code>E</code>. Cada secuencia (email-shared, email-FM1, wa-shared, wa-FM1…) lleva su orden independiente.</p>
-        <p>Útil cuando la campaña combina email + WhatsApp (típico en pos-venta y nutring) o cuando WhatsApp es el canal principal.</p>`
+          <li><strong>Pos-venta</strong> — confirmación de compra por WhatsApp + email con factura.</li>
+          <li><strong>Nutring mixto</strong> — emails largos con contenido + WhatsApp corto con recordatorios.</li>
+          <li><strong>Cliente que prioriza WhatsApp</strong> — típico en LATAM, healthcare, retail.</li>
+        </ul>`
     },
     'campos-capturar': {
       title: 'Campos a capturar',
       body: `
-        <p>Account declara <strong>qué campos pide el formulario</strong> al lead. Sirve de spec para quien lo monte:</p>
+        <p>Aquí declaras <strong>qué datos te tiene que rellenar el lead</strong> cuando entre por este formulario. Sirve para que quien monte el form sepa exactamente qué campos poner.</p>
+        <p><strong>¿Quién lo monta?</strong></p>
         <ul>
-          <li><strong>FM</strong> — Media Buyer lo configura en Meta Ads Manager.</li>
-          <li><strong>FW</strong> — Dev o CRM Manager lo monta en la web del cliente.</li>
+          <li>Si es <strong>FM</strong> (formulario Meta) → Media Buyer en Meta Ads Manager.</li>
+          <li>Si es <strong>FW</strong> (formulario web) → Dev o CRM Manager en la web del cliente.</li>
         </ul>
-        <p>2 grupos:</p>
-        <ul>
-          <li><strong>Por defecto</strong> — nombre, email, teléfono. Marcados de inicio porque son lo habitual. Desmarca si el cliente no los necesita.</li>
-          <li><strong>Personalizados</strong> — todo lo demás (edad, ciudad, sector, tipo de empresa…). Añade los que pida el cliente.</li>
-        </ul>
-        <p>En tipo <strong>BD</strong> no aplica — la lista de leads ya viene hecha.</p>`
+        <p>Los campos van en 2 grupos:</p>
+        <p><strong>Por defecto</strong> — nombre, email, teléfono. Marcados ya de inicio porque casi siempre los pedimos. Si en esta campaña el cliente no quiere alguno (por ejemplo solo email, sin teléfono), desmárcalo.</p>
+        <p><strong>Personalizados</strong> — todo lo demás. Edad, ciudad, sector, tipo de empresa, hijos, mascota… lo que sea relevante para el cliente. Añade uno por línea.</p>
+        <p>En tipo <strong>BD</strong> no aplica, porque la lista de leads ya viene hecha con sus campos. No estamos capturando datos nuevos.</p>`
     },
     'creatividades-naming': {
-      title: 'Nomenclatura de creatividades',
+      title: 'Cómo se nombran los archivos en Drive',
       body: `
-        <p>El nombre se compone de <strong>3 partes</strong> separadas por guion bajo:</p>
+        <p>Cuando el equipo sube los archivos a Drive (los estáticos, reels, copies…), todos llevan un nombre con el mismo patrón. ¿Por qué? Porque así puedes buscar <code>P1C1</code> en Drive y aparecen <strong>todas</strong> las piezas de esa campaña juntas, sin perderse.</p>
+        <p>El nombre tiene 3 piezas, separadas por guiones bajos:</p>
+        <p><strong>1. El código de la campaña</strong> — por ejemplo <code>P1C1</code>. Eso identifica de qué campaña es la pieza. Lo escribe el sistema solo, tú no tienes que pensarlo.</p>
+        <p><strong>2. Una palabra corta describiendo qué es</strong> — <em>estatico</em>, <em>reel</em>, <em>carrusel</em>, <em>copy_RRSS</em>, <em>video_guion</em>… Lo decide la persona que sube el archivo, según le encaje.</p>
+        <p><strong>3. La versión</strong> — <code>v1</code> es el original, <code>v2</code> es la primera revisión, <code>v3</code> la segunda, y así sucesivamente.</p>
+        <p><strong>Importante:</strong> cuando el cliente pide cambios, NO se borra la versión anterior. Se sube la nueva como <code>v3</code>, <code>v4</code>, etc. Así siempre tenemos el histórico — si el cliente cambia de opinión y quiere volver a la versión que se enseñó en marzo, podemos.</p>
+        <p><strong>¿Y la extensión (.png, .mp4, .docx)?</strong> La pone Drive sola al guardar. No la escribas tú en el nombre — antes daba problemas porque salía duplicada.</p>
+        <p><strong>Ejemplos reales:</strong></p>
         <ul>
-          <li><code>&lt;código campaña&gt;</code> — ej. <code>P1C1</code>. Lo asigna el sistema, no se toca.</li>
-          <li><code>&lt;tipo&gt;</code> — texto informativo libre describiendo qué es la pieza: <code>estatico</code>, <code>reel</code>, <code>carrusel</code>, <code>copy_RRSS</code>, <code>video_guion</code>… Lo escribe quien sube el archivo.</li>
-          <li><code>v&lt;n&gt;</code> — versión secuencial. <code>v1</code> = original. <code>v2</code> = primera revisión. <strong>Nunca se borran versiones</strong>: cada cambio sube como <code>v(n+1)</code>.</li>
-        </ul>
-        <p>La extensión (<code>.png</code>, <code>.mp4</code>, <code>.docx</code>…) la pone Drive automáticamente al guardar. <strong>No la escribas tú</strong> — confundía al sistema cuando aparecía duplicada.</p>
-        <p>Ejemplos válidos: <code>P1C1_estatico_v1</code>, <code>P1C1_reel_v2</code>, <code>P1C1_copy_RRSS_v1</code>.</p>
-        <div class="info-pop-ref">Ref: .docx caso 10</div>`
+          <li><code>P1C1_estatico_v1</code> → primer estático de la campaña P1C1</li>
+          <li><code>P1C1_reel_v2</code> → segunda versión de un reel</li>
+          <li><code>P1C1_copy_RRSS_v1</code> → primer copy para redes sociales</li>
+        </ul>`
     },
     'triggers-aplicables': {
-      title: 'A quién aplica este email',
+      title: 'A quién aplica este mensaje',
       body: `
-        <p>Solo hay <strong>2 modos</strong> — nunca un "subset" intermedio (eso genera huecos en la secuencia tipo <code>FM1FM2E2 sin FM1FM2E1</code>):</p>
+        <p>Cuando creas un email (o un WhatsApp), tienes que decidir <strong>quién lo recibe</strong>. Solo hay 2 opciones:</p>
+        <p><strong>📡 Compartido</strong></p>
+        <p>Lo recibe <em>todo el mundo</em> que entre a la campaña, sin importar de dónde vino (formulario de Instagram, formulario de la web, base de datos…). Es la opción más común — la mayoría de emails de bienvenida y nutring encajan aquí.</p>
+        <p><strong>🎯 Específico para un canal</strong></p>
+        <p>Lo recibe <em>solo</em> la gente que entró por un canal concreto. Útil cuando, por ejemplo, el cliente quiere mandar un mensaje distinto a los leads de Instagram que a los leads de la web (porque la oferta cambia, el tono cambia, etc.).</p>
+        <p><strong>¿Cómo funciona la numeración E1, E2, E3?</strong></p>
+        <p>Va por separado para cada opción que elijas. Imagina una campaña con:</p>
         <ul>
-          <li><strong>📡 Compartido</strong> — lo reciben los leads de <em>todos</em> los triggers (presentes y futuros). Código sin prefijo: <code>P1C1E1</code>.</li>
-          <li><strong>🎯 Específico</strong> — lo reciben SOLO los leads de UN trigger concreto. Código con prefijo: <code>P1C1FM1E1</code>.</li>
+          <li>3 emails Compartidos → se llaman <code>P1C1E1</code>, <code>P1C1E2</code>, <code>P1C1E3</code>.</li>
+          <li>Y 2 emails Específicos solo para Instagram → se llaman <code>P1C1FM1E1</code>, <code>P1C1FM1E2</code> (empiezan desde 1 otra vez, porque es otra secuencia distinta).</li>
         </ul>
-        <p>La numeración <code>E1, E2, E3</code> es <strong>independiente por modo</strong>:</p>
-        <ul>
-          <li><code>P1C1E1, P1C1E2, P1C1E3</code> — secuencia compartida (3 emails consecutivos).</li>
-          <li><code>P1C1FM1E1, P1C1FM1E2</code> — secuencia exclusiva FM1.</li>
-          <li><code>P1C1FM2E1</code> — secuencia exclusiva FM2 (1 email solo).</li>
-        </ul>
-        <p>Cada secuencia es como una <strong>rama del workflow GHL</strong> con su propio ritmo.</p>
-        <p>¿Y si quiero un email común a FM1+FW1 pero no a BD1? La nomenclatura no contempla subsets — <strong>duplica el email</strong> (uno por trigger) o márcalo Compartido. Es deliberado: evita códigos huérfanos.</p>
-        <div class="info-pop-ref">Ref: .docx §5</div>`
+        <p>Así nunca se mezclan, y cada lead sigue la secuencia correcta.</p>
+        <p><strong>¿Y si quiero un email para Instagram + Web pero no para la BBDD?</strong></p>
+        <p>No se puede combinar así. La nomenclatura te obliga a decidir: o lo mandas a todos (Compartido) o lo limitas a uno (Específico). Si necesitas algo intermedio, lo más limpio es <strong>crear dos emails iguales</strong>: uno para Instagram y otro para Web. La BBDD no lo recibirá.</p>`
     },
     'plantilla': {
-      title: 'Plantilla del catálogo',
+      title: 'Plantillas de campaña',
       body: `
-        <p>El catálogo TheNucleo de plantillas <strong>precarga</strong> los campos típicos al crear una campaña: nombre sugerido, KPI estándar, presupuesto, briefing master y secuencia heredada de triggers y emails.</p>
-        <p>Elegir <em>"Sin plantilla · custom"</em> arranca con el form vacío. Al guardar la campaña, <strong>se añade automáticamente al catálogo</strong> como plantilla nueva — disponible al instante para la próxima campaña.</p>
-        <p>Cada card lleva una <strong>×</strong> arriba a la derecha para archivar la plantilla del catálogo (las campañas existentes que la usaron no se ven afectadas).</p>`
+        <p>Las plantillas son <strong>"moldes" de campaña reutilizables</strong>. Cuando montas un tipo de campaña que repetimos a menudo (captación leads vía Instagram, newsletter mensual, reactivación BBDD…), eliges la plantilla y te <strong>precarga</strong> automáticamente:</p>
+        <ul>
+          <li>el nombre típico de ese tipo de campaña,</li>
+          <li>el KPI estándar,</li>
+          <li>el link al briefing master,</li>
+          <li>la secuencia de triggers + emails que suele llevar.</li>
+        </ul>
+        <p>Luego ajustas lo que toque para este cliente concreto. La plantilla es <strong>punto de partida, no jaula</strong>.</p>
+        <p><strong>¿Y si la campaña es nueva, sin plantilla previa?</strong></p>
+        <p>Elige <em>"Sin plantilla · custom"</em>. Arrancas el form vacío. Cuando guardes la campaña, se añade <strong>automáticamente al catálogo</strong> como plantilla nueva — así la próxima vez que veas un caso parecido, la tienes a un click.</p>
+        <p><strong>¿Cómo quito una plantilla del catálogo?</strong></p>
+        <p>Cada tarjeta lleva una <strong>×</strong> pequeña en la esquina superior derecha. Pulsarla la archiva (deja de aparecer en el picker). Las campañas existentes que ya la usaron <strong>no se ven afectadas</strong> — solo se esconde de cara a crear nuevas.</p>`
     },
     'briefing-drive': {
-      title: 'Link briefing en Drive',
+      title: 'Link al briefing en Drive',
       body: `
-        <p>El <strong>briefing operativo</strong> (PDF/Doc detallado) vive en <strong>Google Drive del cliente</strong>, no en la ficha. Aquí solo pegamos el link.</p>
-        <p>Flujo: duplicas el template master de Drive a la carpeta del cliente → ajustas → pegas el link aquí. Así el equipo abre el briefing desde la ficha sin ir a buscarlo.</p>`
+        <p>El briefing detallado de la campaña (con la info del cliente, ángulos, copy ideas, presupuesto, restricciones…) vive en <strong>Google Drive</strong>, no en esta ficha. Aquí solo pegamos el link para que el equipo lo abra de un click sin tener que ir a buscarlo.</p>
+        <p><strong>Cómo se hace en la práctica:</strong></p>
+        <ol>
+          <li>Coges el <strong>template master del briefing</strong> (vive en Drive, en la carpeta de templates).</li>
+          <li>Lo <strong>duplicas</strong> a la carpeta del cliente.</li>
+          <li>Lo <strong>rellenas</strong> con la info de esta campaña concreta.</li>
+          <li>Pegas aquí el link al doc duplicado.</li>
+        </ol>
+        <p>Así no tenemos briefings sueltos por Drive que nadie sabe a qué campaña pertenecen.</p>`
     },
     'estado-fino': {
-      title: 'Estados — quién los llena',
+      title: 'Estados — qué tocas tú y qué se pinta solo',
       body: `
-        <p><strong>Tú (Account) solo marcas 2 estados:</strong></p>
+        <p>Como Account, tú solo tienes que tocar <strong>2 estados</strong>:</p>
         <ul>
-          <li><strong>Declarado/-a</strong> — acabas de crearlo. Estado inicial automático.</li>
-          <li><strong>Archivado/-a</strong> — botón Archivar (regla §9: no se borra).</li>
+          <li><strong>Declarado/-a</strong> — sale automático al crear el item. No haces nada.</li>
+          <li><strong>Archivado/-a</strong> — cuando ya no aplica, le das al botón <em>"Archivar"</em>. No se borra nunca; el código queda reservado para que no haya ambigüedad con los archivos antiguos en Drive.</li>
         </ul>
-        <p>El resto son <strong>derivados del lifecycle de tareas Notion</strong> (los pinta el sync, no tú):</p>
-        <ul>
-          <li><strong>Campaña</strong>: En producción ← cuando un trigger pasa a "creado/monitorizando".</li>
-          <li><strong>Trigger</strong>: Creado ← tarea "crear form" cerrada · Monitorizando ← primer lead entró.</li>
-          <li><strong>Email</strong>: Copy listo · Diseño listo · Montado GHL · Activo ← cada uno cuando la tarea Notion de ese hito cierra.</li>
-        </ul>
-        <p>⏸ <em>Sync Notion → ficha aún no operativo. Mientras tanto el dropdown deja editarlo manualmente.</em></p>`
+        <p><strong>¿Y los demás estados (En producción, Creado, Monitorizando, Copy listo, Diseño listo, Activo…)?</strong></p>
+        <p>Los va pintando el sistema solo, según el equipo va cerrando sus tareas en Notion. Por ejemplo, cuando Copy marca <em>"Copy bienvenida listo"</em> en Notion, el email pasa a <strong>"Copy listo"</strong> en la ficha automáticamente.</p>
+        <p>⏸ <strong>Aviso:</strong> hoy ese sync aún no está vivo, así que el dropdown te deja moverlos manualmente como apaño. Cuando lo cableemos, el dropdown se volverá solo-lectura para los estados derivados.</p>`
     },
     'codigo-inmutable': {
       title: 'Por qué el código no cambia al editar',
       body: `
-        <p>Los códigos <code>P1</code>, <code>P1C1</code>, <code>P1C1FM1</code>, <code>P1C1FM1E1</code>… son <strong>permanentes</strong>. Nunca cambian ni se reutilizan tras crearlos.</p>
-        <p>Permite que tareas en Notion, briefings en Drive, segmentos en GHL y referencias en chats sigan apuntando al mismo sitio, aunque renombres o re-estructures.</p>
-        <p>Si te equivocaste de tipo (ej. creaste FM cuando era FW) o de nombre, edita lo demás o <strong>archiva y crea uno nuevo</strong>. El archivado guarda el código reservado.</p>
-        <div class="info-pop-ref">Ref: .docx §3.4</div>`
+        <p>Una vez creado un código (<code>P1</code>, <code>P1C1</code>, <code>P1C1FM1</code>, <code>P1C1E1</code>…), <strong>ese código no cambia nunca</strong>. Ni siquiera si renombras la campaña o cambias la descripción del trigger.</p>
+        <p><strong>¿Por qué tan estricto?</strong></p>
+        <p>Porque ese código está en mil sitios: tareas Notion (<em>"Copy P1C1E1"</em>), archivos Drive (<em>"P1C1_estatico_v1.png"</em>), segmentos GHL, mensajes del equipo, briefings… Si el código cambiara, todas esas referencias se romperían y nadie sabría a qué apuntan.</p>
+        <p><strong>¿Y si me equivoqué al crearlo (ej. puse FM cuando era FW)?</strong></p>
+        <p>Edita lo que se pueda (nombre, descripción, estado, etc.). Lo que no se puede cambiar — código y tipo — solo se resuelve <strong>archivando ese item y creando uno nuevo</strong> correcto. El archivado mantiene el código "reservado" para que nadie lo reutilice por error.</p>`
     },
     'archivar': {
       title: 'Archivar ≠ borrar',
       body: `
-        <p><strong>Nada se borra</strong> en esta ficha. Archivar es ocultar del flujo activo, pero la fila sigue viva en DB.</p>
-        <p>Recuperable con el toggle <em>"Mostrar archivados"</em> en la cabecera del módulo.</p>
-        <p>El código del ítem archivado queda <strong>reservado</strong> — no se reutiliza para crear nuevos. Así no hay colisiones con referencias antiguas en Notion/Drive/GHL.</p>
-        <div class="info-pop-ref">Ref: .docx §9</div>`
+        <p>En esta ficha <strong>no borramos nada</strong>. Solo se archiva. Es un principio, no una preferencia.</p>
+        <p><strong>¿Qué hace archivar exactamente?</strong></p>
+        <ul>
+          <li>Oculta el item del flujo activo (deja de aparecer en las listas normales).</li>
+          <li>Marca el código como <em>"reservado"</em> — nadie podrá crear otro con el mismo nombre.</li>
+          <li>Lo puedes seguir consultando con el toggle <em>"Mostrar archivados"</em> en la cabecera del módulo.</li>
+        </ul>
+        <p><strong>¿Por qué no borrar directamente?</strong></p>
+        <p>Porque ese código vive en Notion, Drive, GHL y chats del equipo. Si lo borrases, todas esas referencias quedarían apuntando al vacío. <strong>Archivar te da limpieza visual sin romper nada</strong>.</p>`
     },
     'versionado': {
-      title: 'Versionado en Drive',
+      title: 'Cómo se versionan los archivos en Drive',
       body: `
-        <p>El código del email (<code>P1C1FM1E1</code>) <strong>no cambia</strong> aunque rehagas el copy o el diseño 5 veces.</p>
-        <p>Las versiones nuevas viven en Drive con <strong>sufijo en el nombre del archivo</strong>:</p>
+        <p>El código del email (por ejemplo <code>P1C1FM1E1</code>) <strong>no cambia</strong> aunque pidamos cambios al copy o al diseño 5 veces. El código identifica al email como concepto; las versiones del contenido viven en Drive.</p>
+        <p><strong>¿Cómo se ven las versiones en Drive?</strong></p>
+        <p>Se añade un sufijo <code>v2</code>, <code>v3</code>… al nombre del archivo:</p>
         <ul>
-          <li><code>P1C1E2_copy.docx</code> — v1</li>
-          <li><code>P1C1E2_v2_copy.docx</code> — v2</li>
-          <li><code>P1C1E2_v3_copy.docx</code> — v3</li>
+          <li><code>P1C1E2_copy.docx</code> → versión 1 (original, sin sufijo)</li>
+          <li><code>P1C1E2_v2_copy.docx</code> → primera revisión</li>
+          <li><code>P1C1E2_v3_copy.docx</code> → segunda revisión</li>
         </ul>
-        <p>Así el código operativo es estable y la trazabilidad de revisiones queda en Drive.</p>
-        <div class="info-pop-ref">Ref: .docx §7</div>`
+        <p><strong>Importante:</strong> cuando el cliente pide cambios, NO se borra la versión vieja. Se sube la nueva como <code>v(n+1)</code> para que siempre quede el histórico. Si más adelante el cliente dice <em>"volvamos a la versión que enseñamos en marzo"</em>, podemos hacerlo.</p>`
     },
   };
   // Exponer al handler global (definido al final del script).
@@ -2585,7 +2608,15 @@ const PIPELINES_MODULE = (() => {
       <div class="field-list">
         ${fieldStatic('Tipo', cfg.label)}
         ${fieldStatic('Cantidad', String(cr.cantidad))}
-        ${fieldStatic('Nomenclatura archivos en Drive', `${c.code}_${cr.tipo}_v<n>`, { mono: true, info: 'creatividades-naming' })}
+        ${cr.linkBrief
+          ? `<div class="field" style="cursor:default">
+              <div style="flex:1;min-width:0">
+                <div class="field-label">Brief en Drive</div>
+                <div class="field-value"><a href="${escapeHtml(cr.linkBrief)}" target="_blank" rel="noopener" style="color:var(--info);text-decoration:underline">📄 Abrir brief</a></div>
+              </div>
+            </div>`
+          : fieldStatic('Brief en Drive', 'Sin brief específico — el equipo se guía por las notas + el briefing macro de la Campaña.')}
+        ${fieldStatic('Cómo se nombrarán los archivos en Drive', `${c.code}_${cr.tipo}_v<n>`, { mono: true, info: 'creatividades-naming' })}
       </div>
       ${S.role === 'account' ? `
         <div class="pip-action-row">
@@ -3435,7 +3466,13 @@ const PIPELINES_MODULE = (() => {
 
         <div class="form-field">
           <label class="form-label" for="ncr-notas">Notas (opcional)</label>
-          <textarea class="form-textarea" id="ncr-notas" placeholder="Ej: lifestyle + producto + testimonial · variantes con/sin precio · briefing en Drive">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
+          <textarea class="form-textarea" id="ncr-notas" placeholder="Lo que el equipo necesita saber para producir estas piezas: variantes, ángulos, referencias visuales, copy idea…">${escapeHtml(isEdit ? (editing.notas || '') : '')}</textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="ncr-brief">Brief en Drive (opcional)</label>
+          <input class="form-input" id="ncr-brief" type="url" value="${escapeHtml(isEdit ? (editing.linkBrief || '') : '')}" placeholder="https://drive.google.com/…" autocomplete="off"/>
+          <div style="font-size:11px;color:var(--text-3);margin-top:6px;line-height:1.4">Si tienes un brief específico para estas piezas (mood board, guion, referencias), pega aquí el link de Drive. Si no, déjalo vacío y el equipo se guía por las notas + el briefing macro de la Campaña.</div>
         </div>
 
         ${isEdit ? `
@@ -3475,13 +3512,16 @@ const PIPELINES_MODULE = (() => {
           if (newTipo === state.tipo) return;
           // Snapshot inputs antes del re-render — solo afecta al callout de
           // nomenclatura (incluye el tipo en el path).
-          const cantSnap = document.getElementById('ncr-cantidad')?.value || '1';
-          const notSnap  = document.getElementById('ncr-notas')?.value || '';
+          const cantSnap  = document.getElementById('ncr-cantidad')?.value || '1';
+          const notSnap   = document.getElementById('ncr-notas')?.value || '';
+          const briefSnap = document.getElementById('ncr-brief')?.value || '';
           state.tipo = newTipo;
           state.cantidad = parseInt(cantSnap, 10) || 1;
           document.getElementById('sheet-body').innerHTML = renderForm();
           const ne = document.getElementById('ncr-notas');
           if (ne && notSnap) ne.value = notSnap;
+          const be = document.getElementById('ncr-brief');
+          if (be && briefSnap) be.value = briefSnap;
           rebind();
         });
       });
@@ -3490,17 +3530,19 @@ const PIPELINES_MODULE = (() => {
         if (!btn || btn.disabled) return;
         const cantidad = parseInt(document.getElementById('ncr-cantidad')?.value, 10);
         const notas    = document.getElementById('ncr-notas')?.value.trim() || null;
+        const brief    = document.getElementById('ncr-brief')?.value.trim() || null;
         const estado   = isEdit ? document.getElementById('ncr-estado')?.value : null;
         if (!cantidad || cantidad < 1) { showToast('Cantidad debe ser ≥1'); return; }
         btn.disabled = true;
         try {
           await rpc('ficha_creatividad_upsert', {
-            p_id:          isEdit ? editing.id : null,
-            p_campania_id: isEdit ? null : c.id,
-            p_tipo:        state.tipo,
-            p_cantidad:    cantidad,
-            p_notas:       notas,
-            p_estado:      estado,
+            p_id:               isEdit ? editing.id : null,
+            p_campania_id:      isEdit ? null : c.id,
+            p_tipo:             state.tipo,
+            p_cantidad:         cantidad,
+            p_notas:            notas,
+            p_estado:           estado,
+            p_link_brief_drive: brief,
           });
           closeSheet();
           await loadFor(S.bubbleId, { preserveView: true });
