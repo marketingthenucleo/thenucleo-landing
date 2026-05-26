@@ -252,27 +252,28 @@ Indicadores de problema:
 - `success=false` con `failure_reason='not_in_allowlist'` repetido para mismo email → un admin sacado del allowlist sigue intentando usar el bridge (limpiarle el botón Bubble o avisarle).
 - Volumen anómalo (>50 success/h por mismo email) → posible Bubble comprometido. Rotar secret.
 
-## Estado actual del rollout (2026-05-26)
+## Estado actual del rollout (2026-05-26 — cierre de 2ª sesión)
 
-Sesión recuperada parcialmente tras un crash de Claude Code (error 400 `text content blocks must be non-empty`). Estado consolidado del bridge:
+Sesión iniciada el 2026-05-25 (Supabase + decisión inline) y reanudada el 2026-05-26 tras un crash de Claude Code (error 400 `text content blocks must be non-empty`). Contexto perdido recuperado vía dump local + screenshots del usuario.
 
-### Lado Supabase ✅ (cerrado 2026-05-25)
-- Edge Function `bridge_from_portal` desplegada (version 1, ACTIVE, `verify_jwt: false`).
+### Lado Supabase ✅ (cerrado 2026-05-25; v5 debug temporal 2026-05-26)
+- Edge Function `bridge_from_portal` **ACTIVE, `verify_jwt: false`**, pero **actualmente desplegada en version 5 con debug echo** — devuelve `{ error, debug: { stage, content_type, body_length, body_sample, parse_err, … } }` en el body de las respuestas 403 cuando falla `invalid_json` o `missing_fields`. ⚠️ **REVERTIR a version 3 (limpia) cuando se cierre el bug abierto** — la v5 filtra body sample en errores, lo cual es info que un atacante con el secret podría usar para fingerprinting. Código v3 vive en `supabase/functions/bridge_from_portal/index.ts` del repo.
 - Tabla `bridge_audit_log` + RLS + índices aplicados via migration `20260525_bridge_portal_audit_log.sql`.
-- `BRIDGE_SHARED_SECRET` configurado en Edge Function Secrets (hex 256 bits — valor NO se commitea aquí; vive en Supabase Dashboard y en el Option Set Bubble).
+- `BRIDGE_SHARED_SECRET` configurado en Edge Function Secrets (hex 256 bits — el valor NO se commitea ni a docs ni a repo).
 - Redirect URL `https://work.thenucleo.com/comunidad/entrar/**` añadido a Supabase Auth → URL Configuration.
 - Patch `assets/js/comunidad-entrar.js` mergeado a main (oculta captcha cuando llega `#access_token=` en hash).
 
-### Lado Bubble ⚠️ (en curso 2026-05-26)
-- ✅ Option Set `Config` con campo `secret` creado, opción `bridge` con el hex pegado.
-- ✅ API Connector call `Config - Supabase Bridge` inicializada y devolviendo `action_link`.
-- ✅ Backend workflow `bridge_to_work_ficha` **creado y luego borrado** (2026-05-26) — se cambió a patrón inline.
-- ✅ Botón **Estrategia** montado con 3 steps inline + deploy LIVE.
-- ✅ Botón **Timeline** montado con 3 steps inline + deploy LIVE.
-- ⏳ Botón **Ficha (legacy)** pendiente de cablear.
+### Lado Bubble ⚠️ (en curso)
+- ✅ **Option Set `Config`** con campo `secret` creado, opción `bridge` con el hex pegado y verificado (SHA256 del valor coincide con el SHA que muestra Supabase Dashboard).
+- ✅ **API Connector call `Config - Supabase Bridge`** inicializada y guardada con response schema correcto (`action_link` como string). Lo certificó una llamada `success=true` registrada a las 07:40:48 UTC del 2026-05-26.
+- ✅ **Backend workflow `bridge_to_work_ficha`** creado y luego borrado — se cambió a patrón inline por botón (más simple, ver sección 5.2/5.4).
+- ✅ **Botón Estrategia** montado con 3 steps inline + deploy LIVE.
+- ✅ **Botón Timeline** montado con 3 steps inline + deploy LIVE.
+- ⏳ **Botón Ficha (legacy)** pendiente de cablear.
 
-### Bug abierto al cierre de sesión 2026-05-26
-Al pulsar **Estrategia** desde portal LIVE el Server Script revienta con:
+### Bug abierto al cierre de sesión 2026-05-26 — `properties.secret` llega `undefined` al Server Script
+
+Al pulsar **Estrategia** desde portal LIVE el Server Script del page workflow revienta con:
 
 ```
 TypeError [ERR_INVALID_ARG_TYPE]: The "key" argument must be of type string or
@@ -283,17 +284,124 @@ Received undefined
     at Object.createHmac (node:crypto:163:10)
 ```
 
-`properties.secret` llega `undefined`. Causa más probable (a verificar en la siguiente sesión):
-- El value del key `secret` en "Keys and values" del Step 1 está vacío o el dynamic data del Option Set no resuelve.
-- La opción `bridge` del Option Set Config existe pero el field `secret` quedó sin valor en el editor del Option Set.
-- El composer apunta al Option Set entero (`Get option Config`) en lugar de a una opción específica con el field (`Get an option Config (bridge)'s secret`).
+**Lo que SE ha verificado durante la sesión y NO arregla el bug:**
 
-**Diagnóstico rápido para reanudar:**
-1. Hardcodear el secret como texto plano en el value del key `secret` del Step 1 → Deploy → click "Estrategia". Si funciona, el problema era el dynamic data.
-2. Si sigue fallando con el mismo error, screenshot del panel "Keys and values" del Step 1 con los 3 pares visibles.
-3. Una vez funcione: rehacer el value como `Get an option Config (bridge)'s secret` y verificar.
+1. ✅ El Option Set `Config` existe con la opción `bridge`. El picker del workflow muestra correctamente `Option set: config` / `Option: bridge` cuando se inspecciona.
+2. ✅ El value del key `secret` en "Keys and values" del Server Script muestra `bridge's secret` — sintaxis correcta de Bubble cuando ya pickeaste `config → bridge → 's secret`.
+3. ✅ El SHA del secret en Supabase Dashboard coincide con el SHA256 del valor que tiene Bubble en el Option Set (descartado desfase de claves).
+4. ✅ Step 1 del workflow es un **Custom State**, no otro Server Script — el Server Script crypto es Step 2 únicamente.
+5. ✅ **Hardcodear el secret como texto plano** en el value del key `secret` (eliminando todo dynamic data, escribiendo el hex literal) + Deploy → **SIGUE saliendo el mismo TypeError**. Esto descarta que el problema sea del dynamic data del Option Set.
+6. ✅ Deploy a LIVE confirmado tras cada cambio.
 
-Cuando esté verde: replicar el patrón en el botón **Ficha (legacy)** (sin `next_path` para que caiga al fallback) y cerrar el rollout.
+**Conclusión parcial:** el problema NO está en cómo se mapea el secret al Option Set ni en el deploy. El Server Script de Toolbox **no recibe `properties.secret`** aunque el value esté hardcodeado. Causas posibles a investigar en próxima sesión:
+
+- La versión instalada del plugin Toolbox (BETA según el badge del UI) podría requerir otra sintaxis para exponer las keys al script (e.g., `context.secret`, `inputs.secret` en lugar de `properties.secret`).
+- Bubble podría estar re-ejecutando una versión cacheada del workflow pese a Deploy (probar incógnito + force reload).
+- El botón en LIVE podría estar en un reusable element con override que no se actualiza.
+- "Multiple Outputs" o algún toggle del action podría estar mal y bloquear el paso de properties.
+
+### Próximo paso preparado para la sesión que viene
+
+Sustituir el contenido del Server Script por una versión **sin `crypto`** que exponga lo que hay en `properties` y mande ese contenido como `signature` del body, para que llegue a Supabase y se vea en el `body_sample` del debug echo. Snippet listo:
+
+```js
+const ts = Math.floor(Date.now() / 1000);
+output1 = ts;
+output2 = 'DEBUG'
+  + '|secret_type=' + (typeof properties.secret)
+  + '|secret_len=' + (properties.secret ? String(properties.secret).length : 'NIL')
+  + '|secret_first10=' + (properties.secret ? String(properties.secret).slice(0,10) : 'NIL')
+  + '|email=' + (properties.email || 'NIL')
+  + '|bubble_id=' + (properties.bubble_id || 'NIL')
+  + '|all_keys=' + Object.keys(properties || {}).join(',');
+```
+
+Save → Deploy → click Estrategia desde el portal LIVE. La Edge Function v5 devolverá en el body 403 el `body_sample` con esa cadena DEBUG, mostrando exactamente qué keys ve Bubble y qué tipo/longitud tienen.
+
+**Cuando esté verde:** revertir el Server Script al código real, replicar el patrón en el botón **Ficha (legacy)** sin `next_path`, **revertir Edge Function a version 3 limpia** (sin debug echo), y registrar el cierre en log-cambios.
+
+### Telemetría de la sesión (`bridge_audit_log`)
+
+15+ intentos durante el 2026-05-26 entre 06:10 UTC y 07:49 UTC. Distribución:
+- `invalid_json` × ~10: causa identificada, **comilla extra pegada al value del Body parameter `email` del API Connector** (ver "Lecciones aprendidas" abajo).
+- `bad_signature` × ~3: clicks del Initialize call con signature dummy `0000...` (esperado, no es bug).
+- `success=true` × 1 a las 07:40:48: confirmación de que el flow Supabase está correcto.
+- 0 llamadas desde las 07:40:48 → todas las clicks posteriores al botón "Estrategia" murieron en Bubble antes de llegar a la Edge Function (TypeError).
+
+## Lecciones aprendidas (2026-05-26)
+
+### L1 — Comilla extra al hacer copy-paste en Body parameters del API Connector
+
+**Síntoma:** `failure_reason='invalid_json'` en `bridge_audit_log`. El cliente Bubble recibe `{"error":"forbidden"}` sin más info.
+
+**Causa raíz:** el value del key `email` (o cualquier otro string del body) tenía una comilla doble `"` pegada al final por un copy-paste accidental del template:
+```
+benjamin.sanchis@thenucleo.com"   ← con comilla extra invisible al final
+```
+Como el body template del API Connector envuelve el placeholder con comillas (`"email": "<email>"`), el resultado serializado era:
+```json
+"email": "benjamin.sanchis@thenucleo.com"",
+```
+JSON inválido (doble comilla `""` antes de la coma) → `req.json()` revienta en la Edge Function.
+
+**Fix:** click en el value del Body parameter, cursor al final, borrar cualquier carácter extra. Validar character-by-character. Nunca confiar en visualmente "se ve igual".
+
+**Diagnóstico:** desplegar Edge Function con debug echo (ver L3) para ver el `body_sample` con el `parse_err` exacto (`SyntaxError: Expected ',' or '}' after property value in JSON at position N`).
+
+### L2 — Supabase Dashboard muestra SHA del secret, no el valor raw
+
+Cuando comparas el secret entre Bubble (Option Set, muestra valor raw) y Supabase (Edge Function Secrets, muestra checksum/fingerprint), parecen no coincidir. Pero Supabase Dashboard enseña un SHA256 del valor por seguridad, no el valor.
+
+Para verificar coincidencia:
+```bash
+echo -n "<valor del Option Set Bubble>" | sha256sum
+```
+Debe coincidir con el fingerprint que muestra Supabase. Si coincide, los secrets están alineados aunque visualmente sean strings distintos.
+
+### L3 — Patrón de diagnóstico: debug echo en Edge Function
+
+Cuando un error opaco como `invalid_json` impide saber qué está enviando Bubble, desplegar **versión temporal** de la Edge Function que incluya un campo `debug` en el body de la respuesta 403 (NO en `bridge_audit_log`, que está pensada para auditoría limpia).
+
+Pattern aplicado en v5:
+```ts
+function forbidden(extra?: Record<string, unknown>): Response {
+  const payload: Record<string, unknown> = { error: "forbidden" };
+  if (extra) payload.debug = extra;
+  return new Response(JSON.stringify(payload), { status: 403, headers: { "content-type": "application/json" } });
+}
+
+// En el catch del parse:
+return forbidden({
+  stage: "json_parse",
+  content_type: contentType,
+  body_length: rawBody.length,
+  body_sample: rawBody.slice(0, 500),
+  parse_err: String(err),
+});
+```
+
+Bubble enseña el body completo en su modal "Unable to initialize" cuando Initialize falla, lo que permite ver el `body_sample` y el `parse_err` directamente sin tener que mirar logs.
+
+⚠️ **Revertir SIEMPRE a la versión limpia** (sin debug) cuando se cierre el bug. Filtrar body samples en respuestas 403 es info que un atacante con el secret podría usar para fingerprinting del payload Bubble.
+
+### L4 — Initialize call de Bubble requiere respuesta 2xx, no 4xx
+
+Para que Bubble guarde una API Connector call inicializada (detecta el response schema), la respuesta debe ser 2xx. Un 4xx hace que Bubble pop-up "Unable to initialize" y NO guarda la call.
+
+Workaround para inicializar contra una Edge Function que requiere HMAC + email allowlisted: generar localmente una firma válida con timestamp fresco:
+
+```bash
+SECRET="<el hex secret>"
+EMAIL="benjamin.sanchis@thenucleo.com"
+BUBBLE_ID="test123"
+TS=$(date +%s)
+SIG=$(printf "%s" "${EMAIL}|${BUBBLE_ID}|${TS}" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $2}')
+echo "timestamp=$TS signature=$SIG"
+```
+
+Pegar esos valores en los Body parameters del API Connector → click Initialize call dentro de la ventana de 5 min (TIMESTAMP_WINDOW_SECONDS). Devuelve 200 con `action_link` válido (single-use, expira en 5 min). El user puede ignorar el magic link generado (no clickear). Bubble detecta el schema y guarda la call.
+
+Después de Initialize, los valores del Body parameter son **solo placeholders** — en runtime se sobreescriben con dynamic data desde el page workflow.
 
 ## Troubleshooting
 
@@ -308,6 +416,9 @@ Cuando esté verde: replicar el patrón en el botón **Ficha (legacy)** (sin `ne
 | `bad_signature` repetido en `bridge_audit_log` | Secret de Bubble (Option Set) ≠ secret de Supabase Edge Function. | Comparar letra por letra. Si rotaste, hacerlo en paralelo en ambos lados (ver "Rotación"). |
 | Bubble alerta "Plugin action Server script error" sin más info | Toolbox no propaga el stack al UI por defecto. | Habilitar "log errors" en el toggle del action + mirar Bubble Server Logs (Logs tab → Server logs). |
 | Step 1 OK pero Step 2 (API Connector) no recibe `timestamp`/`signature` | Toolbox tiene "Multiple Outputs" OFF, o `output1`/`output2` se asignaron con `const`. | Encender Multiple Outputs + declarar tipos (Number/Text) + reescribir como `output1 = …; output2 = …;` sin `const`/`let`/`var`. |
+| `failure_reason='invalid_json'` repetido con `Got it` modal en Bubble sin info útil | Body del POST no es JSON parseable. Causa habitual: **comilla extra `"` pegada por copy-paste al final del value de algún Body parameter del API Connector** (típico en el value de `email`). El template `"email": "<email>"` se serializa como `"email": "valor""` → JSON inválido. | Click en cada value de los Body parameters, cursor al final, borrar caracteres extra. Desplegar Edge Function con `debug` echo (ver L3 en "Lecciones aprendidas") para ver `body_sample` + `parse_err` con la posición exacta del error. |
+| Bubble "Unable to initialize" 403 forbidden sin guardar la API Connector call | Bubble requiere respuesta 2xx en Initialize para detectar response schema. La Edge Function rechaza con 403 si la firma HMAC no es válida. | Generar firma válida + timestamp fresco con `openssl dgst -sha256 -hmac "$SECRET"` (ver L4 en "Lecciones aprendidas"). Pegar en Body parameters → Initialize dentro de la ventana 5 min → Bubble guarda. |
+| Secret de Bubble y secret de Supabase parecen no coincidir en el Dashboard | Supabase Dashboard muestra **SHA256 del secret**, no el valor raw, por seguridad. Bubble Option Set muestra el valor raw. Visualmente parecen distintos pese a estar alineados. | Verificar coincidencia con `echo -n "<valor Bubble>" \| sha256sum` y comparar con el fingerprint que muestra Supabase. Ver L2 en "Lecciones aprendidas". |
 
 ## Referencias
 

@@ -67,23 +67,27 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
-## 2026-05-26 [PORTAL][WORK][FEATURE] — Bridge Portal→Work: rollout Bubble inline (Estrategia + Timeline) + gotchas Toolbox
+## 2026-05-26 [PORTAL][WORK][FEATURE] — Bridge Portal→Work: rollout Bubble inline + 4 lecciones aprendidas + bug abierto del Server Script
 
-- **Área:** Bubble portal (3 page workflows nuevos) + doc `docs/work/bridge-portal-ficha.md` (revisión mayor).
-- **Qué:** se montó la mitad cliente del bridge HMAC + magic link sobre la Edge Function `bridge_from_portal` ya desplegada el 2026-05-25.
-  - Option Set Bubble `Config` con field `secret` (opción `bridge`) — sustituye la idea original de App Constant privada (más limpio, accesible por dynamic data en cualquier page workflow).
-  - API Connector call `Config - Supabase Bridge` (Action POST a la Edge Function) inicializada y devolviendo `action_link`.
-  - Backend workflow `bridge_to_work_ficha` montado y luego borrado: se cambió a **patrón inline por botón** porque llamar a un backend workflow Bubble desde un page workflow y recibir return value requiere otra API Connector call apuntando al propio Bubble endpoint + cookie de sesión + parseo wrapped — 30 min vs 5 min del inline, misma seguridad (Server Script Toolbox corre server-side).
-  - Botones **Estrategia** y **Timeline** montados con 3 steps inline cada uno (Server Script Toolbox → API Connector → Navigate). Deploy LIVE.
-  - Botón **Ficha (legacy)** pendiente — sin `next_path` para que caiga al fallback.
+- **Área:** Bubble portal (3 page workflows nuevos) + Edge Function Supabase (v5 debug temporal) + doc `docs/work/bridge-portal-ficha.md` (revisión mayor).
+- **Qué se montó:**
+  - **Option Set Bubble `Config`** con field `secret` (opción `bridge`) — sustituye la idea original de App Constant privada.
+  - **API Connector call `Config - Supabase Bridge`** (Action POST a la Edge Function) inicializada y guardada con response schema OK (`action_link`).
+  - **Backend workflow `bridge_to_work_ficha`** montado y luego borrado: se cambió a **patrón inline por botón** (5 min vs 30 min del backend + API Connector secundaria, misma seguridad).
+  - **Botones Estrategia y Timeline** montados con 3 steps inline (Server Script Toolbox → API Connector → Navigate) + deploy LIVE.
+  - **Botón Ficha (legacy)** pendiente — sin `next_path` para fallback.
+  - **Edge Function v5 desplegada en debug temporal:** devuelve `debug: { stage, content_type, body_length, body_sample, parse_err }` en respuestas 403 cuando falla `invalid_json` o `missing_fields`. ⚠️ Revertir a v3 limpia cuando se cierre el bug del Server Script (la v5 filtra body sample).
 - **Por qué:** abrir `/estrategia/`, `/timeline/` (Sprint 1 migración) y `/ficha-cliente/` desde el portal sin que el admin pase por Google OAuth otra vez. Patrón Linear/Vercel/Notion (~300ms, 1 redirect visible).
-- **Gotchas Bubble Toolbox `Server Script` descubiertos en sesión:**
-  - **`return` NO devuelve valores.** El script se evalúa como bloque, no función. Hay que asignar a globals `output1 = …; output2 = …;` **sin `const`/`let`/`var`** + activar "Multiple Outputs" + declarar tipos (Number/Text).
-  - `properties.<key>` llega `undefined` si el value del Key/Value está vacío o el dynamic data del Option Set no resuelve → `crypto.createHmac` revienta con `TypeError [ERR_INVALID_ARG_TYPE]`. Dynamic data correcta para el secret: `Get an option Config (bridge)'s secret` (pickar la opción, no solo el set).
-  - `require('crypto')` funciona, `require('https')`/`require('http')` están bloqueados por la sandbox del task runner.
-- **Bug abierto al cierre de sesión:** click en "Estrategia" sigue devolviendo `TypeError ... Received undefined` en `properties.secret`. Próximo paso: hardcodear el secret en el value del Key/Value del Step 1 para confirmar si el problema es el dynamic data del Option Set o algo más. Detalle de diagnóstico en `docs/work/bridge-portal-ficha.md#estado-actual-del-rollout-2026-05-26`.
-- **Impacto:** lado Supabase intacto (Edge Function v1 + tabla `bridge_audit_log` siguen como el 2026-05-25). Lado Bubble queda con 2 botones LIVE que aún no completan el flujo por el bug del secret. Cuando esté verde, replicar en "Ficha (legacy)" y cerrar rollout.
-- **Refs:** `docs/work/bridge-portal-ficha.md` (revisión mayor — secciones 5.1/5.2/5.3/5.4 + gotchas + "Estado actual" + 4 filas nuevas en Troubleshooting). Sesión Claude perdida por error 400 `text content blocks must be non-empty`; conversación recuperada vía screenshot del usuario + dump local (`Conversacion_caida_del_claude.md`).
+- **Lecciones aprendidas (4) — propagadas a `bridge-portal-ficha.md` → "Lecciones aprendidas" + "Troubleshooting":**
+  1. **L1 — Comilla extra al hacer copy-paste en Body parameter del API Connector.** Causa el 90% de los `invalid_json` que vimos hoy: un `"` colado al final del value `email` → JSON con doble comilla `""` → `req.json()` revienta. Fix: revisar character-by-character el value de cada Body parameter.
+  2. **L2 — Supabase Dashboard muestra SHA256 del secret, no el valor raw.** No se puede comparar visualmente con Bubble Option Set. Verificar coincidencia con `echo -n "<valor Bubble>" \| sha256sum`.
+  3. **L3 — Patrón de diagnóstico: debug echo en Edge Function.** Versión temporal de la function que devuelve `body_sample` + `parse_err` en el body 403, visible directo en el modal "Unable to initialize" de Bubble. Imprescindible para diagnosticar `invalid_json` opaco. Revertir SIEMPRE a versión limpia tras cerrar el bug.
+  4. **L4 — Initialize call de Bubble requiere 2xx.** Para guardar la call, generar firma HMAC válida + timestamp fresco con `openssl dgst -sha256 -hmac` y pegarla en Body parameters → click Initialize dentro de la ventana 5 min.
+- **Gotchas Toolbox `Server Script` (revisión de los 5 documentados ayer):** confirmados todos. Añadido: el snippet de **debug del Server Script sin `crypto`** que expone el contenido de `properties` como string en `output2` para enviarlo como `signature` y leerlo en el `body_sample` debug. Vive en `bridge-portal-ficha.md` sección "Próximo paso preparado para la sesión que viene".
+- **Bug abierto al cierre de sesión (no resuelto, contexto consolidado):** click "Estrategia" sigue devolviendo `TypeError: properties.secret undefined` en el Server Script del page workflow, **incluso después de hardcodear el secret como texto plano en el value** + Deploy a LIVE. El Option Set + dynamic data + SHA del secret + deploy están todos OK y verificados. El plugin Toolbox (versión BETA) no pasa las properties al script aunque el value esté hardcodeado. Próxima sesión: reemplazar el script por la versión debug sin `crypto` para ver qué hay realmente en `properties` vía `body_sample` de la Edge Function v5.
+- **Telemetría:** 15+ entries en `bridge_audit_log` entre 06:10 y 07:49 UTC. 1 `success=true` (07:40:48) confirma que el flow Supabase está correcto end-to-end. Las clicks posteriores al botón Estrategia mueren en Bubble antes de llegar a la Edge Function.
+- **Impacto:** lado Supabase intacto en lógica (solo v5 con debug echo temporal). Lado Bubble queda con 2 botones LIVE que aún no completan el flujo. Cuando esté verde, replicar en "Ficha (legacy)", revertir Edge Function a v3 limpia, y cerrar rollout.
+- **Refs:** `docs/work/bridge-portal-ficha.md` (revisión mayor — sección "Estado actual del rollout" reescrita + nueva sección "Lecciones aprendidas" L1-L4 + 4 filas nuevas en Troubleshooting). Sesión inicial del 2026-05-25 perdida por error 400 `text content blocks must be non-empty`; conversación recuperada vía screenshot del usuario + dump local del .md de la conversación caída.
 
 ## 2026-05-25 [WORK][FEATURE] — Ficha cliente: F2.8 panel contextual "Estás en…" con dismiss progresivo
 
