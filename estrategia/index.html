@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#0A0A0A">
 <meta name="robots" content="noindex,nofollow">
 <title>Estrategia — TheNucleo</title>
 
@@ -17,7 +17,7 @@
   @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
 
   :root {
-    --bg: #111111;
+    --bg: #0A0A0A;
     --bg-2: #181818;
     --bg-3: #1f1f1f;
     --bg-hover: #242424;
@@ -38,12 +38,12 @@
     --info: #3b82f6;
     --info-bg: rgba(59,130,246,0.10);
     --violet: #8b5cf6;
-    --header-bg-rgba: rgba(17,17,17,0.92);
+    --header-bg-rgba: rgba(10,10,10,0.92);
     --bg-glow: rgba(34, 197, 94, 0.05);
     --shadow-pop: 0 12px 32px rgba(0,0,0,0.5);
     --font: 'NewBlack', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --ps-w: 200px;
-    --ps-header-h: 60px;
+    --ps-w: 245px;
+    --ps-header-h: 40px;
     --ps-item-active-bg: rgba(34, 197, 94, 0.10);
     --ps-item-hover-bg: rgba(255, 255, 255, 0.04);
     --ps-divider: rgba(255, 255, 255, 0.06);
@@ -94,7 +94,7 @@
 
   .portal-sidebar {
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 110;
-    width: var(--ps-w); background: var(--bg);
+    width: var(--ps-w); background: #111111;
     border-right: 1px solid var(--ps-divider);
     display: flex; flex-direction: column;
     padding: 18px 12px 16px;
@@ -143,7 +143,6 @@
     height: var(--ps-header-h);
     background: var(--header-bg-rgba);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--ps-divider);
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 20px;
   }
@@ -176,7 +175,7 @@
     background: var(--ps-avatar-bg);
     color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+    font-size: 13px; font-weight: 500; letter-spacing: 0.02em;
     user-select: none; cursor: default; flex-shrink: 0;
   }
   .ps-backdrop {
@@ -273,15 +272,15 @@
   }
   .client-head-text { flex: 1; min-width: 0; }
   .client-name {
-    font-size: 28px; font-weight: 700; line-height: 1.05;
-    letter-spacing: -0.01em; word-break: break-word; color: var(--text);
+    font-size: 38px; font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.01em; word-break: break-word; color: #FFFFFF;
     margin-bottom: 6px;
   }
   .client-sector-line {
-    font-size: 11px; font-weight: 600; color: var(--text-3);
-    letter-spacing: 0.02em;
+    font-size: 16px; font-weight: 700; color: var(--text-3);
+    letter-spacing: 0;
   }
-  .client-sector-line strong { color: var(--text-2); font-weight: 600; }
+  .client-sector-line strong { color: var(--text-3); font-weight: 700; }
   .client-back {
     flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
     background: none; border: none; color: var(--text-2);
@@ -301,8 +300,9 @@
     min-width: 0;
   }
   .activo-pill {
-    display: inline-flex; align-items: center; padding: 6px 14px;
-    border-radius: 999px; font-size: 11px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 100px; height: 30px; padding: 0 16px;
+    border-radius: 8px; font-size: 13px; font-weight: 700;
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
     color: #fff; letter-spacing: 0.02em;
   }
@@ -965,7 +965,7 @@
     body { padding-bottom: 100px; }
     .app-header { padding: 24px 40px 18px; }
     .header-top { margin-bottom: 18px; }
-    .client-name { font-size: 36px; }
+    /* base 38px ya es el spec exacto Bubble, sin override desktop */
     .section-tabs { margin-left: -40px; margin-right: -40px; padding: 0 40px; }
     .content { padding: 32px 40px 60px; max-width: 920px; margin: 0 auto; }
     .pip-name { font-size: 24px; }
@@ -4359,7 +4359,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = t;
   try { localStorage.setItem(THEME_KEY, t); } catch {}
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#111111' : '#f5f6f8');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#0A0A0A' : '#f5f6f8');
 });
 
 // ─── Volver atrás → portal cliente concreto ────────
