@@ -6,6 +6,8 @@ actualizado: 2026-05-26
 tags: [ficha-cliente, work, portal, bubble, supabase, auth, edge-function, sso, magic-link]
 ---
 
+> **Rollout cerrado 2026-05-26 noche.** Los 3 botones del submenú Cliente (Estrategia / Timeline / Ficha legacy) están operativos en LIVE en modo bearer. Smoke verde verificado en `bridge_audit_log` con `bubble_id` real (`1772815116826x630388853372878800`) y `next_path` correctos. 3 lecciones nuevas (L5–L7) añadidas en sección "Lecciones aprendidas".
+
 # Bridge Portal → `/ficha-cliente/` — deep-link sin doble login
 
 Desde el portal Bubble (portal.thenucleo.com), un botón "Ver ficha en Work" abre `work.thenucleo.com/ficha-cliente/?id=<bubble_id>` (o `/estrategia/`, `/timeline/`, …) con la sesión Supabase ya creada. Sin que el admin pase por Google OAuth otra vez.
@@ -265,7 +267,7 @@ Indicadores de problema:
 - `success=false` con `failure_reason='not_in_allowlist'` repetido para mismo email → un admin sacado del allowlist sigue intentando usar el bridge (limpiarle el botón Bubble o avisarle).
 - Volumen anómalo (>50 success/h por mismo email) → posible Bubble comprometido. Rotar secret.
 
-## Estado actual del rollout (2026-05-26 — bug Toolbox resuelto by-pass)
+## Estado actual del rollout (2026-05-26 noche — CERRADO)
 
 Sesión iniciada el 2026-05-25 (Supabase + decisión inline HMAC) y reanudada el 2026-05-26 tras un crash de Claude Code (error 400 `text content blocks must be non-empty`). Contexto perdido recuperado vía dump local + screenshots. Cierre 2026-05-26 noche: switch arquitectónico a **bearer mode** que elimina la dependencia del Toolbox plugin (raíz del bug).
 
@@ -276,13 +278,13 @@ Sesión iniciada el 2026-05-25 (Supabase + decisión inline HMAC) y reanudada el
 - Redirect URL `https://work.thenucleo.com/comunidad/entrar/**` añadido a Supabase Auth → URL Configuration.
 - Patch `assets/js/comunidad-entrar.js` mergeado a main (oculta captcha cuando llega `#access_token=` en hash).
 
-### Lado Bubble ⏳ (pendiente rehacer setup en modo bearer)
-- ✅ **API Connector call `Config - Supabase Bridge`** existe, inicializada (response schema `action_link` correcto). **Pendiente:** añadirle el header `Authorization: Bearer <secret hex literal>` y **quitar `signature`** del Body. Reinicializar contra la Edge Function v6 (ver sección 5.1).
-- ⚠️ **Option Set `Config (bridge)'s secret`** se puede ELIMINAR o conservar como histórico (ya no se consume desde el workflow bearer). El secret vive ahora en el header del API Connector.
-- ⏳ **Botón Estrategia** — rehacer page workflow: eliminar Step 1 Server Script (Toolbox), dejar solo 2 steps: API Connector call → Open external website. Detalle en 5.2.
-- ⏳ **Botón Timeline** — idem.
-- ⏳ **Botón Ficha (legacy)** — montar de cero con los 2 steps bearer + `next_path` vacío (fallback a `/ficha-cliente/?id=<bubble_id>`).
-- ❌ **Backend workflow** + **Server Scripts** del intento HMAC — eliminar / archivar.
+### Lado Bubble ✅ (cerrado 2026-05-26 noche)
+- ✅ **API Connector call `Config - Supabase Bridge`** reconfigurada en modo bearer: header `Authorization: Bearer <secret hex literal>` añadido, `signature` quitado del Body, Initialize values **vaciados** tras inicializar (ver L6 abajo).
+- ✅ **Botón Estrategia** — page workflow 2 steps (API Connector call → Open external website). `next_path` = `/estrategia/?id=` + `<Group's name>'s Clientes's unique id`. Smoke verde 17:07 UTC con `bubble_id=1772815116826x630388853372878800`.
+- ✅ **Botón Timeline** — idem, `next_path` = `/timeline/?id=` + …. Smoke verde 17:07 UTC.
+- ✅ **Botón Ficha (legacy)** — montado con `next_path` vacío → fallback Edge Function a `/ficha-cliente/?id=<bubble_id>`.
+- ✅ **Server Scripts del intento HMAC** — eliminados de los page workflows.
+- ⚠️ **Option Set `Config (bridge)'s secret`** queda conservado como histórico (ya no se consume — el secret vive en el header del API Connector). Borrable cuando se haga limpieza de Option Sets.
 
 ### Bug Server Script Toolbox — cerrado 2026-05-26 by-pass arquitectónico
 
@@ -406,6 +408,42 @@ Pegar esos valores en los Body parameters del API Connector → click Initialize
 
 Después de Initialize, los valores del Body parameter son **solo placeholders** — en runtime se sobreescriben con dynamic data desde el page workflow.
 
+### L5 — `Current Page's <X>` resuelve vacío si el dato vive en un Group, no en el Page
+
+**Síntoma:** la call tiene éxito (`success=true` en `bridge_audit_log`) pero `bubble_id` llega como un valor "extraño" (típicamente el Initialize value antiguo, ej. `test`) y `next_path` aterriza con `?id=` vacío. En la UI, el botón aterriza al usuario en `/estrategia/?id=` (sin id) — autenticado, pero sin contexto de cliente.
+
+**Causa raíz:** el page donde está el botón **no tiene `Type of content = Clientes`**. El cliente vive dentro de un Group con su propio Data Type (típicamente alimentado por workflow o `Set states`). El composer `Current Page's Clientes's unique id` evalúa la expresión en runtime → como `Current Page` no es de tipo Clientes, devuelve string vacío.
+
+En el bridge, el page del portal Bubble era tipo `User` y el cliente vivía en `Group Clientes concreto` (visible en el workflow porque el Step 1 hace `Set states ... of Group Clientes concreto`).
+
+**Fix:** en el composer del Body parameter (`bubble_id` y `next_path`), sustituir `Current Page's Clientes` por `<Group's name>'s Clientes`. El Group adecuado casi siempre se delata mirando el Step 1 del propio workflow.
+
+**Cómo detectarlo en producción:** query a `bridge_audit_log` — si `bubble_id` coincide con un Initialize value antiguo (típicamente `test` u otro hardcoded de cuando inicializaste la call), el dynamic data resuelve vacío en runtime y Bubble cae al fallback del Initialize (ver L6).
+
+### L6 — Los Initialize values del API Connector son fallback silencioso en runtime
+
+**Síntoma:** la call funciona pero envía los **valores hardcodeados del Initialize** en lugar del dynamic data del workflow. El bug no produce 4xx — la call llega a la Edge Function con datos "casi correctos" y autoriza al magic link a aterrizar en una URL incorrecta. Difícil de detectar sin auditar el `bridge_audit_log`.
+
+**Causa raíz:** cuando el dynamic data de un Body parameter resuelve vacío en runtime (típicamente por L5), Bubble **no envía string vacío** — usa el value que pegaste al inicializar la call como **default silencioso**. Si dejaste `bubble_id=test` para inicializar, en producción todas las llamadas con dynamic data fallido enviarán `bubble_id=test`.
+
+**Fix:** después de inicializar la call y confirmar response schema, **vaciar TODOS los Body parameters values** en el API Connector. Bubble mantiene el schema detectado. En runtime los rellena el page workflow; si el dynamic resuelve vacío, la Edge Function rechaza con `failure_reason='missing_fields'` y el bug es **visible inmediatamente en `bridge_audit_log`** (vs "funcionar" silenciosamente con datos incorrectos durante semanas).
+
+**Regla operativa:** en API Connector calls que se llaman desde workflows con dynamic data, los Initialize values son **solo para inicializar**, nunca defaults de producción. Esto aplica a cualquier call, no solo al bridge.
+
+### L7 — Format custom de fecha Moment.js: el token es `X`, no el unix epoch literal
+
+**Síntoma:** `failure_reason='stale_timestamp'` en `bridge_audit_log` empezando ~5 min después del primer click exitoso. Antes de ese umbral el flow funciona porque el timestamp casualmente cae dentro de la ventana ±5 min. Después, **TODAS** las llamadas fallan con `stale_timestamp` hasta el siguiente Deploy/edit.
+
+**Causa raíz:** en el modal Date Formatting de Bubble, al elegir `Format type: Custom`, el campo Format pide un **template Moment.js**, no un valor de ejemplo. Si pegas un unix epoch literal (ej. `1779784625` porque te lo dieron como ejemplo), Moment.js no entiende esos dígitos como tokens — devuelve la string `"1779784625"` tal cual en CADA ejecución del workflow. El timestamp NUNCA se actualiza.
+
+> Es como un reloj parado: da la hora correcta 2 veces al día (cuando `now()` casualmente cae dentro de ±5 min del literal hardcodeado).
+
+**Fix:** en Format escribir literalmente **`X`** (una sola letra mayúscula, nada más). Token de Moment.js para "unix epoch en segundos". `x` minúscula = milliseconds (no sirve aquí).
+
+Expresión final correcta: `Current date/time :formatted as X :converted to number` (donde verás literalmente la letra `X`, no un número).
+
+**Validación:** en `bridge_audit_log` el primer test pasa, los siguientes a >5 min devuelven `stale_timestamp` con timestamps que no avanzan. Esa secuencia (1 success + cascada de stale_timestamp) es la firma del bug.
+
 ## Troubleshooting
 
 **Genéricos:**
@@ -429,6 +467,8 @@ Después de Initialize, los valores del Body parameter son **solo placeholders**
 | `failure_reason='missing_fields'` | Body sin `email` / `bubble_id` / `timestamp` (o tipos incorrectos). | Verificar los Body parameters del API Connector. `timestamp` debe ser numérico (Bubble nativo: `Current date/time:formatted as X:converted to number`). |
 | `failure_reason='invalid_json'` con `Got it` modal sin info útil | Body del POST no es JSON parseable. Causa habitual: comilla extra `"` pegada por copy-paste al final del value de algún Body parameter del API Connector. El template `"email": "<email>"` se serializa como `"email": "valor""` → JSON inválido. | Click en cada value de los Body parameters, cursor al final, borrar caracteres extra. Si reaparece, desplegar Edge Function con `debug` echo temporal (ver L3) para ver `body_sample` + `parse_err`. |
 | Bubble "Unable to initialize" 403 forbidden sin guardar la API Connector call | Bubble requiere respuesta 2xx en Initialize para detectar response schema. La Edge Function rechaza si el bearer está mal o el timestamp es stale. | Hardcodear temporalmente values válidos + timestamp fresco (`date +%s`) en los Body parameters → Initialize dentro de la ventana 5 min → Bubble guarda. Detalle en 5.1. |
+| `success=true` en `bridge_audit_log` pero `next_path` viene con `?id=` vacío y/o `bubble_id` coincide con un Initialize value antiguo (típicamente `test`) | El dynamic data del Body parameter resuelve vacío en runtime (típicamente porque `Current Page's Clientes` no resuelve — el cliente vive en un Group, no en el Page) y Bubble usa el Initialize value como fallback silencioso. | (1) En el composer del workflow, sustituir `Current Page's X` por `<Group's name>'s X` (L5). (2) Vaciar todos los Initialize values del API Connector para que la próxima caída a vacío devuelva `missing_fields` en vez de `test` (L6). |
+| `failure_reason='stale_timestamp'` reproducible solo a partir del minuto 6 del primer click | Format custom de fecha mal configurado: pegaste un unix epoch literal (ej. `1779784625`) como template Moment.js en vez del token `X`. Bubble devuelve siempre el mismo timestamp en cada ejecución. | Editar `(body) timestamp` del workflow → Date Formatting → Format type Custom → Format **`X`** (una sola letra mayúscula). Detalle en L7. |
 
 **Modo HMAC (legacy):**
 
