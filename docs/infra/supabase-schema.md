@@ -476,6 +476,17 @@ Misma allowlist. Devuelve `to_jsonb(c.*)` del cliente con TODAS las columnas de 
 
 ⚠️ **Allowlist en 9 sitios ahora** (frontend `playbook`/`fichas-de-producto`/`ficha-cliente` + RLS `playbook_progreso`/`playbook_task_feedback`/`playbook_cliente_servicios` + RPCs `playbook_cliente_detalle`/`ficha_cliente_listar`/`ficha_cliente_get`/`catalogos_cliente_get` + Edge Function `bridge_from_portal` + policy `admins_read_audit` de `bridge_audit_log`). Si añades editor: actualizar todos. Casuísticas + disponibilidades tienen sus propios sets independientes.
 
+#### `work_current_user_profile()` — perfil del user logueado (avatar shell)
+
+Devuelve `(bubble_id, nombre, email, color)` del row de `bub_user` cuyo `LOWER(email) = LOWER(auth.email())`. `STABLE SECURITY DEFINER` + `GRANT EXECUTE TO authenticated`. Creada 2026-05-26 (migration `work_current_user_profile`).
+
+```sql
+RETURNS TABLE(bubble_id text, nombre text, email text, color text)
+LANGUAGE sql STABLE SECURITY DEFINER
+```
+
+No comprueba allowlist por diseño: cualquier `authenticated` puede leer **su propio** row (la RPC ya filtra por `auth.email()`, así que no hay enumeración). Consumida por el shell unificado portal del header de `work.thenucleo.com/ficha-cliente/` (y luego `/estrategia/`, `/timeline/`) para pintar el avatar 40×40 radius 100% con la columna `bub_user.color` que Bubble asigna a cada usuario — mismo color que se ve en el avatar del portal. Fallback `#6b7280` si la columna es NULL/vacía. SECURITY DEFINER necesario porque `bub_user` tiene RLS y los admins work no tienen policy de lectura ahí (mismo patrón que `disponibilidad_miembros()` y `ficha_cliente_*`).
+
 ### Pipelines y Campañas — 5 tablas nativas (F2, desde 2026-05-24)
 
 Backend del módulo "Pipelines y Campañas" de `work.thenucleo.com/ficha-cliente/` (frontend F1 vivo desde 2026-05-23 con SEED hardcoded en `ficha-cliente/index.html:1677-2100`). Visión operacional completa en [[../portal/ficha-cliente-operativa]] (modelo PxCx, 7 reglas, casuísticas). Migration `ficha_cliente_pipelines_f2_schema`, también vive en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql` del repo landing.

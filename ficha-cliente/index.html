@@ -188,11 +188,11 @@
   .ph-icon-btn svg { width: 18px; height: 18px; stroke-width: 1.75; }
 
   .ph-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: var(--ps-avatar-bg);
     color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
     user-select: none; cursor: default;
     flex-shrink: 0;
   }
@@ -5939,25 +5939,44 @@ const SCOPE_GUIDE = (() => {
   (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(e => { if (e.matches) close(); });
 })();
 
-// ─── Portal shell: avatar con iniciales del usuario ─
-(function initUserAvatar() {
+// ─── Portal shell: avatar con iniciales + color del usuario (desde bub_user) ─
+async function initUserAvatar() {
   const el = document.getElementById('user-avatar');
   if (!el) return;
   const u = currentUser();
   if (!u) { el.textContent = '·'; return; }
-  const name = (u.user_metadata?.full_name || u.user_metadata?.name || '').trim();
-  let initials;
-  if (name) {
-    const parts = name.split(/\s+/).filter(Boolean);
-    initials = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
-  } else {
+
+  // 1) Iniciales fallback inmediato desde la sesión local (sin esperar RPC)
+  const initialsFromSession = () => {
+    const name = (u.user_metadata?.full_name || u.user_metadata?.name || '').trim();
+    if (name) {
+      const parts = name.split(/\s+/).filter(Boolean);
+      return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+    }
     const local = (u.email || '').split('@')[0] || '';
     const parts = local.split(/[._-]+/).filter(Boolean);
-    initials = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
-  }
-  el.textContent = (initials || '·').toUpperCase().slice(0, 2);
+    return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+  };
+  el.textContent = (initialsFromSession() || '·').toUpperCase().slice(0, 2);
   el.setAttribute('title', u.email || '');
-})();
+
+  // 2) RPC para color real + nombre canónico desde bub_user
+  try {
+    const rows = await rpc('work_current_user_profile');
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    if (row?.color) el.style.background = row.color;
+    if (row?.nombre) {
+      const parts = row.nombre.trim().split(/\s+/).filter(Boolean);
+      const ini = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+      if (ini) el.textContent = ini.toUpperCase().slice(0, 2);
+      el.setAttribute('title', row.nombre + (row.email ? ` · ${row.email}` : ''));
+    }
+  } catch (e) {
+    // Si el usuario no está en bub_user (caso raro), nos quedamos con el fallback rojo
+    console.warn('[ficha-cliente] work_current_user_profile failed', e);
+  }
+}
+initUserAvatar();
 
 // ─── Logout (vive en el sidebar footer) ────────────
 document.getElementById('logout-btn')?.addEventListener('click', () => {
