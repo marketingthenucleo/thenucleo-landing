@@ -7,3 +7,8 @@ node_modules/
 .cache/
 __pycache__/
 *.pyc
+
+# Obsidian vault config: solo trackeamos docs/.obsidian/ (vault canonico).
+# Si Obsidian se abre por error en repo root, auto-genera .obsidian/ aqui
+# con defaults vacios — no debe entrar a git.
+/.obsidian/
