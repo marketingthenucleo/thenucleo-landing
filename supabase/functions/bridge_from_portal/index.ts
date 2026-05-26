@@ -1,17 +1,29 @@
-// Bridge Portal Bubble → Work (/ficha-cliente/) via Supabase magic link.
+// Bridge Portal Bubble → Work (/ficha-cliente/, /estrategia/, /timeline/, …) via Supabase magic link.
 //
-// Bubble calls this Edge Function with HMAC-signed payload. If valid, we
-// generate a single-use magic link for the requesting admin email and
-// return the action_link. Bubble redirects the user there; Supabase
-// consumes the link, drops the JWT in localStorage on work.thenucleo.com,
-// and the user lands at /ficha-cliente/?id=<bubble_id> already signed in.
+// Bubble calls this Edge Function. Si la auth pasa, generamos un magic link
+// single-use para el email del admin y devolvemos action_link. Bubble redirige
+// al user al magic link; Supabase lo consume y aterriza al user en
+// /comunidad/entrar/?next=<next_path> con el JWT en localStorage.
 //
-// Config in Supabase Dashboard → Edge Functions → bridge_from_portal:
-//   - verify_jwt: false       (caller is Bubble, auth is via HMAC)
-//   - Secret BRIDGE_SHARED_SECRET (openssl rand -hex 32, mirrored in Bubble)
-//   - Secret SUPABASE_SERVICE_ROLE_KEY (already provisioned by Supabase)
+// Dos modos de autenticación soportados (ambos basados en el mismo
+// BRIDGE_SHARED_SECRET — sin claves separadas):
 //
-// See docs/work/bridge-portal-ficha.md for arch + rotation steps.
+//   1. BEARER (recomendado, sin crypto en Bubble — desde 2026-05-26).
+//      Header: `Authorization: Bearer <BRIDGE_SHARED_SECRET>`
+//      Body:   { email, bubble_id, timestamp, next_path }
+//
+//   2. HMAC (legacy — requiere Bubble Toolbox Server Script).
+//      Body:   { email, bubble_id, timestamp, signature, next_path }
+//      signature = HMAC-SHA256(BRIDGE_SHARED_SECRET, `${email}|${bubble_id}|${timestamp}`)
+//
+// Replay protection idéntica en ambos modos via ventana timestamp ±5 min.
+//
+// Config en Supabase Dashboard → Edge Functions → bridge_from_portal:
+//   - verify_jwt: false       (el caller es Bubble, no Supabase Auth)
+//   - Secret BRIDGE_SHARED_SECRET (openssl rand -hex 32, mirrored en Bubble)
+//   - Secret SUPABASE_SERVICE_ROLE_KEY (provisionado automáticamente por Supabase)
+//
+// Setup Bubble + rotación + troubleshooting: docs/work/bridge-portal-ficha.md
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -60,11 +72,22 @@ async function hmacSha256Hex(secret: string, message: string): Promise<string> {
     .join("");
 }
 
-function timingSafeEqualHex(a: string, b: string): boolean {
+function timingSafeEqualString(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
+}
+
+// Bubble manda timestamp como number (Toolbox crypto path) o como numeric
+// string (path bearer con `Current date/time:formatted as X`). Aceptamos ambos.
+function parseTimestamp(raw: unknown): number {
+  if (typeof raw === "number") return raw;
+  if (typeof raw === "string") {
+    const n = Number(raw.trim());
+    return Number.isFinite(n) ? n : NaN;
+  }
+  return NaN;
 }
 
 type AuditEntry = {
@@ -119,19 +142,32 @@ serve(async (req) => {
 
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const bubble_id = typeof body.bubble_id === "string" ? body.bubble_id.trim() : "";
-  const timestamp = typeof body.timestamp === "number" ? body.timestamp : NaN;
+  const timestamp = parseTimestamp(body.timestamp);
   const signature = typeof body.signature === "string" ? body.signature.trim().toLowerCase() : "";
   const rawNextPath = typeof body.next_path === "string" ? body.next_path.trim() : "";
 
-  if (!email || !bubble_id || !Number.isFinite(timestamp) || !signature) {
+  if (!email || !bubble_id || !Number.isFinite(timestamp)) {
     await logAudit({ email, bubble_id, ip, user_agent: ua, success: false, failure_reason: "missing_fields" });
     return forbidden();
   }
 
-  const expected = await hmacSha256Hex(BRIDGE_SHARED_SECRET, `${email}|${bubble_id}|${timestamp}`);
-  if (!timingSafeEqualHex(expected, signature)) {
-    await logAudit({ email, bubble_id, ip, user_agent: ua, success: false, failure_reason: "bad_signature" });
-    return forbidden();
+  // Auth: si llega `signature` en body → modo HMAC. Si no → modo bearer
+  // (Authorization header). Cualquier otra cosa → reject. Ambos modos prueban
+  // posesión del MISMO BRIDGE_SHARED_SECRET; la replay window es idéntica.
+  if (signature) {
+    const expected = await hmacSha256Hex(BRIDGE_SHARED_SECRET, `${email}|${bubble_id}|${timestamp}`);
+    if (!timingSafeEqualString(expected, signature)) {
+      await logAudit({ email, bubble_id, ip, user_agent: ua, success: false, failure_reason: "bad_signature" });
+      return forbidden();
+    }
+  } else {
+    const authHeader = req.headers.get("authorization") ?? "";
+    const m = authHeader.match(/^Bearer\s+(.+)$/i);
+    const token = m ? m[1].trim() : "";
+    if (!token || !timingSafeEqualString(token, BRIDGE_SHARED_SECRET)) {
+      await logAudit({ email, bubble_id, ip, user_agent: ua, success: false, failure_reason: "bad_bearer" });
+      return forbidden();
+    }
   }
 
   const now = Math.floor(Date.now() / 1000);
