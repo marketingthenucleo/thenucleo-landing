@@ -2,7 +2,7 @@
 title: Bridge Portal Bubble → Ficha de Cliente (Work)
 dominio: ficha-cliente
 estado: vivo
-actualizado: 2026-05-25
+actualizado: 2026-05-26
 tags: [ficha-cliente, work, portal, bubble, supabase, auth, edge-function, sso, magic-link]
 ---
 
@@ -91,18 +91,14 @@ https://work.thenucleo.com/comunidad/entrar/**
 Sin esto, el magic link redirige al Site URL por defecto y se pierde el deep-link.
 
 ### 5. Configurar Bubble portal
-- Instalar plugin **Toolbox** (gratis, para `Server Script` con Node.js — Bubble nativo no expone `crypto`).
-- Crear backend workflow `bridge_to_work_ficha`:
-  - Inputs: `bubble_id` (text) **+ `next_path` (text, opcional)** — el segundo es el destino dentro de Work; sin pasarlo cae al fallback `/ficha-cliente/?id=<bubble_id>` (retrocompat con el botón "Ver ficha en Work" original).
-  - Step Server Script (genera timestamp + firma en un único nodo para evitar desfases ms vs s):
-    ```js
-    const crypto = require('crypto');
-    const timestamp = Math.floor(Date.now() / 1000);
-    const msg = `${properties.email}|${properties.bubble_id}|${timestamp}`;
-    const signature = crypto.createHmac('sha256', properties.secret).update(msg).digest('hex');
-    return { timestamp: timestamp, signature: signature };
-    ```
-  - Step API Connector POST a `https://cbixhqjsnpuhcrcjppah.supabase.co/functions/v1/bridge_from_portal` con `Content-Type: application/json`, `apikey: <SUPABASE_ANON_KEY>`, body:
+
+#### 5.1 Prerequisites Bubble
+- Instalar plugin **Toolbox** (gratis, expone `Server Script` con Node.js — Bubble nativo no incluye `crypto`).
+- **Option Set `Config`** con un campo `secret` (text) y **una opción** (p.ej. `bridge`) que tenga ese campo relleno con el shared secret hex. Decisión 2026-05-26: se eligió Option Set en lugar de App Constant porque es accesible desde dynamic data en cualquier page workflow sin permisos extra.
+- **API Connector call `Config - Supabase Bridge`** (Action, no Data source) inicializada contra `https://cbixhqjsnpuhcrcjppah.supabase.co/functions/v1/bridge_from_portal`:
+  - Method: POST
+  - Headers: `Content-Type: application/json`, `apikey: <SUPABASE_ANON_KEY>`
+  - Body (JSON):
     ```json
     {
       "email": "<email>",
@@ -112,15 +108,92 @@ Sin esto, el magic link redirige al Site URL por defecto y se pierde el deep-lin
       "next_path": "<next_path>"
     }
     ```
-    (Si `next_path` no está, mándalo como string vacío o no incluyas la clave — la Edge Function trata cualquiera de los dos casos como "usar fallback".)
-  - Step "Go to external website" → `Result of API Call's action_link`.
-- **Botones recomendados en el submenú Cliente del portal Bubble** (cada uno dispara el mismo workflow con un `next_path` distinto):
-  - **"Ficha (legacy)"** → sin `next_path` (o cadena vacía) → cae al fallback `/ficha-cliente/?id=<bubble_id>`. Sigue siendo útil mientras `/ficha-cliente/` no se elimine.
-  - **"Estrategia"** → `next_path = "/estrategia/?id=<Current Cliente's bubble_id>"`
-  - **"Timeline"** → `next_path = "/timeline/?id=<Current Cliente's bubble_id>"`
-  - (Futuro: **"Catálogo"** → `/catalogo/?id=...`, **"Servicios"** → `/servicios/?id=...`)
+  - Response: la call expone `action_link` (string) del JSON devuelto por la Edge Function.
 
-> ⚠️ La Edge Function valida `next_path` contra una **allowlist** hardcoded: `/ficha-cliente/`, `/estrategia/`, `/timeline/`, `/catalogo/`, `/servicios/`. Cualquier path fuera de la lista devuelve 403 con `failure_reason='next_path_not_allowed'` en `bridge_audit_log`. Esto es anti open-redirect: aunque Bubble se comprometa, no puede mandar magic links a `/evil/`.
+#### 5.2 Patrón inline por botón (recomendado, en uso desde 2026-05-26)
+Cada botón del portal lleva su propio page workflow con 3 steps. **No** se usa backend workflow — se descartó porque para que un page workflow llame a un backend workflow y reciba un return value hay que crear otra API Connector call apuntando al propio Bubble endpoint, manejar la cookie de sesión, parsear la respuesta wrapped… 30 min más vs los 5 min del inline. La seguridad es la misma (Server Script de Toolbox corre server-side en Bubble, no en el browser).
+
+Receta del **page workflow** (replicar en cada botón cambiando solo el `next_path`):
+
+**Step 1 — Server Script (Toolbox plugin):**
+```js
+const crypto = require('crypto');
+const ts = Math.floor(Date.now() / 1000);
+const msg = properties.email + '|' + properties.bubble_id + '|' + ts;
+output1 = ts;
+output2 = crypto.createHmac('sha256', properties.secret).update(msg).digest('hex');
+```
+
+⚠️ **Sin `return`. Sin `const` delante de `output1`/`output2`.** Toolbox lee variables globales (ver "Gotchas Toolbox" abajo).
+
+- **Keys and values** (las tres son obligatorias — si falta una el script recibe `undefined`):
+
+  | key | value (dynamic data Bubble) |
+  |---|---|
+  | `email` | `Current User's email` |
+  | `bubble_id` | `Current Cliente's bubble_id` (ajustar al data source real de la página: Parent group's Cliente, Current Page Cliente, etc.) |
+  | `secret` | `Get an option Config (bridge)'s secret` |
+
+- **Multiple Outputs: ON** · `output1: Number` (timestamp unix) · `output2: Text` (firma hex).
+- Toggles: async OFF, ignore errors OFF, log errors ON.
+
+**Step 2 — API Connector call `Config - Supabase Bridge`:**
+
+| Body field | Value |
+|---|---|
+| `email` | `Current User's email` |
+| `bubble_id` | `Current Cliente's bubble_id` (mismo que Step 1) |
+| `timestamp` | `Result of step 1's output1` |
+| `signature` | `Result of step 1's output2` |
+| `next_path` | depende del botón (ver tabla 5.3) — composer Bubble: texto literal `/estrategia/?id=` + dynamic data `Current Cliente's bubble_id` |
+
+**Step 3 — Navigation → "Open an external website":**
+- Destination: `Result of step 2 (Config - Supabase Bridge)'s action_link`
+- Open in a new tab: ❌ OFF (mismo tab, transición fluida ~300ms).
+
+#### 5.3 next_path por botón
+3 botones en el submenú Cliente del portal Bubble. Mismo workflow, distinto `next_path`:
+
+| Botón | `next_path` en Step 2 | Allowlist Edge Function |
+|---|---|---|
+| **Estrategia** | `/estrategia/?id=` + `Current Cliente's bubble_id` | ✅ |
+| **Timeline** | `/timeline/?id=` + `Current Cliente's bubble_id` | ✅ |
+| **Ficha (legacy)** | vacío (no incluir la key) → fallback `/ficha-cliente/?id=<bubble_id>` | ✅ |
+
+> ⚠️ La Edge Function valida `next_path` contra una **allowlist** hardcoded: `/ficha-cliente/`, `/estrategia/`, `/timeline/`, `/catalogo/`, `/servicios/`. Fuera de esa lista → 403 con `failure_reason='next_path_not_allowed'` en `bridge_audit_log`. Anti open-redirect: aunque Bubble se comprometa, no puede generar magic links a `/evil/`. Para añadir paths (Catálogo, Servicios, …) tocar el array `ALLOWED_NEXT_PATHS` en `supabase/functions/bridge_from_portal/index.ts` y re-deploy.
+
+#### 5.4 Alternativa archivada: backend workflow
+El diseño original era 1 botón "Ver ficha en Work" disparando un **backend workflow** `bridge_to_work_ficha` (API Event con auth "This user" + Detect data) con los mismos 3 steps internos. Se descartó 2026-05-26 cuando se decidió tener 3 botones. La receta detallada vivió en este doc hasta el commit anterior — si en algún momento se vuelve a centralizar lógica (Custom Event reusable o backend workflow llamado por API), reusar:
+- Server Script idéntico al Step 1 inline.
+- API Connector call `Config - Supabase Bridge` igual.
+- Auth del API Event = "This user" (no "None required") para que solo users autenticados puedan invocar.
+
+### 5.bis Gotchas Bubble Toolbox `Server Script`
+
+Aprendidos a base de errores 2026-05-26. Cuando reuses el patrón en otros workflows que necesiten `crypto`:
+
+1. **`return` NO devuelve valores.** El script se evalúa como bloque, no como función. Para exponer valores al siguiente step, **asignar a variables globales `output1`, `output2`, …** sin `const`/`let` ni `var`. Toolbox las lee del scope global y las mapea a los outputs declarados en el panel del action.
+
+   ```js
+   //  ❌ NO HACE NADA
+   return [ts, sig];
+
+   //  ❌ TAMPOCO — const las hace locales al bloque
+   const output1 = ts;
+   const output2 = sig;
+
+   //  ✅ CORRECTO
+   output1 = ts;
+   output2 = sig;
+   ```
+
+2. **`properties.<key>` solo existe si el par Key/Value está rellenado completamente** en el panel "Keys and values" del action. Si dejas el value vacío o el dynamic data no resuelve (p.ej. Option Set sin opción seleccionada), llega `undefined` y `crypto.createHmac` revienta con `TypeError [ERR_INVALID_ARG_TYPE]: The "key" argument must be of type string …`.
+
+3. **Multiple Outputs OFF por defecto** — si no lo enciendes, los `output1`/`output2` se ignoran. Encenderlo y declarar el tipo de cada output (Number / Text / etc.) antes de mapear al siguiente step.
+
+4. **`require('crypto')` funciona** (es Node nativo) pero **`require('https')` y `require('http')` están bloqueados** por la sandbox del task runner. Si necesitas HTTP saliente desde Toolbox, usar la API Connector como step separado, no `https` dentro del Server Script.
+
+5. **Dynamic data del Option Set: `Get an option <SetName> (<OpcionEspecifica>)'s <campo>`** — no basta con elegir el Option Set, hay que **elegir una opción concreta** dentro del set. Si pulsas solo "Config" sin pickar la opción, Bubble devuelve el set entero (no el field) y el value llega como objeto serializado, no como string → HMAC falla.
 
 ## Seguridad
 
@@ -179,6 +252,49 @@ Indicadores de problema:
 - `success=false` con `failure_reason='not_in_allowlist'` repetido para mismo email → un admin sacado del allowlist sigue intentando usar el bridge (limpiarle el botón Bubble o avisarle).
 - Volumen anómalo (>50 success/h por mismo email) → posible Bubble comprometido. Rotar secret.
 
+## Estado actual del rollout (2026-05-26)
+
+Sesión recuperada parcialmente tras un crash de Claude Code (error 400 `text content blocks must be non-empty`). Estado consolidado del bridge:
+
+### Lado Supabase ✅ (cerrado 2026-05-25)
+- Edge Function `bridge_from_portal` desplegada (version 1, ACTIVE, `verify_jwt: false`).
+- Tabla `bridge_audit_log` + RLS + índices aplicados via migration `20260525_bridge_portal_audit_log.sql`.
+- `BRIDGE_SHARED_SECRET` configurado en Edge Function Secrets (hex 256 bits — valor NO se commitea aquí; vive en Supabase Dashboard y en el Option Set Bubble).
+- Redirect URL `https://work.thenucleo.com/comunidad/entrar/**` añadido a Supabase Auth → URL Configuration.
+- Patch `assets/js/comunidad-entrar.js` mergeado a main (oculta captcha cuando llega `#access_token=` en hash).
+
+### Lado Bubble ⚠️ (en curso 2026-05-26)
+- ✅ Option Set `Config` con campo `secret` creado, opción `bridge` con el hex pegado.
+- ✅ API Connector call `Config - Supabase Bridge` inicializada y devolviendo `action_link`.
+- ✅ Backend workflow `bridge_to_work_ficha` **creado y luego borrado** (2026-05-26) — se cambió a patrón inline.
+- ✅ Botón **Estrategia** montado con 3 steps inline + deploy LIVE.
+- ✅ Botón **Timeline** montado con 3 steps inline + deploy LIVE.
+- ⏳ Botón **Ficha (legacy)** pendiente de cablear.
+
+### Bug abierto al cierre de sesión 2026-05-26
+Al pulsar **Estrategia** desde portal LIVE el Server Script revienta con:
+
+```
+TypeError [ERR_INVALID_ARG_TYPE]: The "key" argument must be of type string or
+an instance of ArrayBuffer, Buffer, TypedArray, DataView, KeyObject, or CryptoKey.
+Received undefined
+    at prepareSecretKey (node:internal/crypto/keys:684:11)
+    at new Hmac (node:internal/crypto/hash:166:9)
+    at Object.createHmac (node:crypto:163:10)
+```
+
+`properties.secret` llega `undefined`. Causa más probable (a verificar en la siguiente sesión):
+- El value del key `secret` en "Keys and values" del Step 1 está vacío o el dynamic data del Option Set no resuelve.
+- La opción `bridge` del Option Set Config existe pero el field `secret` quedó sin valor en el editor del Option Set.
+- El composer apunta al Option Set entero (`Get option Config`) en lugar de a una opción específica con el field (`Get an option Config (bridge)'s secret`).
+
+**Diagnóstico rápido para reanudar:**
+1. Hardcodear el secret como texto plano en el value del key `secret` del Step 1 → Deploy → click "Estrategia". Si funciona, el problema era el dynamic data.
+2. Si sigue fallando con el mismo error, screenshot del panel "Keys and values" del Step 1 con los 3 pares visibles.
+3. Una vez funcione: rehacer el value como `Get an option Config (bridge)'s secret` y verificar.
+
+Cuando esté verde: replicar el patrón en el botón **Ficha (legacy)** (sin `next_path` para que caiga al fallback) y cerrar el rollout.
+
 ## Troubleshooting
 
 | Síntoma | Causa probable | Fix |
@@ -188,6 +304,10 @@ Indicadores de problema:
 | `/ficha-cliente/` muestra "cliente no encontrado" | `bubble_id` no existe en `bub_clientes` o el cliente está `estado='No Activo'`. | Verificar el bubble_id en el portal. |
 | Captcha "No soy un robot" parpadea al llegar de Bubble | El parche `arrivingFromMagicLink` no se aplicó. | Verificar `assets/js/comunidad-entrar.js` líneas iniciales. |
 | `bridge_audit_log` vacío tras llamadas | Falta el `SUPABASE_SERVICE_ROLE_KEY` en la Edge Function o RLS bloquea el insert. | Revisar logs Edge Function en Supabase Dashboard. |
+| `TypeError [ERR_INVALID_ARG_TYPE]: The "key" argument must be of type string … Received undefined` al pulsar el botón | `properties.secret` (o `email`/`bubble_id`) llega `undefined` al Server Script. | Verificar los 3 pares Key/Value del Step 1 — value relleno con dynamic data válido. Para `secret`: composer debe leer `Get an option Config (bridge)'s secret`, no `Get option Config`. Verificar que la opción `bridge` existe en el Option Set y tiene el hex en el field `secret`. |
+| `bad_signature` repetido en `bridge_audit_log` | Secret de Bubble (Option Set) ≠ secret de Supabase Edge Function. | Comparar letra por letra. Si rotaste, hacerlo en paralelo en ambos lados (ver "Rotación"). |
+| Bubble alerta "Plugin action Server script error" sin más info | Toolbox no propaga el stack al UI por defecto. | Habilitar "log errors" en el toggle del action + mirar Bubble Server Logs (Logs tab → Server logs). |
+| Step 1 OK pero Step 2 (API Connector) no recibe `timestamp`/`signature` | Toolbox tiene "Multiple Outputs" OFF, o `output1`/`output2` se asignaron con `const`. | Encender Multiple Outputs + declarar tipos (Number/Text) + reescribir como `output1 = …; output2 = …;` sin `const`/`let`/`var`. |
 
 ## Referencias
 

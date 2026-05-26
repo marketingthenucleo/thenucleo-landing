@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-25
+actualizado: 2026-05-26
 tags:
   - log
   - historial
@@ -66,6 +66,24 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-26 [PORTAL][WORK][FEATURE] — Bridge Portal→Work: rollout Bubble inline (Estrategia + Timeline) + gotchas Toolbox
+
+- **Área:** Bubble portal (3 page workflows nuevos) + doc `docs/work/bridge-portal-ficha.md` (revisión mayor).
+- **Qué:** se montó la mitad cliente del bridge HMAC + magic link sobre la Edge Function `bridge_from_portal` ya desplegada el 2026-05-25.
+  - Option Set Bubble `Config` con field `secret` (opción `bridge`) — sustituye la idea original de App Constant privada (más limpio, accesible por dynamic data en cualquier page workflow).
+  - API Connector call `Config - Supabase Bridge` (Action POST a la Edge Function) inicializada y devolviendo `action_link`.
+  - Backend workflow `bridge_to_work_ficha` montado y luego borrado: se cambió a **patrón inline por botón** porque llamar a un backend workflow Bubble desde un page workflow y recibir return value requiere otra API Connector call apuntando al propio Bubble endpoint + cookie de sesión + parseo wrapped — 30 min vs 5 min del inline, misma seguridad (Server Script Toolbox corre server-side).
+  - Botones **Estrategia** y **Timeline** montados con 3 steps inline cada uno (Server Script Toolbox → API Connector → Navigate). Deploy LIVE.
+  - Botón **Ficha (legacy)** pendiente — sin `next_path` para que caiga al fallback.
+- **Por qué:** abrir `/estrategia/`, `/timeline/` (Sprint 1 migración) y `/ficha-cliente/` desde el portal sin que el admin pase por Google OAuth otra vez. Patrón Linear/Vercel/Notion (~300ms, 1 redirect visible).
+- **Gotchas Bubble Toolbox `Server Script` descubiertos en sesión:**
+  - **`return` NO devuelve valores.** El script se evalúa como bloque, no función. Hay que asignar a globals `output1 = …; output2 = …;` **sin `const`/`let`/`var`** + activar "Multiple Outputs" + declarar tipos (Number/Text).
+  - `properties.<key>` llega `undefined` si el value del Key/Value está vacío o el dynamic data del Option Set no resuelve → `crypto.createHmac` revienta con `TypeError [ERR_INVALID_ARG_TYPE]`. Dynamic data correcta para el secret: `Get an option Config (bridge)'s secret` (pickar la opción, no solo el set).
+  - `require('crypto')` funciona, `require('https')`/`require('http')` están bloqueados por la sandbox del task runner.
+- **Bug abierto al cierre de sesión:** click en "Estrategia" sigue devolviendo `TypeError ... Received undefined` en `properties.secret`. Próximo paso: hardcodear el secret en el value del Key/Value del Step 1 para confirmar si el problema es el dynamic data del Option Set o algo más. Detalle de diagnóstico en `docs/work/bridge-portal-ficha.md#estado-actual-del-rollout-2026-05-26`.
+- **Impacto:** lado Supabase intacto (Edge Function v1 + tabla `bridge_audit_log` siguen como el 2026-05-25). Lado Bubble queda con 2 botones LIVE que aún no completan el flujo por el bug del secret. Cuando esté verde, replicar en "Ficha (legacy)" y cerrar rollout.
+- **Refs:** `docs/work/bridge-portal-ficha.md` (revisión mayor — secciones 5.1/5.2/5.3/5.4 + gotchas + "Estado actual" + 4 filas nuevas en Troubleshooting). Sesión Claude perdida por error 400 `text content blocks must be non-empty`; conversación recuperada vía screenshot del usuario + dump local (`Conversacion_caida_del_claude.md`).
 
 ## 2026-05-25 [WORK][FEATURE] — Ficha cliente: F2.8 panel contextual "Estás en…" con dismiss progresivo
 
