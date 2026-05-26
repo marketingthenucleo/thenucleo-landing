@@ -104,7 +104,7 @@ La carpeta `docs/` es una vault de Obsidian con el plugin **Obsidian Git** insta
 
 **Doc junto a código.** Cualquier cambio funcional en un archivo de este repo se propaga en el mismo PR a su `.md` de referencia:
 
-- Cambio en `ficha-cliente/index.html` → revisar `docs/portal/secciones-app.md` sección Ficha Cliente.
+- Cambio en `ficha-cliente/index.html` → revisar `docs/work/ficha-cliente.md` (canónico) + `docs/portal/secciones-app.md` sección Ficha Cliente + `docs/portal/ficha-cliente.md` si toca Pipelines PxCx.
 - Cambio en RPC Supabase → actualizar `docs/infra/supabase-schema.md`.
 - Cambio en workflow n8n → actualizar `docs/infra/n8n-workflows.md`.
 - Cambio en `playbook/index.html` → revisar `docs/work/playbook.md`.
@@ -321,6 +321,26 @@ Métricas: FCP 0.7s ✅ · LCP 0.8s ✅ · CLS 0.003 ✅ · TBT **980ms** ⚠️
 - **Refactor:** `.svc-group*` → `.coll-group*` (mismas reglas CSS, nombre genérico). Servicios mantiene su atributo `[data-toggle]` con estado propio (allOpen, openCats, búsqueda); Datos/Catálogos usan `[data-coll-toggle]` con handler global (click + Enter/Space, `aria-expanded`).
 - **Helper JS:** `renderDatosSection(listId, countId, fields)` reemplaza el `.innerHTML = [...].join('')` por sección. Pinta los rows y actualiza el badge.
 - Commit `94fce60` (PR-less, merge directo fast-forward a main).
+
+## Pendientes backend `/ficha-cliente/` — F2 (auditoría 2026-05-24)
+
+Estado por panel hoy:
+- **Datos** → 🟢 real (parcial). 5 grupos cableados a `bub_clientes` vía RPC `ficha_cliente_get`. MOCK los campos que la tabla no almacena: WhatsApp, Quién gestiona dominio, Instagram, Facebook, y la sección Accesos entera (Meta BM, Google Ads, GHL, DNS) — `ficha-cliente/index.html:1410-1426`.
+- **Pipelines** → 🟡 seed F1 hardcoded de Dra. Neuss en JS. UI completa con drawers Account/PM pero sin persistencia.
+- **Catálogos** → 🔴 mock total (2 secciones `MOCKUP · 1`, sin RPC ni tabla).
+- **Servicios** → 🟢 real desde `playbook_cliente_servicios` (jsonb agregado en `ficha_cliente_get`).
+- **Anomalías** → 🔴 mock plano + chip header hardcoded (`index.html:1392`).
+
+Pendientes para próxima sesión (orden sugerido en [[docs/work/ficha-cliente.md]]):
+1. **Pipelines y Campañas** — crear `cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + RPCs `ficha_pipelines_get` / `ficha_codigos_catalogo` / 4 upserts + webhook n8n para "Crear tareas Notion". Brief de implementación: `docs/portal/ficha-cliente-pipelines-handoff-landing.md`.
+2. **Campos MOCK de Datos** — decidir columnas nuevas en `bub_clientes` (opción A) vs tabla `cliente_accesos` con RLS allowlist (opción B, preferida). Tras decidir: ampliar `ficha_cliente_get`, editor inline con debounce 500ms.
+3. **Catálogos** — definir con Ben qué entidades modelan (sospecha: items del cliente + base de contactos para campañas). Crear schema + RPC.
+4. **Anomalías** — decidir fuente (tareas vencidas, KPIs Ads `loser/fatigue`, silencio GChat, facturación pendiente) y capa (vista materializada vs CRON n8n).
+5. **Modales Pipelines** (`new-trigger`, `new-email`, `np-create`, `nc-save`, `tasks-send` líneas 2172-2378) — hoy solo `showToast(... mockup)`. Se cablean al cerrar el punto 1.
+
+**⚠️ Allowlist:** ya está en 7 sitios (3 frontends admin + 2 RLS + 2 RPCs `ficha_cliente_*`). Cada tabla nueva del módulo sumará uno más. Cuando lleguemos a 10+, migrar a tabla `work_admins(email)` o reutilizar `comunidad_admins`.
+
+Doc canónico: `docs/work/ficha-cliente.md`. Entrada en backlog: `docs/work/deuda-tecnica.md` sección "Backend Ficha Cliente — F2".
 
 ## Reglas de trabajo
 - **NO tocar la arquitectura Three.js / scroll-jacking** sin confirmación explícita

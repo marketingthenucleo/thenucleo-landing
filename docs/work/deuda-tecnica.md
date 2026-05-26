@@ -41,6 +41,19 @@ Inventario de items pendientes del landing y páginas admin (`/playbook/`, `/fic
 
 - **n8n JWT en plano en `~/.claude/settings.json` (PC1 Ben).** 2 entradas `Bash(curl -s -X PUT -H 'X-N8N-API-KEY: eyJ…IsyI' …)` contienen la API key de PROD literal dentro de la allowlist user-level. Riesgo bajo (archivo local), pero la key activa en plano = mal patrón (cualquier backup de `~/.claude/` la lleva). Acción: rotar el token desde n8n UI → reemplazar las 2 entradas por wildcard `Bash(curl * X-N8N-API-KEY: *)` (sin valor literal) o pasar la key a variable de entorno y usar `$N8N_API_KEY` en el curl. Detectado 2026-05-24.
 
+## Backend Ficha Cliente — F2 (auditoría 2026-05-24)
+
+> Nota: parte de este backlog ya está cerrado en main (allowlist ahora en 9 sitios, F2.7 Catálogos cerrada con 18 tablas, F2.8 panel contextual cerrado). Mantenido aquí como histórico del estado al 2026-05-24 + items aún abiertos (Anomalías, modales operativos pendientes de cableado completo).
+
+Inventario detallado en [[ficha-cliente]]. Resumen:
+
+1. **Pipelines y Campañas — cablear a Supabase.** ✅ Cerrado en F2.5d (5 tablas + RPCs). Brief original: [[../portal/ficha-cliente-pipelines-handoff-landing]].
+2. **Campos MOCK del panel Datos.** Sigue abierto — Accesos (Meta BM, Google Ads, GHL, DNS) sigue MOCKUP. Decisión pendiente: columnas en `bub_clientes` vs tabla `cliente_accesos`.
+3. **Catálogos.** ✅ Cerrado en F2.7 (17 tablas `cliente_catalogo_*` + RPC agregadora + Sprint 3 visibilidad por cliente).
+4. **Anomalías — decidir fuente.** Sigue abierto. Hoy mock plano + chip hardcoded.
+5. **Modales operativos en Pipelines.** Parcial — `new-trigger`/`new-email`/`np-create`/`nc-save` cableados; `tasks-send` (webhook n8n) sigue stub.
+6. **Allowlist en 9 sitios hoy** (ampliada desde los 7 originales con catálogos + bridge). Cuando llegue a 12+, migrar a tabla `work_admins(email)`.
+
 ## Cerrados (histórico corto)
 
 - ~~**Self-host Google Fonts.**~~ ✅ Eliminado — todo unificado en NewBlack (self-hosted woff2). Space Grotesk y JetBrains Mono removidos.
