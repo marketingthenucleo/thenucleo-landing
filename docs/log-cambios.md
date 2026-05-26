@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-26 (header /estrategia + /timeline rediseñado)
+actualizado: 2026-05-26 (Acceder dentro del burger móvil en los 4 navs)
 tags:
   - log
   - historial
@@ -66,6 +66,16 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-26 [WORK][REFACTOR] — Botón "Acceder →" movido dentro del burger en mobile (4 navs)
+
+- **Área:** `index.html` (landing inline CSS), `assets/css/comunidad.css`, `_includes/comunidad-base.njk`, `_includes/blog.njk`, `conocimiento-zenyx/index.njk`.
+- **Qué:** en `≤900px` (landing) y `≤860px` (comunidad/blog/conocimiento), `.nav-right > .btn-sm` (el "Acceder →") pasa a `display: none` y se reañade como último item del `#nav-mobile-menu`, separado del resto con un `<div class="menu-divider">` y estilado con clase `.menu-cta` (color accent + `font-weight: 600`). Landing usa amarillo (`var(--yellow)` + `rgba(243,249,89,.10)` hover); comunidad/blog/conocimiento usan verde (`var(--accent-primary)` + `var(--accent-primary-muted)` hover). El JS del burger ya cerraba el menú al click sobre cualquier `<a>` interno (delegate) → sin cambios JS.
+- **Por qué:** auditoría móvil del header mostraba 3 amarillos compitiendo (aro isotipo + Acceder + hero CTA "Empezar ahora"). El segundo le robaba peso al tercero — y el tercero es la CTA que convierte tráfico frío. "Acceder" es para clientes existentes, no para nuevos; meterlo a 1 tap dentro del burger aclara la jerarquía sin penalizar al recurrente. Patrón estándar SaaS mobile (Stripe, Linear, Vercel, Resend).
+- **Skipped intencional:** `_includes/onboarding-base.njk` NO se tocó — su nav no tiene burger ni mobile menu (flujo 1-2-3 step con step-indicator central), no aplica el patrón.
+- **Discrepancia breakpoint detectada (no corregida):** landing usa `≤900px` para ocultar `.nav-links`, comunidad/blog usan `≤860px`. Mantenido cada uno con su breakpoint actual — unificar sería un cambio aparte.
+- **Impacto:** `npm run build` OK (59 archivos en `_site/`). Desktop (>900px / >860px) idéntico al estado previo. La sección "Fix 2026-04-30" del `CLAUDE.md` raíz queda extendida implícitamente (no editada): los 4 navs ya tenían burger, ahora además contienen Acceder.
+- **Refs:** [`index.html:1364`](../index.html) (regla `nav-right > .btn-sm`), [`index.html:239-253`](../index.html) (estilos `.menu-divider` + `.menu-cta`), [`index.html:1762-1763`](../index.html) (link en mobile menu). [`assets/css/comunidad.css:1013-1026`](../assets/css/comunidad.css) (estilos compartidos) + `:1034` (regla mobile). Los 3 `.njk` añaden las 2 mismas líneas al final de su `#nav-mobile-menu`.
 
 ## 2026-05-26 [WORK][FEATURE] — Header rediseñado en `/estrategia/` y `/timeline/` + tabs cross-page
 

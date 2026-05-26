@@ -1011,6 +1011,20 @@ footer {
   outline: none;
 }
 .nav-mobile-menu a.active { color: var(--accent-primary); }
+.nav-mobile-menu .menu-divider {
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--border);
+}
+.nav-mobile-menu a.menu-cta {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+.nav-mobile-menu a.menu-cta:hover,
+.nav-mobile-menu a.menu-cta:focus-visible {
+  background: var(--accent-primary-muted);
+  color: var(--accent-primary);
+}
 
 .nav-mobile-backdrop {
   display: none;
@@ -1030,6 +1044,7 @@ footer {
   .nav-links { display: none; }
   .nav-burger { display: inline-flex; align-items: center; justify-content: center; }
   .nav-mobile-menu { display: block; }
+  .nav-right > .btn-sm { display: none; }
   nav#nav { width: calc(100% - 24px); padding: 12px 18px; top: 10px; }
   nav#nav.scrolled { padding: 10px 18px; top: 8px; }
   .page { padding: 100px 20px 60px; }

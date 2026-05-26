@@ -237,6 +237,20 @@
       color: var(--yellow);
       outline: none;
     }
+    .nav-mobile-menu .menu-divider {
+      height: 1px;
+      margin: 6px 8px;
+      background: rgba(255,255,255,.08);
+    }
+    .nav-mobile-menu a.menu-cta {
+      color: var(--yellow);
+      font-weight: 600;
+    }
+    .nav-mobile-menu a.menu-cta:hover,
+    .nav-mobile-menu a.menu-cta:focus-visible {
+      background: rgba(243,249,89,.10);
+      color: var(--yellow);
+    }
     .nav-mobile-backdrop {
       display: none;
       position: fixed; inset: 0;
@@ -1362,6 +1376,7 @@
       .nav-burger { display: inline-flex; align-items: center; justify-content: center; }
       .nav-mobile-menu { display: block; }
       .nav-logotipo { display: none; }
+      .nav-right > .btn-sm { display: none; }
       .btn-sm { padding: 8px 12px; font-size: 12px; min-height: 44px; } /* WCAG 2.5.5 AA touch target */
       .phase { padding: 0 24px; }
       .cap-grid { grid-template-columns: 1fr 1fr; }
@@ -1758,6 +1773,8 @@
     <a href="#" data-phase="4" role="menuitem">Precios</a>
     <a href="/comunidad/" role="menuitem">Comunidad</a>
     <a href="/conocimiento-zenyx/" role="menuitem">Conocimiento</a>
+    <div class="menu-divider" aria-hidden="true"></div>
+    <a href="https://portal.thenucleo.com/" target="_blank" rel="noopener noreferrer" class="menu-cta" role="menuitem">Acceder &rarr;</a>
   </div>
 
   <!-- Scene overlay -->
