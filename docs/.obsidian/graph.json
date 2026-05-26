@@ -8,56 +8,56 @@
   "collapse-color-groups": false,
   "colorGroups": [
     {
-      "query": "path:\"MOC\" OR path:\"docs/CLAUDE\" OR path:\"docs/README\"",
-      "color": {
-        "a": 1,
-        "rgb": 15067115
-      }
-    },
-    {
-      "query": "path:\"docs/work/README\" OR path:\"docs/portal/README\" OR path:\"docs/infra/README\" OR path:\"docs/portal/integraciones/README\" OR path:\"docs/portal/sectores/README\" OR path:\"docs/addons/README\"",
+      "query": "path:\"work/README\" OR path:\"portal/README\" OR path:\"infra/README\" OR path:\"portal/integraciones/README\" OR path:\"portal/sectores/README\" OR path:\"addons/README\"",
       "color": {
         "a": 1,
         "rgb": 16569165
       }
     },
     {
-      "query": "path:docs/work/",
+      "query": "path:\"MOC\" OR path:\"CLAUDE\" OR path:\"README\"",
       "color": {
         "a": 1,
-        "rgb": 2278750
+        "rgb": 15067115
       }
     },
     {
-      "query": "path:docs/portal/integraciones/",
+      "query": "path:portal/integraciones/",
       "color": {
         "a": 1,
         "rgb": 440020
       }
     },
     {
-      "query": "path:docs/portal/sectores/",
+      "query": "path:portal/sectores/",
       "color": {
         "a": 1,
         "rgb": 15485081
       }
     },
     {
-      "query": "path:docs/portal/",
+      "query": "path:portal/",
       "color": {
         "a": 1,
         "rgb": 9133302
       }
     },
     {
-      "query": "path:docs/infra/",
+      "query": "path:work/",
+      "color": {
+        "a": 1,
+        "rgb": 2278750
+      }
+    },
+    {
+      "query": "path:infra/",
       "color": {
         "a": 1,
         "rgb": 16347926
       }
     },
     {
-      "query": "path:docs/addons/",
+      "query": "path:addons/",
       "color": {
         "a": 1,
         "rgb": 14391156
@@ -74,6 +74,6 @@
   "repelStrength": 14.7916666666667,
   "linkStrength": 0.385416666666667,
   "linkDistance": 348,
-  "scale": 0.5096199459793587,
+  "scale": 0.18493464153987474,
   "close": true
 }
