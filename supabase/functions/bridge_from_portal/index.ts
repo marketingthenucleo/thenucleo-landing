@@ -24,6 +24,17 @@ const ALLOWLIST = new Set([
   "valentina.ramirez@thenucleo.com",
 ]);
 
+// Paths permitidos para next_path (allowlist anti open-redirect).
+// El path entrante debe START WITH uno de estos. Sin esta lista, un atacante
+// con el secret podría generar magic links que redirijan a /evil/?xss=...
+const ALLOWED_NEXT_PATHS = [
+  "/ficha-cliente/",
+  "/estrategia/",
+  "/timeline/",
+  "/catalogo/",
+  "/servicios/",
+];
+
 const TIMESTAMP_WINDOW_SECONDS = 300;
 const WORK_BASE = "https://work.thenucleo.com";
 
@@ -63,6 +74,7 @@ type AuditEntry = {
   user_agent?: string;
   success: boolean;
   failure_reason?: string;
+  next_path?: string;
 };
 
 async function logAudit(entry: AuditEntry): Promise<void> {
@@ -91,7 +103,13 @@ serve(async (req) => {
   const ip = req.headers.get("x-forwarded-for") ?? "";
   const ua = req.headers.get("user-agent") ?? "";
 
-  let body: { email?: unknown; bubble_id?: unknown; timestamp?: unknown; signature?: unknown };
+  let body: {
+    email?: unknown;
+    bubble_id?: unknown;
+    timestamp?: unknown;
+    signature?: unknown;
+    next_path?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -103,6 +121,7 @@ serve(async (req) => {
   const bubble_id = typeof body.bubble_id === "string" ? body.bubble_id.trim() : "";
   const timestamp = typeof body.timestamp === "number" ? body.timestamp : NaN;
   const signature = typeof body.signature === "string" ? body.signature.trim().toLowerCase() : "";
+  const rawNextPath = typeof body.next_path === "string" ? body.next_path.trim() : "";
 
   if (!email || !bubble_id || !Number.isFinite(timestamp) || !signature) {
     await logAudit({ email, bubble_id, ip, user_agent: ua, success: false, failure_reason: "missing_fields" });
@@ -126,8 +145,31 @@ serve(async (req) => {
     return forbidden();
   }
 
-  const next = `/ficha-cliente/?id=${encodeURIComponent(bubble_id)}`;
-  const redirectTo = `${WORK_BASE}/comunidad/entrar/?next=${encodeURIComponent(next)}`;
+  // Resolver next_path: si Bubble lo manda y pasa la allowlist, lo usamos
+  // tal cual. Si no, fallback al destino legacy (retrocompat: botones
+  // viejos en Bubble que sólo conocen la ficha siguen funcionando).
+  let nextPath: string;
+  if (rawNextPath) {
+    const looksSafe = rawNextPath.startsWith("/") && !rawNextPath.startsWith("//");
+    const matchesAllowed = ALLOWED_NEXT_PATHS.some((p) => rawNextPath.startsWith(p));
+    if (!looksSafe || !matchesAllowed) {
+      await logAudit({
+        email,
+        bubble_id,
+        ip,
+        user_agent: ua,
+        success: false,
+        failure_reason: "next_path_not_allowed",
+        next_path: rawNextPath,
+      });
+      return forbidden();
+    }
+    nextPath = rawNextPath;
+  } else {
+    nextPath = `/ficha-cliente/?id=${encodeURIComponent(bubble_id)}`;
+  }
+
+  const redirectTo = `${WORK_BASE}/comunidad/entrar/?next=${encodeURIComponent(nextPath)}`;
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "magiclink",
@@ -144,11 +186,12 @@ serve(async (req) => {
       user_agent: ua,
       success: false,
       failure_reason: `magiclink_failed:${error?.message ?? "no_link"}`,
+      next_path: nextPath,
     });
     return forbidden();
   }
 
-  await logAudit({ email, bubble_id, ip, user_agent: ua, success: true });
+  await logAudit({ email, bubble_id, ip, user_agent: ua, success: true, next_path: nextPath });
 
   return new Response(JSON.stringify({ action_link }), {
     status: 200,

@@ -1174,7 +1174,8 @@ bubble_id       text                              -- bubble_id del cliente targe
 ip              text                              -- x-forwarded-for de la request
 user_agent      text
 success         boolean NOT NULL
-failure_reason  text                              -- invalid_json | missing_fields | bad_signature | stale_timestamp | not_in_allowlist | magiclink_failed:<msg>
+failure_reason  text                              -- invalid_json | missing_fields | bad_signature | stale_timestamp | not_in_allowlist | next_path_not_allowed | magiclink_failed:<msg>
+next_path       text                              -- añadida 2026-05-25 (migration bridge_audit_log_next_path). Path destino del magic link tras /comunidad/entrar/?next=. Allowlist Edge Function: /ficha-cliente/, /estrategia/, /timeline/, /catalogo/, /servicios/. NULL en registros pre-2026-05-25.
 created_at      timestamptz NOT NULL DEFAULT now()
 ```
 
@@ -1186,7 +1187,7 @@ created_at      timestamptz NOT NULL DEFAULT now()
 ### Edge Function `bridge_from_portal` (verify_jwt=false)
 Caller: backend workflow de Bubble (no JWT Supabase). Autenticación por HMAC compartido.
 
-POST `{ email, bubble_id, timestamp: unix_seconds, signature: hex_hmac_sha256 }` →
+POST `{ email, bubble_id, timestamp: unix_seconds, signature: hex_hmac_sha256, next_path?: string }` →
 - Si OK: 200 `{ action_link: '<magic_link_supabase>' }`.
 - Si KO: 403 `{ error: 'forbidden' }` (genérico, sin revelar qué validación falló — el motivo real va a `bridge_audit_log.failure_reason`).
 
@@ -1194,7 +1195,8 @@ POST `{ email, bubble_id, timestamp: unix_seconds, signature: hex_hmac_sha256 }`
 1. HMAC: `HMAC-SHA256(BRIDGE_SHARED_SECRET, "<email>|<bubble_id>|<timestamp>")` comparación timing-safe.
 2. Timestamp: `Math.abs(now - timestamp) <= 300` segundos (anti-replay).
 3. Email: ∈ allowlist hardcoded x5.
-4. Genera magic link: `auth.admin.generateLink({type:'magiclink', email, options:{redirectTo: 'work.thenucleo.com/comunidad/entrar/?next=/ficha-cliente/?id=<bubble_id>'}})`.
+4. **next_path (opcional, desde 2026-05-25):** si Bubble lo manda, debe empezar por `/` (no `//`) Y empezar por uno de la allowlist `[/ficha-cliente/, /estrategia/, /timeline/, /catalogo/, /servicios/]`. Si no cumple → `next_path_not_allowed`. Si Bubble no lo manda → fallback al legacy `/ficha-cliente/?id=<bubble_id>`.
+5. Genera magic link: `auth.admin.generateLink({type:'magiclink', email, options:{redirectTo: 'work.thenucleo.com/comunidad/entrar/?next=<nextPath>'}})`.
 
 **Secrets:**
 - `BRIDGE_SHARED_SECRET` — `openssl rand -hex 32`. Mismo valor en Supabase Dashboard → Edge Functions → Secrets y en Bubble App Constant privada. Rotable simultáneamente en ambos lados.

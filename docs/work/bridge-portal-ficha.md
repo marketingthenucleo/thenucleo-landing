@@ -93,16 +93,34 @@ Sin esto, el magic link redirige al Site URL por defecto y se pierde el deep-lin
 ### 5. Configurar Bubble portal
 - Instalar plugin **Toolbox** (gratis, para `Server Script` con Node.js — Bubble nativo no expone `crypto`).
 - Crear backend workflow `bridge_to_work_ficha`:
-  - Input: `bubble_id` (text).
-  - Step Server Script:
+  - Inputs: `bubble_id` (text) **+ `next_path` (text, opcional)** — el segundo es el destino dentro de Work; sin pasarlo cae al fallback `/ficha-cliente/?id=<bubble_id>` (retrocompat con el botón "Ver ficha en Work" original).
+  - Step Server Script (genera timestamp + firma en un único nodo para evitar desfases ms vs s):
     ```js
     const crypto = require('crypto');
-    const msg = `${properties.email}|${properties.bubble_id}|${properties.timestamp}`;
-    return crypto.createHmac('sha256', properties.secret).update(msg).digest('hex');
+    const timestamp = Math.floor(Date.now() / 1000);
+    const msg = `${properties.email}|${properties.bubble_id}|${timestamp}`;
+    const signature = crypto.createHmac('sha256', properties.secret).update(msg).digest('hex');
+    return { timestamp: timestamp, signature: signature };
     ```
-  - Step API Connector POST a `https://cbixhqjsnpuhcrcjppah.supabase.co/functions/v1/bridge_from_portal` con `Content-Type: application/json`, `apikey: <SUPABASE_ANON_KEY>`, body `{ email, bubble_id, timestamp, signature }`.
+  - Step API Connector POST a `https://cbixhqjsnpuhcrcjppah.supabase.co/functions/v1/bridge_from_portal` con `Content-Type: application/json`, `apikey: <SUPABASE_ANON_KEY>`, body:
+    ```json
+    {
+      "email": "<email>",
+      "bubble_id": "<bubble_id>",
+      "timestamp": <timestamp>,
+      "signature": "<signature>",
+      "next_path": "<next_path>"
+    }
+    ```
+    (Si `next_path` no está, mándalo como string vacío o no incluyas la clave — la Edge Function trata cualquiera de los dos casos como "usar fallback".)
   - Step "Go to external website" → `Result of API Call's action_link`.
-- En la página Cliente del portal, añadir botón "Ver ficha en Work" con `When clicked → Trigger bridge_to_work_ficha (bubble_id = Current Cliente's bubble_id)`.
+- **Botones recomendados en el submenú Cliente del portal Bubble** (cada uno dispara el mismo workflow con un `next_path` distinto):
+  - **"Ficha (legacy)"** → sin `next_path` (o cadena vacía) → cae al fallback `/ficha-cliente/?id=<bubble_id>`. Sigue siendo útil mientras `/ficha-cliente/` no se elimine.
+  - **"Estrategia"** → `next_path = "/estrategia/?id=<Current Cliente's bubble_id>"`
+  - **"Timeline"** → `next_path = "/timeline/?id=<Current Cliente's bubble_id>"`
+  - (Futuro: **"Catálogo"** → `/catalogo/?id=...`, **"Servicios"** → `/servicios/?id=...`)
+
+> ⚠️ La Edge Function valida `next_path` contra una **allowlist** hardcoded: `/ficha-cliente/`, `/estrategia/`, `/timeline/`, `/catalogo/`, `/servicios/`. Cualquier path fuera de la lista devuelve 403 con `failure_reason='next_path_not_allowed'` en `bridge_audit_log`. Esto es anti open-redirect: aunque Bubble se comprometa, no puede mandar magic links a `/evil/`.
 
 ## Seguridad
 
@@ -139,7 +157,9 @@ Si hay desfase entre ambos lados, las llamadas devolverán 403 (`bad_signature` 
 8. RPC `ficha_cliente_get` (body)
 9. **Edge Function `bridge_from_portal` (`ALLOWLIST` const) + tabla `bridge_audit_log` (policy `admins_read_audit`)**
 
-Al añadir/quitar admin, sincronizar los 9 sitios. Casuísticas + disponibilidades tienen sus propios sets independientes (ver `docs/work/ficha-cliente.md` para inventario completo).
+Las clones `/estrategia/index.html` y `/timeline/index.html` (Sprint 1 de la migración, 2026-05-25) reusan el mismo `EDITOR_EMAILS` que `/ficha-cliente/`, no añaden sitio nuevo — vienen heredados del monolito en el clone-first.
+
+Al añadir/quitar admin, sincronizar los 9 sitios + propagar a los 2 clones (estrategia/timeline). Casuísticas + disponibilidades tienen sus propios sets independientes.
 
 **Deuda técnica abierta:** extraer la allowlist a una tabla `admin_emails` + helper RPC `is_work_admin(email)`. Fuera de alcance de este bridge. Tracked en `docs/work/deuda-tecnica.md`.
 

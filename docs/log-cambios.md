@@ -120,6 +120,38 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
 
 ---
 
+### 2026-05-25 [WORK][INFRA][FEATURE] — Migración a subsecciones del Cliente: `/estrategia/` + `/timeline/` (Sprint 1, clones de `/ficha-cliente/`) + bridge `next_path`
+
+- **Disparador:** decisión de Ben — el monolito `/ficha-cliente/index.html` (5.261 líneas, 5 paneles Datos/Servicios/Pipelines/Catálogos/Anomalías en una sola página con tabs internas) debe partirse en **subsecciones hermanas por verbo**, accesibles desde el submenú "Clientes" del portal Bubble (donde hoy hay General/Tareas/Editar y se añadirán entradas nuevas). Mental model más limpio: 1 URL = 1 verbo. Datos desaparece (su fuente real está en Bubble), Anomalías era mockup → fuera de scope del rediseño.
+- **Estrategia:** **clone-first, refactor-later.** Cada subsección nace como copia pelada de `/ficha-cliente/` con solo su módulo. El monolito queda **intacto y vivo** durante la convivencia; se eliminará/converrtirá en hub cuando las 4-5 subsecciones cubran todo. Cero riesgo de regresión, reversible borrando un directorio. Inversión de extraer infra compartida queda como deuda técnica explícita (ver más abajo).
+- **Alcance Sprint 1 (este commit):**
+  - **`/estrategia/index.html` (4.220 líneas):** clon de `/ficha-cliente/` pelado a solo `PIPELINES_MODULE`. Mismo auth gate, mismo client picker, mismo theme switch, mismo nav dropdown (con entrada propia "Estrategia" activa + "Timeline" hermana). Cortes vía `sed`: borrados los IIFEs `CATALOGOS_MODULE` (~762 líneas), `renderServiciosPanel` (~105 líneas), `renderDatosSection` (~23 líneas), y los 4 `<section>` panel HTML que no son Pipelines (~99 líneas). Edits via Edit tool: tabs nav simplificado a 1 tab, `<title>`/brand/gate copies, paths `/ficha-cliente/` → `/estrategia/`, `renderCliente()` reducido a `PIPELINES_MODULE.init() + loadFor(c.bubble_id)`, retirado chip "Anomalías mockup" del status strip.
+  - **`/timeline/index.html` (1.866 líneas):** clon del estrategia ya pelado, con `PIPELINES_MODULE` IIFE eliminado entero (~2.312 líneas) + IIFE `setupInfoPop` quitado (sin uso fuera de Pipelines). Panel reemplazado por placeholder `<empty-card>` "Timeline en construcción" + nombre del cliente. Sirve para que el botón "Timeline" del submenú Bubble ya tenga destino válido + autenticado, aunque sin contenido funcional. Pendiente diseñar y construir el módulo real (qué datos, qué visualización, qué RPC).
+  - **Edge Function `bridge_from_portal` v3 (deployada):** ampliada para aceptar parámetro opcional `next_path`. Si Bubble lo manda → validación allowlist `[/ficha-cliente/, /estrategia/, /timeline/, /catalogo/, /servicios/]` + check `startsWith('/')` y NO `startsWith('//')` (anti open-redirect). Si no lo manda → fallback al `/ficha-cliente/?id=<bubble_id>` legacy (retrocompat — el botón "Ver ficha en Work" original sigue funcionando sin cambios en Bubble). Failures nuevas: `failure_reason='next_path_not_allowed'` con el path ofensivo registrado en `bridge_audit_log.next_path`.
+  - **Migration `bridge_audit_log_next_path`:** `ALTER TABLE bridge_audit_log ADD COLUMN IF NOT EXISTS next_path text;` + COMMENT. NULLABLE — registros anteriores quedan vacíos.
+- **Datos paneles/módulos eliminados del scope nuevo:**
+  - Datos (5 grupos `coll-group` con campos del espejo `bub_clientes`) → desaparece. Bubble es la UI de edición real.
+  - Servicios contratados → futuro `/servicios/?id=X` (mismo patrón replicable).
+  - Catálogos del cliente (17 catálogos F2.7) → futuro `/catalogo/?id=X`.
+  - Anomalías (era mockup plano) → fuera del rediseño definitivo.
+- **Convención de mantenimiento durante la convivencia (cero refactor compartido aún):**
+  - `PIPELINES_MODULE` está **duplicado bit-a-bit** entre `/ficha-cliente/index.html` y `/estrategia/index.html`. Cualquier cambio funcional → editar PRIMERO en `/ficha-cliente/` (fuente de verdad) y propagar al clon en el mismo commit.
+  - Auth gate, helpers `rpc()`/`tableRequest()`/`escapeHtml()`/`openSheet()`/`showToast()`, handler `[data-coll-toggle]`, client picker, theme switch, nav dropdown — **duplicados** entre `/ficha-cliente/`, `/playbook/`, `/fichas-de-producto/`, `/estrategia/`, `/timeline/` (5 sitios ahora). Sigue creciendo cada clon.
+  - **Trigger para cerrar la deuda:** cuando se clone el 3er panel (`/catalogo/`), bloquear más clones hasta extraer `_includes/admin-base.njk` (HTML shell común) + `assets/js/admin-shared.js` (lógica común). Registrado en `docs/work/deuda-tecnica.md`.
+- **Allowlist 5 emails se queda en 9 sitios hardcoded** — los 2 clones reusan el `EDITOR_EMAILS` que copiaron del monolito, no añaden sitio nuevo. Al añadir/retirar admin: sincronizar los 9 originales **+ propagar la edición del `EDITOR_EMAILS` Set a los 2 clones** (estrategia + timeline).
+- **Bubble: setup manual pendiente (no automatizable desde Claude).** Para activar los botones nuevos del submenú Cliente del portal Bubble:
+  1. Ampliar workflow `bridge_to_work_ficha` con input opcional `next_path` (text). Mapearlo al body del API Connector POST a la Edge Function.
+  2. Server Script de Toolbox: generar timestamp + signature **en un único nodo** (evita desfase ms vs s entre Bubble `:formatted as unix` y la Edge Function que espera seconds).
+  3. Botones del submenú Cliente: "Ficha (legacy)" sin `next_path` (fallback) · "Estrategia" `next_path=/estrategia/?id=<bubble_id>` · "Timeline" `next_path=/timeline/?id=<bubble_id>`. Receta paso a paso en [[../work/bridge-portal-ficha|docs/work/bridge-portal-ficha]] sección "Configurar Bubble portal".
+- **Estado backend:** Edge Function `bridge_from_portal` redesplegada vía MCP (v3, ACTIVE, `verify_jwt=false`). Migration `bridge_audit_log_next_path` aplicada vía MCP. Build Eleventy local pasó de 56 → 58 archivos (las 2 páginas nuevas se sirven por passthrough automático, no requiere tocar `.eleventy.js`).
+- **Out of scope deliberado (sprints futuros):**
+  - `/catalogo/?id=X` y `/servicios/?id=X` (mismo patrón clone-first, replicable cuando se quiera tirar).
+  - Construir el módulo Timeline real (qué datos, qué visualización, qué RPC — hoy solo placeholder).
+  - Extraer infra compartida (`_includes/admin-base.njk` + `assets/js/admin-shared.js`) — trigger declarado: clonar el 3er panel.
+  - Eliminar `/ficha-cliente/` o convertirla en hub.
+  - 301 redirect `/ficha-cliente/` → subsecciones equivalentes.
+- **Refs:** plan original `~/.claude/plans/habr-a-alguna-forma-ingeniosa-polished-island.md`. Archivos: `estrategia/index.html`, `timeline/index.html`, `supabase/functions/bridge_from_portal/index.ts` (modificado), `supabase/migrations/20260525_bridge_audit_log_next_path.sql`. Docs: [[../work/estrategia|docs/work/estrategia]] (nueva), [[../work/ficha-cliente|docs/work/ficha-cliente]] (convención convivencia), [[../work/bridge-portal-ficha|docs/work/bridge-portal-ficha]] (setup Bubble ampliado), [[../work/deuda-tecnica|docs/work/deuda-tecnica]] (extraer infra), `docs/infra/supabase-schema.md` (columna `next_path` + validación). Branch: `claude/portal-work-client-card-link-Ih6Tz`.
+
 ### 2026-05-25 [WORK][PORTAL][INFRA][FEATURE] — Bridge Portal Bubble → `/ficha-cliente/` sin doble login (Edge Function + magic link)
 
 - **Disparador:** Ben pregunta cómo lograr que desde el portal Bubble, al pulsar un botón en la sección Cliente, se abra `work.thenucleo.com/ficha-cliente/?id=<bubble_id>` **sin pasar por el OAuth Google de Supabase otra vez**. Hoy son 2 sistemas auth aislados (Bubble propietaria vs Supabase Auth) → cada vez que el admin va de un lado al otro, OAuth completo.
