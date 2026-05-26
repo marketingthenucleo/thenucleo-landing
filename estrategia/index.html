@@ -119,15 +119,15 @@
     display: flex; align-items: center; gap: 12px;
     padding: 6px 14px; min-height: 40px;
     border-radius: 10px;
-    color: var(--text);
-    font-size: 14px; font-weight: 500;
+    color: var(--text-2);
+    font-size: 16px; font-weight: 500;
     cursor: pointer; user-select: none;
     transition: background 120ms ease, color 120ms ease;
     border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
   }
   .ps-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 1.25; }
-  .ps-item:hover { background: var(--ps-item-hover-bg); }
-  .ps-item.active { background: rgba(59, 130, 246, 0.12); color: var(--text); }
+  .ps-item:hover { background: var(--ps-item-hover-bg); color: var(--text); }
+  .ps-item.active { background: #1a1434; color: var(--text); }
   .ps-item.active::before {
     content: ''; position: absolute;
     left: -12px; top: 0; bottom: 0;
