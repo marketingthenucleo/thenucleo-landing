@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-26 (Acceder dentro del burger móvil en los 4 navs)
+actualizado: 2026-05-26 (fix sheet asomando en desktop ficha-cliente/estrategia/timeline)
 tags:
   - log
   - historial
@@ -66,6 +66,14 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-26 [WORK][BUGFIX] — `#sheet` asomaba ~40px en desktop con el placeholder "Detalle / —"
+
+- **Área:** `ficha-cliente/index.html`, `estrategia/index.html`, `timeline/index.html` (los tres comparten el mismo CSS del bottom-sheet).
+- **Qué:** en el media query `≥720px` el estado por defecto de `.sheet` mezclaba `bottom: 5vh` con el `transform: translateY(100%)` heredado del estado base. `translateY(100%)` solo desplaza la altura del propio elemento (≈80px con el header vacío "Detalle / —"), no compensa los 5vh, así que la cabecera del sheet quedaba visible asomando por el centro inferior de la pantalla en desktop sin que nadie lo abriera. Fix: pasar el centrado al estado base (`left: 50%; transform: translate(-50%, 100%)` con `bottom: 0`) y mover los 5vh de elevación al estado abierto (`.sheet.open { transform: translate(-50%, -5vh) }`). Misma posición final visual al abrir el sheet, pero cerrado ahora queda 100% fuera del viewport.
+- **Por qué:** bug visual detectado por Ben — la barra "Detalle / —" se veía permanentemente en `/ficha-cliente/`, `/estrategia/` y `/timeline/` en pantallas anchas. No bloqueaba el uso pero rompía la sensación de pulido.
+- **Impacto:** ninguno funcional. El `openSheet()` y todos los formularios (cambiar cliente, gestionar catálogos, CRUDs de Pipelines, etc.) siguen abriéndose en la misma posición. Sólo cambia el estado oculto.
+- **Refs:** [`ficha-cliente/index.html:1140-1141`](../ficha-cliente/index.html), [`estrategia/index.html:955-956`](../estrategia/index.html), [`timeline/index.html:955-956`](../timeline/index.html). Sección "Pendientes backend `/ficha-cliente/` — F2" del `CLAUDE.md` raíz no se toca (el bug era CSS, no del módulo Pipelines).
 
 ## 2026-05-26 [WORK][REFACTOR] — Botón "Acceder →" movido dentro del burger en mobile (4 navs)
 

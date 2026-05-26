@@ -43,7 +43,7 @@
     --shadow-pop: 0 12px 32px rgba(0,0,0,0.5);
     --font: 'NewBlack', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     /* Portal shell */
-    --ps-w: 232px;
+    --ps-w: 200px;
     --ps-header-h: 60px;
     --ps-item-active-bg: rgba(34, 197, 94, 0.10);
     --ps-item-hover-bg: rgba(255, 255, 255, 0.04);
@@ -98,22 +98,23 @@
     width: var(--ps-w); background: var(--bg);
     border-right: 1px solid var(--ps-divider);
     display: flex; flex-direction: column;
-    padding: 18px 14px 16px;
+    padding: 18px 12px 16px;
     transform: translateX(0);
     transition: transform 220ms ease;
   }
 
   .ps-brand {
-    display: flex; align-items: center; gap: 10px;
-    padding: 4px 8px 18px; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 4px 4px 18px;
+    min-height: 45px;
   }
-  .ps-brand-iso { width: 34px; height: 34px; flex-shrink: 0; }
-  .ps-brand-logo { height: 18px; width: auto; }
+  .ps-brand-iso { width: 45px; height: 45px; flex-shrink: 0; }
+  .ps-brand-logo { height: 25px; width: auto; flex-shrink: 0; }
 
   .ps-nav, .ps-footer {
-    display: flex; flex-direction: column; gap: 2px;
+    display: flex; flex-direction: column; gap: 0;
   }
-  .ps-nav { padding-top: 14px; }
+  .ps-nav { padding-top: 6px; }
   .ps-footer {
     margin-top: auto; padding-top: 12px;
     border-top: 1px solid var(--ps-divider);
@@ -1137,8 +1138,8 @@
     .tabs { padding: 16px 40px 0; top: 134px; }
     .content { padding: 32px 40px 60px; max-width: 920px; margin: 0 auto; }
     .pip-name { font-size: 24px; }
-    .sheet { left: auto; right: auto; width: min(560px, 92vw); margin: 0 auto; border-radius: 24px; bottom: 5vh; max-height: 88vh; }
-    .sheet.open { transform: translate(-50%, 0); left: 50%; }
+    .sheet { left: 50%; right: auto; width: min(560px, 92vw); margin: 0; border-radius: 24px; bottom: 0; max-height: 88vh; transform: translate(-50%, 100%); }
+    .sheet.open { transform: translate(-50%, -5vh); }
     .fab { right: max(20px, calc(50vw - 460px + 20px)); }
   }
   @media (min-width: 1024px) {
