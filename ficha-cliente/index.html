@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#090a0f">
+<meta name="theme-color" content="#111111">
 <meta name="robots" content="noindex,nofollow">
 <title>Ficha Cliente — TheNucleo</title>
 
@@ -17,12 +17,12 @@
   @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
 
   :root {
-    --bg: #090a0f;
-    --bg-2: #12141b;
-    --bg-3: #1a1d27;
-    --bg-hover: #1e2130;
-    --line: #1e2130;
-    --line-2: #2a2d3e;
+    --bg: #111111;
+    --bg-2: #181818;
+    --bg-3: #1f1f1f;
+    --bg-hover: #242424;
+    --line: #232323;
+    --line-2: #2e2e2e;
     --text: #edeef3;
     --text-2: #8b8fa8;
     --text-3: #5c6078;
@@ -37,10 +37,18 @@
     --ok-bg: rgba(34,197,94,0.10);
     --info: #3b82f6;
     --info-bg: rgba(59,130,246,0.10);
-    --header-bg-rgba: rgba(9,10,15,0.85);
+    --violet: #8b5cf6;
+    --header-bg-rgba: rgba(17,17,17,0.92);
     --bg-glow: rgba(34, 197, 94, 0.05);
     --shadow-pop: 0 12px 32px rgba(0,0,0,0.5);
     --font: 'NewBlack', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    /* Portal shell */
+    --ps-w: 232px;
+    --ps-header-h: 60px;
+    --ps-item-active-bg: rgba(139, 92, 246, 0.10);
+    --ps-item-hover-bg: rgba(255, 255, 255, 0.04);
+    --ps-divider: rgba(255, 255, 255, 0.06);
+    --ps-avatar-bg: #ef4444;
   }
 
   [data-theme="light"] {
@@ -64,9 +72,13 @@
     --ok-bg: rgba(22,163,74,0.10);
     --info: #2563eb;
     --info-bg: rgba(37,99,235,0.10);
+    --violet: #7c3aed;
     --header-bg-rgba: rgba(245,246,248,0.92);
     --bg-glow: rgba(22, 163, 74, 0.04);
     --shadow-pop: 0 12px 32px rgba(0,0,0,0.12);
+    --ps-item-active-bg: rgba(124, 58, 237, 0.10);
+    --ps-item-hover-bg: rgba(0, 0, 0, 0.04);
+    --ps-divider: rgba(0, 0, 0, 0.06);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -75,8 +87,144 @@
     background: var(--bg); color: var(--text); font-family: var(--font); font-weight: 500;
     -webkit-font-smoothing: antialiased; line-height: 1.4; overscroll-behavior: none;
   }
-  html.locked-mode .app { visibility: hidden; }
+  html.locked-mode .app-shell { visibility: hidden; }
   html.locked-mode .gate { display: flex !important; }
+
+  /* ─── Portal shell ───────────────────────────────────────── */
+  .app-shell { min-height: 100vh; }
+
+  .portal-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 110;
+    width: var(--ps-w); background: var(--bg);
+    border-right: 1px solid var(--ps-divider);
+    display: flex; flex-direction: column;
+    padding: 18px 14px 16px;
+    transform: translateX(0);
+    transition: transform 220ms ease;
+  }
+
+  .ps-brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 8px 22px; margin-bottom: 10px;
+    border-bottom: 1px solid var(--ps-divider);
+  }
+  .ps-brand-iso { width: 34px; height: 34px; flex-shrink: 0; }
+  .ps-brand-logo { height: 18px; width: auto; }
+
+  .ps-nav, .ps-footer {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .ps-nav { padding-top: 14px; }
+  .ps-footer {
+    margin-top: auto; padding-top: 12px;
+    border-top: 1px solid var(--ps-divider);
+  }
+
+  .ps-item {
+    position: relative;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px 10px 14px;
+    border-radius: 10px;
+    color: var(--text-2);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; user-select: none;
+    transition: background 120ms ease, color 120ms ease;
+    border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
+  }
+  .ps-item svg {
+    width: 18px; height: 18px; flex-shrink: 0;
+    stroke-width: 1.75;
+  }
+  .ps-item:hover { background: var(--ps-item-hover-bg); color: var(--text); }
+  .ps-item.active {
+    background: var(--ps-item-active-bg);
+    color: var(--accent);
+  }
+  .ps-item.active::before {
+    content: ''; position: absolute; left: -14px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 22px; border-radius: 0 3px 3px 0;
+    background: var(--accent);
+  }
+
+  .ps-logout {
+    color: var(--text-3); font-size: 12px;
+    margin-top: 6px;
+  }
+  .ps-logout:hover { color: var(--bad); background: rgba(239,68,68,0.06); }
+
+  /* ─── Portal header ──────────────────────────────────────── */
+  .portal-header {
+    position: sticky; top: 0; z-index: 100;
+    height: var(--ps-header-h);
+    background: var(--header-bg-rgba);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--ps-divider);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+  }
+  .ph-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ph-title {
+    font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .ph-actions { display: flex; align-items: center; gap: 10px; }
+
+  .ph-burger {
+    display: none; background: transparent; border: none;
+    color: var(--text-2); padding: 6px; cursor: pointer; border-radius: 8px;
+  }
+  .ph-burger:hover { color: var(--text); background: var(--ps-item-hover-bg); }
+  .ph-burger svg { width: 22px; height: 22px; stroke-width: 1.75; }
+
+  .ph-icon-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: transparent; border: 1px solid transparent;
+    color: var(--text-2); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 13px; font-family: inherit;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+  .ph-icon-btn:hover { color: var(--text); background: var(--ps-item-hover-bg); }
+  .ph-icon-btn svg { width: 18px; height: 18px; stroke-width: 1.75; }
+
+  .ph-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--ps-avatar-bg);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    user-select: none; cursor: default;
+    flex-shrink: 0;
+  }
+
+  /* Drawer backdrop (mobile only) */
+  .ps-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 105;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+  }
+  .ps-backdrop.open { display: block; animation: fadeIn 180ms ease; }
+
+  /* App pane (right side of shell) */
+  .app { min-height: 100vh; }
+
+  /* Desktop ≥ 1024 */
+  @media (min-width: 1024px) {
+    .app { margin-left: var(--ps-w); }
+  }
+
+  /* Mobile drawer */
+  @media (max-width: 1023.98px) {
+    .portal-sidebar {
+      transform: translateX(-100%);
+      box-shadow: 0 0 40px rgba(0,0,0,0.4);
+    }
+    .portal-sidebar.open { transform: translateX(0); }
+    .ph-burger { display: inline-flex; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .portal-sidebar, .ps-item, .ph-icon-btn { transition: none !important; }
+  }
 
   body {
     min-height: 100vh; padding-bottom: 80px;
@@ -142,7 +290,11 @@
   [data-theme="light"] #theme-toggle .icon-moon { display: none; }
   [data-theme="light"] #theme-toggle .icon-sun { display: block; }
 
-  .client-row { display: flex; align-items: flex-end; gap: 14px; }
+  .client-row {
+    display: flex; align-items: flex-end; gap: 14px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--ps-divider);
+  }
 
   .client-avatar {
     width: 56px; height: 56px; border-radius: 14px;
@@ -198,7 +350,7 @@
     display: flex; gap: 4px; padding: 14px 20px 0;
     overflow-x: auto; scrollbar-width: none;
     border-bottom: 1px solid var(--line); background: var(--bg);
-    position: sticky; top: 109px; z-index: 90;
+    position: sticky; top: var(--ps-header-h); z-index: 90;
   }
   .tabs::-webkit-scrollbar { display: none; }
 
@@ -1414,55 +1566,105 @@
   </div>
 </div>
 
+<div class="app-shell">
+
+<!-- ─────── PORTAL SIDEBAR (shared shell con portal.thenucleo.com) ─────── -->
+<aside class="portal-sidebar" id="portal-sidebar" aria-label="Navegación principal">
+  <a class="ps-brand" href="https://portal.thenucleo.com/dashboard" aria-label="TheNucleo">
+    <svg class="ps-brand-iso" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="ps-iso-g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-160.001,160.001,0,159.389,157.823)">
+          <stop offset=".676" stop-color="#000000" stop-opacity="0"/>
+          <stop offset=".982" stop-color="#f3f959" stop-opacity="1"/>
+        </radialGradient>
+      </defs>
+      <path style="mix-blend-mode:screen;fill:url(#ps-iso-g1)" d="m160 0c-88.37 0-160 71.63-160 160 0 88.37 71.63 160 160 160 88.37 0 160-71.63 160-160 0-88.37-71.63-160-160-160z"/>
+    </svg>
+    <svg class="ps-brand-logo" viewBox="0 0 830 166" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g fill="#edeef3">
+        <path d="m291.61 102.87q0 13.32-4.75 22.72-4.77 9.4-13.56 14.27-8.81 4.88-20.69 4.87-16.18 0-25.1-9.27-8.92-9.28-8.92-27.83v-69.93h-22.83v72.55q0 18.55 6.78 30.8 6.77 12.25 19.02 18.19 12.25 5.95 28.43 5.95 15.46 0 27.83-6.9 9.2-5.13 14.98-13.44v18.91h21.65v-126.06h-22.84z"/>
+        <path d="m821.97 67.43q-8.56-14.51-23.67-22.71-15.1-8.21-34.37-8.21-17.13 0-30.56 6.78-13.44 6.78-20.82 20.1l17.37 11.18q6.18-9.28 15.1-13.68 8.92-4.4 19.15-4.4 12.37 0 22.12 5.47 9.75 5.47 15.46 15.34 5.71 9.88 5.71 23.43 0 13.56-5.71 23.55-5.71 9.99-15.46 15.46-9.75 5.47-22.12 5.47-10.23 0-19.15-4.4-8.92-4.4-15.1-13.68l-17.37 10.94q7.38 13.09 20.82 20.1 13.43 7.02 30.56 7.02 19.27 0 34.37-8.32 15.11-8.33 23.67-22.84 8.56-14.5 8.56-33.3 0-18.79-8.56-33.3z"/>
+        <path d="m664.09-0.36v164.12h22.84v-164.12-0.12h-22.84z"/>
+        <path fill-rule="evenodd" d="m629.8 67.43q8.2 14.51 8.2 33.3 0.01 18.8-8.44 33.3-8.44 14.51-23.79 22.84-15.34 8.32-35.56 8.32-15.69 0-28.42-5.23-12.72-5.23-21.29-15.23l12.61-14.74q6.9 7.61 16.05 11.41 9.16 3.81 20.34 3.81 13.56 0 24.03-5.47 10.46-5.47 16.29-15.34 4.3-7.28 5.42-16.06h-102.35q-0.23-1.66-0.36-3.56-0.11-1.91-0.11-3.33 0-19.51 7.96-34.14 7.97-14.62 22-22.71 14.04-8.09 32.35-8.09 18.08 0 32.47 8.21 14.39 8.2 22.6 22.71zm-90.75 8.56q-3.96 7.22-4.78 15.94h81.02q-0.99-8.66-4.88-15.82-5.23-9.63-14.51-14.98-9.27-5.35-21.17-5.35-12.13 0-21.28 5.35-9.16 5.35-14.4 14.86z"/>
+        <path d="m449.03 44.01q-15.06-8.31-34.08-8.31-19.27 0-34.2 8.43-14.94 8.43-23.61 23-8.67 14.58-8.67 33.6 0 18.79 8.67 33.6 8.67 14.81 23.73 23.24 15.05 8.43 34.08 8.43 19.02 0 34.08-8.43 15.05-8.43 23.6-23.12 8.55-14.69 8.55-33.72 0-19.02-8.55-33.72-8.55-14.69-23.6-23z"/>
+        <path d="m273.92 10.83h-37.52v15.56h37.52z"/>
+        <path d="m135.82 119.46l-111.78-119.88h-24.04v164.12h24.05l0.06-126.06 115.9 126.06h19.87v-164.12h-24.06z"/>
+      </g>
+    </svg>
+  </a>
+
+  <nav class="ps-nav" aria-label="Secciones del portal">
+    <a class="ps-item" href="https://portal.thenucleo.com/dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Dashboard
+    </a>
+    <a class="ps-item active" id="ps-link-clientes" href="https://portal.thenucleo.com/clientes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M21.5 18.5c0-2.5-1.8-4.5-4-4.8"/></svg>
+      Clientes
+    </a>
+    <a class="ps-item" href="https://portal.thenucleo.com/operaciones">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Operaciones
+    </a>
+    <a class="ps-item" href="https://portal.thenucleo.com/rrhh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Recursos Humanos
+    </a>
+    <a class="ps-item" href="https://portal.thenucleo.com/finanzas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Finanzas
+    </a>
+    <a class="ps-item" href="https://work.thenucleo.com/comunidad">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Comunidad
+    </a>
+  </nav>
+
+  <div class="ps-footer">
+    <a class="ps-item" href="https://portal.thenucleo.com/ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Ajustes
+    </a>
+    <a class="ps-item" href="https://portal.thenucleo.com/soporte">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-.8.6-1.5 1-1.5 2"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      Soporte
+    </a>
+    <button type="button" class="ps-item ps-logout" id="logout-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span id="logout-label">Salir</span>
+    </button>
+  </div>
+</aside>
+
+<button type="button" class="ps-backdrop" id="ps-backdrop" aria-label="Cerrar menú" tabindex="-1"></button>
+
 <div class="app" id="app">
 
-<!-- ─────── HEADER ─────── -->
-<header class="app-header">
-  <div class="header-top">
-    <div class="brand">TheNucleo · Ficha</div>
-    <div class="actions">
-      <button class="icon-btn" id="theme-toggle" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </button>
-      <div class="nav-wrap">
-        <button class="icon-btn" id="nav-btn" title="Navegación" aria-haspopup="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        </button>
-        <div class="nav-dropdown" id="nav-dropdown" role="menu">
-          <a class="nav-item" href="/playbook/" role="menuitem">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
-            Playbook
-          </a>
-          <a class="nav-item active" href="/ficha-cliente/" role="menuitem">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
-            Ficha de Cliente
-          </a>
-          <a class="nav-item" href="/fichas-de-producto/" role="menuitem">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            Fichas de Producto
-          </a>
-          <div class="nav-divider"></div>
-          <a class="nav-item" href="/casuisticas/" role="menuitem">Casuísticas</a>
-          <a class="nav-item" href="/disponibilidades/" role="menuitem">Disponibilidades</a>
-          <div class="nav-divider"></div>
-          <button class="nav-item" id="logout-btn" role="menuitem" style="background:transparent;border:none;text-align:left;width:100%;cursor:pointer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span id="logout-label">Salir</span>
-          </button>
-        </div>
-      </div>
-    </div>
+<!-- ─────── PORTAL HEADER ─────── -->
+<header class="portal-header">
+  <div class="ph-left">
+    <button class="ph-burger" id="ps-burger" aria-label="Abrir menú" aria-controls="portal-sidebar" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="ph-title">Ficha de cliente</div>
   </div>
-  <div class="client-row" id="client-row" style="display:none">
-    <div class="client-avatar" id="client-avatar"><span id="client-initial">?</span></div>
-    <div class="client-info">
-      <div class="client-name" id="client-name">—</div>
-      <div class="client-sub" id="client-sub">—</div>
-    </div>
-    <button class="client-switch" id="client-switch" title="Cambiar de cliente">Cambiar</button>
+  <div class="ph-actions">
+    <button class="ph-icon-btn" id="theme-toggle" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+    <div class="ph-avatar" id="user-avatar" aria-hidden="true">??</div>
   </div>
 </header>
+
+<div class="client-row" id="client-row" style="display:none">
+  <div class="client-avatar" id="client-avatar"><span id="client-initial">?</span></div>
+  <div class="client-info">
+    <div class="client-name" id="client-name">—</div>
+    <div class="client-sub" id="client-sub">—</div>
+  </div>
+  <button class="client-switch" id="client-switch" title="Cambiar de cliente">Cambiar</button>
+</div>
 
 <!-- ─────── Status strip ─────── -->
 <div class="status-strip" id="status-strip" style="display:none">
@@ -1602,6 +1804,7 @@
 </main>
 
 </div>
+</div><!-- /.app-shell -->
 
 <!-- ─── FAB ─── -->
 <button class="fab hidden" id="fab" aria-label="Acciones">+</button>
@@ -1847,6 +2050,9 @@ function renderDatosSection(listId, countId, fields) {
 
 function renderCliente(c) {
   if (!c) return;
+
+  // Sidebar "Clientes" link sincronizado con el cliente actual
+  try { window.syncClientesLink?.(c.bubble_id); } catch {}
 
   // Header
   const initial = (c.nombre_empresas || '?').slice(0, 1).toUpperCase();
@@ -5706,23 +5912,71 @@ const SCOPE_GUIDE = (() => {
   return { refresh };
 })();
 
-// ─── Nav dropdown ──────────────────────────────────
-(function initNavDropdown() {
-  const navBtn = document.getElementById('nav-btn');
-  const navDropdown = document.getElementById('nav-dropdown');
-  if (!navBtn || !navDropdown) return;
-  navBtn.addEventListener('click', e => {
+// ─── Portal shell: drawer móvil ────────────────────
+(function initPortalDrawer() {
+  const sidebar = document.getElementById('portal-sidebar');
+  const burger = document.getElementById('ps-burger');
+  const backdrop = document.getElementById('ps-backdrop');
+  if (!sidebar || !burger) return;
+  const open = () => {
+    sidebar.classList.add('open');
+    backdrop?.classList.add('open');
+    burger.setAttribute('aria-expanded', 'true');
+  };
+  const close = () => {
+    sidebar.classList.remove('open');
+    backdrop?.classList.remove('open');
+    burger.setAttribute('aria-expanded', 'false');
+  };
+  burger.addEventListener('click', e => {
     e.stopPropagation();
-    navDropdown.classList.toggle('open');
+    sidebar.classList.contains('open') ? close() : open();
   });
-  document.addEventListener('click', () => navDropdown.classList.remove('open'));
-  navDropdown.addEventListener('click', e => e.stopPropagation());
+  backdrop?.addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  // Cerrar al redimensionar a desktop
+  const mq = window.matchMedia('(min-width: 1024px)');
+  (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(e => { if (e.matches) close(); });
 })();
 
-document.getElementById('logout-btn').addEventListener('click', () => {
+// ─── Portal shell: avatar con iniciales del usuario ─
+(function initUserAvatar() {
+  const el = document.getElementById('user-avatar');
+  if (!el) return;
+  const u = currentUser();
+  if (!u) { el.textContent = '·'; return; }
+  const name = (u.user_metadata?.full_name || u.user_metadata?.name || '').trim();
+  let initials;
+  if (name) {
+    const parts = name.split(/\s+/).filter(Boolean);
+    initials = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+  } else {
+    const local = (u.email || '').split('@')[0] || '';
+    const parts = local.split(/[._-]+/).filter(Boolean);
+    initials = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+  }
+  el.textContent = (initials || '·').toUpperCase().slice(0, 2);
+  el.setAttribute('title', u.email || '');
+})();
+
+// ─── Logout (vive en el sidebar footer) ────────────
+document.getElementById('logout-btn')?.addEventListener('click', () => {
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
   location.assign('/comunidad/entrar/?next=' + encodeURIComponent('/ficha-cliente/'));
 });
+
+// ─── Portal shell: link "Clientes" sincronizado ────
+window.syncClientesLink = function(bubbleId) {
+  const a = document.getElementById('ps-link-clientes');
+  if (!a) return;
+  a.href = bubbleId
+    ? `https://portal.thenucleo.com/clientes?resume=${encodeURIComponent(bubbleId)}`
+    : 'https://portal.thenucleo.com/clientes';
+};
+(function initClientesLink() {
+  const wantId = new URLSearchParams(location.search).get('id');
+  if (wantId) window.syncClientesLink(wantId);
+})();
 
 // ─── Theme ─────────────────────────────────────────
 const THEME_KEY = 'thenucleo-ficha-cliente-theme';
@@ -5734,7 +5988,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = t;
   try { localStorage.setItem(THEME_KEY, t); } catch {}
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#090a0f' : '#f5f6f8');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#111111' : '#f5f6f8');
 });
 
 // ─── Switch client triggers ────────────────────────
