@@ -2044,10 +2044,16 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#111111' : '#f5f6f8');
 });
 
-// ─── Volver atrás + tabs próximamente ──────────────
+// ─── Volver atrás → portal cliente concreto ────────
 document.getElementById('client-back').addEventListener('click', () => {
-  if (history.length > 1) history.back();
-  else location.href = '/ficha-cliente/';
+  const id = STATE.cliente?.bubble_id || new URLSearchParams(location.search).get('id');
+  if (id) {
+    location.href = `https://portal.thenucleo.com/clientes/${encodeURIComponent(id)}`;
+  } else if (history.length > 1) {
+    history.back();
+  } else {
+    location.href = 'https://portal.thenucleo.com/clientes';
+  }
 });
 document.getElementById('tab-tareas').addEventListener('click', () => showToast('Tareas — próximamente'));
 document.getElementById('tab-editar').addEventListener('click', () => showToast('Editar — próximamente'));
