@@ -2080,11 +2080,14 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#0A0A0A' : '#f5f6f8');
 });
 
-// ─── Volver atrás → portal cliente concreto ────────
+// ─── Volver atrás → portal cliente concreto en sección General ─
+// (Opción C de la decisión 2026-05-26: siempre a ?sec=general, sin saber de
+//  dónde vino el usuario. Opción B pendiente — Bubble pasaría from_sec en el
+//  bridge → work lo persistiría en sessionStorage → vuelta contextual.)
 document.getElementById('client-back').addEventListener('click', () => {
   const id = STATE.cliente?.bubble_id || new URLSearchParams(location.search).get('id');
   if (id) {
-    location.href = `https://portal.thenucleo.com/clientes/${encodeURIComponent(id)}`;
+    location.href = `https://portal.thenucleo.com/clientes/${encodeURIComponent(id)}?sec=general`;
   } else if (history.length > 1) {
     history.back();
   } else {
