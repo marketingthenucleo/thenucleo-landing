@@ -322,6 +322,15 @@ Métricas: FCP 0.7s ✅ · LCP 0.8s ✅ · CLS 0.003 ✅ · TBT **980ms** ⚠️
 - **Helper JS:** `renderDatosSection(listId, countId, fields)` reemplaza el `.innerHTML = [...].join('')` por sección. Pinta los rows y actualiza el badge.
 - Commit `94fce60` (PR-less, merge directo fast-forward a main).
 
+## Fix 2026-05-26 — "Acceder →" movido dentro del burger móvil (los 4 navs)
+- **Problema:** en mobile, header con 3 amarillos compitiendo (aro isotipo + "Acceder →" pill + hero CTA "Empezar ahora"). El segundo le robaba peso al tercero — y "Empezar ahora" es la CTA que convierte tráfico frío. "Acceder" es para clientes existentes, no para nuevos.
+- **Fix:** a `≤900px` (landing) y `≤860px` (comunidad/blog/conocimiento), `.nav-right > .btn-sm { display: none }`. El link se reañade como último item del `#nav-mobile-menu`, separado con `<div class="menu-divider">` y estilado con `.menu-cta` (color accent + `font-weight: 600`). Landing usa amarillo (`var(--yellow)` + `rgba(243,249,89,.10)` hover); comunidad/blog/conocimiento usan verde (`var(--accent-primary)` + `var(--accent-primary-muted)` hover).
+- **Sin cambios JS:** el delegate `menu.addEventListener('click', e => { if (e.target.closest('a')) close(); })` ya cubría cualquier `<a>` interno.
+- **Archivos:** `index.html` (CSS inline), `assets/css/comunidad.css`, `_includes/comunidad-base.njk`, `_includes/blog.njk`, `conocimiento-zenyx/index.njk`. **Skipped intencional:** `_includes/onboarding-base.njk` — su nav no tiene burger ni mobile menu (flujo 1-2-3 step), no aplica.
+- **Discrepancia breakpoint detectada (no corregida):** landing usa `≤900px`, comunidad/blog `≤860px`. Unificar = otro cambio.
+- **Actualiza la frase del Fix 2026-04-30** "Sin cambio JS auth: 'Acceder →' sigue visible logueado o no". Sigue siendo cierto en desktop; en mobile el botón ya no vive en el header sino dentro del burger (el avatar/auth-menu de comunidad sí permanece visible en `.nav-right` mobile cuando hay sesión).
+- Commit `ee60dfd` (PR-less).
+
 ## Pendientes backend `/ficha-cliente/` — F2 (auditoría 2026-05-24)
 
 Estado por panel hoy:
