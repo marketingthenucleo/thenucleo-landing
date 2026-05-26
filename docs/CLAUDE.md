@@ -58,6 +58,7 @@ Notion (tareas) ──[polling 1 min]──▶ Bubble (frontend + datos)
 - `newsletter_wip` — WIP completo newsletter por conversación: estrategia + array emails + doc_url (antes `newsletter_emails_wip`)
 - `activity_log` — Auditoría
 - `analisis_wip` — WIP del chat co-creativo Análisis Estratégico Cliente (sector 7). briefing=12 secciones fijas; segmentos=array 4 objetos `{nombre, descripcion, problematica, oportunidad, empatia, buyer_persona, angulos}`
+- `alta_cliente_wip` — WIP conversacional del workflow `OPS VENTAS — Alta Cliente WhatsApp` (`Q99fjZWhA8tlofVr`). 1 fila por sesión activa de un comercial (Benja/Alex) hablando con el bot por WhatsApp. Estados `abierto|confirmado|rechazado`. UNIQUE parcial sobre `(telefono_e164) WHERE estado='abierto'` (1 sesión activa por comercial). UNIQUE `(last_msg_in_id)` para idempotencia anti-reintentos Evolution. Sin policies = solo service_role. Al confirmar, el workflow crea `bub_clientes` (Bubble dispara `wvHcgVqqjkWJcJDu` Drive+Notion automáticamente) + `playbook_cliente_servicios` (Supabase, vía SYNC `ewu5A5E05T4tz5CD` se espeja a Bubble).
 - `blog_videos` — Backlog de vídeos Blog Zenyx + estado de generación de posts (pendiente/publicado/error)
 - `n8n_incidencias` — Errores de workflows n8n enriquecidos por Claude. Visualizables en `work.thenucleo.com/incidencias`
 - `cliente_external_links` — Links cliente ↔ sistemas externos (ClickUp, etc.): provider + external_id + external_type + is_primary
@@ -172,12 +173,12 @@ Ambas SECURITY DEFINER + allowlist hardcoded en body (5 emails TheNucleo desde 2
 
 ### Triggers (3 patrones)
 - `trg_set_synced_at` (BEFORE INSERT/UPDATE) → 18 tablas `bub_*` sincronizadas desde Bubble.
-- `*_updated_at` (BEFORE UPDATE) → tablas operativas: `analisis_wip`, `blog_videos`, `clockify_tarifas`, `newsletter_wip`, `rag_stores`, `comunidad_comentarios`, `comunidad_propuestas`.
+- `*_updated_at` (BEFORE UPDATE) → tablas operativas: `analisis_wip`, `alta_cliente_wip`, `blog_videos`, `clockify_tarifas`, `newsletter_wip`, `rag_stores`, `comunidad_comentarios`, `comunidad_propuestas`.
 - `trigger_cleanup_messages` (AFTER INSERT en `chat_messages`) → FIFO 100 mensajes por conversación.
 
 ### Reglas clave
 - n8n usa `service_role` (bypass RLS). Bubble usa `anon` (sujeto a RLS).
-- RLS activo: todas las `bub_*` + `analisis_wip` + `rag_stores` + `newsletter_wip` + `clockify_*` + `holded_*` + `n8n_incidencias` + `comunidad_*` + `casuisticas_board`.
+- RLS activo: todas las `bub_*` + `analisis_wip` + `alta_cliente_wip` + `rag_stores` + `newsletter_wip` + `clockify_*` + `holded_*` + `n8n_incidencias` + `comunidad_*` + `casuisticas_board`.
 - Sin RLS: `chat_*`, `activity_log`, `blog_videos`, `cliente_external_links`, `provider_webhooks`, `sync_suppress`.
 - Fallos silenciosos de PATCH Bubble → primer check = RLS policies.
 - PostgreSQL function params: siempre prefijo `p_` para evitar error 42702.
@@ -235,6 +236,7 @@ Ambas SECURITY DEFINER + allowlist hardcoded en body (5 emails TheNucleo desde 2
 - ✅ `4gN3uGhH8NZX2BDU` — **OPS ADS — Oyente Meta Ads (Gmail)** (LEGACY, sustituido por workflow Discovery + alertas derivadas del polling; archivar tras 2 semanas smoke verde). Trigger Gmail cada minuto. NO extrae métricas. Escribe en `bub_dashboardmedia_alertas_operativas`.
 - ✅ `fdmkhBOua6pbZh6P` — **OPS ADS — Receptor Google Ads Script** (LEGACY Google Apps Script push). Pendiente migrar a polling Google Ads API con OAuth (estructura paralela Meta).
 - ⏸ `Ik2Tt3Dw5ivL8qk7` — **OPS CRM — Oyente GHL [PAUSADO]**
+- ⏸ `Q99fjZWhA8tlofVr` — **OPS VENTAS — Alta Cliente WhatsApp** (continuado 2026-05-24 desde draft del 2026-05-23). Webhook POST `/webhook/ventas_whatsapp_inbound` ← Evolution API. 26 nodos. Allowlist hardcoded 2 comerciales (Benja `+34627755036`, Alex `+34675525001`). Audio → Gemini File API + `gemini-2.5-flash` (transcribe ES) | Texto directo. WIP conversacional en tabla nativa `alta_cliente_wip` (jsonb `mensajes` + `payload`, UNIQUE parcial sobre teléfono+abierto, UNIQUE `last_msg_in_id` para idempotencia). Lookups paralelos `fichas_de_producto` + `fichas_categorias` + `bub_clientes` (filtrado por `agencia_id=eq.1769...`). Claude Sonnet 4.6 estructura ficha + servicios y decide `accion ∈ {preguntar,resumir,crear,cancelar}` con anti-alucinación de `ficha_id`. Al confirmar: POST `bub_clientes` (dispara `wvHcgVqqjkWJcJDu` Drive+Notion) → SplitInBatches sobre `servicios_finales` → INSERT `playbook_cliente_servicios` (vía SYNC `ewu5A5E05T4tz5CD` espeja a Bubble). Bugs corregidos del draft: `agencia_id_bub`→`agencia_id`, `cliente_id`→`cliente_bubble_id`, whitelist env→hardcoded, Loop servicios sin Expandir previo. **INACTIVO hasta:** asignar 4 credenciales en 17 nodos HTTP en UI + añadir tag `portal` + configurar env `EVO_URL`/`EVO_INSTANCE`/`BUBBLE_BASE_URL`/`GEMINI_API_KEY` + webhook Evolution. Detalle: `docs/portal/integraciones/whatsapp-alta-cliente.md`.
 
 ### Ads — Control de Campañas v2 (Meta, activos desde 2026-05-12)
 - ✅ `hwKBGC6QWP2dFObT` — **SYNC ADS — Meta Discovery Cuentas** (cron `*/30 8-21` Madrid). 6 nodos: RPC `ads_meta_creds_listas` → GET `/me/adaccounts` → mapear cuentas + derivar alertas (account_status 2/3/7/8/9, disable_reason) → fan-out UPSERT `ads_cuentas` + UPSERT `ads_alertas`. Tags `portal`+`ads`.
@@ -245,10 +247,11 @@ Ambas SECURITY DEFINER + allowlist hardcoded en body (5 emails TheNucleo desde 2
 - ✅ `sNpVWEkinc4g0KfA` — **OPS ADS — Acciones Bubble [WEBHOOK]** (endpoint POST `/webhook/ads_action`). 17 nodos. Switch v3.4 mode expression por `body.action` → 3 branches: **refresh** (re-poll Meta + UPSERT KPIs + scoring), **status_toggle** (POST Meta `<entity_id>` con status + RPC `ads_aplicar_status_toggle` que UPDATE+INSERT notas+activity_log), **nota_crear** (RPC `ads_notas_crear`). Cada branch su propio Respond to Webhook. Tags `portal`+`ads`.
 
 ### IA Cerebro
-- ✅ `JI5Tr7IogqXgaI7a` — **IA Cerebro — Chat por Cliente**
-- ✅ `7yjLwl4cEJa7XAYY` — **IA Cerebro — Tool Loop [SUB]**
+- ✅ `JI5Tr7IogqXgaI7a` — **IA Cerebro — Chat por Cliente** (refactor 2026-05-24: bloque "Preparar Indexacion" sustituido por `Preparar Input SUB Indexacion` → `Call Sub Cargar Contexto` → `Decidir Indexacion`, delegando la lógica RAG al SUB compartido `F1gfvgmQ90JmQlTr`. Build Claude Body migrado al patrón sb env-based — lookup `nombre_cliente` ya no falla en sub-workflow runtime)
+- ✅ `7yjLwl4cEJa7XAYY` — **IA Cerebro — Tool Loop [SUB]** (refactor 2026-05-24: pre-carga contexto vía SUB `F1gfvgmQ90JmQlTr` antes de Process Tools; el branch `cargar_contexto_cliente` ahora lee del contexto pre-cargado en vez de duplicar lógica RAG)
 - ✅ `NI1oUwIY99TGk496` — **IA Cerebro — Indexar Drive [SUB]**
 - ✅ `BqNTrwoQ2iJIcAB4` — **IA Cerebro — Reindexar RAG Manual [WEBHOOK]**
+- ✅ `F1gfvgmQ90JmQlTr` — **IA Cerebro — Cargar Contexto Cliente [SUB]** (creado 2026-05-24). Encapsula la lógica RAG común antes duplicada entre `JI5Tr7IogqXgaI7a` y `7yjLwl4cEJa7XAYY`. I/O: `{ conversation_id, cliente_notion_id, save_to_metadata }` → `{ ok, cliente, store_id, resumen, contexto_cargado, error }`. Smart-cache: si `metadata.contexto_cargado=true`, devuelve resumen cacheado sin re-llamar Gemini.
 
 ### IA Newsletter
 - ✅ `inWFSAEDLCH1kx5P` — **IA Newsletter — Entrada**

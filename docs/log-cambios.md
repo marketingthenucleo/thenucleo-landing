@@ -934,6 +934,336 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
   - Verificar en próxima sesión nueva si las skills aparecen en la lista de "available skills" del system prompt sin configuración extra, o si hay que añadir un `settings.json` apuntando a `.claude/skills/`.
   - Las otras 6 skills del repo `ui-ux-pro-max-skill` (`design`, `design-system`, `brand`, `ui-styling`, `slides`, `banner-design`) son ~6.6 MB extra — añadir si Ben las quiere disponibles también.
 
+
+### 2026-05-24 [INFRA][REFACTOR] — Cerebro RAG: helper `cargar_contexto_cliente` extraído a sub-workflow propio
+
+- **Área:** n8n workflows IA Cerebro. Cierra deuda #3 de la entrada anterior (Rotación Gemini API key).
+- **Qué:**
+  - **Nuevo sub-workflow `F1gfvgmQ90JmQlTr` (`IA Cerebro — Cargar Contexto Cliente [SUB]`).** 2 nodos: Execute Workflow Trigger (passthrough) + Code `Cargar Contexto`. I/O contractual: `{ conversation_id, cliente_notion_id, save_to_metadata }` → `{ ok, cliente:{nombre_empresas,link_drive,pagina_web,sector,descripcion_plan}, store_id, resumen, contexto_cargado, error }`. Smart-cache: si `metadata.contexto_cargado=true && contexto_resumen`, devuelve el resumen cacheado sin re-llamar Gemini (solo 2 GETs Supabase). Si `save_to_metadata && resumen`, PATCH `chat_conversations.metadata` con `contexto_resumen + contexto_cargado=true + rag_store_id`. Helper `sb` env-based (patrón lección 15: `this.helpers.request` + `$env.SUPABASE_SERVICE_ROLE_KEY`, no `httpRequestWithAuthentication`). Activo + publicado.
+  - **Refactor `JI5Tr7IogqXgaI7a` (`IA Cerebro — Chat por Cliente`).** Reemplazado nodo `Preparar Indexacion` (1 Code monolítico con lógica RAG inline + decisión de indexar + bootstrap metadata) por 3 nodos: `Preparar Input SUB Indexacion` (Code mini, extrae conversation_id+cliente_notion_id) → `Call Sub Cargar Contexto` (Execute Workflow al SUB con `save_to_metadata:true`) → `Decidir Indexacion` (Code: bootstrap metadata si falta + interpreta output SUB para decidir `should_index` cuando NO hay store pero SÍ hay `link_drive`). 21→24 nodos. Conexión `Get Conv Metadata` → 3 nuevos → `Necesita Indexar?` (sin cambios downstream). Aplicado vía MCP SDK preservando `webhookId: e0587a17-6d3b-421a-a7da-25b3c13053ea` y path `chat_cerebro` (URL pública para Bubble intacta). activeVersionId: `c1a43dd0-f81c-4fcb-9a28-6034143646a7`.
+  - **Cierre punto 4 deuda anterior**: en el mismo update SDK migrado el Code `Build Claude Body` del patrón roto `httpRequestWithAuthentication` (silenciosamente fallaba en sub-workflow runtime y el prompt perdía `nombre_cliente`) al patrón canónico `sb` env-based con `this.helpers.request + $env.SUPABASE_SERVICE_ROLE_KEY`. Lookup `nombre_cliente` ahora funciona.
+  - **Refactor `7yjLwl4cEJa7XAYY` (`IA Cerebro — Tool Loop [SUB]`).** Pre-load del contexto antes del Process Tools en vez de inline dentro del branch `cargar_contexto_cliente` (n8n Code node no expone `executeWorkflow`, no se puede llamar SUB inline). Trigger → `Preparar Input SUB` (Code mini) → `Call Sub Cargar Contexto` (Execute Workflow al SUB con `save_to_metadata:true`) → `Process Tools` (modificado: lee trigger via `$('Execute Workflow Trigger').first().json` y SUB via `$input.first().json`; branch `cargar_contexto_cliente` usa el contexto pre-cargado, fallback a resumen plano con datos básicos cliente si no hay store). 7→9 nodos. Helper `sb` env-based sigue solo para `consultar_datos`/`describir_tabla`/`listar_tablas` (POST a RPC). Coste: 2 GETs Supabase por turno del loop si Claude no pide la tool — aceptable por el smart-cache del SUB (devuelve cacheado sin Gemini). activeVersionId: `257d034d-d99a-47f2-87de-2d2a141c8480`.
+  - **Decisión approach SUB I/O**: el SUB devuelve primitivas, callers deciden (vs absorber decisiones en el SUB con flag `modo`). Más reutilizable: futuras invocaciones (ej. desde `IA Newsletter — KB Fetch [SUB]` si quisiéramos compartir contexto de cliente con la newsletter) solo necesitan llamar al SUB. Documentado en `docs/portal/sectores/chats-ia.md` pendiente actualización.
+  - **Lección operativa**: la prudencia documentada ayer ("workflow muy complejo con webhook + 20 nodos + fan-outs → riesgo de translation error en SDK demasiado alto") no era veredicto técnico; era no haber probado. El SDK actual preserva `webhookId` cuando se pasa explícitamente en `config.webhookId` del trigger node — verificado E2E con el update de `JI5Tr7IogqXgaI7a`. Para próximos refactores SDK de workflows con webhook: pasar `webhookId` explícito en config y verificar inmediatamente post-update con `get_workflow_details` antes de publicar. Si webhookId cambió → rollback con publish_workflow del versionId anterior. Si preserva → publish del draft.
+  - **Riesgo conocido cred httpHeaderAuth**: el SDK no permite preservar credenciales bindeadas via `genericCredentialType` por ID (mensaje "HTTP Request nodes were skipped during credential auto-assignment"). Tras update, las credenciales pueden mantenerse o perderse según el parser n8n — verificación manual obligatoria en UI tras publicar. Patrón a documentar en `docs/infra/n8n-workflows.md` lección 16 (pendiente).
+- **Por qué:** eliminar duplicación de la lógica RAG (cliente+store+Gemini+PATCH metadata) entre `Preparar Indexacion` y `Process Tools` (cada uno repetía ~30 líneas idénticas). Si Gemini cambia API, prompt o esquema → 1 sitio en vez de 2. Igualmente cierra punto 4 (Build Claude Body migrado).
+- **Impacto:**
+  - ✅ `IA Cerebro — Cargar Contexto Cliente [SUB]` operativo (F1gfvgmQ90JmQlTr).
+  - ✅ Chat por Cliente refactorizado, webhookId preservado, Build Claude Body fix aplicado.
+  - ✅ Tool Loop pre-carga contexto cliente en cada turno via SUB (smart-cache evita Gemini repetido).
+  - ⚠️ Credenciales httpHeaderAuth (Claude API + Claude API Loop) pueden necesitar re-asignación manual en UI tras publish. Verificación E2E pendiente — Ben verifica + test Cerebro chat con cliente test.
+  - ⏸ Tag `portal` al SUB nuevo pendiente UI (sin él no entra al backup `marketingthenucleo/n8nthenucleo`).
+- **Refs:**
+  - n8n workflows creados: `F1gfvgmQ90JmQlTr` (nuevo)
+  - n8n workflows modificados: `JI5Tr7IogqXgaI7a`, `7yjLwl4cEJa7XAYY`
+  - Versiones anteriores (rollback si rompe): JI5Tr7IogqXgaI7a `a8db412e-d469-4d7c-accf-b131a01a39ff`, 7yjLwl4cEJa7XAYY `429c27d6-743a-4b59-a5a3-4472ba283bed`
+  - Docs pendientes actualizar: `docs/portal/CLAUDE.md` (sección IA Cerebro + 1 workflow nuevo en mapa), `docs/infra/n8n-workflows.md` (entry SUB + lección 16 cred httpHeaderAuth + actualizar entries Cerebro Chat/Tool Loop), `docs/portal/sectores/chats-ia.md` (arquitectura RAG con SUB compartido).
+- **Deuda restante de la entrada anterior:**
+  1. Audit ~40 workflows Portal restantes — sigue abierto.
+  2. Refrescar credencial Meta Ads — sigue abierto (incidencia 02f91d05).
+  3. ✅ Cerrado en esta entrada (refactor cargar_contexto_cliente).
+  4. ✅ Cerrado en esta entrada (Build Claude Body migrado a sb env-based).
+  5. Refactor OOM PDF chunks — solo si vuelve a haber OOM, no proactivo.
+
+### 2026-05-24 [INFRA][BUGFIX] — Audit secrets: 2 workflows IA Newsletter con SUPABASE service_role JWT + Gemini key hardcoded (rotación incompleta de ayer)
+
+- **Área:** n8n workflows IA Newsletter (2 outliers de la rotación del 2026-05-24 anterior). Cierra parcialmente la deuda #1 ("Audit de los ~40 workflows Portal restantes") — 19 de ~50 auditados, 0 hallazgos en el resto del Portal hasta el corte.
+- **Qué:**
+  - **Hallazgo #1 — `SfwR7gqs1hBIOV7i` (`IA Newsletter — Tool Loop [SUB]`):** Code `Process Tools` tenía hardcoded el **SUPABASE service_role JWT completo** (`eyJ...ZgRskYaJJn_VuMiMiyBZDhl7o0SsvKazbF8LacvCQRQ`, role=service_role, exp=2089) + la **Gemini key vieja** (`AIzaSyBWk-gPMdM6fOaWj2bpZKlN2iJZqc-lfSk`, ya revocada por Google ayer). Patcheado vía SDK MCP → migrado a `$env.SUPABASE_SERVICE_ROLE_KEY` + `$env.GEMINI_API_KEY` + URL Gemini cambiada de `?key=` query param a header `x-goog-api-key`. activeVersionId nuevo: `0e116979-8d69-422e-9172-7ab6afa1de10`. Versión vieja para rollback: `d6d7471a-4fd3-4ed6-8734-f7f1d88397cb`.
+  - **Hallazgo #2 — `UBYXNKZ1HHFTZyDX` (`IA Newsletter — Init`):** **7 nodos HTTP** con `apikey` + `Authorization: Bearer` hardcoded con el **mismo SUPABASE service_role JWT** (Get Messages Count, Get RAG Store, Get Cliente Drive, Insert Msg A, Insert Msg Indexing, Upsert WIP Indexing, Insert Msg Generic) + **1 nodo Gemini** (`Gemini RAG Resumen`) con la **misma Gemini key vieja** en `?key=` query param. Patcheado vía SDK MCP → todos los headers manuales migrados a `$env.SUPABASE_SERVICE_ROLE_KEY` + Gemini a `$env.GEMINI_API_KEY` (header `x-goog-api-key`). webhookId `790e0374-8ee8-4fbe-8ef0-138151e1161c` preservado. activeVersionId nuevo: `6de033ba-9477-4035-a5b8-4b52f6f96553`. Versión vieja para rollback: `e129bcdc-1652-48a5-a9e9-fdb4b1610c05`.
+  - **Por qué pasaron desapercibidos ayer:** la rotación de ayer cubrió KB Fetch + 4 Cerebro (los que detonaron el incidente al fallar con 403). El Tool Loop NL y el Newsletter Init NUNCA se ejecutaron en el test E2E con Rock & Climb (los branches con el hardcoded estaban en código muerto durante el test). Ambos eran código de marzo no modernizado.
+  - **Patrón canónico confirmado vs outliers:** 17 workflows auditados (incluidos los 4 Cerebro patcheados ayer + 2 ADS multi-provider F1 + 3 IA Análisis + 3 SYNC + 1 Blog Zenyx + 1 OPS ADS Receptor + Newsletter Entrada + Análisis Init + 2 trigger shims + Cerebro Reindexar Manual) usan **uno de 2 patrones seguros**:
+    1. **Cred bindeada vía nodos nativos** (`predefinedCredentialType` + `nodeCredentialType` o `genericCredentialType` + `httpHeaderAuth`).
+    2. **`$env.AIC_KEY` + RPC `aic_get_with_key`** para descifrar creds Meta/Google de `agencia_integraciones_config` (cifradas con pgcrypto) — patrón ADS F1.
+  - **No-secrets identificados (falsos positivos):** IndexNow key `d75eac395db864420f8f0401b9277586` (pública por diseño), Drive driveId `0AHG_M2zse8nOUk9PVA` (público intra-cuenta), agencia_id `e748c7d4-...` (ID interno no sensible), Bubble agencia uid `1769513105728x555492736219132700`, Clockify workspaceId `68e22513cb6c3d1db549ca50`, Notion DB IDs (`b67f8416-...`, `fd1652ef-...`), Supabase URL pública.
+- **Por qué:** eliminar la causa raíz del leak. El backup repo `marketingthenucleo/n8nthenucleo` (privado, solo Ben) había estado commiteando el JWT en plano en cada update de estos 2 workflows desde marzo. Sin rotación urgente del JWT porque el repo es privado y el blast radius limitado.
+- **Impacto:**
+  - ✅ Newsletter Tool Loop y Newsletter Init usan ahora env vars en runtime (mismo valor, no expuesto en código exportable).
+  - ✅ Próximos commits al backup `n8nthenucleo` NO incluirán los secrets.
+  - ⚠️ El JWT y la Gemini key vieja siguen en el histórico git del backup — no rotamos porque repo privado. Si en el futuro se hace público o se da acceso a externos, rotar entonces.
+  - ⏸ ~28 workflows restantes del Portal sin auditar (SYNCs, CRONs nocturnos, OPS Tareas/LOG, INTEGRACIONES F1, ERRORES). Riesgo estimado bajo: la mayoría usa nodos nativos con cred bindeada.
+- **Refs:**
+  - n8n workflows patcheados: `SfwR7gqs1hBIOV7i`, `UBYXNKZ1HHFTZyDX`
+  - n8n workflows auditados clean: `CNlBtiFCwY69I6Wl` (Blog Zenyx), `fdmkhBOua6pbZh6P` (OPS ADS Google), `GjijIDEUyiH05Mg0` (SYNC TAREAS Notion), `FcTmv78nLjbCb2Ea08qbt` (SYNC CLIENTES Notion), `inWFSAEDLCH1kx5P` (NL Entrada), `9wnB9NI8Capa4b8s` (NL Entrega), `dtgF0G35aeJQVVfn` (Análisis Entrada), `pIxC6RNqHISWvpoU` (CRON ADS Meta Daily), `FFhkdTFCjTtfyvhP` (Análisis Tool Loop), `Cfs3NFEE1enu1jTx` (Análisis KB Fetch), `QW8VZ9cV5ECsSKvZ` (Análisis Entrega), `Uqv3R3txzcg8GI1B` (CRON ADS Google+Meta 30min), `sNpVWEkinc4g0KfA` (OPS ADS Acciones), `JtXdkXHm6RyGOJft` (Análisis Trigger Entrega), `8hAokf6zfQl0dMlR` (Análisis Init), `u9DsFadbpb7QiLaP` (NL Trigger Entrega), `BqNTrwoQ2iJIcAB4` (Cerebro Reindex Manual)
+  - n8n workflows archived (sin auditar, por diseño): `4gN3uGhH8NZX2BDU` (OPS ADS Gmail listener legacy)
+  - Docs pendientes actualizar: `docs/infra/n8n-workflows.md` (lección 16: "patrón hardcoded vs env vars en workflows IA antiguos"), `docs/infra/ids-referencias.md` (variables de entorno completas).
+
+---
+
+### 2026-05-24 [DOCS][PORTAL] — Roadmap del desarrollo Pipelines (audit Fase 0 verificada)
+
+- **Área:** Docs `docs/portal/`.
+- **Qué:** nuevo `docs/portal/pipelines-roadmap.md` con la auditoría del flujo Pipelines (account/PM/equipo). Roadmap en 4 fases (F0 vivo · F1 transición manual · F2 backend Supabase + dropdown forzado Bubble · F3 catálogo abierto) + bloqueadores cruzados + verificación end-to-end + inicializador para retomar el trabajo en sesiones futuras.
+- **Por qué:** consolidar en un solo doc qué está vivo, qué está en transición y qué bloquea el siguiente milestone (F2), evitando que el contexto se pierda entre sesiones efímeras de Claude Code on the web.
+- **Verificación contra fuentes de verdad (no inventado):** líneas de `ficha-cliente/index.html` (módulo Pipelines en 1087, IIFE en 1681–2385, SEED en 1695–1756, PLANTILLAS en 1684–1692, emailCode en 1774–1780, etc.) confirmadas leyendo el archivo. Conteos Supabase verificados vía MCP contra `cbixhqjsnpuhcrcjppah`: `bub_clientes`=78 (29 activos · 49 No Activo, corrige a 73 que decía el doc origen), `playbook_cliente_servicios`=199, `fichas_de_producto`=57 (corrige a 63 que decía una fuente intermedia), `fichas_categorias`=12, `casuisticas_board`=1, `playbook_onboarding`=1. RPCs `ficha_cliente_listar`, `ficha_cliente_get`, `disponibilidad_miembros`, `playbook_publico`, `playbook_cliente_detalle` confirmadas EXISTS. Tablas F2 `cliente_pipelines` y `cliente_campanias` confirmadas MISSING. Commits validados con `git log -- ficha-cliente/index.html` (7 hashes reales). IDs de workflow n8n proceden de `docs/infra/n8n-workflows.md` sin contraste contra el MCP n8n (flag explícito en el doc).
+- **Impacto:** documentación pura, sin cambios de código ni schema. Sirve como punto de entrada cuando se retome F1.4 (TODO L1 "Campañas" en `wvHcgVqqjkWJcJDu`) o F2 (5 migraciones + RPCs + cableado).
+- **Refs:** `docs/portal/pipelines-roadmap.md` (nuevo) · referencias a `pipelines-presentacion.md`, `account-manual-pipelines.md`, `pm-manual-pipelines.md`, `equipo-manual-pipelines.md`, `ficha-cliente.md`, `secciones-app.md`, `docs/infra/supabase-schema.md`, `docs/infra/n8n-workflows.md`.
+
+---
+
+### 2026-05-24 [INFRA][BUGFIX] — Audit secrets cerrado: 24/50 workflows + 3 outliers patcheados (Newsletter Tool Loop + Newsletter Init + Google Chat Pub/Sub)
+
+- **Área:** n8n workflows Portal — audit completo de la categoría con mayor vector de riesgo (workflows con Code nodes que hacen HTTP a APIs externas + workflows IA antiguos). Cierra la deuda #1 ("Audit de los ~40 workflows Portal restantes") con cobertura suficiente (24/50, 100% IA + 100% ADS + 6 SYNCs/CRONs/OPS muestreados de los antiguos).
+- **Qué (additional findings tras los 2 críticos):**
+  - **Hallazgo #3 — `8snJvdNsmRM2yI2y` (`OPS LOG — Mensajes Google Chat (Pub/Sub)`):** 3 nodos HTTP con `Authorization: Bearer 088a20b5465b6fa2cb8fbba67f250a79` hardcoded (Bubble API token, mismo que ayer movimos a `$env.BUBBLE_API_TOKEN` en SYNC Espejo). Nodos: `GET Cliente by Space`, `GET Dup Check`, `POST Bubble actividad_diaria_log`. **Severidad: BAJA-MEDIA** vs los 2 críticos previos (token Bubble permite r/w en la app Bubble pero NO bypass total Supabase). Patcheado vía SDK MCP → migrado a `={{ 'Bearer ' + $env.BUBBLE_API_TOKEN }}`. webhookId `b268b39b-57af-487f-92fc-577732967131` preservado. activeVersionId nuevo: `237d945c-f474-4723-a1ce-0b95560d2071`. Versión vieja para rollback: `711a9f4a-44a8-4b71-8f99-519282132fad`.
+- **Cobertura audit (24/50):** IA Cerebro 4/4 ✅ + IA Newsletter 6/6 (2 patcheados ayer + 4 hoy con 2 más patcheados) + IA Análisis 6/6 ✅ + ADS Multi-provider F1 6/6 ✅ + SYNCs muestra 4/9 ✅ + OPS muestra 3/11 (1 patcheado) + CRONs muestra 3/9 ✅ + Blog Zenyx 1/1 ✅ + 1 archivado. **Restantes (~26): SYNCs Notion/ClickUp/Bubble bidireccionales, CRONs reconciliación, OPS Tareas (backfills MANUAL), INTEGRACIONES F1 multi-provider sub-workflows, ERRORES.** Patrón canónico observado en los 24 auditados = nodos nativos n8n con cred bindeada (`predefinedCredentialType`/`genericCredentialType`) o el patrón F1 ADS (`$env.AIC_KEY + aic_get_with_key`). Riesgo estimado en los 26 restantes: bajo.
+- **Total outliers identificados:** 3 (2 críticos JWT + 1 menor Bubble token), todos del mismo origen — código antiguo (marzo-mayo) escrito antes de adoptar la disciplina `$env vars + cred bindeada` aplicada desde abril-mayo. Coincide cronológicamente con la modernización del patrón canónico (`Uqv3R3txzcg8GI1B` ADS Intra-día creado 2026-05-13 ya con `$env.AIC_KEY + aic_get_with_key`).
+- **Refs additional (batch 3+4+5 clean):**
+  - n8n workflows auditados clean (15 más): `FFhkdTFCjTtfyvhP` (Análisis Tool Loop), `Cfs3NFEE1enu1jTx` (Análisis KB Fetch), `QW8VZ9cV5ECsSKvZ` (Análisis Entrega), `Uqv3R3txzcg8GI1B` (CRON ADS Google+Meta 30min), `sNpVWEkinc4g0KfA` (OPS ADS Acciones), `JtXdkXHm6RyGOJft` (Análisis Trigger Entrega), `8hAokf6zfQl0dMlR` (Análisis Init — YA usaba $env vars), `u9DsFadbpb7QiLaP` (NL Trigger Entrega), `BqNTrwoQ2iJIcAB4` (Cerebro Reindex Manual), `vI3TbyxtFM6wjhBS` (Holded), `ccPQuZmH7DGYRRbe` (Clockify CRON), `wvHcgVqqjkWJcJDu` (Bubble→Notion+Drive), `kZE3W2ae0upyGt2E` (CRON NL Reindex 3:30).
+  - n8n workflows patcheados batch 5: `8snJvdNsmRM2yI2y` (Bubble token).
+- **Deuda restante (transferida a próximas sesiones):**
+  1. ✅ Cerrado en esta entrada (audit secrets, cobertura suficiente).
+  2. Refrescar credencial Meta Ads — sigue abierto (incidencia 02f91d05).
+  3. ✅ Cerrado entrada anterior (refactor cargar_contexto_cliente).
+  4. ✅ Cerrado entrada anterior (Build Claude Body migrado).
+  5. OOM PDF chunks — solo proactivo si vuelve a haber OOM.
+  6. **Auditoría de los 26 workflows restantes** — pendiente (baja prioridad, patrón conocido).
+  7. **Rotación service_role JWT Supabase** — diferida (repo backup privado, blast radius limitado). Si en el futuro `n8nthenucleo` se hace público o gana colaboradores, rotar entonces.
+
+- **⚠️ Aprendizaje crítico durante el patch:** `$env.X` en `headerParameters.value` de HTTP Request nodes está **BLOQUEADO** por defecto en n8n self-hosted con `N8N_BLOCK_ENV_ACCESS_IN_NODE=true`. Solo Code nodes (con `$env.X` en jsCode) y `jsonBody` con cred bindeada (caso `Uqv3R3txzcg8GI1B`) pueden leer env vars. Mis patches iniciales de `UBYXNKZ1HHFTZyDX` (7 HTTP nodes Supabase + 1 Gemini) y `8snJvdNsmRM2yI2y` (3 HTTP nodes Bubble) **fallaron en runtime con `[ERROR: access to env vars denied]`** → rollback inmediato a versionIds `e129bcdc-...` y `711a9f4a-...` respectivamente. Fix decidido: añadir env var `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` en Easypanel → restart n8n → republicar versiones nuevas (`6de033ba-...` y `237d945c-...`). Trade-off aceptado: amplía superficie de exposición a inyección via webhook expressions, mitigado porque n8n self-hosted privado sin endpoints abiertos. Documentar en `docs/infra/n8n-workflows.md` lección 17 ("env vars en HTTP nodes requieren `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`"). `SfwR7gqs1hBIOV7i` no se vio afectado porque su `$env` vive dentro de Code node (jsCode), donde el bloqueo no aplica.
+
+- **⚠️ Aprendizaje crítico durante el patch (y pivot al patrón correcto):** `$env.X` en `headerParameters.value` de HTTP Request nodes está **BLOQUEADO** por defecto en n8n self-hosted con `N8N_BLOCK_ENV_ACCESS_IN_NODE=true`. Solo Code nodes (con `$env.X` en jsCode) y `jsonBody` con cred bindeada (caso `Uqv3R3txzcg8GI1B`) pueden leer env vars. Mis patches iniciales de `UBYXNKZ1HHFTZyDX` (7 HTTP nodes Supabase + 1 Gemini) y `8snJvdNsmRM2yI2y` (3 HTTP nodes Bubble) **fallaron en runtime con `[ERROR: access to env vars denied]`** → rollback inmediato a versionIds `e129bcdc-...` y `711a9f4a-...` respectivamente. **Decisión final (pivot)**: NO bajar `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` (amplía superficie de inyección) sino **usar el patrón canónico de cred bindeada** (mismo patrón que usan el resto de workflows clean del Portal):
+  - Ben creó 2 creds Header Auth nuevas en n8n UI: `Bubble API Token` (id `IFAeIvEVDbrPBZIW`) y `Gemini API Key` (id `fEKYLWb7Vhx4HnNs`).
+  - Repatchados ambos workflows vía SDK con `authentication: 'genericCredentialType', genericAuthType: 'httpHeaderAuth', credentials: { httpHeaderAuth: { id, name } }`. El SDK preserva el ID de cred bindeada cuando se pasa explícito.
+  - Los 7 nodos Supabase de `UBYXNKZ1HHFTZyDX` usan `predefinedCredentialType: supabaseApi` pero el SDK NO auto-asignó (skipped) — Ben los bindeó manualmente en UI (1 click por nodo, ~1 min).
+  - activeVersionIds finales: `UBYXNKZ1HHFTZyDX = 29fd0f99-598b-4fff-8486-080f30f590e1`, `8snJvdNsmRM2yI2y = 5ceffae5-15e2-46a8-a48f-f677db2a00cb`. Verificado E2E por Ben.
+  - **`SfwR7gqs1hBIOV7i` no se vio afectado** porque su `$env` vive dentro de Code node (jsCode), donde el bloqueo no aplica — quedó con el patrón `$env` desde el primer patch (`0e116979-...`).
+  - **Lección para próximos patches**: si necesitas un secret en un HTTP Request node, NUNCA uses `$env.X` en `headerParameters.value` — usa cred Generic Header Auth bindeada con ID explícito en `config.credentials`. Si necesitas un secret en un Code node, `$env.X` en jsCode SÍ funciona. Documentar en `docs/infra/n8n-workflows.md` lección 17.
+
+### 2026-05-24 [PORTAL][N8N] — OPS VENTAS — Alta Cliente WhatsApp: continuado el draft + tabla `alta_cliente_wip` + doc
+
+- **Área:** workflow n8n `Q99fjZWhA8tlofVr`, Supabase tabla nativa nueva `alta_cliente_wip`, doc `docs/portal/integraciones/whatsapp-alta-cliente.md`, entries en `docs/infra/n8n-workflows.md` + `docs/CLAUDE.md`.
+- **Qué:**
+  - **Workflow renombrado** de `OPS VENTAS — WhatsApp Intake` (draft 2026-05-23 nunca arrancado) a `OPS VENTAS — Alta Cliente WhatsApp` (español, consistencia con convención de naming).
+  - **Tabla `alta_cliente_wip`** creada (patrón `analisis_wip` / `newsletter_wip`): `mensajes jsonb` historial conversacional, `payload jsonb` borrador ficha, `estado abierto/confirmado/rechazado`, `last_msg_in_id` UNIQUE para idempotencia anti-reintento Evolution, UNIQUE parcial `(telefono_e164) WHERE estado='abierto'` para 1 sesión activa por comercial. RLS habilitada sin policies → solo `service_role`. Trigger `update_updated_at()` reutilizado.
+  - **3 bugs corregidos del draft** (no se podían detectar sin smoke test contra el esquema real):
+    1. `agencia_id_bub` → `agencia_id` en GET + POST contra `bub_clientes` (columna real). Confirmado contra `information_schema.columns`.
+    2. `cliente_id` → `cliente_bubble_id` en INSERT a `playbook_cliente_servicios` (columna real es `cliente_bubble_id`).
+    3. Loop servicios iteraba el output de POST Bubble (1 item con el cliente creado) en vez del array `servicios_finales`. Añadido nodo nuevo `Expandir servicios` (Code) que devuelve N items + fallback `__skip:true` cuando no hay servicios para evitar INSERT con nulls.
+  - **Whitelist** convertida de env var `WHITELIST_TELEFONOS` (que no existía en Easypanel) a array hardcoded en el If: `["+34627755036","+34675525001"]` (Benja + Alex).
+  - **Mapeo teléfono → comercial** añadido al Code `Normalizar texto entrada` (dict `COMERCIALES`). Sustituye al hardcode anterior que solo apuntaba a Alex (`alejandro.lopez@thenucleo.com`). Cada intake graba `comercial_email + comercial_nombre` derivado del número entrante.
+  - **Prompt Claude** generalizado: `mensaje_para_alex` → `mensaje_para_comercial` (el bot ya no asume Alex). System prompt ahora incluye "COMERCIAL ACTUAL: <nombre> (<email>)" para que la IA pueda dirigirse al comercial correcto. Regla nueva "una pregunta por mensaje, corta y directa, con opciones cerradas (1/2/3) cuando aplique" — alineado con el flujo Q&A rápido que pidió Ben.
+  - **Migración Supabase** aplicada vía `apply_migration` (`crear_alta_cliente_wip`). Tabla creada en proyecto `cbixhqjsnpuhcrcjppah`.
+- **Por qué:** primer uso productivo de Evolution API para TheNucleo. Sustituye el alta manual de cliente que hoy hace Account por una captura inmediata del comercial al cerrar la venta. La doc de `n8n-workflows.md:1331` decía "no hay workflow Evolution" — ya no aplica.
+- **Impacto:**
+  - ⏸ **Workflow listo pero INACTIVO** pendiente: asignar 4 credenciales en 17 nodos HTTP (UI), añadir tag `portal` (UI), configurar env vars `EVO_URL`/`EVO_INSTANCE`/`BUBBLE_BASE_URL`/`GEMINI_API_KEY` (Easypanel), apuntar webhook Evolution a `/webhook/ventas_whatsapp_inbound`.
+  - ✅ Tabla `alta_cliente_wip` en `bub_clientes` schema (proyecto cbi) — `RLS ENABLED`, sin policies = solo service_role.
+  - ✅ Triggers `set_updated_at` añadido a `alta_cliente_wip` (lista de updated_at en CLAUDE.md actualizada).
+  - ✅ Nota desactualizada `n8n-workflows.md:1331` (sobre falta de workflow Evolution) reescrita con referencia al nuevo workflow.
+  - ✅ Doc nueva `docs/portal/integraciones/whatsapp-alta-cliente.md` (flujo, schema tabla, prompt, env vars, decisiones de diseño, TODOs).
+  - ✅ Entries añadidas en `docs/CLAUDE.md` (Tablas operativas + n8n OPS) y `docs/portal/integraciones/README.md` (tabla index + drop de la línea "Evolution sin doc dedicado").
+- **Refs:**
+  - n8n workflow: `Q99fjZWhA8tlofVr`
+  - Supabase migration: `crear_alta_cliente_wip`
+  - Supabase tablas tocadas: `alta_cliente_wip` (creada)
+  - Tablas leídas por el workflow: `bub_clientes`, `fichas_de_producto`, `fichas_categorias`
+  - Tablas escritas por el workflow: `bub_clientes` (vía Bubble Data API), `playbook_cliente_servicios`, `alta_cliente_wip`
+  - Docs tocadas: `docs/log-cambios.md` (esta entrada), `docs/infra/n8n-workflows.md` (sección Externos + nueva sub `OPS VENTAS — Alta Cliente WhatsApp`), `docs/portal/integraciones/whatsapp-alta-cliente.md` (nueva), `docs/portal/integraciones/README.md` (tabla index), `docs/CLAUDE.md` (Tablas operativas + Triggers + RLS list + OPS workflows)
+
+---
+
+### 2026-05-24 [PORTAL][N8N] — OPS VENTAS — Alta Cliente WhatsApp v2: HTTP genéricos → nodos nativos (Bubble + Evolution)
+
+- **Área:** workflow n8n `Q99fjZWhA8tlofVr` (segunda iteración del día).
+- **Qué:**
+  - **`POST bub_clientes Bubble`** (HTTP Request 4.4 con `genericAuthType: httpHeaderAuth` apuntando a `$env.BUBBLE_BASE_URL/obj/bub_clientes`) **→ `Crear cliente Bubble`** (nodo nativo `n8n-nodes-base.bubble` v1, resource `object`, operation `create`, typeName `bub_clientes`, credencial `bubbleApi`). Mismas 7 propiedades (`nombre_empresas`, `sector`, `contacto_principal`, `correo_principal`, `telefono_principal`, `estado: "Activo"`, `agencia_id: "1769513105728x555492736219132700"`).
+  - **3x `sendText *`** (HTTP Request 4.4 con `genericAuthType: httpHeaderAuth` apuntando a `$env.EVO_URL/message/sendText/$env.EVO_INSTANCE`) **→ 3x nodo nativo Evolution** (`n8n-nodes-evolution-api.evolutionApi` v1, resource `messages-api`, operation `send-text`, credencial `evolutionApi`). Nombres renombrados a `Evolution sendText cliente creado` / `cancelado` / `pregunta`. Params: `remoteJid` (sin el `+` prefix) + `messageText`.
+  - **Credenciales nativas autoasignadas** por n8n al hacer el SDK update (sin intervención): `Bubble account` (`bubbleApi`) + `Evolution account` (`evolutionApi`, ID `XHvfdN2BRxBlsRLR`). Antes esto requería re-asignar 4 credenciales genéricas a mano en UI.
+  - **Env vars eliminadas:** `EVO_URL`, `EVO_INSTANCE`, `BUBBLE_BASE_URL` ya no hacen falta (las credenciales nativas llevan host/instance/Bubble app dentro). Solo queda `GEMINI_API_KEY` (ya configurada). Las refs en `EXPANDIR_JS` y `PATCH intake confirmado` se actualizaron de `$("POST bub_clientes Bubble")` → `$("Crear cliente Bubble")`.
+- **Por qué:** Ben confirmó que (a) `Bubble account` (cred `bubbleApi`) y `Evolution account` (cred `evolutionApi` ID `XHvfdN2BRxBlsRLR`) ya existen en n8n y (b) la auth genérica `httpHeaderAuth` contra Bubble Data API no funciona limpiamente — la cred nativa Bubble sí. Regla operativa "si hay nodo nativo equivalente al HTTP Request, usarlo siempre".
+- **Impacto:**
+  - ✅ Reducidos 4 nodos HTTP genéricos a 4 nodos nativos con credencial autoasignada. Total nodos sigue en 26.
+  - ✅ Pendientes manuales bajaron de 17 a 11 (10 Supabase + 1 Anthropic; los 4 nativos se autoasignaron).
+  - ✅ Eliminada deuda de configurar 3 env vars en EasyPanel.
+  - ⏸ Sigue INACTIVO hasta que Ben asigne las 11 credenciales restantes + tag `portal` + configure webhook Evolution.
+  - ⚠️ Una alternativa pendiente: el nodo `Descargar audio Evolution` sigue siendo HTTP genérico (a la `mediaUrl` que viene en el webhook payload, URL firmada sin auth aparente). Si en el primer smoke devuelve 401, sustituir por `chat-api → get-media-base64` del nodo nativo Evolution + Code para decodificar a binary.
+- **Refs:**
+  - n8n workflow: `Q99fjZWhA8tlofVr`
+  - Credenciales n8n existentes referenciadas: `bubbleApi` (Bubble account), `evolutionApi` ID `XHvfdN2BRxBlsRLR`
+  - Nodos n8n nuevos usados: `n8n-nodes-base.bubble` v1 (op `object/create`), `n8n-nodes-evolution-api.evolutionApi` v1 (op `messages-api/send-text`) — community node.
+  - Docs tocadas: `docs/log-cambios.md` (esta entrada), `docs/infra/n8n-workflows.md` (sección OPS VENTAS — Env vars + Credenciales + Cambios del draft), `docs/portal/integraciones/whatsapp-alta-cliente.md` (ASCII flow, commit final, env vars + credenciales, TODOs).
+
+---
+
+### 2026-05-24 [INTEG][OPS] — Meta Ads token revocado por Meta — incidencia 02f91d05 (regeneración manual pendiente aprobación interna)
+
+- **Área:** Meta Business Manager + workflow n8n `Uqv3R3txzcg8GI1B` (`CRON ADS — Google Y Meta Intra-día 30min`) + tabla Supabase `agencia_integraciones_config` (slug `meta-ads`).
+- **Qué:**
+  - **Incidencia detectada:** `02f91d05-3a3e-4881-ba59-f80ba4959434` abierta 2026-05-24 06:30 UTC. Error literal: `Forbidden - perhaps check your credentials?` (Meta API 403) en nodo `GET Insights Ad` de la rama Meta del workflow. El nodo `Descifrar Creds Meta (refresh)` y `appsecret_proof` siguen funcionando — esto descarta App Secret corrupto y apunta a **System User Token revocado por Meta** a pesar del flag `token_never_expires: true` en el metadata.
+  - **Diagnóstico:** Meta puede revocar System User tokens marcados "never-expires" por: security review automático, cambios de permisos del System User, admin BM modificó settings, app review interno de Meta. No hay refresh automático posible en este patrón (a diferencia de Google Ads que SÍ usa refresh_token OAuth en la otra rama del mismo workflow). Solo se puede regenerar manualmente en Meta BM. Documentado en `docs/infra/ids-referencias.md` sección Meta App.
+  - **Discrepancia corregida en `ids-referencias.md`:** el doc tenía System User ID `122135715861053861` que NO coincidía con la realidad. Ben verificó visualmente en Meta BM y el ID real del System User `thenucleoadssync` es **`61581615834355`**. Doc corregido. (Existe también 2º System User `TheNucleo_App_Control_Ads` ID `100091956884423`, histórico, no usado.)
+  - **Procedimiento documentado para regeneración** (ahora ejecutable por cualquier sesión futura):
+    1. Meta BM → `business.facebook.com/settings/system-users` → cuenta `The Nucleo` (BM ID `459242169567605`)
+    2. Click System User `thenucleoadssync` (ID `61581615834355`)
+    3. "Generar identificador" → app `Ads Control Portal` (App ID `1626417301947904`)
+    4. Permisos: `ads_read`, `ads_management`, `business_management`
+    5. Token expiration: Sin caducidad (si Meta solo ofrece 60-day, ese)
+    6. Copiar token (`EAAX...` ~200+ chars) y guardarlo cifrado en Supabase vía:
+       ```sql
+       SELECT aic_set_with_key(
+         p_agencia    => 'e748c7d4-5823-413d-8cb3-532896f6e41d'::uuid,
+         p_slug       => 'meta-ads',
+         p_provider   => 'meta',
+         p_creds      => jsonb_build_object(
+           'system_user_token', '<NUEVO_TOKEN>',
+           'app_secret',        '<APP_SECRET_ACTUAL>',
+           'app_id',            '1626417301947904',
+           'business_id',       '459242169567605',
+           'system_user_id',    '61581615834355'
+         ),
+         p_key        => '<AIC_KEY>',
+         p_meta       => '{"app_name":"Ads Control Portal","access_tier":"standard","permissions":["ads_read","ads_management","business_management"],"system_user_name":"thenucleoadssync","token_never_expires":true}'::jsonb
+       );
+       ```
+    7. Verificar disparando el workflow `Uqv3R3txzcg8GI1B` manualmente en n8n UI.
+    8. Cerrar incidencia: `UPDATE n8n_incidencias SET status='resolved', resolved_at=now() WHERE id='02f91d05-3a3e-4881-ba59-f80ba4959434';`
+- **Por qué pausado:** Ben necesita aprobación interna del equipo antes de regenerar tokens de cuentas Meta (procedimiento de seguridad). Token nuevo + cierre incidencia + verificación quedan diferidos hasta que el compañero apruebe.
+- **Estrategia a futuro (decisión 2026-05-24):** opción C del plan — **regenerar manualmente cuando se rompe**, no migrar a OAuth completo (App Review Meta + redirect handling = 1-2 días setup + 2-7 días aprobación) ni añadir health-check semanal preventivo. System User tokens suelen aguantar 6-12 meses sin tocar; el coste pragmático de regenerar manualmente cada vez es menor que el coste de mantener un flujo OAuth.
+- **Impacto:**
+  - ⏸ Workflow `Uqv3R3txzcg8GI1B` rama Meta caída desde 2026-05-24 06:30. Rama Google sigue OK (refresh OAuth automático).
+  - ⏸ KPIs intra-día Meta no se actualizan en `ads_*` tablas hasta refresh del token.
+  - ✅ Procedimiento de regeneración + corrección de IDs documentado en `docs/infra/ids-referencias.md` y en este log.
+- **Refs:**
+  - n8n incidencia: `02f91d05-3a3e-4881-ba59-f80ba4959434` (status `open` hasta refresh)
+  - n8n workflow afectado: `Uqv3R3txzcg8GI1B`
+  - Supabase tabla: `agencia_integraciones_config` (1 fila slug `meta-ads`)
+  - Supabase RPCs: `aic_set_with_key`, `aic_get_with_key`, `ads_meta_creds_listas`
+  - Docs actualizadas: `docs/infra/ids-referencias.md` (Meta App: System User ID corregido + procedimiento regeneración).
+- **Pendiente cuando se reciba aprobación:** Ben pega token nuevo en chat → yo ejecuto `aic_set_with_key` con `AIC_KEY` actual → disparo workflow manual → cierro incidencia → actualizo log con resultado.
+
+### 2026-05-24 [PORTAL][N8N] — OPS VENTAS — Alta Cliente WhatsApp v3: fixes del primer smoke (alwaysOutputData + bug Array.isArray del draft original)
+
+- **Área:** workflow n8n `Q99fjZWhA8tlofVr` (tercera iteración del día). Detectados a partir de la execution `135016` (primer smoke real con texto "Hola" desde Benja).
+- **Qué:**
+  - **`GET intake abierto`** → añadido `alwaysOutputData: true`. Antes, cuando el comercial mandaba su primer mensaje (sin sesión abierta previa), Supabase devolvía `[]`, n8n auto-iteraba a 0 items y cortaba silenciosamente toda la cadena downstream. Síntoma exacto: la execution figuraba como `status: success` pero `lastNodeExecuted: "GET intake abierto"` — clásico anti-patrón #2 documentado en `n8n-workflows.md`.
+  - **3 bugs latentes del draft original `2026-05-23`** que se habrían disparado en cuanto la cadena lo alcanzara (la execution se cortó antes de llegar):
+    1. `UPSERT intake` jsonBody usaba `const existing = Array.isArray(prev) && prev.length ? prev[0] : null;` asumiendo que `$("GET intake abierto").first().json` era el array crudo de la respuesta Supabase. Falso: el HTTP Request node de n8n auto-itera arrays JSON, así que `prev` es siempre el objeto del primer elemento (o `{}` cuando alwaysOutputData inyecta placeholder vacío). Resultado del bug: rama "existing" inalcanzable → cada mensaje crearía una fila nueva en `alta_cliente_wip` → historial conversacional perdido entre turnos. **Fix:** `const existing = prev && prev.id ? prev : null;` (chequea `id` para distinguir fila real de placeholder vacío).
+    2. `Parsear y validar ficha_id` jsCode hacía `$("UPSERT intake").first().json[0] || {}` — mismo error conceptual. `intake_id` saldría `undefined` y todos los PATCH downstream fallarían. **Fix:** quitar el `[0]`.
+    3. `Claude Sonnet 4.6` system prompt referenciaba `$("UPSERT intake").first().json[0]` en 2 sitios (payload + mensajes para el contexto del agente). La IA vería estado vacío en cada turno y nunca acumularía contexto. **Fix:** quitar el `[0]`.
+- **Por qué:** los 3 bugs vienen del draft del 2026-05-23 y son consistentes con un autor que escribió el JS sin probar contra n8n real (asumió el shape del response Supabase tal cual venía del REST). Si los hubiera detectado el smoke, hubiera sido un fallo cíclico de "Claude pregunta lo mismo cada turno porque nunca ve el historial".
+- **Impacto:**
+  - ✅ Workflow listo para activar y volver a smoke-testear. Esperar que el texto "Hola" complete la cadena entera (webhook → normalizar → GET/UPSERT intake → 3 lookups paralelos → Claude → PATCH intake mensaje → Switch → Evolution sendText con la pregunta de la IA).
+  - ⚠️ **Efecto colateral del SDK update_workflow**: cada full update puede desvincular las credenciales asignadas manualmente en UI. Tras el v3 el response trajo `autoAssignedCredentials: []` (n8n no re-asignó). Ben tiene que verificar en UI que las 4 nativas (1 Bubble + 3 Evolution) y las 11 predefined (10 Supabase + 1 Anthropic) sigan ligadas.
+- **Refs:**
+  - n8n workflow: `Q99fjZWhA8tlofVr`
+  - n8n execution origen del análisis: `135016` (2026-05-24 14:32 UTC)
+  - Anti-patrón aplicado: `docs/infra/n8n-workflows.md` lección 2 (empty output → downstream skipped). También aplica un nuevo anti-patrón "n8n auto-itera arrays JSON del response HTTP, no acceder con `[0]`" — pendiente documentar como lección 20 si vuelve a aparecer.
+  - Docs tocadas: `docs/log-cambios.md` (esta entrada).
+
+---
+
+### 2026-05-24 [PORTAL][N8N] — OPS VENTAS — Alta Cliente WhatsApp v3 publicado: descubierto el anti-patrón "MCP update_workflow guarda en draft, no publica"
+
+- **Área:** workflow n8n `Q99fjZWhA8tlofVr` — mismo bloque que la entrada siguiente, pero el descubrimiento meta es independiente.
+- **Qué:**
+  - Ben re-probó "Hola" tras el v3 (execution `135042`) y el flow se cortó de nuevo en `GET intake abierto`. `alwaysOutputData: true` que añadí parecía no surtir efecto.
+  - Investigando con `get_workflow_details`: el workflow tenía 2 IDs distintos — `versionId: 33c58623-...` (draft v3 con los fixes) **vs** `activeVersionId: 487d66bd-...` (versión publicada vieja con la JS rota y sin alwaysOutputData). El draft sí tenía los fixes pero **n8n estaba ejecutando la versión publicada antigua**.
+  - El MCP tool `update_workflow` actualiza el draft pero **no publica automáticamente**. Hay que llamar `publish_workflow` explícitamente después.
+  - Llamado `publish_workflow(Q99fjZWhA8tlofVr)` → respuesta `{success:true, activeVersionId:"33c58623-..."}`. Ahora draft == active.
+- **Por qué:** anti-patrón #9 ya documentado en `n8n-workflows.md` ("Versionado draft vs active sin publicar") pero no había salido a la luz hasta hoy con la API MCP. Probablemente el v2 (HTTP → nativos Bubble+Evolution) también se quedó en draft sin publicar tras el SDK update, hasta que Ben activó el workflow desde la UI y eso auto-publicó el draft de ese momento. Entonces el v3 quedó en draft y los 2 tests de Ben ejecutaron la v2 activeVersion.
+- **Impacto:**
+  - ✅ v3 ahora ES la activeVersion. Próximo test debería completar al menos hasta el Switch (rama `preguntar`) y enviar la respuesta de Claude por Evolution.
+  - 📝 **Lección nueva para `n8n-workflows.md`:** todo `update_workflow` SDK requiere `publish_workflow` posterior. La UI auto-publica al guardar, pero la API no.
+- **Refs:**
+  - n8n workflow: `Q99fjZWhA8tlofVr`
+  - executions origen del análisis: `135016` (primer smoke v0/draft original), `135042` (smoke post-v3 que sigue corriendo activeVersion vieja)
+  - MCP tools usadas: `get_workflow_details` (descubrir el split draft/active), `publish_workflow` (resolver)
+  - Docs tocadas: `docs/log-cambios.md` (esta entrada).
+
+---
+
+### 2026-05-24 [PORTAL][N8N] — OPS VENTAS — Alta Cliente WhatsApp v4: upsert por PK + idempotency inline (PK violation fix)
+
+- **Área:** workflow n8n `Q99fjZWhA8tlofVr` (cuarta iteración). Detectado a partir de la execution `135060` — primer fallo "intermedio del flow" tras llegar Claude+Evolution sendText OK en el primer turno.
+- **Qué:**
+  - **Síntoma:** segundo mensaje de Benja ("Cliente testnombre testtedt...") tras la sesión abierta del primer "Hola!" → UPSERT intake falló con `409 / 23505 duplicate key value violates unique constraint "alta_cliente_wip_pkey"`.
+  - **Causa:** `?on_conflict=last_msg_in_id` no resuelve la identidad real de la fila. El body enviado al UPSERT incluía `id: existing.id` (correcto) + `last_msg_in_id` nuevo (correcto). Supabase: "no encuentro fila con ese last_msg_in_id → INSERT → ya hay un row con esa PK → 23505". El upsert solo mergea cuando el campo del `on_conflict` matchea, y `last_msg_in_id` cambia con cada mensaje (por diseño).
+  - **Fix:**
+    1. URL del POST: `?on_conflict=last_msg_in_id` → `?on_conflict=id` (PK). Cuando el body lleva `id` que existe → UPDATE; cuando no lleva `id` → INSERT con `gen_random_uuid()`.
+    2. JS jsonBody: **idempotency inline anti-retry Evolution** — antes de construir el nuevo mensaje, chequea `if (existing && existing.last_msg_in_id === meta.msg_in_id) return existing;`. Si Evolution reintenta el mismo `msg_in_id`, devuelve la fila intacta → UPDATE no-op. Sin esto, un retry de Evolution duplicaría el mensaje en el array `mensajes`.
+  - La columna `UNIQUE (last_msg_in_id)` se mantiene como defensa en BD (un INSERT con last_msg_in_id duplicado fallaría a nivel Postgres), aunque la idempotencia funcional la da ahora el chequeo JS.
+- **Por qué:** error de diseño mío en v3 (el draft original lo heredó tal cual). La idempotencia anti-Evolution-retry no encaja con un upsert PostgREST cuando el campo "identidad de fila" (PK) es distinto del campo "no duplicar" (last_msg_in_id).
+- **Impacto:**
+  - ✅ Segundo y siguientes turnos de la conversación deberían funcionar end-to-end (UPSERT como UPDATE → Claude → PATCH → Switch → Evolution sendText).
+  - ✅ Idempotency anti-retry preservada vía chequeo JS.
+  - ⚠️ Cred wiring posiblemente desasignado por el SDK update (autoAssignedCredentials vacío). Ben asignó manualmente `1. Espejo Supabase` (`13dKSjEd2XZCYpJa`) a varios nodos en su última iteración; si tras este update queda desasignado, hay que re-pegar el click.
+- **Refs:**
+  - n8n workflow: `Q99fjZWhA8tlofVr`
+  - n8n executions origen: `135042` (v3 publicada, primer "Hola" OK con respuesta de Claude); `135060` (segundo mensaje, fallo 23505)
+  - Cred n8n Supabase: `13dKSjEd2XZCYpJa` ("1. Espejo Supabase")
+  - Tabla afectada: `alta_cliente_wip` — schema sin cambios (las constraints siguen valiendo)
+  - Docs tocadas: `docs/log-cambios.md` (esta entrada)
+
+---
+
+### 2026-05-24 [PORTAL][N8N] — OPS VENTAS — Alta Cliente WhatsApp v5: arquitectura Merge+Normalizar datos rescatada + fix conflict aplicado encima
+
+- **Área:** workflow n8n `Q99fjZWhA8tlofVr` (quinta iteración del día).
+- **Qué:**
+  - **Aprendizaje meta:** el `update_workflow` SDK es un FULL REPLACE. Ben había añadido en UI (entre v3 y v4) una arquitectura mejor para el bloque de lookups:
+    1. `UPSERT intake` ahora fan-out paralelo a 3 GETs (fichas/categorias/clientes), en vez de cadena secuencial.
+    2. Nodo nuevo `Merge` (`n8n-nodes-base.merge` v3.2, `numberInputs: 3`) sincroniza las 3 ramas.
+    3. Nodo nuevo `Normalizar datos` (Code) construye el body Claude completo como variable JS (template literals limpios) y lo emite como `body_claude`.
+    4. `Claude Sonnet 4.6` ahora solo hace `jsonBody: {{ $json.body_claude }}` — fuera de la expression gigante.
+    5. Los 3 Evolution sendText nodes tienen ahora `instanceName: "ventas-thenucleo"` rellenado.
+  - **Mi v4 lo borró sin avisarle.** Ben lo rescató (probable revert UI manual) y me pidió aplicar solo el fix UPSERT encima.
+  - **Aplicado v5 vía SDK preservando bit a bit la arquitectura rescatada** (28 nodos = 26 + Merge + Normalizar datos), cambiando solo:
+    - `UPSERT intake` URL: `?on_conflict=last_msg_in_id` → `?on_conflict=id`
+    - `UPSERT intake` jsCode: añadida idempotency inline `if (existing && existing.last_msg_in_id === meta.msg_in_id) { return existing; }`
+  - Llamado `publish_workflow` para que la nueva versión sea activa (`activeVersionId: ec0dc31a-...`).
+- **Por qué:** doble error mío — (a) no detecté que Ben había refactorizado vía UI entre publishes, (b) lo borré con full replace SDK sin avisar. La nota "Hice algun ajuste al workflow que e te paso desapercibido" del mensaje previo de Ben era literal y específica, no solo cred wiring.
+- **Impacto:**
+  - ✅ Arquitectura Merge+Normalizar datos restaurada y combinada con el fix conflict.
+  - ⚠️ Credenciales nuevamente posiblemente desvinculadas tras el update (`autoAssignedCredentials: []`).
+  - 📝 **Lección nueva crítica para `n8n-workflows.md`:** todo `update_workflow` SDK es full replace y puede borrar cambios UI hechos entre updates. Antes de cada update SDK, ejecutar `get_workflow_details` para detectar nodos/conexiones desconocidos y preguntar a Ben antes de continuar.
+- **Refs:**
+  - n8n workflow: `Q99fjZWhA8tlofVr`
+  - n8n executions origen: `135060` (PK violation que motivó v4), pero el patch llegó vía v4 → v5 tras rescate manual.
+  - Docs tocadas: `docs/log-cambios.md` (esta entrada).
+
+---
+
+### 2026-05-24 [PORTAL][N8N] — OPS VENTAS — Alta Cliente WhatsApp: cierre del día (v5 ACTIVO)
+
+- **Estado final:** workflow `Q99fjZWhA8tlofVr` ACTIVO, 28 nodos, instance Evolution `ventas-thenucleo`, env solo `GEMINI_API_KEY`, comerciales Benja+Alex hardcoded.
+- **Conversación E2E validada hasta:** primer "Hola" → Claude responde por WhatsApp con la pregunta correcta. Resto del flujo (servicios catálogo + crear cliente + servicios) **pendiente de smoke con datos reales** — Ben aceptó cerrar el día tras el v5 sin volver a probar.
+- **Iteraciones del día:** v1 (creación draft) → v2 (HTTP genéricos → nodos nativos Bubble + Evolution) → v3 (alwaysOutputData + bug `Array.isArray`/`json[0]` heredados del draft) → publish (sin él la v3 nunca ejecutó) → v4 (PK violation: `on_conflict=last_msg_in_id` → `on_conflict=id` + idempotency JS) → Ben rescata su refactor UI (Merge + Normalizar datos + instanceName) → v5 (mi v5 SDK reconstruye preservando bit a bit la arquitectura de Ben + aplica los 2 cambios del v4 conflict fix encima).
+- **Por qué cerrar ahora:** funcional para el caso base; afinado pendiente (smoke completo, posibles tweaks Claude prompt, cron reset stuck si sesiones se quedan zombi).
+- **Refs:**
+  - n8n workflow: `Q99fjZWhA8tlofVr` (activeVersionId final: `ec0dc31a-1e12-4861-bdd1-3a5b70f89aa7`)
+  - Entradas previas detalladas: v3, v3 publish, v4, v5 (debajo de esta entrada en este mismo log).
+  - Docs tocadas en este cierre: `docs/portal/integraciones/whatsapp-alta-cliente.md` (ASCII flow actualizado a 28 nodos + Merge/Normalizar datos + UPSERT fix), `docs/infra/n8n-workflows.md` (sección OPS VENTAS — flujo + tabla destino + cambios del draft consolidados), `docs/CLAUDE.md` (línea del workflow en OPS pasa de 26 nodos ⏸ a 28 nodos ✅), `docs/log-cambios.md` (esta entrada de cierre).
+
+---
+
+### 2026-05-24 [DOCS] — Vault Obsidian: graph view aprovechable (excluir log-cambios + colorGroups vivos + wikilinks rotos)
+
+- **Área:** `docs/.obsidian/graph.json` + 3 notas vivas.
+- **Qué:**
+  - `graph.json`: `search: "-path:log-cambios"` (excluye el agujero negro: 132 wikilinks salientes que conectaban casi todo con todo) + `hideUnresolved: true` (oculta nodos fantasma de wikilinks rotos) + `colorGroups` reconstruido con paths que existen post-reorg 2026-05-20: quita `docs/integraciones/` obsoleto, añade `docs/portal/integraciones/` + `docs/portal/sectores/` + `docs/addons/` + `docs/CLAUDE`. `linkDistance` 348→250 y `centerStrength` 0→0.2 para que se agrupe mejor visualmente.
+  - 3 wikilinks rotos a memorias persistentes (viven en `~/.claude/`, no en el vault) convertidos a inline code: `feedback_bubble_data_api_indexado` en `infra/n8n-workflows.md:250`, `feedback_playbook_allowlist_5_sitios` en `work/disponibilidades.md:87`, `root-claude-uploads-…` en `portal/ficha-cliente-pipelines-handoff-landing.md:25`.
+- **Por qué:** El graph view en global mode era ilegible — 46 notas × 295 wikilinks = ~6 edges/nodo, dominado por `log-cambios.md` (4.541 líneas, 45% de todos los wikilinks de la bóveda) que aparecía como hub central conectado a casi todo. Los colorGroups apuntaban a `docs/integraciones/` que ya no existe (movido a `docs/portal/integraciones/` el 2026-05-20) → ningún coloreo se aplicaba. Los wikilinks rotos a memorias persistentes generaban nodos fantasma grises sin valor de navegación.
+- **Impacto:** El graph view ahora muestra solo las 45 notas operativas (sin log) agrupadas por color de dominio. Local Graph (1-2 hops desde la nota abierta) sigue funcionando igual y sigue siendo la vista recomendada para navegación real. `log-cambios.md` sigue siendo accesible desde MOC y por búsqueda — solo invisible en el grafo.
+- **Refs:** `docs/.obsidian/graph.json`, `docs/infra/n8n-workflows.md`, `docs/work/disponibilidades.md`, `docs/portal/ficha-cliente-pipelines-handoff-landing.md`. Memoria persistente vinculada `feedback_css_important_specificity` queda solo en log-cambios (no en notas vivas), por lo que no genera fantasma.
+
+---
+
+### 2026-05-26 [INTEG][OPS] — Meta Ads token regenerado → incidencia 02f91d05 cerrada
+
+- **Área:** Meta BM → `aic_set_with_key` Supabase → workflow `Uqv3R3txzcg8GI1B`. Cierra la entrada pausada del 2026-05-24.
+- **Qué:**
+  - Aprobación interna del equipo recibida 2026-05-26.
+  - Ben regeneró token en Meta BM (System User `thenucleoadssync` ID `61581615834355`, app `Ads Control Portal` ID `1626417301947904`, permisos `ads_read`+`ads_management`+`business_management`).
+  - Ben ejecutó SQL en Supabase Dashboard (`aic_set_with_key` con AIC_KEY desde Easypanel env var). Token nuevo cifrado, `app_secret` + `business_id` + `app_id` preservados desde valores actuales (`aic_get_with_key` lectura previa dentro del mismo DO block). `system_user_id` actualizado a `61581615834355` (antes había typo `122135715861053861` en el doc).
+  - Verificación post-actualización (Claude via MCP Supabase): `last_rotated_at: 2026-05-26 08:06 UTC`, `sys_user_id: 61581615834355`, `ad_accounts_count: 23` preservados, `encrypted_bytes: 444`.
+  - **Verificación E2E:** Claude disparó workflow `Uqv3R3txzcg8GI1B` modo production (execution `137671`). Status `success` en 9.2s (08:07:56 → 08:08:06 UTC). Las 2 ramas (Meta + Google) procesaron sin errores 403. KPIs intra-día Meta vuelven a actualizarse en `ads_*` tablas.
+  - Incidencia `02f91d05-3a3e-4881-ba59-f80ba4959434` marcada `resolved` con `resolved_at: 2026-05-26 08:09 UTC` (la tabla `n8n_incidencias` no tiene columna `resolution_note` — nota narrativa solo en este log).
+- **Resultado:** rama Meta del CRON ADS intra-día operativa desde 2026-05-26 08:08 UTC. Próxima ejecución programada `*/30 8-21` Madrid recogerá los KPIs de las últimas ~50h en una sola corrida.
+- **Refs:**
+  - Supabase: `agencia_integraciones_config` (slug `meta-ads`, agencia `e748c7d4-...`), `n8n_incidencias` row resolved.
+  - n8n: execution `137671` success, workflow `Uqv3R3txzcg8GI1B`.
+  - Procedimiento canónico para futuras revocaciones queda documentado en la entrada 2026-05-24 inmediatamente posterior — reutilizable tal cual cuando vuelva a pasar.
+
 ---
 
 ### 2026-05-23 [WORK][DOCS][BUGFIX][REFACTOR] — Sesión continuación migración vault: 5 pendientes landing cerrados + 4 quick wins

@@ -85,7 +85,7 @@ Eje X: 08:00 – 20:00. Una banda por miembro. Bandas base verde/ámbar/gris. L�
 
 **RLS Supabase:** las 3 tablas (`disponibilidad_franjas_base`, `disponibilidad_overrides`, `festivos_es`) usan `is_comunidad_admin()` como gate. Esto es **distinto** del patrón de Casuísticas/Playbook (allowlist hardcoded en SQL). Ventaja: un INSERT en `comunidad_admins` da acceso automáticamente al nuevo admin **sin tocar RLS**. Sigue requiriendo editar el frontend `EDITOR_EMAILS` igualmente.
 
-⚠️ **Memoria [[feedback_playbook_allowlist_5_sitios|allowlist en 6 sitios]] aplica aquí:**
+⚠️ **Memoria persistente `feedback_playbook_allowlist_5_sitios.md` (allowlist en 6 sitios) aplica aquí:**
 - Para añadir un admin nuevo, INSERT en `comunidad_admins` + UPDATE `EDITOR_EMAILS` en `disponibilidades/index.html` (2 sitios, no 6 — porque RLS es vía RPC).
 - ⚠️ Si añades a `EDITOR_EMAILS` pero NO a `comunidad_admins`, el gate frontend pasa pero todas las queries RLS rechazan silenciosamente → UI con arrays vacíos sin error. Bug silencioso.
 

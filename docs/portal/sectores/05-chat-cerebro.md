@@ -96,13 +96,16 @@ Usuario en /clientes/{empresa_id}/cerebro
 
 | ID | Nombre | Rol |
 |---|---|---|
-| `JI5Tr7IogqXgaI7a` | IA Cerebro — Chat por Cliente | Webhook entrada, guarda mensaje user, dispara Tool Loop, guarda respuesta |
-| `7yjLwl4cEJa7XAYY` | IA Cerebro — Tool Loop [SUB] | Recursivo Claude + tools (`consultar_datos`, `describir_tabla`, `listar_tablas`, `cargar_contexto_cliente`) |
+| `JI5Tr7IogqXgaI7a` | IA Cerebro — Chat por Cliente | Webhook entrada, guarda mensaje user, dispara Tool Loop, decide si indexar. Refactor 2026-05-24: el bloque `Preparar Indexacion` (Code monolítico con lógica RAG inline) se sustituyó por `Preparar Input SUB Indexacion` → `Call Sub Cargar Contexto` (a `F1gfvgmQ90JmQlTr`) → `Decidir Indexacion`. Build Claude Body migrado a patrón sb env-based. |
+| `7yjLwl4cEJa7XAYY` | IA Cerebro — Tool Loop [SUB] | Recursivo Claude + tools (`consultar_datos`, `describir_tabla`, `listar_tablas`, `cargar_contexto_cliente`). Refactor 2026-05-24: pre-carga contexto cliente vía SUB `F1gfvgmQ90JmQlTr` antes de Process Tools; el branch `cargar_contexto_cliente` lee del contexto pre-cargado en vez de duplicar lógica RAG. |
+| `F1gfvgmQ90JmQlTr` | **IA Cerebro — Cargar Contexto Cliente [SUB]** | Creado 2026-05-24. Encapsula la lógica RAG común antes duplicada entre los 2 anteriores. I/O contractual: `{ conversation_id, cliente_notion_id, save_to_metadata }` → `{ ok, cliente, store_id, resumen, contexto_cargado, error }`. **Smart-cache**: si `metadata.contexto_cargado=true`, devuelve resumen cacheado sin re-llamar Gemini (solo 2 GETs Supabase). Patrón canónico `sb` env-based (lección 15). |
 | `NI1oUwIY99TGk496` | IA Cerebro — Indexar Drive [SUB] | **Worker motor** de indexación: Drive → Gemini fileSearchStore → UPSERT `rag_stores` |
 | `ZnJSkoWlSusmEjhO` | CRON IA Cerebro — Reindexar RAG (3:00) | Trigger CRON 3AM → llama a `NI1oUwIY99TGk496` para clientes con cambios en Drive |
 | `BqNTrwoQ2iJIcAB4` | IA Cerebro — Reindexar RAG Manual [WEBHOOK] | Trigger manual POST `/reindexar_rag_cerebro` → llama a `NI1oUwIY99TGk496` |
 
-**Nota:** `NI1oUwIY99TGk496` y `BqNTrwoQ2iJIcAB4` **no son duplicados**. Son 1 worker motor + 2 disparadores (manual + CRON). `ZnJSkoWlSusmEjhO` también invoca al mismo worker.
+**Notas:**
+- `NI1oUwIY99TGk496` y `BqNTrwoQ2iJIcAB4` **no son duplicados**. Son 1 worker motor + 2 disparadores (manual + CRON). `ZnJSkoWlSusmEjhO` también invoca al mismo worker.
+- `F1gfvgmQ90JmQlTr` (cargar contexto) y `NI1oUwIY99TGk496` (indexar Drive) **tampoco son duplicados**. El primero **lee** del store existente (Gemini RAG query con `file_search_store_names`); el segundo **escribe** al store (sube/refresca archivos a Gemini). Cargar Contexto se llama en cada turno del chat; Indexar Drive solo cuando no hay store o cuando cambian archivos en Drive (CRON nocturno + reindex manual).
 
 ### Credencial Supabase
 Todos los workflows del sector usan ahora credencial `13dKSjEd2XZCYpJa` ("Espejo Supabase", cbi). La credencial legacy `pmc312jjJKdPClmj` (maw) queda sin uso en este sector.

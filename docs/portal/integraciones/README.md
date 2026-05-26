@@ -2,7 +2,7 @@
 title: portal/integraciones/ — Sistemas externos del Portal
 dominio: portal
 estado: vivo
-actualizado: 2026-05-21
+actualizado: 2026-05-24
 tags: [hub, portal, integraciones]
 ---
 
@@ -20,6 +20,7 @@ Integraciones de terceros que el Portal consume. Cada doc cubre el sistema, los 
 | [[google-chat-log]] | Google Chat (captura actividad) | Operativo desde 2026-05-08, rollout multi-espacio 2026-05-09 | Antes de tocar workflows `8snJvdNsmRM2yI2y` / `xzNDkDNiUOYOA2Ku` o tabla `bub_actividad_diaria_log` |
 | [[google-chat-dm-urgentes]] | Google Chat (DM al @mencionado) | ⚠️ Planificado, 5 fases | Antes de implementar Fases 0–4 del plan |
 | [[control-de-campanias]] | Meta Ads + Google Ads | Meta Ads v2 F0+F1 ✅ (5 workflows + 11 RPCs + 7 tablas `ads_*`). Intra-día Google+Meta unificado 2026-05-21 | Antes de tocar workflows `hwKBGC6QWP2dFObT` / `VhlqAQ1vH9HldpH5` / `pIxC6RNqHISWvpoU` / `Uqv3R3txzcg8GI1B` (legacy `BCgSCKjzryYaFYMC` ⏸) / `sNpVWEkinc4g0KfA`, schema `ads_*`, o construir Google Ads |
+| [[whatsapp-alta-cliente]] | Evolution API (WhatsApp) — Alta Cliente desde Ventas | ⏸ INACTIVO 2026-05-24 (workflow + tabla listos, falta cred + envs + tag `portal` UI) | Antes de tocar workflow `Q99fjZWhA8tlofVr`, tabla `alta_cliente_wip`, o cambiar comerciales autorizados |
 
 ## Otras integraciones sin doc dedicado
 
@@ -30,7 +31,6 @@ Algunas integraciones del Portal viven solo en `n8n-workflows` + `bubble-api-con
 - **Holded** — facturación (workflow `vI3TbyxtFM6wjhBS`)
 - **GHL** — CRM (Ajustes + Bubble API Connector, sin n8n)
 - **Google Drive** — carpetas cliente automáticas (workflow `wvHcgVqqjkWJcJDu` + subworkflow `d0B4LokmPhHWdg6g`)
-- **Evolution API** — WhatsApp (sin doc dedicado todavía)
 
 ## Cross-refs
 

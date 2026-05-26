@@ -22,7 +22,7 @@ Documento puente entre la sesión de visión operacional (este repo, `thenucleo-
 | [[account-manual-pipelines]] | `thenucleo-vault` | Manual operativo para Account en lenguaje plano. Acompaña a Melina al usar la nueva ficha. No es spec técnica. |
 | `Design/mockups/ficha-cliente-v2/index-v3.html` | `thenucleo-vault` (gitignored, entrega aparte) | Mockup standalone del módulo aislado. React+Tailwind CDN. Pegado a fuentes (sin invenciones). |
 | `Design/mockups/ficha-cliente-v2/index-integrado.html` | `thenucleo-vault` (gitignored, entrega aparte) | Mockup del módulo **dentro de la ficha completa** (Datos / Servicios / Pipelines / Catálogos MOCKUP / Anomalías MOCKUP). Es lo que la otra sesión Claude debe replicar. |
-| [[../../../root/.claude/plans/root-claude-uploads-c0a7cf67-b3ea-4549-humble-stearns]] | local (no en repo) | Plan operacional con modelo de datos Supabase propuesto. Lo guarda Ben fuera del repo. |
+| `~/.claude/plans/root-claude-uploads-c0a7cf67-b3ea-4549-humble-stearns` | local (no en repo) | Plan operacional con modelo de datos Supabase propuesto. Lo guarda Ben fuera del repo. |
 
 ## Misión para la sesión de `thenucleo-landing`
 

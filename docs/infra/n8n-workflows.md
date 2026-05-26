@@ -247,7 +247,7 @@ Schedule 03:15 ─────────┤
 **Resolución de referencias inter-bloque (clave):**
 - Ficha tiene `categoria_id` (UUID Supabase) → debe resolverse a `_id` Bubble de la categoría.
 - Junction tiene `ficha_id` (UUID Supabase) → mismo problema.
-- Tras el POST de una categoría nueva, **el GET Bubble del siguiente bloque NO la verá** por delay de indexado (~30-60s, anti-patrón documentado en [[feedback_bubble_data_api_indexado]]).
+- Tras el POST de una categoría nueva, **el GET Bubble del siguiente bloque NO la verá** por delay de indexado (~30-60s, anti-patrón documentado en memoria persistente `feedback_bubble_data_api_indexado.md`).
 - **Mitigación:** capturar `_id` de la respuesta del POST (Bubble devuelve `{id: "..."}` inmediato) y construir el mapa progresivamente:
   ```js
   // En Compute Ficha Ops:
@@ -679,7 +679,7 @@ Refactorizado al patrón Análisis (Pull-on-Signal). Detalles funcionales en [[0
 
 **WIP unificada:** todos los workflows leen/escriben `newsletter_wip` (1 fila por conv con `parametros + estrategia_texto + emails jsonb[] + email_actual + kb_text + estado + doc_url`) en cbi. La tabla `chat_conversations.metadata` ya no se usa para Newsletter; `newsletter_emails_wip` deprecada.
 
-**Credencial cbi:** `13dKSjEd2XZCYpJa` "Espejo Supabase". JWT `service_role` cbi inline en jsCode (deuda técnica anotada).
+**Credencial cbi:** `13dKSjEd2XZCYpJa` "Espejo Supabase" (supabaseApi). Usada por todos los nodos HTTP Supabase de los 6 workflows vía `predefinedCredentialType: supabaseApi`. **Cleanup 2026-05-24:** removida la deuda técnica del JWT inline — los outliers `SfwR7gqs1hBIOV7i` (Code, `$env.SUPABASE_SERVICE_ROLE_KEY`) y `UBYXNKZ1HHFTZyDX` (7 HTTP nodes, cred bindeada) están migrados. Detalle en lección 20 + Historial fix 2026-05-24. **Credencial Gemini para HTTP:** `fEKYLWb7Vhx4HnNs` "Gemini API Key" (httpHeaderAuth `x-goog-api-key`) — usada por `UBYXNKZ1HHFTZyDX` nodo `Gemini RAG Resumen`. Los Code nodes siguen usando `$env.GEMINI_API_KEY` (caso `SfwR7gqs1hBIOV7i` Process Tools, válido porque Code nodes leen $env sin restricción).
 
 **Tipo conversación:** `newsletter_<notion_id>_<unix_seconds>`. Bubble construye el sufijo en Page Loaded. Permite N newsletters por cliente sin colisionar con `UNIQUE(agencia_id, tipo)` de `chat_conversations`. La tool `completar_newsletter` ya NO renombra `tipo`.
 
@@ -1361,7 +1361,32 @@ Detector de alertas operativas Google Ads. El script externo envía un payload c
 
 ## Externos (Webhooks de entrada)
 
-⚠️ **No hay workflow propio activo de TheNucleo para GHL ni para Evolution API/WhatsApp en este momento.** El único oyente GHL (`Ik2Tt3Dw5ivL8qk7` / WF2 GHL) está inactivo (en desarrollo). Las tablas `wa_conversaciones`, `wa_mensajes`, `wa_resumenes` están vacías; cuando exista el workflow, documentarlo aquí.
+⚠️ **GHL sin workflow activo:** el único oyente GHL (`Ik2Tt3Dw5ivL8qk7` / WF2 GHL) está inactivo (en desarrollo).
+
+**Evolution API (WhatsApp):** primer uso productivo en `Q99fjZWhA8tlofVr` — **OPS VENTAS — Alta Cliente WhatsApp** (ver sección [OPS VENTAS](#ops-ventas-alta-cliente-whatsapp) más abajo). Las tablas legacy `wa_conversaciones` / `wa_mensajes` / `wa_resumenes` se eliminaron (nunca llegaron a usarse); la persistencia conversacional vive ahora en la tabla nativa `alta_cliente_wip`.
+
+### OPS VENTAS — Alta Cliente WhatsApp
+
+- **ID:** `Q99fjZWhA8tlofVr` — INACTIVO (pendiente Evolution + credenciales).
+- **Trigger:** Webhook POST `/webhook/ventas_whatsapp_inbound` (Evolution API push).
+- **Allowlist hardcoded en `Filtro whitelist + fromMe`** (anti-confusión con clientes externos que pudieran mandar al mismo número):
+  - `+34627755036` — Benja
+  - `+34675525001` — Alex
+- **Flujo (26 nodos):** Webhook → Respond 200 OK + If whitelist+fromMe=false → If audio → (rama audio) `Descargar audio Evolution` → `Upload Gemini File API` → `Transcribir Gemini` (gemini-2.5-flash) — (rama texto) directo → `Normalizar texto entrada` (Code, mapea teléfono→`{nombre,email}` del comercial) → `GET intake abierto` (alta_cliente_wip) → `UPSERT intake` (append historial) → 3 lookups paralelos en cascada: `GET fichas catalogo` + `GET categorias` + `GET clientes existentes` (bub_clientes con `agencia_id=eq.1769...`) → `Claude Sonnet 4.6` (system prompt con catálogo+clientes existentes+comercial actual, devuelve JSON `{accion:preguntar|resumir|crear|cancelar, mensaje_para_comercial, payload_actualizado, servicios_finales}`) → `Parsear y validar ficha_id` (Code, anti-alucinación: si Claude inventa un `ficha_id` que no está en catálogo, fuerza `accion=preguntar`) → `PATCH intake mensaje asistente` → `Ruta por accion` (Switch v3.4):
+  - **crear** → `POST bub_clientes Bubble` (dispara `wvHcgVqqjkWJcJDu` Drive+Notion automáticamente) → `Expandir servicios` (Code, devuelve N items con un fallback `__skip:true` cuando no hay servicios) → `Loop servicios` (SplitInBatches v3, batchSize 1) → onEachBatch `INSERT playbook_cliente_servicios` (vía SYNC `ewu5A5E05T4tz5CD` se espeja a Bubble) → nextBatch → onDone `PATCH intake confirmado` (`estado=confirmado`, `cliente_bubble_id`=ID Bubble) → `sendText cliente creado` (Evolution).
+  - **cancelar** → `PATCH intake rechazado` → `sendText cancelado`.
+  - **preguntar/resumir** → `sendText Evolution` con `mensaje_para_comercial`.
+- **Tabla destino WIP:** `alta_cliente_wip` (nativa, sin policies = solo service_role; `UNIQUE (telefono_e164) WHERE estado='abierto'` impide 2 sesiones abiertas a la vez del mismo comercial; `last_msg_in_id UNIQUE` da idempotencia anti-doble webhook Evolution).
+- **Tabla destino final cliente:** `bub_clientes` vía Bubble Data API (LIVE). Campos seteados: `nombre_empresas`, `sector`, `contacto_principal`, `correo_principal`, `telefono_principal`, `estado='Activo'`, `agencia_id='1769513105728x555492736219132700'` (unique id Bubble, NO uuid Supabase).
+- **Tabla destino servicios:** `playbook_cliente_servicios` (Supabase nativa, FK `cliente_bubble_id`). El SYNC `ewu5A5E05T4tz5CD` los espeja a Bubble.
+- **Env vars requeridas en EasyPanel:** `GEMINI_API_KEY`, `BUBBLE_BASE_URL` (apuntando a LIVE), `EVO_URL`, `EVO_INSTANCE`.
+- **Credenciales n8n requeridas:** `Supabase API` (predefined), `Anthropic API` (predefined), `Bubble HTTP Header (LIVE)` (httpHeaderAuth genérica), `Evolution API Header Auth` (httpHeaderAuth genérica).
+- **Pendientes UI antes de activar:**
+  1. Asignar las 4 credenciales en los 17 nodos HTTP marcados como skipped.
+  2. Añadir tag `portal` (sin él, el workflow no entra al backup `n8nthenucleo`).
+  3. Configurar webhook Evolution para que apunte a `/webhook/ventas_whatsapp_inbound`.
+- **Bugs corregidos al continuar el draft `2026-05-23`:** (a) `agencia_id_bub` → `agencia_id` en GET + POST contra `bub_clientes`; (b) `cliente_id` → `cliente_bubble_id` en INSERT a `playbook_cliente_servicios`; (c) whitelist por env var `WHITELIST_TELEFONOS` (no existía) → hardcoded en el If; (d) nuevo nodo `Expandir servicios` que iteraba la respuesta de Bubble en vez de los servicios reales — ahora itera el array `servicios_finales` real.
+- **Doc detallada:** [[../portal/integraciones/whatsapp-alta-cliente|whatsapp-alta-cliente]].
 
 ---
 
@@ -1970,7 +1995,95 @@ Si Bubble pasa también .xlsx, .pptx u otros OOXML, el mismo patrón JSZip funci
 
 ---
 
+### 20. `$env.X` en `headerParameters.value` de HTTP Request nodes → `[ERROR: access to env vars denied]` en runtime
+
+**Síntoma:** un HTTP Request node con un header tipo `Authorization: ={{ 'Bearer ' + $env.BUBBLE_API_TOKEN }}` muestra en el editor expression el texto `[ERROR: access to env vars denied]` en rojo bajo el campo Value. En runtime, el HTTP request se ejecuta SIN ese header (la expression evalúa a string vacío) → la API destino devuelve 401/403.
+
+**Causa:** n8n self-hosted con `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` (default desde n8n 1.x) **bloquea acceso a `$env.*` desde expressions evaluadas en parámetros de nodos**. La intención es prevenir exfiltración: si un payload externo (webhook untrusted, Form Trigger público) se cuela como expression sin escape, no puede leer env vars.
+
+**Comportamiento observado por tipo de nodo:**
+| Nodo | `$env.X` funciona | Por qué |
+|---|---|---|
+| Code node (jsCode) | ✅ Sí | El sandbox del Code node tiene `$env` siempre disponible — el flag NO afecta a Code nodes |
+| HTTP Request `headerParameters.value` | ❌ No | Expression evaluator bloqueado por el flag |
+| HTTP Request `url` | ❌ No | Idem |
+| HTTP Request `jsonBody` **con cred bindeada** (`predefinedCredentialType` o `genericCredentialType`) | ✅ Sí | Verificado empíricamente en `Uqv3R3txzcg8GI1B`: `={{ $env.AIC_KEY }}` en jsonBody con cred Supabase bindeada funciona. Aparentemente el flag relaja la restricción cuando el node ya tiene auth bindeada — pero NO se ha verificado si funciona en `headerParameters.value` con cred bindeada (no probado) |
+
+**Incorrecto (patches iniciales del 2026-05-24 que fallaron):**
+```json
+{
+  "name": "Authorization",
+  "value": "={{ 'Bearer ' + $env.BUBBLE_API_TOKEN }}"
+}
+```
+
+**Correcto — opción A: cred Generic Header Auth bindeada** (patrón canónico):
+```json
+{
+  "authentication": "genericCredentialType",
+  "genericAuthType": "httpHeaderAuth"
+}
+```
+Y bindear cred en UI (ID `IFAeIvEVDbrPBZIW` para Bubble, `fEKYLWb7Vhx4HnNs` para Gemini, etc.). Vía SDK: `credentials: { httpHeaderAuth: { id: 'IFAeIvEVDbrPBZIW', name: 'Bubble API Token' } }`.
+
+**Correcto — opción B: cred predefined (Supabase, Anthropic, etc.)**:
+```json
+{
+  "authentication": "predefinedCredentialType",
+  "nodeCredentialType": "supabaseApi"
+}
+```
+Para nodos HTTP que llaman a Supabase REST API, esto bindea la cred Supabase canónica (`13dKSjEd2XZCYpJa`) e inyecta `apikey` + `Authorization: Bearer ...` automáticamente. **No requiere `sendHeaders: true`**.
+
+**Correcto — opción C: Code node intermedio** (para casos donde el secret va al body o se construye dinámicamente):
+```js
+// Code node antes del HTTP
+return [{ json: { ...item, token: $env.BUBBLE_API_TOKEN } }];
+```
+Luego HTTP node usa `={{ $('Get Token').first().json.token }}` (lee del item del flow, no de $env).
+
+**Workaround NO recomendado:** bajar `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`. Amplía superficie de exposición a inyección via expressions evaluadas — no aceptado en TheNucleo (decisión 2026-05-24).
+
+**Dónde ocurrió:**
+- `UBYXNKZ1HHFTZyDX` (`IA Newsletter — Init`): 7 nodos HTTP Supabase + 1 Gemini con `apikey` + `Authorization: Bearer ={{ $env.SUPABASE_SERVICE_ROLE_KEY }}` en headers → fix: Supabase con `predefinedCredentialType: supabaseApi`, Gemini con cred httpHeaderAuth bindeada ID `fEKYLWb7Vhx4HnNs`.
+- `8snJvdNsmRM2yI2y` (`OPS LOG — Mensajes Google Chat (Pub/Sub)`): 3 nodos HTTP Bubble con `Authorization: Bearer ={{ 'Bearer ' + $env.BUBBLE_API_TOKEN }}` → fix: cred httpHeaderAuth bindeada ID `IFAeIvEVDbrPBZIW`.
+- `SfwR7gqs1hBIOV7i` (`IA Newsletter — Tool Loop [SUB]`): NO afectado porque su `$env.SUPABASE_SERVICE_ROLE_KEY` + `$env.GEMINI_API_KEY` viven dentro del Code `Process Tools` (jsCode), no en expression de HTTP node. Patch con `$env` es válido y se mantiene activo.
+
+**Lección general:** si necesitas un secret en un HTTP Request node, usa cred bindeada (opciones A/B) — NUNCA `$env.X` en `headerParameters.value` ni en `url`. Si necesitas el secret en un Code node, `$env.X` en jsCode SÍ funciona. Aplica a Code de cualquier sub-workflow incluyendo workflows bajo Task Runner.
+
+**Diagnóstico futuro:** si un workflow patcheado con `$env` en HTTP empieza a devolver 401/403 de la API destino tras un push reciente, revisar primero si el editor de n8n muestra `[ERROR: access to env vars denied]` en rojo bajo el campo. Es el indicador inequívoco.
+
+---
+
 ## Historial de fixes críticos
+
+### 2026-05-24 — Audit secrets Portal: 3 outliers IA con secrets hardcoded + pivot a cred bindeada
+
+**Contexto:** tras la rotación de Gemini API key del mismo día (entrada principal del log), audit completo de los workflows del Portal buscando otros secrets hardcoded similares. Cobertura: 24/50 workflows, 100% IA + 100% ADS + muestreo SYNCs/CRONs/OPS antiguos.
+
+**Outliers identificados (3 totales, todos del mismo origen — código pre-mayo antes de la disciplina `$env vars + cred bindeada`):**
+
+1. **`SfwR7gqs1hBIOV7i`** (`IA Newsletter — Tool Loop [SUB]`) — Code `Process Tools` con **SUPABASE service_role JWT completo** (`eyJ...ZgRskYaJJn_VuMiMiyBZDhl7o0SsvKazbF8LacvCQRQ`) + **Gemini key vieja revocada** (`AIzaSyBWk-...`) hardcoded en las primeras líneas. Severidad CRÍTICA (bypass total RLS).
+2. **`UBYXNKZ1HHFTZyDX`** (`IA Newsletter — Init`) — 7 nodos HTTP Supabase con `apikey` + `Authorization: Bearer eyJ...` hardcoded en `headerParameters` + 1 nodo Gemini con `?key=AIzaSyBWk-...` en URL. Severidad CRÍTICA (mismo JWT compartido).
+3. **`8snJvdNsmRM2yI2y`** (`OPS LOG — Mensajes Google Chat (Pub/Sub)`) — 3 nodos HTTP Bubble con `Authorization: Bearer 088a20b5...` (Bubble API token) hardcoded en headers. Severidad MEDIA (Bubble token, no Supabase JWT).
+
+**Fix aplicado (todos vía SDK MCP preservando webhookIds):**
+- `SfwR7gqs1hBIOV7i`: `$env.SUPABASE_SERVICE_ROLE_KEY` + `$env.GEMINI_API_KEY` en el Code → ✅ funciona (Code nodes leen $env sin problema).
+- `UBYXNKZ1HHFTZyDX` y `8snJvdNsmRM2yI2y`: **primer intento con `$env` en `headerParameters.value` FALLÓ** (anti-patrón #20 — `[ERROR: access to env vars denied]`). Rollback inmediato a versionIds anteriores. **Pivot al patrón canónico** (cred bindeada):
+  - Ben creó 2 creds Header Auth en n8n UI: `Bubble API Token` (id `IFAeIvEVDbrPBZIW`) y `Gemini API Key` (id `fEKYLWb7Vhx4HnNs`).
+  - Re-patch con SDK pasando `credentials: { httpHeaderAuth: { id, name } }` explícito.
+  - 7 nodos Supabase de NL Init usan `predefinedCredentialType: supabaseApi` pero SDK no auto-asigna → Ben las bindeó en UI manualmente (1 click por nodo).
+
+**activeVersionIds finales:**
+- `SfwR7gqs1hBIOV7i = 0e116979-8d69-422e-9172-7ab6afa1de10` (rollback: `d6d7471a-...`)
+- `UBYXNKZ1HHFTZyDX = 29fd0f99-598b-4fff-8486-080f30f590e1` (rollback: `e129bcdc-...`)
+- `8snJvdNsmRM2yI2y = 5ceffae5-15e2-46a8-a48f-f677db2a00cb` (rollback: `711a9f4a-...`)
+
+**No-action sobre rotación JWT Supabase:** el JWT vivo `eyJ...ZgRsk...` siguió en histórico git del backup repo `marketingthenucleo/n8nthenucleo` (privado, solo Ben). Decisión 2026-05-24: NO rotar — repo backup privado, blast radius limitado. Si en el futuro se hace público o gana colaboradores externos, rotar entonces.
+
+**Workflows restantes sin auditar (~26):** SYNCs Notion/ClickUp/Bubble bidireccionales, CRONs reconciliación, OPS Tareas backfills, INTEGRACIONES F1 multi-provider sub-workflows, ERRORES. Riesgo estimado bajo: los 24 auditados (= mayor vector de riesgo IA + ADS + 4 SYNCs/CRONs antiguos) muestran consistentemente el patrón canónico (cred bindeada o `$env.AIC_KEY + aic_get_with_key`). Deferir audit a próxima sesión.
+
+**Lección:** ver lección 20 ("$env.X en headerParameters.value de HTTP nodes → access denied"). Lección operativa adicional: para workflows complejos con webhook trigger + cred httpHeaderAuth, el SDK MCP **preserva `webhookId`** si se pasa explícito en `config.webhookId` del trigger node, y **preserva cred bindeada** si se pasa explícito en `config.credentials` con `{ id, name }` de la cred. Validado E2E hoy. Esto deroga la prudencia documentada el día anterior ("workflow muy complejo, mejor manual UI") — el SDK es seguro con cuidado de pasar IDs.
 
 ### 2026-05-12 — Fix `helpers.httpRequestWithAuthentication` en Reindexar RAG Manual
 **Contexto:** ejecución `119925` del workflow `BqNTrwoQ2iJIcAB4` (`IA Cerebro — Reindexar RAG Manual [WEBHOOK]`) falló al disparar reindex desde Bubble. Payload: `cliente_notion_id=31de4743-b0ae-8165-aa1c-c14e6387385c` (Actualizate Psicología), `agencia_id` TheNucleo.
