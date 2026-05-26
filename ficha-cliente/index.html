@@ -49,6 +49,10 @@
     --ps-item-hover-bg: rgba(255, 255, 255, 0.04);
     --ps-divider: rgba(255, 255, 255, 0.06);
     --ps-avatar-bg: #ef4444;
+    --ps-sidebar-bg: #111111;
+    --ps-icon-bg: #12141b;
+    --ps-icon-bg-hover: #1a1d27;
+    --ps-active-pill: #1a1434;
   }
 
   [data-theme="light"] {
@@ -79,6 +83,10 @@
     --ps-item-active-bg: rgba(22, 163, 74, 0.10);
     --ps-item-hover-bg: rgba(0, 0, 0, 0.04);
     --ps-divider: rgba(0, 0, 0, 0.06);
+    --ps-sidebar-bg: #ffffff;
+    --ps-icon-bg: #eef0f4;
+    --ps-icon-bg-hover: #e4e6ec;
+    --ps-active-pill: rgba(124, 58, 237, 0.08);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -95,7 +103,7 @@
 
   .portal-sidebar {
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 110;
-    width: var(--ps-w); background: #111111;
+    width: var(--ps-w); background: var(--ps-sidebar-bg);
     border-right: 1px solid var(--ps-divider);
     display: flex; flex-direction: column;
     padding: 18px 12px 16px;
@@ -137,7 +145,7 @@
   }
   .ps-item:hover { background: var(--ps-item-hover-bg); color: var(--text); }
   .ps-item.active {
-    background: #1a1434;
+    background: var(--ps-active-pill);
     color: var(--text);
   }
   .ps-item.active::before {
@@ -182,12 +190,12 @@
 
   .ph-icon-btn {
     width: 36px; height: 36px; border-radius: 10px;
-    background: #12141b; border: 1px solid transparent;
+    background: var(--ps-icon-bg); border: 1px solid transparent;
     color: var(--text); display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 13px; font-family: inherit;
     transition: background 120ms ease, border-color 120ms ease;
   }
-  .ph-icon-btn:hover { background: #1a1d27; }
+  .ph-icon-btn:hover { background: var(--ps-icon-bg-hover); }
   .ph-icon-btn svg { width: 18px; height: 18px; stroke-width: 1.25; }
 
   .ph-avatar {

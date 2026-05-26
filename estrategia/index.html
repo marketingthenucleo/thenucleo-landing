@@ -48,6 +48,10 @@
     --ps-item-hover-bg: rgba(255, 255, 255, 0.04);
     --ps-divider: rgba(255, 255, 255, 0.06);
     --ps-avatar-bg: #ef4444;
+    --ps-sidebar-bg: #111111;
+    --ps-icon-bg: #12141b;
+    --ps-icon-bg-hover: #1a1d27;
+    --ps-active-pill: #1a1434;
   }
 
   [data-theme="light"] {
@@ -78,6 +82,10 @@
     --ps-item-active-bg: rgba(22, 163, 74, 0.10);
     --ps-item-hover-bg: rgba(0, 0, 0, 0.04);
     --ps-divider: rgba(0, 0, 0, 0.06);
+    --ps-sidebar-bg: #ffffff;
+    --ps-icon-bg: #eef0f4;
+    --ps-icon-bg-hover: #e4e6ec;
+    --ps-active-pill: rgba(124, 58, 237, 0.08);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -94,7 +102,7 @@
 
   .portal-sidebar {
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 110;
-    width: var(--ps-w); background: #111111;
+    width: var(--ps-w); background: var(--ps-sidebar-bg);
     border-right: 1px solid var(--ps-divider);
     display: flex; flex-direction: column;
     padding: 18px 12px 16px;
@@ -127,7 +135,7 @@
   }
   .ps-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 1.25; }
   .ps-item:hover { background: var(--ps-item-hover-bg); color: var(--text); }
-  .ps-item.active { background: #1a1434; color: var(--text); }
+  .ps-item.active { background: var(--ps-active-pill); color: var(--text); }
   .ps-item.active::before {
     content: ''; position: absolute;
     left: -12px; top: 0; bottom: 0;
@@ -163,12 +171,12 @@
   .ph-burger svg { width: 18px; height: 18px; stroke-width: 1.25; }
   .ph-icon-btn {
     width: 36px; height: 36px; border-radius: 10px;
-    background: #12141b; border: 1px solid transparent;
+    background: var(--ps-icon-bg); border: 1px solid transparent;
     color: var(--text); display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 13px; font-family: inherit;
     transition: background 120ms ease, border-color 120ms ease;
   }
-  .ph-icon-btn:hover { background: #1a1d27; }
+  .ph-icon-btn:hover { background: var(--ps-icon-bg-hover); }
   .ph-icon-btn svg { width: 18px; height: 18px; stroke-width: 1.25; }
   .ph-avatar {
     width: 40px; height: 40px; border-radius: 50%;
@@ -1502,9 +1510,9 @@
       </div>
     </div>
     <nav class="section-tabs" id="section-tabs" aria-label="Secciones del cliente">
-      <a class="section-tab" id="tab-general" href="/ficha-cliente/">General</a>
-      <button class="section-tab disabled" id="tab-tareas" type="button" title="Próximamente">Tareas</button>
-      <button class="section-tab disabled" id="tab-editar" type="button" title="Próximamente">Editar</button>
+      <a class="section-tab" id="tab-general" href="https://portal.thenucleo.com/clientes">General</a>
+      <a class="section-tab" id="tab-tareas" href="https://portal.thenucleo.com/clientes">Tareas</a>
+      <a class="section-tab" id="tab-editar" href="https://portal.thenucleo.com/clientes">Editar</a>
       <a class="section-tab active" id="tab-estrategia" href="/estrategia/">Estrategia</a>
       <a class="section-tab" id="tab-timeline" href="/timeline/">Timeline</a>
     </nav>
@@ -1786,9 +1794,12 @@ function renderCliente(c) {
   document.getElementById('h-mes-actual').textContent =
     c.bb_horas_mes_actual || 'NINGUNA';
 
-  // Tabs: deep-link con ?id=<bubble_id> en los enlaces navegables.
+  // Tabs cross-page: General/Tareas/Editar → portal Bubble; Estrategia/Timeline → work.
   const id = encodeURIComponent(c.bubble_id || '');
-  document.getElementById('tab-general').href = `/ficha-cliente/?id=${id}`;
+  const portalUrl = `https://portal.thenucleo.com/clientes/${id}`;
+  document.getElementById('tab-general').href = `${portalUrl}?sec=general`;
+  document.getElementById('tab-tareas').href = `${portalUrl}?sec=tareas`;
+  document.getElementById('tab-editar').href = `${portalUrl}?sec=editar_cliente`;
   document.getElementById('tab-estrategia').href = `/estrategia/?id=${id}`;
   document.getElementById('tab-timeline').href = `/timeline/?id=${id}`;
 
@@ -4373,8 +4384,7 @@ document.getElementById('client-back').addEventListener('click', () => {
     location.href = 'https://portal.thenucleo.com/clientes';
   }
 });
-document.getElementById('tab-tareas').addEventListener('click', () => showToast('Tareas — próximamente'));
-document.getElementById('tab-editar').addEventListener('click', () => showToast('Editar — próximamente'));
+// tab-tareas / tab-editar ahora son <a> directos al portal — sin handlers JS
 
 // ─── BOOTSTRAP ─────────────────────────────────────
 function getUrlClientId() {
