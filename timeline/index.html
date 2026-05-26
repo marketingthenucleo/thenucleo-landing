@@ -149,6 +149,7 @@
   }
   .ph-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .ph-title {
+    display: none; /* Portal Bubble no muestra título en el header — vacío en la izquierda */
     font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--text);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
@@ -1771,9 +1772,17 @@ function renderCliente(c) {
     pill.classList.add('warn');
   }
 
-  // Próxima factura — sin columna en bub_clientes; placeholder hasta cablear backend.
+  // Próxima factura — formateo ISO → "6 ene 2026" si es fecha, passthrough si es texto.
+  const fmtProxima = (raw) => {
+    if (!raw) return 'Sin factura asociada';
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    return String(raw);
+  };
   document.getElementById('proxima-factura').textContent =
-    c.bb_proxima_factura || c.bb_estado_facturacion || 'Sin factura asociada';
+    fmtProxima(c.bb_proxima_factura || c.bb_estado_facturacion);
 
   // H/MES actual — sin columna en bub_clientes; placeholder hasta cablear backend.
   document.getElementById('h-mes-actual').textContent =
