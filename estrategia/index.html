@@ -1801,6 +1801,17 @@ function renderCliente(c) {
   document.getElementById('tab-estrategia').href = `/estrategia/?id=${id}`;
   document.getElementById('tab-timeline').href = `/timeline/?id=${id}`;
 
+  // Tab Tareas conditional (matches workflow Bubble "Only when proveedor_tareas is notion")
+  // Se aplica cuando la promesa del perfil resuelve; mientras tanto el tab queda visible.
+  (window.WORK_USER_PROFILE_READY || Promise.resolve(window.WORK_USER_PROFILE))
+    .then(profile => {
+      const tareasTab = document.getElementById('tab-tareas');
+      if (!tareasTab) return;
+      const provider = (profile?.agencia_proveedor_tareas || '').toLowerCase();
+      tareasTab.style.display = provider === 'notion' ? '' : 'none';
+    })
+    .catch(() => { /* falla la RPC: dejamos el tab visible por defecto */ });
+
   document.getElementById('client-block').style.display = '';
 
   // Pipelines — F2.2.1: cargado desde Supabase vía RPC ficha_pipelines_get.
@@ -4305,12 +4316,15 @@ const PIPELINES_MODULE = (() => {
   (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(e => { if (e.matches) close(); });
 })();
 
-// ─── Portal shell: avatar con iniciales + color del usuario (desde bub_user) ─
-async function initUserAvatar() {
+// ─── Portal shell: avatar + perfil completo del usuario (bub_user + bub_agencia) ─
+// Carga avatar (iniciales + color) Y guarda el row entero en window.WORK_USER_PROFILE
+// para que otras partes (ej: tab Tareas conditional por proveedor_tareas) puedan leer
+// agencia_id, agencia_proveedor_tareas, etc. Lo expone como promesa para sincronizar.
+window.WORK_USER_PROFILE = null;
+window.WORK_USER_PROFILE_READY = (async function initUserProfile() {
   const el = document.getElementById('user-avatar');
-  if (!el) return;
   const u = currentUser();
-  if (!u) { el.textContent = '·'; return; }
+  if (!u) { if (el) el.textContent = '·'; return null; }
   const initialsFromSession = () => {
     const name = (u.user_metadata?.full_name || u.user_metadata?.name || '').trim();
     if (name) {
@@ -4321,23 +4335,31 @@ async function initUserAvatar() {
     const parts = local.split(/[._-]+/).filter(Boolean);
     return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
   };
-  el.textContent = (initialsFromSession() || '·').toUpperCase().slice(0, 2);
-  el.setAttribute('title', u.email || '');
+  if (el) {
+    el.textContent = (initialsFromSession() || '·').toUpperCase().slice(0, 2);
+    el.setAttribute('title', u.email || '');
+  }
   try {
     const rows = await rpc('work_current_user_profile');
     const row = Array.isArray(rows) ? rows[0] : rows;
-    if (row?.color) el.style.background = row.color;
-    if (row?.nombre) {
-      const parts = row.nombre.trim().split(/\s+/).filter(Boolean);
-      const ini = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
-      if (ini) el.textContent = ini.toUpperCase().slice(0, 2);
-      el.setAttribute('title', row.nombre + (row.email ? ` · ${row.email}` : ''));
+    if (row) {
+      window.WORK_USER_PROFILE = row;
+      if (el) {
+        if (row.color) el.style.background = row.color;
+        if (row.nombre) {
+          const parts = row.nombre.trim().split(/\s+/).filter(Boolean);
+          const ini = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+          if (ini) el.textContent = ini.toUpperCase().slice(0, 2);
+          el.setAttribute('title', row.nombre + (row.email ? ` · ${row.email}` : ''));
+        }
+      }
     }
+    return row || null;
   } catch (e) {
     console.warn('[estrategia] work_current_user_profile failed', e);
+    return null;
   }
-}
-initUserAvatar();
+})();
 
 // ─── Logout (vive en el sidebar footer) ────────────
 document.getElementById('logout-btn')?.addEventListener('click', () => {
