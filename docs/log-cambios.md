@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-26
+actualizado: 2026-05-26 (header /estrategia + /timeline rediseñado)
 tags:
   - log
   - historial
@@ -66,6 +66,49 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-26 [WORK][FEATURE] — Header rediseñado en `/estrategia/` y `/timeline/` + tabs cross-page
+
+- **Área:** `estrategia/index.html` + `timeline/index.html` (mismo cambio en ambas, son siblings).
+- **Qué:** sustituido el header viejo (avatar + nombre + sub + botón "Cambiar" + status-strip de chips + sub-pestaña "Pipelines") por un bloque limpio inspirado en la cabecera del portal Bubble: título grande (`Dra. Camino`) + `Sector: <valor>`, link "← Volver atrás" arriba a la derecha, pill verde `Activo` + `Próxima Factura: <valor>` + `H/MES ACTUAL <valor>` a la derecha, y tabs cross-page **General · Tareas · Editar · Estrategia · Timeline** integradas dentro del header sticky (subrayado activo color `--info` para diferenciarlo de la pill verde).
+- **Routing tabs:** las 3 navegables (`General` → `/ficha-cliente/?id=…`, `Estrategia` → `/estrategia/?id=…`, `Timeline` → `/timeline/?id=…`) se inyectan en `renderCliente()` propagando `c.bubble_id`. `Tareas` y `Editar` quedan como `<button class="section-tab disabled">` con `showToast('… — próximamente')` hasta que se decida destino (¿portal Bubble?, ¿nueva ruta de este repo?).
+- **Volver atrás:** `history.back()` con fallback a `/ficha-cliente/` si no hay historial (caso deep-link directo desde el portal Bubble vía bridge `bridge_from_portal`).
+- **Por qué:** alinear la cabecera de las dos subsecciones con el lenguaje visual que el usuario espera del portal Bubble, y dar navegación cross-page entre las "vistas hermanas" del cliente sin tener que pasar por el listado.
+- **Pendientes backend señalados en el código** (sin columna en `bub_clientes`):
+  - `Próxima Factura` lee `c.bb_proxima_factura || c.bb_estado_facturacion || 'Sin factura asociada'` (fallback al campo de facturación existente).
+  - `H/MES ACTUAL` lee `c.bb_horas_mes_actual || 'NINGUNA'`.
+  - Cuando se cableen, sustituir los placeholders sin cambiar la UI.
+- **Bajas:** botón "Cambiar de cliente" eliminado (sustituido funcionalmente por "Volver atrás" → listado en `/ficha-cliente/`). Función `openClientPicker()` queda viva en el JS pero sin listener — usada solo internamente por el estado vacío (que también está disponible por inline list desde 2026-05-25).
+- **Impacto:** `npm run build` OK (59 archivos en `_site/`). Ningún cambio en `bub_clientes`, RPCs, ni Edge Functions.
+- **Refs:** `estrategia/index.html` (CSS `.client-block` / `.client-head-row` / `.client-status-row` / `.section-tabs` / `.section-tab.active|.disabled`; HTML lines ~1305-1335; JS `renderCliente()` y listeners back/tareas/editar). Mirror exacto en `timeline/index.html`.
+
+## 2026-05-26 [PORTAL][WORK][FEATURE] — Bridge Portal→Work: rollout Bubble bearer CERRADO (3 botones operativos LIVE)
+
+- **Área:** Bubble portal (3 page workflows cerrados en LIVE: Estrategia / Timeline / Ficha) + doc `docs/work/bridge-portal-ficha.md` (3 lecciones nuevas L5–L7 + Estado actual → CERRADO + filas troubleshooting nuevas).
+- **Qué se cerró:**
+  - API Connector call `Config - Supabase Bridge` reconfigurada en modo bearer (header `Authorization: Bearer <hex>` + `signature` quitado del Body + Initialize values vaciados tras inicializar).
+  - 3 page workflows del submenú Cliente (Estrategia / Timeline / Ficha legacy) montados con 2 steps puros (API Connector + Open external website). Sin Toolbox, sin Server Script. Server Scripts del intento HMAC eliminados.
+  - Smoke verde en `bridge_audit_log` a las 17:07 UTC: `success=true`, `bubble_id=1772815116826x630388853372878800` (cliente real), `next_path=/estrategia/?id=1772815116826x630388853372878800` y `/timeline/?id=…`. Magic link consumido + aterrizaje autenticado en la subsección correcta.
+- **Por qué:** desbloqueo final del rollout iniciado el 2026-05-25 (Supabase) y trabajado el 2026-05-26 (bearer mode + Bubble). El usuario admin pulsa un botón en portal.thenucleo.com y aterriza en work.thenucleo.com autenticado en ~300 ms, sin Google OAuth.
+- **Lecciones aprendidas (3) — propagadas a `bridge-portal-ficha.md` → "Lecciones aprendidas" + "Troubleshooting" (modo bearer):**
+  1. **L5 — `Current Page's <X>` resuelve vacío si el dato vive en un Group, no en el Page.** El page del portal era tipo `User` y el cliente vivía en `Group Clientes concreto` (visible porque el Step 1 hace `Set states of Group Clientes concreto`). El composer `Current Page's Clientes's unique id` devolvía string vacío. Fix: sustituir por `<Group's name>'s Clientes's unique id` (el Group adecuado se delata mirando el Step 1).
+  2. **L6 — Los Initialize values del API Connector son fallback silencioso en runtime.** Cuando el dynamic data resuelve vacío (por L5 u otra causa), Bubble usa el value que pegaste al inicializar como default, NO envía vacío. Resultado: la call llega a la Edge Function con datos hardcodeados antiguos (típicamente `bubble_id=test`) y el usuario aterriza en una URL "casi correcta" sin que el flow falle visiblemente. Detectado por discrepancia entre `bridge_audit_log.bubble_id=test` y el contexto del click. **Fix:** vaciar todos los Body parameters del API Connector tras inicializar. Si el dynamic resuelve vacío, la EF rechaza con `missing_fields` (visible en log) en vez de "funcionar" silenciosamente con `test`. **Regla operativa generalizable** a cualquier API Connector call con dynamic data.
+  3. **L7 — Format custom de fecha Moment.js: el token es `X`, no el unix epoch literal.** En el modal Date Formatting de Bubble, `Format type: Custom` espera un template Moment.js. Pegar `1779784625` como Format hace que Bubble devuelva siempre la string `"1779784625"` (Moment.js no entiende dígitos como tokens) → timestamp NUNCA se actualiza → todas las llamadas pasados 5 min devuelven `stale_timestamp`. Como un reloj parado: da la hora correcta 2 veces al día. **Fix:** Format = `X` (una sola letra mayúscula). `x` minúscula = milliseconds, no sirve aquí. Firma del bug en log: 1 success + cascada de `stale_timestamp` con timestamps que no avanzan.
+- **Telemetría cierre (`bridge_audit_log` 2026-05-26 17:04→17:07 UTC):** 4 intentos con bug (`bubble_id=test` o `next_path` con `?id=` vacío — manifestación de L5+L6) + 2 success limpios al final (17:07:29 Estrategia, 17:07:36 Timeline) con `bubble_id` y `next_path` correctos. Botón Ficha legacy montado con `next_path` vacío → fallback EF a `/ficha-cliente/?id=<bubble_id>`.
+- **Impacto:**
+  - Bridge **operativo end-to-end en LIVE** desde el portal Bubble hasta las 3 subsecciones de Work (Estrategia / Timeline / Ficha). 1 redirect visible (~300ms), sin captcha (oculto por `arrivingFromMagicLink` en `comunidad-entrar.js`), sin Google OAuth secundario.
+  - Doc del bridge `docs/work/bridge-portal-ficha.md`: header con callout de rollout cerrado + "Lado Bubble ✅" + 3 lecciones nuevas + 2 filas troubleshooting bearer nuevas.
+  - Option Set `Config (bridge)'s secret` queda conservado como histórico (no se consume). Borrable cuando se haga limpieza de Option Sets.
+- **Refs:** `docs/work/bridge-portal-ficha.md` (header callout + sección "Estado actual del rollout" + L5/L6/L7 + troubleshooting). Edge Function `bridge_from_portal` v6 sin cambios (ya estaba ACTIVE desde la entrada anterior). `bridge_audit_log` para auditoría continua.
+
+## 2026-05-26 [WORK][DOCS] — Skill `meta-ads-analyzer` instalada en `.claude/skills/`
+
+- **Área:** `.claude/skills/meta-ads-analyzer/` (carpeta nueva — `SKILL.md` + `references/` × 9 docs).
+- **Qué:** clonada [mathiaschu/meta-ads-analyzer](https://github.com/mathiaschu/meta-ads-analyzer) (HEAD `9088472`) y copiado `skill/*` al repo. Provee framework de análisis de campañas Meta Ads: Breakdown Effect, Learning Phase, Auction Overlap, Pacing, Bid Strategies, Ad Auctions, Ad Relevance Diagnostics, Performance Fluctuations, Core Concepts. Triggers de activación: Meta Ads analysis / campaign diagnosis / CPA / ROAS / exports Ads Manager.
+- **Por qué:** primera skill de análisis Meta Ads en el repo. Complementa el MCP `MCP_Meta_Ads` ya activo en las sesiones (que aporta datos en vivo) con el framework interpretativo — qué hacer con esos datos, por qué Meta asigna presupuesto a segmentos "caros", cuándo NO recomendar pausa por CPA alto, cómo justificar recomendaciones con mecánica de auction de Meta.
+- **Impacto:** ninguna sobre el build (`npm run build` OK — escribe 58 archivos en `_site/`; el counter del CLAUDE.md raíz dice 53, está desactualizado pero no es bloqueante). `.claude/` ignorado por Eleventy → `SKILL.md` y `references/` no se emiten en `_site/`. Suma 11ª skill committeada (n8n×7, supabase×2, ui-ux-pro-max, meta-ads-analyzer).
+- **Pendiente opcional:** componente MCP del repo origen (`mcp/mcp.json.example` + `scripts/setup.sh` + `scripts/refresh_token.sh`) NO instalado — requiere Meta App propia + access token de Marketing API. Ya tenemos `MCP_Meta_Ads` oficial activo en las sesiones, así que probablemente no haga falta este puente alternativo.
+- **Refs:** `.claude/skills/meta-ads-analyzer/SKILL.md` (frontmatter `name: meta-ads-analyzer`), `.claude/skills/meta-ads-analyzer/references/{breakdown_effect, core_concepts, learning_phase, ad_relevance_diagnostics, auction_overlap, pacing, bid_strategies, ad_auctions, performance_fluctuations}.md`. Fuente: github.com/mathiaschu/meta-ads-analyzer @ commit `9088472`.
 
 ## 2026-05-26 [DOCS] — Saneamiento del grafo Obsidian (0 huérfanos, colisión `ficha-cliente.md` rota)
 

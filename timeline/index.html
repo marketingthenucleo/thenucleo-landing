@@ -142,74 +142,83 @@
   [data-theme="light"] #theme-toggle .icon-moon { display: none; }
   [data-theme="light"] #theme-toggle .icon-sun { display: block; }
 
-  .client-row { display: flex; align-items: flex-end; gap: 14px; }
-
-  .client-avatar {
-    width: 56px; height: 56px; border-radius: 14px;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
-    color: var(--bg); display: flex; align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 700; flex-shrink: 0;
-    background-size: cover; background-position: center;
+  /* ─── Client header (redesign 2026-05-26) ────── */
+  .client-block { padding-top: 8px; }
+  .client-head-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px;
   }
-  .client-avatar.has-image { background: var(--bg-3); }
-  .client-avatar.has-image span { display: none; }
-
-  .client-info { flex: 1; min-width: 0; }
+  .client-head-text { flex: 1; min-width: 0; }
   .client-name {
-    font-size: 26px; font-weight: 600; line-height: 1.05;
-    letter-spacing: -0.01em; word-break: break-word;
+    font-size: 28px; font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.01em; word-break: break-word; color: var(--text);
+    margin-bottom: 6px;
   }
-  .client-sub {
-    font-size: 10px; color: var(--text-3);
-    text-transform: uppercase; letter-spacing: 0.14em;
-    margin-top: 6px; font-weight: 600;
+  .client-sector-line {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    letter-spacing: 0.02em;
   }
-
-  .client-switch {
-    flex-shrink: 0; background: var(--bg-2); border: 1px solid var(--line);
-    color: var(--text-2); border-radius: 8px; padding: 6px 10px;
-    font-size: 11px; font-weight: 600; cursor: pointer;
-    font-family: inherit; align-self: center;
-    text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .client-switch:hover { color: var(--text); border-color: var(--line-2); }
-
-  /* ─── Status strip ──────────────────────────────── */
-  .status-strip {
-    display: flex; gap: 6px; overflow-x: auto;
-    padding: 12px 20px; border-bottom: 1px solid var(--line);
-    background: var(--bg-2); scrollbar-width: none;
-  }
-  .status-strip::-webkit-scrollbar { display: none; }
-
-  .chip {
+  .client-sector-line strong { color: var(--text-2); font-weight: 600; }
+  .client-back {
     flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 10px; border-radius: 999px;
-    background: var(--bg-3); border: 1px solid var(--line);
-    font-size: 11px; color: var(--text-2); font-weight: 500;
+    background: none; border: none; color: var(--text-2);
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; padding: 4px 6px; margin-top: 4px;
+    text-decoration: none;
   }
-  .chip.ok { color: var(--ok); border-color: rgba(34,197,94,0.3); }
-  .chip.warn { color: var(--warn); border-color: rgba(245,158,11,0.3); }
-  .chip.bad { color: var(--bad); border-color: rgba(239,68,68,0.3); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .client-back:hover { color: var(--text); }
+  .client-back svg { width: 14px; height: 14px; }
 
-  /* ─── Tabs ─────────────────────────────────────── */
-  .tabs {
-    display: flex; gap: 4px; padding: 14px 20px 0;
+  .client-status-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .client-status-left {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    min-width: 0;
+  }
+  .activo-pill {
+    display: inline-flex; align-items: center; padding: 6px 14px;
+    border-radius: 999px; font-size: 11px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+    color: #fff; letter-spacing: 0.02em;
+  }
+  .activo-pill.inactivo { background: var(--bg-3); color: var(--text-3); }
+  .activo-pill.warn { background: var(--warn); color: var(--bg); }
+  .activo-pill.bad { background: var(--bad); color: #fff; }
+  .client-billing { font-size: 12px; color: var(--text-2); }
+  .client-billing strong { color: var(--text); font-weight: 600; }
+  .client-hmes {
+    display: inline-flex; align-items: baseline; gap: 8px;
+    font-size: 11px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.12em; font-weight: 600;
+  }
+  .client-hmes strong {
+    color: var(--text); font-size: 13px; letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+
+  /* ─── Section tabs (cross-page nav) ────────────── */
+  .section-tabs {
+    display: flex; gap: 4px; margin-top: 18px;
     overflow-x: auto; scrollbar-width: none;
-    border-bottom: 1px solid var(--line); background: var(--bg);
-    position: sticky; top: 109px; z-index: 90;
+    border-bottom: 1px solid var(--line);
+    margin-left: -20px; margin-right: -20px;
+    padding: 0 20px;
   }
-  .tabs::-webkit-scrollbar { display: none; }
-
-  .tab {
+  .section-tabs::-webkit-scrollbar { display: none; }
+  .section-tab {
     flex-shrink: 0; padding: 10px 14px;
     font-family: inherit; font-size: 13px; font-weight: 600;
     color: var(--text-3); background: none; border: none;
     border-bottom: 2px solid transparent; cursor: pointer;
-    transition: color 0.2s; margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s; margin-bottom: -1px;
+    text-decoration: none; display: inline-block;
   }
-  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .section-tab:hover { color: var(--text-2); }
+  .section-tab.active { color: var(--text); border-bottom-color: var(--info); }
+  .section-tab.disabled { opacity: 0.55; cursor: default; }
+  .section-tab.disabled:hover { color: var(--text-3); }
 
   /* ─── Content ──────────────────────────────────── */
   .content { padding: 24px 20px 40px; }
@@ -824,10 +833,8 @@
     body { padding-bottom: 100px; }
     .app-header { padding: 24px 40px 18px; }
     .header-top { margin-bottom: 18px; }
-    .client-name { font-size: 32px; }
-    .client-avatar { width: 64px; height: 64px; font-size: 28px; border-radius: 16px; }
-    .status-strip { padding: 14px 40px; }
-    .tabs { padding: 16px 40px 0; top: 134px; }
+    .client-name { font-size: 36px; }
+    .section-tabs { margin-left: -40px; margin-right: -40px; padding: 0 40px; }
     .content { padding: 32px 40px 60px; max-width: 920px; margin: 0 auto; }
     .pip-name { font-size: 24px; }
     .sheet { left: auto; right: auto; width: min(560px, 92vw); margin: 0 auto; border-radius: 24px; bottom: 5vh; max-height: 88vh; }
@@ -1301,27 +1308,35 @@
       </div>
     </div>
   </div>
-  <div class="client-row" id="client-row" style="display:none">
-    <div class="client-avatar" id="client-avatar"><span id="client-initial">?</span></div>
-    <div class="client-info">
-      <div class="client-name" id="client-name">—</div>
-      <div class="client-sub" id="client-sub">—</div>
+  <div class="client-block" id="client-block" style="display:none">
+    <div class="client-head-row">
+      <div class="client-head-text">
+        <div class="client-name" id="client-name">—</div>
+        <div class="client-sector-line">Sector: <strong id="client-sector">—</strong></div>
+      </div>
+      <button class="client-back" id="client-back" type="button" title="Volver atrás">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Volver atrás
+      </button>
     </div>
-    <button class="client-switch" id="client-switch" title="Cambiar de cliente">Cambiar</button>
+    <div class="client-status-row">
+      <div class="client-status-left">
+        <span class="activo-pill" id="activo-pill">Activo</span>
+        <span class="client-billing">Próxima Factura: <strong id="proxima-factura">Sin factura asociada</strong></span>
+      </div>
+      <div class="client-hmes">
+        H/MES ACTUAL <strong id="h-mes-actual">NINGUNA</strong>
+      </div>
+    </div>
+    <nav class="section-tabs" id="section-tabs" aria-label="Secciones del cliente">
+      <a class="section-tab" id="tab-general" href="/ficha-cliente/">General</a>
+      <button class="section-tab disabled" id="tab-tareas" type="button" title="Próximamente">Tareas</button>
+      <button class="section-tab disabled" id="tab-editar" type="button" title="Próximamente">Editar</button>
+      <a class="section-tab" id="tab-estrategia" href="/estrategia/">Estrategia</a>
+      <a class="section-tab active" id="tab-timeline" href="/timeline/">Timeline</a>
+    </nav>
   </div>
 </header>
-
-<!-- ─────── Status strip ─────── -->
-<div class="status-strip" id="status-strip" style="display:none">
-  <!-- inyectado por JS -->
-</div>
-
-<!-- ─────── Tabs ─────── -->
-<!-- Timeline sólo expone un panel — tabs ocultas, dejadas en el DOM por si
-     un día partimos la timeline en sub-pestañas (campañas / hitos / NPS …). -->
-<nav class="tabs" id="tabs" style="display:none">
-  <button class="tab active" data-panel="timeline">Timeline</button>
-</nav>
 
 <main class="content">
 
@@ -1560,56 +1575,47 @@ function fieldRow({ label, value, mock = false, isUrl: asUrl = false }) {
 function renderCliente(c) {
   if (!c) return;
 
-  // Header
-  const initial = (c.nombre_empresas || '?').slice(0, 1).toUpperCase();
-  document.getElementById('client-initial').textContent = initial;
+  // Título + sector
   document.getElementById('client-name').textContent = c.nombre_empresas || '—';
+  document.getElementById('client-sector').textContent = c.sector || '—';
 
-  const avatar = document.getElementById('client-avatar');
-  if (c.logo_url && isUrl(c.logo_url)) {
-    avatar.classList.add('has-image');
-    avatar.style.backgroundImage = `url('${c.logo_url}')`;
-  } else if (c.logo_imagen && isUrl(c.logo_imagen)) {
-    avatar.classList.add('has-image');
-    avatar.style.backgroundImage = `url('${c.logo_imagen}')`;
+  // Estado pill (Activo / Inactivo / Pausa / …)
+  const pill = document.getElementById('activo-pill');
+  const estado = (c.estado || '').trim();
+  pill.textContent = estado || 'Activo';
+  pill.classList.remove('inactivo', 'warn', 'bad');
+  const e = estado.toLowerCase();
+  if (!e || e === 'activo') {
+    // verde por defecto
+  } else if (e.includes('pausa')) {
+    pill.classList.add('warn');
+  } else if (e.includes('inact') || e.includes('baja') || e.includes('no ')) {
+    pill.classList.add('inactivo');
   } else {
-    avatar.classList.remove('has-image');
-    avatar.style.backgroundImage = '';
+    pill.classList.add('warn');
   }
 
-  const subParts = [];
-  if (c.sector) subParts.push(c.sector);
-  if (c.estado) subParts.push(c.estado);
-  const m = monthsSince(c.fecha_onboarding);
-  if (m !== null) subParts.push(m === 0 ? 'Onboarding este mes' : `${m} ${m === 1 ? 'mes' : 'meses'}`);
-  document.getElementById('client-sub').textContent = subParts.join(' · ') || '—';
+  // Próxima factura — sin columna en bub_clientes; placeholder hasta cablear backend.
+  document.getElementById('proxima-factura').textContent =
+    c.bb_proxima_factura || c.bb_estado_facturacion || 'Sin factura asociada';
 
-  document.getElementById('client-row').style.display = '';
+  // H/MES actual — sin columna en bub_clientes; placeholder hasta cablear backend.
+  document.getElementById('h-mes-actual').textContent =
+    c.bb_horas_mes_actual || 'NINGUNA';
 
-  // Status strip
-  const strip = document.getElementById('status-strip');
-  const chips = [];
-  if (c.estado) {
-    const cls = c.estado.toLowerCase() === 'activo' ? 'ok' : (c.estado.toLowerCase().includes('no') ? 'bad' : 'warn');
-    chips.push(`<span class="chip ${cls}"><span class="dot"></span>${escapeHtml(c.estado)}</span>`);
-  }
-  if (c.sector) chips.push(`<span class="chip"><span class="dot"></span>${escapeHtml(c.sector)}</span>`);
-  if (c.plan_actual) chips.push(`<span class="chip"><span class="dot"></span>Plan: ${escapeHtml(c.plan_actual)}</span>`);
-  if (c.gchat_space_id) chips.push(`<span class="chip ok"><span class="dot"></span>Google Chat activo</span>`);
-  if (c.bb_estado_facturacion) {
-    const cls = /al dia|al día|ok|pagad/i.test(c.bb_estado_facturacion) ? 'ok' : 'warn';
-    chips.push(`<span class="chip ${cls}"><span class="dot"></span>Facturación: ${escapeHtml(c.bb_estado_facturacion)}</span>`);
-  }
-  strip.innerHTML = chips.join('');
-  strip.style.display = '';
+  // Tabs: deep-link con ?id=<bubble_id> en los enlaces navegables.
+  const id = encodeURIComponent(c.bubble_id || '');
+  document.getElementById('tab-general').href = `/ficha-cliente/?id=${id}`;
+  document.getElementById('tab-estrategia').href = `/estrategia/?id=${id}`;
+  document.getElementById('tab-timeline').href = `/timeline/?id=${id}`;
+
+  document.getElementById('client-block').style.display = '';
 
   // Timeline placeholder: solo refleja el nombre del cliente. Cuando se
   // construya el módulo real, reemplazar por TIMELINE_MODULE.loadFor(c.bubble_id).
   const nombreEl = document.getElementById('timeline-cliente-nombre');
   if (nombreEl) nombreEl.textContent = c.nombre_empresas || '—';
 
-  // Mostrar tabs + content
-  document.getElementById('tabs').style.display = '';
   document.getElementById('state-content').style.display = '';
   document.getElementById('state-empty').style.display = 'none';
   document.getElementById('state-loading').style.display = 'none';
@@ -1812,8 +1818,13 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#090a0f' : '#f5f6f8');
 });
 
-// ─── Switch client triggers ────────────────────────
-document.getElementById('client-switch').addEventListener('click', openClientPicker);
+// ─── Volver atrás + tabs próximamente ──────────────
+document.getElementById('client-back').addEventListener('click', () => {
+  if (history.length > 1) history.back();
+  else location.href = '/ficha-cliente/';
+});
+document.getElementById('tab-tareas').addEventListener('click', () => showToast('Tareas — próximamente'));
+document.getElementById('tab-editar').addEventListener('click', () => showToast('Editar — próximamente'));
 
 // ─── BOOTSTRAP ─────────────────────────────────────
 function getUrlClientId() {
