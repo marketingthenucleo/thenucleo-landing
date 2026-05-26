@@ -127,7 +127,13 @@
   }
   .ps-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 1.25; }
   .ps-item:hover { background: var(--ps-item-hover-bg); }
-  .ps-item.active { background: var(--ps-item-active-bg); color: var(--accent); }
+  .ps-item.active { background: transparent; color: #85db02; }
+  .ps-item.active::before {
+    content: ''; position: absolute;
+    left: -12px; top: 0; bottom: 0;
+    width: 5px;
+    background: #85db02;
+  }
   .ps-logout { color: var(--text-3); font-size: 12px; margin-top: 6px; }
   .ps-logout:hover { color: var(--bad); background: rgba(239,68,68,0.06); }
 
@@ -156,13 +162,13 @@
   .ph-burger:hover { background: var(--ps-item-hover-bg); }
   .ph-burger svg { width: 18px; height: 18px; stroke-width: 1.25; }
   .ph-icon-btn {
-    width: 40px; height: 40px; padding: 6px; border-radius: 10px;
-    background: transparent; border: 1px solid transparent;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--bg-2); border: 1px solid transparent;
     color: var(--text); display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 13px; font-family: inherit;
     transition: background 120ms ease, border-color 120ms ease;
   }
-  .ph-icon-btn:hover { background: var(--ps-item-hover-bg); }
+  .ph-icon-btn:hover { background: var(--bg-3); }
   .ph-icon-btn svg { width: 18px; height: 18px; stroke-width: 1.25; }
   .ph-avatar {
     width: 40px; height: 40px; border-radius: 50%;
