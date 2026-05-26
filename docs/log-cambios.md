@@ -67,6 +67,14 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
+## 2026-05-26 [WORK][BUGFIX] — Ficha-cliente · info popup centrado + theme-aware
+
+- **Área:** `ficha-cliente/index.html` (CSS `.info-pop` + `.info-pop-backdrop`).
+- **Qué:** el overlay de ayuda contextual (ⓘ junto a Datos / Pipelines / Catálogos) pasa de estar anclado a `bottom: 12px` (modo sheet) a centrado vertical+horizontal con `top:50% / left:50% / translate(-50%,-50%)`. `box-shadow` hardcodeado `rgba(0,0,0,0.5)` sustituido por `var(--shadow-pop)` (ya tematizado en `:root` + `[data-theme="light"]`). Override del backdrop en light a `rgba(15,23,42,0.35)` para que no se sienta una capa negra desproporcionada sobre fondo claro. `max-height` ajustada a `min(70vh, calc(100vh - 32px))` para que el popup no respire pegado a los bordes en viewports muy bajos.
+- **Por qué:** en viewports cortos el popup pinned-bottom crecía hacia arriba hasta solaparse visualmente con los tabs sticky (`top:109px, z-index:90`); aunque el z-index del popup (1101) ganaba el stacking, el resultado parecía "el header corta el popup". Y el box-shadow + backdrop dark-only hacían que en light theme el popup siguiera percibiéndose oscuro pese a que el `background: var(--bg-2)` sí cambia.
+- **Impacto:** solo CSS, sin tocar JS, markup ni dataset. Sin cambios de schema/RPC.
+- **Refs:** `ficha-cliente/index.html` líneas 1349–1365.
+
 ## 2026-05-25 [WORK][FEATURE] — Ficha cliente: F2.8 panel contextual "Estás en…" con dismiss progresivo
 
 - **Área:** Frontend `work.thenucleo.com/ficha-cliente/index.html` (sin tocar Supabase).
