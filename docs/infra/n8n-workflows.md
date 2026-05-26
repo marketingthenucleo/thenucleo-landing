@@ -184,7 +184,7 @@ Notion Trigger pageAdded → Clockify Create Client → Clockify Create Project 
 
 5 L1 + 4 L2 + 4 L3. Estructura **temática por tipo de activo**, no por Campaña.
 
-⚠️ **TODO 2026-05-23 — añadir L1 `Campañas`** (decidido en sesión de documentación Ficha Cliente v2 modelo A): la nomenclatura PxCx requiere una carpeta por Campaña (`/Cliente/Campañas/PxCx — Nombre/`) donde vivan TODOS los entregables de esa Campaña juntos (briefing + copies + diseños + estáticos + reels + configs). Modificación pendiente: añadir nodo `Crear Campañas` en `Decidir L1` + `Listar L1` (que la incluya como `needed`). Coste estimado: 1 nodo HTTP + 1 fila en `Decidir L1`. La subcarpeta `PxCx — Nombre/` dentro de `Campañas/` la crea Account manualmente al declarar Pipeline/Campaña en la ficha (en F2 con backend se podría automatizar vía RPC + workflow nuevo). Referencias: [[../portal/ficha-cliente|ficha-cliente]] §7, [[../portal/equipo-manual-pipelines|equipo-manual-pipelines]] §2.bis.
+⚠️ **TODO 2026-05-23 — añadir L1 `Campañas`** (decidido en sesión de documentación Ficha Cliente v2 modelo A): la nomenclatura PxCx requiere una carpeta por Campaña (`/Cliente/Campañas/PxCx — Nombre/`) donde vivan TODOS los entregables de esa Campaña juntos (briefing + copies + diseños + estáticos + reels + configs). Modificación pendiente: añadir nodo `Crear Campañas` en `Decidir L1` + `Listar L1` (que la incluya como `needed`). Coste estimado: 1 nodo HTTP + 1 fila en `Decidir L1`. La subcarpeta `PxCx — Nombre/` dentro de `Campañas/` la crea Account manualmente al declarar Pipeline/Campaña en la ficha (en F2 con backend se podría automatizar vía RPC + workflow nuevo). Referencias: [[../portal/ficha-cliente-operativa|ficha-cliente]] §7, [[../portal/equipo-manual-pipelines|equipo-manual-pipelines]] §2.bis.
 - **Defensivo contra Bubble:** Bubble manda strings literales `"null"` para campos vacíos en API Connector. El nodo Normalize convierte `"null"` y `"undefined"` (strings) a `null` reales antes de procesar.
 - **Token Bubble:** credencial `IFAeIvEVDbrPBZIW` (Header Auth Bubble) con token live de portal. NO usar tokens hardcoded en nodos.
 - **Logs útiles:** activity_log con `clase=cliente`, `accion=creado|actualizado`, `entidad_id=bubble_id`, `metadata.execution_id`, `metadata.drive_already_existed` (distingue alta real vs retry).
@@ -542,7 +542,7 @@ Mantiene las fechas seed de la agencia Demo Quasar (`bea972de-6499-4086-b8de-57e
 **Estado:** ✅ Activo
 **Schedule:** Diario 18:00 Madrid
 
-Coge el siguiente vídeo pendiente de la vista `v_blog_videos_pendientes` (orden ASC), oembed + Supadata transcribe + Claude genera markdown, hace commit al repo `marketingthenucleo/thenucleo-landing` (carpeta `content/conocimiento-zenyx/`), marca `publicado` en `blog_videos`. Detalle completo en [[blog-zenyx|docs/blog-zenyx-workflow]].
+Coge el siguiente vídeo pendiente de la vista `v_blog_videos_pendientes` (orden ASC), oembed + Supadata transcribe + Claude genera markdown, hace commit al repo `marketingthenucleo/thenucleo-landing` (carpeta `content/conocimiento-zenyx/`), marca `publicado` en `blog_videos`. Detalle completo en [[blog-zenyx|docs/work/blog-zenyx]].
 
 **Contrato Claude → parser (2026-04-26):** Claude devuelve **tags XML** (`<title>`, `<slug>`, `<excerpt>`, `<markdown_body>`), no JSON. El nodo `Parse Claude and Build Markdown` extrae con regex `<tag>([\s\S]*?)</tag>`. Razón en anti-patrón #11.
 
@@ -666,7 +666,7 @@ Recibe empresa_id y mensaje del usuario. Llama al proceso.
 
 ### Newsletter IA (sector 4) — Refactor 2026-04-29
 
-Refactorizado al patrón Análisis (Pull-on-Signal). Detalles funcionales en [[04-chat-newsletter|docs/sectores/04-chat-newsletter]]. Plan de refactor: `C:\Users\Benjamin\.claude\plans\tomando-como-referencia-la-deep-curry.md`.
+Refactorizado al patrón Análisis (Pull-on-Signal). Detalles funcionales en [[04-chat-newsletter|docs/portal/sectores/04-chat-newsletter]]. Plan de refactor: `C:\Users\Benjamin\.claude\plans\tomando-como-referencia-la-deep-curry.md`.
 
 | Workflow | ID | Rol | Estado | Notas |
 |---|---|---|---|---|
@@ -2148,7 +2148,7 @@ Luego HTTP node usa `={{ $('Get Token').first().json.token }}` (lee del item del
 **Resultado:** ejecución `114871` (97 s, 300 PATCHes success). Verificado en Supabase: tareas con `cliente_notion_id` ✅ y `cliente_nombre` ❌ pasaron de **300 → 0**. 59 huérfanas restantes son legacy sin `cliente_notion_id` (no recuperables, ortogonales al bug).
 
 ### 2026-05-07 — Nuevo workflow OPS LOG + ALLOWED_TABLES a 23 tablas
-**Contexto:** captura automática de logs operativos por cliente desde espacios de Google Chat. Detalle completo en [[google-chat-log|docs/google-chat-log]].
+**Contexto:** captura automática de logs operativos por cliente desde espacios de Google Chat. Detalle completo en [[google-chat-log|docs/portal/integraciones/google-chat-log]].
 
 **Cambios:**
 - **Workflow nuevo:** `xzNDkDNiUOYOA2Ku` (`OPS LOG — Captura desde Google Chat`) — skeleton inactivo. Tag `portal` aplicado vía REST API (PUT `/workflows/{id}/tags`, MCP `addTag` sigue roto).

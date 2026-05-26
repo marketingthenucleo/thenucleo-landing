@@ -67,5 +67,5 @@ Inventario detallado en [[ficha-cliente]]. Resumen:
 - `thenucleo-landing/CLAUDE.md` — fuente primaria (raíz del repo), sección "Problemas críticos pendientes" + "Mejoras no críticas".
 - `docs/archive/FULL-AUDIT-REPORT.md` y `docs/archive/ACTION-PLAN.md` — **eliminados 2026-05-23** (commit `0e81519`) antes de la importación del vault. Si se vuelven a necesitar: están en git history.
 - Auditoría triple (UX/seguridad/responsive) 2026-04-29 — referenciada en `CLAUDE.md` raíz, sección "Auditoría 2026-04-29".
-- [[../portal/ficha-cliente]] — visión PxCx + Pipelines (módulo F1 vivo, F2 pendiente).
+- [[../portal/ficha-cliente-operativa]] — visión PxCx + Pipelines (módulo F1 vivo, F2 pendiente).
 - [[README|docs/work]] — hub del dominio.

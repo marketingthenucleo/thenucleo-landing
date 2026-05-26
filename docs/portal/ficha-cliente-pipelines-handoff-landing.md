@@ -18,7 +18,7 @@ Documento puente entre la sesión de visión operacional (este repo, `thenucleo-
 
 | Archivo | Repo | Para qué sirve |
 |---|---|---|
-| [[ficha-cliente]] | `thenucleo-vault` | Visión operacional completa: 3 capas (Cliente/Pipeline/Campaña), nomenclatura PxCx, catálogo abierto de Plantillas, flujo Account→PM→Equipo, casos casuísticos del `.docx`. **Fuente de verdad funcional.** |
+| [[ficha-cliente-operativa]] | `thenucleo-vault` | Visión operacional completa: 3 capas (Cliente/Pipeline/Campaña), nomenclatura PxCx, catálogo abierto de Plantillas, flujo Account→PM→Equipo, casos casuísticos del `.docx`. **Fuente de verdad funcional.** |
 | [[account-manual-pipelines]] | `thenucleo-vault` | Manual operativo para Account en lenguaje plano. Acompaña a Melina al usar la nueva ficha. No es spec técnica. |
 | `Design/mockups/ficha-cliente-v2/index-v3.html` | `thenucleo-vault` (gitignored, entrega aparte) | Mockup standalone del módulo aislado. React+Tailwind CDN. Pegado a fuentes (sin invenciones). |
 | `Design/mockups/ficha-cliente-v2/index-integrado.html` | `thenucleo-vault` (gitignored, entrega aparte) | Mockup del módulo **dentro de la ficha completa** (Datos / Servicios / Pipelines / Catálogos MOCKUP / Anomalías MOCKUP). Es lo que la otra sesión Claude debe replicar. |

@@ -500,7 +500,7 @@ Todas POST con `Content-Type: application/json`. Patrón mixto `webhook_ff` / `w
 
 ## Newsletter v2 (9 calls — refactor 2026-04-29) ✅ CREADAS E INICIALIZADAS
 
-Grupo nuevo en API Connector. Sustituye al legacy "Actualizar email editado manual" (5 calls) + grupo "Newsletter" (1 call). Plan: refactor `newsletter_emails_wip` (legacy) → `newsletter_wip` (cbi unificada). Detalle del refactor en [[04-chat-newsletter|docs/sectores/04-chat-newsletter]].
+Grupo nuevo en API Connector. Sustituye al legacy "Actualizar email editado manual" (5 calls) + grupo "Newsletter" (1 call). Plan: refactor `newsletter_emails_wip` (legacy) → `newsletter_wip` (cbi unificada). Detalle del refactor en [[04-chat-newsletter|docs/portal/sectores/04-chat-newsletter]].
 
 **Conv inicializadora (datos completos para Bubble RPC introspect):** `922cfab0-c9f7-4d65-9e5b-62b2764c0d74` (cliente_id `30de4743-b0ae-81e2-835a-dcb7ca7d38d2` "Actualízate Psicología"). Mantenida en cbi tras inicialización para futuras re-inits si se modifican RPCs.
 

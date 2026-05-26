@@ -1,3 +1,11 @@
+---
+title: Manual del Equipo — Pipelines y Campañas
+dominio: portal
+estado: vivo
+actualizado: 2026-05-25
+tags: [portal, pipelines, manual, equipo, copy, diseno, media-buyer, crm]
+---
+
 # Manual del equipo — Pipelines y Campañas
 
 Audiencia: Estratega creativo · Copy · Diseño · Media Buyer · CRM Manager. Lectura: 6 minutos. Es lo único que necesitas saber para que el sistema te funcione.

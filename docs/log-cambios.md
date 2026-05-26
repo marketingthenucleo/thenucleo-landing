@@ -67,6 +67,24 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
+## 2026-05-26 [DOCS] — Saneamiento del grafo Obsidian (0 huérfanos, colisión `ficha-cliente.md` rota)
+
+- **Área:** `docs/` — 19 archivos modificados + 1 rename.
+- **Qué:**
+  1. **Frontmatter añadido a 7 archivos** que no tenían: `pipelines-presentacion`, `account-manual-pipelines`, `pm-manual-pipelines`, `equipo-manual-pipelines`, `pipelines-roadmap` (todos `dominio: portal`), `integraciones/whatsapp-alta-cliente` (`dominio: integracion`), y `fichas-de-producto_v2_draft` completado (`estado: historico` + `actualizado` + `tags`). Ahora todos los docs entran a la tabla dataview del [[MOC]] y a los Groups de Graph View por `tag:#portal` / `tag:#work` / `tag:#integracion`.
+  2. **Rename `docs/portal/ficha-cliente.md` → `docs/portal/ficha-cliente-operativa.md`** para romper la colisión de basenames con `docs/work/ficha-cliente.md`. Obsidian resolvía `[[ficha-cliente]]` ambiguamente al primero que indexaba (probablemente el de portal) → un % alto de los 32 inbound estaban mal resueltos sin que nadie se enterara.
+  3. **9 archivos con wikilinks actualizados** automáticamente vía script Python (`c:\tmp\fix_wikilinks.py`): patrones `[[../portal/ficha-cliente...]]` → `[[../portal/ficha-cliente-operativa...]]` (path explícito, 11 reemplazos) + `[[ficha-cliente...]]` sin prefijo dentro de `docs/portal/**` → `[[ficha-cliente-operativa...]]` (6 reemplazos, evitando colisionar con `ficha-cliente-pipelines-handoff-landing` via negative lookahead).
+  4. **8 aliases con paths obsoletos corregidos** (no rompían el grafo pero el hover mostraba rutas ficticias post-reorg 2026-05-20): `[[google-chat-log|docs/google-chat-log]]` ×2 → `docs/portal/integraciones/google-chat-log`, `[[blog-zenyx|docs/blog-zenyx-workflow]]` → `docs/work/blog-zenyx`, `[[04-chat-newsletter|docs/sectores/...]]` ×2 → `docs/portal/sectores/04-chat-newsletter`, `[[bubble-api-connectors|docs/bubble-api-connectors]]` → `docs/infra/bubble-api-connectors`, `[[supabase-schema|docs/supabase-schema]]` → `docs/infra/supabase-schema`, `[[comunidad|docs/comunidad-publica]]` → `docs/work/comunidad`, y el alias del rename en `work/ficha-cliente.md:789`.
+  5. **2 huérfanos linkeados desde `portal/README.md`**: `[[demo-quasar]]` (agencia multitenant Demo Quasar) y `[[pipelines-roadmap]]` (auditoría F1→F2). Ya formaban parte del cluster portal pero no aparecían en la tabla de docs.
+  6. **Draft v2 fichas-de-producto** conservado pero reclasificado (`estado: historico` por decisión 2026-05-26 — V2 ya vive en Supabase + Bubble desde 2026-05-20) y enganchado vía `[[fichas-de-producto_v2_draft]]` desde el doc vivo.
+- **Por qué:** el grafo visual de Obsidian no comunicaba nada al usuario. Causas detectadas en auditoría: (a) `log-cambios.md` con 139 outbound actúa como agujero negro conectando todo con todo, (b) colisión silenciosa `ficha-cliente` entre portal y work, (c) 7 archivos sin frontmatter no entraban a filtros por dominio, (d) huérfanos sin inbound, (e) aliases con paths obsoletos del reorg 2026-05-20.
+- **Impacto:**
+  - **0 huérfanos** (antes 4: `demo-quasar`, `pipelines-roadmap`, `fichas-de-producto_v2_draft`, falso huérfano `work/ficha-cliente` por colisión).
+  - **Colisión rota:** `portal/ficha-cliente-operativa.md` (16 inbound) + `work/ficha-cliente.md` (16 inbound) — distribución sana, antes era 32 vs 0.
+  - **Archivos con inbound: 45** (antes 41).
+  - Tip operativo para Ben: en Obsidian Graph View → Filters añadir `-file:log-cambios` (no toca el archivo, solo lo excluye de la visualización; elimina ~80% del ruido visual).
+- **Refs:** rename `docs/portal/ficha-cliente.md` → `docs/portal/ficha-cliente-operativa.md`. Modificados: `docs/portal/{pipelines-presentacion, account-manual-pipelines, pm-manual-pipelines, equipo-manual-pipelines, pipelines-roadmap, ficha-cliente-pipelines-handoff-landing, secciones-app, README}.md` + `docs/portal/integraciones/whatsapp-alta-cliente.md` + `docs/portal/sectores/04-chat-newsletter.md` + `docs/work/{deuda-tecnica, ficha-cliente, fichas-de-producto, fichas-de-producto_v2_draft}.md` + `docs/infra/{bubble-api-connectors, ids-referencias, n8n-workflows, supabase-schema}.md`. Script auxiliar: `c:\tmp\fix_wikilinks.py` (no commiteado).
+
 ## 2026-05-26 [WORK][BUGFIX] — Ficha-cliente · info popup centrado + theme-aware
 
 - **Área:** `ficha-cliente/index.html` (CSS `.info-pop` + `.info-pop-backdrop`).
@@ -278,7 +296,7 @@ Entradas anteriores a 2026-05-13 no llevan tags (no se hizo backfill — el hist
   - **Buscador global** del panel (los 17 catálogos pueden tener muchas entradas).
   - **Toggle "Ver archivadas"** (hoy se muestran siempre, tachadas y al final).
   - **Bulk operations** (importar lista, exportar CSV).
-- **Refs:** commits `7de0b79` (Sprint 1) + `b59e9fd` (Sprint 2). Doc canónico del panel: [[../work/ficha-cliente|docs/work/ficha-cliente]] sección "Panel Catálogos". Schema en [[../infra/supabase-schema|docs/infra/supabase-schema]] sección "Catálogos del cliente — F2.7 Fase A". Visión funcional + framing híbrido A+C en [[../portal/ficha-cliente|docs/portal/ficha-cliente]].
+- **Refs:** commits `7de0b79` (Sprint 1) + `b59e9fd` (Sprint 2). Doc canónico del panel: [[../work/ficha-cliente|docs/work/ficha-cliente]] sección "Panel Catálogos". Schema en [[../infra/supabase-schema|docs/infra/supabase-schema]] sección "Catálogos del cliente — F2.7 Fase A". Visión funcional + framing híbrido A+C en [[../portal/ficha-cliente-operativa|docs/portal/ficha-cliente]].
 
 ### 2026-05-25 [WORK][INFRA][FEATURE] — Ficha de Cliente F2.7 Fase A: 17 catálogos del cliente (Supabase)
 

@@ -1,3 +1,11 @@
+---
+title: Manual de Account — Pipelines y nomenclatura PxCx
+dominio: portal
+estado: vivo
+actualizado: 2026-05-25
+tags: [portal, pipelines, manual, account, nomenclatura]
+---
+
 # Manual de Account — Pipelines, Campañas y nomenclatura PxCx
 
 Audiencia: Account (Melina y quien venga). Lectura: 10 minutos. Acción: 30 minutos por cliente para llenar el mapa la primera vez. Después, 2-5 minutos por cambio.

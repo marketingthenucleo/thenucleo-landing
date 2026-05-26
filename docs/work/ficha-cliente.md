@@ -9,7 +9,7 @@ tags: [ficha-cliente, work, admin, supabase, oauth, mobile-first, pipelines]
 
 # Ficha de Cliente — `work.thenucleo.com/ficha-cliente/`
 
-Vista admin-only mobile-first para consultar y operar sobre la ficha de un cliente del portal. Lee `bub_clientes` vía RPCs admin-allowlist sin tocar las policies de la tabla. Incluye el módulo **Pipelines y Campañas** (visión PxCx, ver [[../portal/ficha-cliente]] para el modelo conceptual).
+Vista admin-only mobile-first para consultar y operar sobre la ficha de un cliente del portal. Lee `bub_clientes` vía RPCs admin-allowlist sin tocar las policies de la tabla. Incluye el módulo **Pipelines y Campañas** (visión PxCx, ver [[../portal/ficha-cliente-operativa]] para el modelo conceptual).
 
 > ✅ **Vivo desde 2026-05-22** en `work.thenucleo.com/ficha-cliente/` (allowlist 5 emails TheNucleo desde 2026-05-25, `noindex`). **Módulo Pipelines y Campañas** vivo (F2.5d cerrada 2026-05-25; F2.5e tipo SD 2026-05-25): triggers `FM/FW/BD/DM/SD` (DM = auto-DM RRSS con keyword + mensaje; SD = "Sin trigger definido" — canal ajeno al sistema como broadcast WhatsApp, carteles físicos, eventos, boca a boca; solo declarativo, sin requisitos extra); creatividades 1-fila-por-pieza con código `<trigger.code><E|R|C|O><n>` (P1C1FM1E1, P1C1DM1R1, P1C1SD1O1…) — cada pieza apunta a un trigger destino obligatorio, categoría ANUNCIOS [Estático/Reel] / RRSS [Carrusel/Reel] / OTROS, sin cantidad (para varias piezas similares crear N entradas); sin Brief Drive (retirado por feedback Ben "aquí no tenemos URLs"). Backend completo en Supabase (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails` + `cliente_mensajes_whatsapp` + `cliente_creatividades` + `cliente_campania_plantillas` + RPCs).
 >
@@ -127,7 +127,7 @@ Lee el array `servicios` que viene en `ficha_cliente_get`. Renderiza **agrupado 
 
 Módulo F1 (vivo desde 2026-05-23). Implementación: ver `ficha-cliente/index.html` líneas 1677-2100 (`// Pipelines & Campañas module — F1: SEED hardcoded Dra. Neuss`).
 
-**Datos**: 4 pipelines hardcoded en el `const SEED` (P1 Venta directa Curso Suplementación, P2 Captación leads, P3 Reactivación, P4 Newsletter mensual). Cada uno con campañas, triggers y emails alineados a la nomenclatura PxCx (ver [[../portal/ficha-cliente]] §3).
+**Datos**: 4 pipelines hardcoded en el `const SEED` (P1 Venta directa Curso Suplementación, P2 Captación leads, P3 Reactivación, P4 Newsletter mensual). Cada uno con campañas, triggers y emails alineados a la nomenclatura PxCx (ver [[../portal/ficha-cliente-operativa]] §3).
 
 **UI**:
 
@@ -137,7 +137,7 @@ Módulo F1 (vivo desde 2026-05-23). Implementación: ver `ficha-cliente/index.ht
 - Nota visible permanente: **"📌 Datos seed F1 · Los 4 pipelines de Dra. Neuss vienen hardcoded para validar UI. En F2 esto se cablea a Supabase por cliente."**
 - Briefings de Drive son `drive://...` placeholders (no abren — sólo nombre del archivo).
 
-**Pendiente F2**: 4 tablas Supabase nuevas (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails`) + RPCs CRUD + RLS por `cliente_id`. La visión completa del modelo está en [[../portal/ficha-cliente]] §10 punto 4.
+**Pendiente F2**: 4 tablas Supabase nuevas (`cliente_pipelines` + `cliente_campanias` + `cliente_triggers` + `cliente_emails`) + RPCs CRUD + RLS por `cliente_id`. La visión completa del modelo está en [[../portal/ficha-cliente-operativa]] §10 punto 4.
 
 ### Panel "Catálogos" (F2.7 Fase B Sprint 1+2 — vivo 2026-05-25)
 
@@ -273,7 +273,7 @@ Vista lanzada. Antes era un mockup con datos inventados. Migration RPCs `ficha_c
 
 ## Cross-refs
 
-- **Visión PxCx / modelo conceptual de Pipelines**: [[../portal/ficha-cliente]] — el WHY, las 7 reglas, las casuísticas, las plantillas de campaña.
+- **Visión PxCx / modelo conceptual de Pipelines**: [[../portal/ficha-cliente-operativa]] — el WHY, las 7 reglas, las casuísticas, las plantillas de campaña.
 - **Infraestructura técnica**: [[../infra/supabase-schema]] sección "Ficha de Cliente" — RPCs, columnas relevantes, política allowlist.
 - **Hub del dominio**: [[README]] — visión global de las páginas admin.
 - **Deuda técnica**: [[deuda-tecnica]] — items abiertos del landing y admin.
@@ -786,7 +786,7 @@ El gran paso pendiente: que las Campañas del módulo Pipelines referencien entr
 
 ### 🎬 Cómo arrancar la próxima sesión
 
-1. **Lee este inicializador** (estás aquí). Si la sesión es para Sprint 4: lee también los apartados Recetas + Troubleshooting. Si es Fase C: lee también el modelo conceptual en [[../portal/ficha-cliente|docs/portal/ficha-cliente]].
+1. **Lee este inicializador** (estás aquí). Si la sesión es para Sprint 4: lee también los apartados Recetas + Troubleshooting. Si es Fase C: lee también el modelo conceptual en [[../portal/ficha-cliente-operativa|docs/portal/ficha-cliente-operativa]].
 2. **Verifica el estado en prod:** abre `https://work.thenucleo.com/ficha-cliente/?id=1778244949886x259108771172188160` (Rock & Climb). Debería verse el botón "⚙️ Gestionar catálogos" y, tras activar las 5 macros con datos (recursos_drive, comunicacion, marketing_meta, operativo, producto), las 16 entradas seed.
 3. **Verifica que Supabase está al día** (no hay migrations sueltas):
    ```sql

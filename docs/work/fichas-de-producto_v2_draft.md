@@ -1,10 +1,12 @@
 ---
-title: Fichas de Producto v2 — borrador para revisión (homogeneización con Excel comercial)
+title: Fichas de Producto v2 — detalle de las 57 fichas (referencia histórica post-migración)
 dominio: fichas-de-producto
-estado: borrador
+estado: historico
+actualizado: 2026-05-20
 creado: 2026-05-20
 fuente: cruce del Excel "Servicios vendidos en Onboarding.xlsx" (7 clientes, 199 filas) con las 63 fichas operativas actuales
 total: 57 fichas comerciales unificadas
+tags: [fichas, work, referencia, historico, v2]
 ---
 
 # Fichas de Producto v2 — Borrador

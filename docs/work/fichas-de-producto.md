@@ -13,7 +13,7 @@ Catálogo editable inline del catálogo de servicios de la agencia: qué incluye
 
 > 🔒 **Acceso admin-only en lectura y edición.** Sin público anon, sin link compartible, sin clientes. Solo cuentas en `comunidad_admins` ven la página. Decisión cerrada con Ben el 2026-05-13: "los mails que te he ido dando yo".
 
-> ✅ **Migración v2 aplicada (2026-05-20):** 63 fichas operativas → 57 fichas comerciales unificadas con el Excel `Servicios vendidos en Onboarding.xlsx`. Borrador con el detalle de las 57: [`fichas-de-producto_v2_draft.md`](fichas-de-producto_v2_draft.md). Backup de las 63 previas en `c:\tmp\fichas_backup_pre_v2.json`. Las dudas del equipo del Excel quedan embebidas como bloques `Pendiente aclarar` dentro de `alcance`.
+> ✅ **Migración v2 aplicada (2026-05-20):** 63 fichas operativas → 57 fichas comerciales unificadas con el Excel `Servicios vendidos en Onboarding.xlsx`. Source of truth: tablas `fichas_categorias` + `fichas_de_producto` en Supabase, replicadas a Bubble vía `ewu5A5E05T4tz5CD`. Detalle histórico de las 57 fichas con sus `[???]` y bloques "Pendiente aclarar" en [[fichas-de-producto_v2_draft]] (referencia, no editar — la verdad está en BD). Backup de las 63 previas en `c:\tmp\fichas_backup_pre_v2.json`.
 
 ---
 

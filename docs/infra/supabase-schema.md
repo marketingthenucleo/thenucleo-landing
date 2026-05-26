@@ -92,7 +92,7 @@ Plan completo en `~/.claude/plans/thenucleo-addons-onboarding-master-plan.md`. E
 
 ## Actividad Diaria Log (creado 2026-05-07)
 
-Captura natural de logs operativos por cliente desde Google Chat. Detalle funcional en [[google-chat-log|docs/google-chat-log]].
+Captura natural de logs operativos por cliente desde Google Chat. Detalle funcional en [[google-chat-log|docs/portal/integraciones/google-chat-log]].
 
 ### `bub_actividad_diaria_log`
 Espejo de Bubble Data Type `actividad_diaria_log`. Escrito por `FGxG67I24POOUeHW` cuando el workflow `xzNDkDNiUOYOA2Ku` (`OPS LOG — Captura desde Google Chat`) crea una entrada en Bubble.
@@ -478,7 +478,7 @@ Misma allowlist. Devuelve `to_jsonb(c.*)` del cliente con TODAS las columnas de 
 
 ### Pipelines y Campañas — 5 tablas nativas (F2, desde 2026-05-24)
 
-Backend del módulo "Pipelines y Campañas" de `work.thenucleo.com/ficha-cliente/` (frontend F1 vivo desde 2026-05-23 con SEED hardcoded en `ficha-cliente/index.html:1677-2100`). Visión operacional completa en [[../portal/ficha-cliente]] (modelo PxCx, 7 reglas, casuísticas). Migration `ficha_cliente_pipelines_f2_schema`, también vive en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql` del repo landing.
+Backend del módulo "Pipelines y Campañas" de `work.thenucleo.com/ficha-cliente/` (frontend F1 vivo desde 2026-05-23 con SEED hardcoded en `ficha-cliente/index.html:1677-2100`). Visión operacional completa en [[../portal/ficha-cliente-operativa]] (modelo PxCx, 7 reglas, casuísticas). Migration `ficha_cliente_pipelines_f2_schema`, también vive en `supabase/migrations/20260524_ficha_cliente_pipelines_f2_schema.sql` del repo landing.
 
 **Decisiones de schema (sesión 2026-05-24):**
 - Plantillas por agencia (`agencia_id` NOT NULL, no global) — coherente con `bub_plantillas_tareas_notion`.
@@ -684,7 +684,7 @@ INDEX cliente_creatividades_campania_idx (campania_id)
 
 ### Catálogos del cliente — F2.7 Fase A (desde 2026-05-25)
 
-Biblioteca de **recursos reutilizables del cliente** que las Campañas referencian (Fase C). 17 tablas `cliente_catalogo_*` con schema cerrado por tipo y entradas abiertas que la Account mantiene. Migration `f2_7_catalogos_cliente`. Visión funcional + framing híbrido A+C en [[../portal/ficha-cliente]].
+Biblioteca de **recursos reutilizables del cliente** que las Campañas referencian (Fase C). 17 tablas `cliente_catalogo_*` con schema cerrado por tipo y entradas abiertas que la Account mantiene. Migration `f2_7_catalogos_cliente`. Visión funcional + framing híbrido A+C en [[../portal/ficha-cliente-operativa]].
 
 **Convención común (las 17 tablas):**
 ```

@@ -1,3 +1,11 @@
+---
+title: Manual de PM — Pipelines y reparto con código
+dominio: portal
+estado: vivo
+actualizado: 2026-05-25
+tags: [portal, pipelines, manual, pm, nomenclatura]
+---
+
 # Manual de PM — Pipelines, Campañas y reparto de tareas con código
 
 Audiencia: PM (Melina y quien venga). Lectura: 8 minutos. Acción: 10 minutos diarios + 5 minutos por Campaña que reparte.

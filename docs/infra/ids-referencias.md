@@ -198,7 +198,7 @@ Detalle completo en [[google-chat-log|docs/portal/integraciones/google-chat-log]
 
 ## Comunidad pública (work.thenucleo.com/comunidad)
 
-Detalle completo en [[comunidad|docs/comunidad-publica]].
+Detalle completo en [[comunidad|docs/work/comunidad]].
 
 - **Edge Function:** `https://cbixhqjsnpuhcrcjppah.supabase.co/functions/v1/comunidad_admin_action` (verify_jwt)
 - **Google OAuth Client ID (público):** `817779477263-gkjj21peahulv2srkpfnnuqb2p8ighoh.apps.googleusercontent.com`

@@ -274,7 +274,7 @@ Página `/clientes/{empresa_id}/newsletter`. Plantilla base: clonar la página `
 
 ### 7.2 API Connectors (10) — TODOS Action, NUNCA Data source ✅ CREADAS 2026-04-29
 
-**Estado:** las 9 calls del grupo Newsletter v2 + las 2 reusadas del grupo Análisis están **creadas e inicializadas en Bubble**. Detalle canónico en [[bubble-api-connectors#newsletter-v2-9-calls--refactor-2026-04-29--creadas-e-inicializadas|docs/bubble-api-connectors]].
+**Estado:** las 9 calls del grupo Newsletter v2 + las 2 reusadas del grupo Análisis están **creadas e inicializadas en Bubble**. Detalle canónico en [[bubble-api-connectors#newsletter-v2-9-calls--refactor-2026-04-29--creadas-e-inicializadas|docs/infra/bubble-api-connectors]].
 
 **Conv inicializadora:** `922cfab0-c9f7-4d65-9e5b-62b2764c0d74` (cliente_id `30de4743-b0ae-81e2-835a-dcb7ca7d38d2` "Actualízate Psicología") — fila `newsletter_wip` con datos completos creada en cbi para que Bubble tipe los RPC correctamente. Mantenida tras inicialización.
 

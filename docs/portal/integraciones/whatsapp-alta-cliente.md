@@ -1,3 +1,11 @@
+---
+title: WhatsApp — Alta Cliente desde Ventas (Evolution API)
+dominio: integracion
+estado: inactivo
+actualizado: 2026-05-24
+tags: [whatsapp, evolution-api, alta-cliente, ventas, n8n, ia]
+---
+
 # WhatsApp — Alta Cliente desde Ventas
 
 > Primer uso productivo de Evolution API en TheNucleo. Los comerciales mandan un audio (o texto) a un número de WhatsApp interno, la IA estructura la información del cliente y los servicios contratados, repregunta los huecos, y al confirmar crea el cliente en Bubble + servicios en Supabase.

@@ -1,3 +1,11 @@
+---
+title: Roadmap Pipelines — Auditoría F1 → F2
+dominio: portal
+estado: en-construccion
+actualizado: 2026-05-24
+tags: [portal, pipelines, roadmap, auditoria, f2]
+---
+
 # Roadmap del desarrollo Pipelines (account / PM / equipo)
 
 > **Auditoría 2026-05-24** del flujo Pipelines/Campañas (nomenclatura PxCx). Documenta qué está vivo, qué está en transición y qué bloquea el siguiente milestone (F2). Complementa a [`pipelines-presentacion.md`](./pipelines-presentacion.md) (visión del cambio), [`account-manual-pipelines.md`](./account-manual-pipelines.md), [`pm-manual-pipelines.md`](./pm-manual-pipelines.md), [`equipo-manual-pipelines.md`](./equipo-manual-pipelines.md) y [`ficha-cliente.md`](./ficha-cliente.md).

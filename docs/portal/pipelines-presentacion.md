@@ -1,3 +1,11 @@
+---
+title: Pipelines y Campañas — presentación del cambio en 1 página
+dominio: portal
+estado: vivo
+actualizado: 2026-05-25
+tags: [portal, pipelines, presentacion, account, pm, equipo, onboarding]
+---
+
 # Pipelines y Campañas — la presentación del cambio en 1 página
 
 Audiencia: Account, PM, Equipo (Copy, Diseño, Media Buyer, CRM). Léelo entero, te lleva 4 minutos. Si después de leerlo tienes dudas, no improvises — pregunta.
@@ -125,7 +133,7 @@ No hay versión light de esto. O lo seguimos todos o no funciona.
 
 ## Dónde está la documentación
 
-- **Visión operacional completa** (la "biblia"): [[ficha-cliente]]
+- **Visión operacional completa** (la "biblia"): [[ficha-cliente-operativa]]
 - **Manual Account paso a paso**: [[account-manual-pipelines]]
 - **Manual PM paso a paso**: [[pm-manual-pipelines]]
 - **Manual del equipo paso a paso** (Estratega · Copy · Diseño · Media Buyer · CRM): [[equipo-manual-pipelines]]
