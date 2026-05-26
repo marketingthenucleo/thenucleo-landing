@@ -45,7 +45,7 @@
     /* Portal shell */
     --ps-w: 232px;
     --ps-header-h: 60px;
-    --ps-item-active-bg: rgba(139, 92, 246, 0.10);
+    --ps-item-active-bg: rgba(34, 197, 94, 0.10);
     --ps-item-hover-bg: rgba(255, 255, 255, 0.04);
     --ps-divider: rgba(255, 255, 255, 0.06);
     --ps-avatar-bg: #ef4444;
@@ -76,7 +76,7 @@
     --header-bg-rgba: rgba(245,246,248,0.92);
     --bg-glow: rgba(22, 163, 74, 0.04);
     --shadow-pop: 0 12px 32px rgba(0,0,0,0.12);
-    --ps-item-active-bg: rgba(124, 58, 237, 0.10);
+    --ps-item-active-bg: rgba(22, 163, 74, 0.10);
     --ps-item-hover-bg: rgba(0, 0, 0, 0.04);
     --ps-divider: rgba(0, 0, 0, 0.06);
   }
@@ -105,8 +105,7 @@
 
   .ps-brand {
     display: flex; align-items: center; gap: 10px;
-    padding: 4px 8px 22px; margin-bottom: 10px;
-    border-bottom: 1px solid var(--ps-divider);
+    padding: 4px 8px 18px; margin-bottom: 6px;
   }
   .ps-brand-iso { width: 34px; height: 34px; flex-shrink: 0; }
   .ps-brand-logo { height: 18px; width: auto; }
@@ -123,9 +122,9 @@
   .ps-item {
     position: relative;
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 12px 10px 14px;
+    padding: 6px 14px; min-height: 40px;
     border-radius: 10px;
-    color: var(--text-2);
+    color: var(--text);
     font-size: 13px; font-weight: 500;
     cursor: pointer; user-select: none;
     transition: background 120ms ease, color 120ms ease;
@@ -133,17 +132,12 @@
   }
   .ps-item svg {
     width: 18px; height: 18px; flex-shrink: 0;
-    stroke-width: 1.75;
+    stroke-width: 1.25;
   }
-  .ps-item:hover { background: var(--ps-item-hover-bg); color: var(--text); }
+  .ps-item:hover { background: var(--ps-item-hover-bg); }
   .ps-item.active {
     background: var(--ps-item-active-bg);
     color: var(--accent);
-  }
-  .ps-item.active::before {
-    content: ''; position: absolute; left: -14px; top: 50%; transform: translateY(-50%);
-    width: 3px; height: 22px; border-radius: 0 3px 3px 0;
-    background: var(--accent);
   }
 
   .ps-logout {
@@ -172,20 +166,22 @@
 
   .ph-burger {
     display: none; background: transparent; border: none;
-    color: var(--text-2); padding: 6px; cursor: pointer; border-radius: 8px;
+    width: 40px; height: 40px; padding: 6px;
+    color: var(--text); cursor: pointer; border-radius: 10px;
+    align-items: center; justify-content: center;
   }
-  .ph-burger:hover { color: var(--text); background: var(--ps-item-hover-bg); }
-  .ph-burger svg { width: 22px; height: 22px; stroke-width: 1.75; }
+  .ph-burger:hover { background: var(--ps-item-hover-bg); }
+  .ph-burger svg { width: 18px; height: 18px; stroke-width: 1.25; }
 
   .ph-icon-btn {
-    width: 36px; height: 36px; border-radius: 10px;
+    width: 40px; height: 40px; padding: 6px; border-radius: 10px;
     background: transparent; border: 1px solid transparent;
-    color: var(--text-2); display: flex; align-items: center; justify-content: center;
+    color: var(--text); display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 13px; font-family: inherit;
-    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    transition: background 120ms ease, border-color 120ms ease;
   }
-  .ph-icon-btn:hover { color: var(--text); background: var(--ps-item-hover-bg); }
-  .ph-icon-btn svg { width: 18px; height: 18px; stroke-width: 1.75; }
+  .ph-icon-btn:hover { background: var(--ps-item-hover-bg); }
+  .ph-icon-btn svg { width: 18px; height: 18px; stroke-width: 1.25; }
 
   .ph-avatar {
     width: 40px; height: 40px; border-radius: 50%;
