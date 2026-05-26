@@ -330,6 +330,7 @@
   }
   .section-tabs::-webkit-scrollbar { display: none; }
   .section-tab {
+    position: relative;
     flex-shrink: 0; padding: 10px 14px;
     font-family: inherit; font-size: 13px; font-weight: 600;
     color: var(--text-3); background: none; border: none;
@@ -338,6 +339,15 @@
     text-decoration: none; display: inline-block;
   }
   .section-tab:hover { color: var(--text-2); }
+  /* Hover underline 2px × 55% center, color accent-secondary-hover (Shape HOVER de Bubble) */
+  .section-tab:not(.active):not(.disabled):hover::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 50%;
+    transform: translateX(-50%);
+    width: 55%; height: 2px;
+    background: #2563eb;
+  }
   .section-tab.active { color: var(--text); border-bottom-color: var(--info); }
   .section-tab.disabled { opacity: 0.55; cursor: default; }
   .section-tab.disabled:hover { color: var(--text-3); }
