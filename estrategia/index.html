@@ -1384,7 +1384,148 @@
     .pip-card, .pip-row, .pip-plantilla-card, .pip-archive-btn,
     .pip-back-btn, .pip-new-btn, .pip-pm-card-btn { transition: none !important; }
   }
+
+  /* F3 — PM Board dinámico (drag-drop tareas propuestas) */
+  .pm-board {
+    margin: 18px 0 24px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .pm-board-head {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-3);
+  }
+  .pm-board-title { font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .06em; }
+  .pm-board-sub   { font-size: 12px; color: var(--text-2); margin-left: 4px; }
+  .pm-board-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .pm-board-actions button {
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    padding: 8px 14px; border-radius: 10px; cursor: pointer; min-height: 36px;
+    border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text);
+  }
+  .pm-board-actions button:hover { border-color: var(--accent); color: var(--accent); }
+  .pm-board-actions .pm-btn-primary {
+    background: var(--accent); color: var(--bg); border-color: var(--accent);
+  }
+  .pm-board-actions .pm-btn-primary:hover { background: var(--accent-dim); color: var(--bg); border-color: var(--accent-dim); }
+  .pm-board-actions .pm-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .pm-board-warnings {
+    padding: 8px 16px;
+    background: var(--warn-bg);
+    border-bottom: 1px solid var(--line);
+    color: var(--warn);
+    font-size: 12px;
+  }
+  .pm-cols {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(220px, 1fr)) minmax(180px, 0.7fr);
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pm-col {
+    border-right: 1px solid var(--line);
+    min-height: 200px;
+    display: flex; flex-direction: column;
+  }
+  .pm-col:last-child { border-right: none; }
+  .pm-col-head {
+    padding: 10px 12px;
+    background: var(--bg-3);
+    border-bottom: 1px solid var(--line);
+    font-size: 11px; font-weight: 700; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: .07em;
+    display: flex; align-items: center; gap: 6px;
+    position: sticky; top: 0; z-index: 1;
+  }
+  .pm-col-count {
+    margin-left: auto;
+    background: var(--bg-2); border-radius: 999px; padding: 2px 8px;
+    font-size: 10px; color: var(--text-2);
+  }
+  .pm-col-excluidas .pm-col-head { color: var(--text-3); }
+  .pm-col-list {
+    padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 120px;
+    flex: 1;
+  }
+  .pm-col-list.sortable-ghost { background: var(--accent-muted); }
+  .pm-task-card {
+    background: var(--bg-3);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: grab;
+    display: flex; flex-direction: column; gap: 6px;
+    transition: border-color .15s, background .15s;
+  }
+  .pm-task-card:hover { border-color: var(--accent); }
+  .pm-task-card:active { cursor: grabbing; }
+  .pm-task-card.sortable-chosen { box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+  .pm-task-card.subtask { margin-left: 18px; border-left: 3px solid var(--accent); }
+  .pm-task-card.subtask::before { content: "↳ "; color: var(--accent); font-weight: 700; }
+  .pm-task-card.fase-mismatch { border-color: var(--warn); }
+  .pm-task-card.fase-mismatch::after {
+    content: "●"; color: var(--warn);
+    position: absolute; top: 6px; right: 8px; font-size: 14px;
+  }
+  .pm-task-card { position: relative; }
+  .pm-task-row1 { display: flex; align-items: center; gap: 8px; }
+  .pm-task-code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; font-weight: 700;
+    background: var(--accent-muted); color: var(--accent);
+    padding: 3px 7px; border-radius: 6px;
+    white-space: nowrap;
+  }
+  .pm-task-title {
+    flex: 1;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    outline: none;
+    word-break: break-word;
+  }
+  .pm-task-title:focus { background: var(--bg-2); border-radius: 4px; padding: 2px 4px; }
+  .pm-task-row2 {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 11px; color: var(--text-2);
+  }
+  .pm-task-role-select {
+    font-family: inherit; font-size: 11px;
+    background: var(--bg-2); color: var(--text);
+    border: 1px solid var(--line-2); border-radius: 6px;
+    padding: 3px 6px; cursor: pointer;
+    min-height: 26px;
+  }
+  .pm-task-warning { color: var(--warn); font-size: 11px; }
+  .pm-task-deps { font-size: 10px; color: var(--text-3); }
+  .pm-task-card.excluida { opacity: .55; }
+  .pm-task-card.excluida .pm-task-title { text-decoration: line-through; }
+  .pm-board-empty {
+    padding: 40px 20px; text-align: center;
+    color: var(--text-2); font-size: 13px;
+  }
+  .pm-board-status {
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    background: var(--bg-3);
+    font-size: 11px; color: var(--text-2);
+  }
+
+  @media (max-width: 720px) {
+    .pm-cols { grid-template-columns: 1fr; }
+    .pm-col { border-right: none; border-bottom: 1px solid var(--line); }
+    .pm-col-head { position: static; }
+    .pm-board-head { flex-direction: column; align-items: stretch; }
+    .pm-board-actions { width: 100%; }
+    .pm-board-actions button { flex: 1; }
+  }
 </style>
+<script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </head>
 <body>
 
@@ -2217,6 +2358,11 @@ const PIPELINES_MODULE = (() => {
     showArchived: false,
     view: { kind: 'list' },
     stack: [],
+    // F3 — PM Board efímero. Solo activo cuando S.role==='pm' y el PM pulsa
+    // "Crear" sobre una Campaña. Vive en memoria; al cambiar de campaña o
+    // de vista se resetea (regenera al volver). Persiste a través del
+    // toggle Account↔PM mientras el cId no cambie.
+    tasksBoard: null,     // null | { cId, tasks: Task[], dirty: bool, lastPushAt: ts? }
   };
 
   // Adapta una plantilla DB (snake_case + triggers_tipicos[{tipo,nombre}])
@@ -2341,6 +2487,428 @@ const PIPELINES_MODULE = (() => {
     return `<span class="state-badge ${s}">${STATE_LABELS[s] || s}</span>`;
   }
   function findPlantilla(slug) { return S.plantillas.find(p => p.slug === slug); }
+
+  // ── F3 — PM Board dinámico ──────────────────────────────────────
+  // Constantes para el board drag-drop de tareas propuestas.
+  const TASK_PHASES = [
+    { id: 'estrategia',   label: 'Estrategia',          emoji: '🧠' },
+    { id: 'produccion',   label: 'Producción mensajes', emoji: '✍️' },
+    { id: 'triggers',     label: 'Triggers',            emoji: '🎯' },
+    { id: 'creativos',    label: 'Creatividades',       emoji: '🎨' },
+    { id: 'lanzamiento',  label: 'Lanzamiento',         emoji: '🚀' },
+    { id: 'excluidas',    label: 'Excluidas',           emoji: '✗' },
+  ];
+  const TASK_ROLES = [
+    { id: 'estratega',    label: 'Estratega creativo' },
+    { id: 'copy',         label: 'Copy' },
+    { id: 'diseno',       label: 'Diseño' },
+    { id: 'media_buyer',  label: 'Media Buyer' },
+    { id: 'crm_manager',  label: 'CRM Manager' },
+    { id: 'community',    label: 'Community Manager' },
+    { id: 'dev',          label: 'Dev' },
+    { id: 'pm',           label: 'PM' },
+  ];
+  const taskRoleLabel = (id) => (TASK_ROLES.find(r => r.id === id) || {}).label || id;
+
+  // proposeTasks(c) — función pura que dada una Campaña con sus triggers/
+  // emails/whatsapps/creatividades genera la lista de tareas propuestas
+  // siguiendo la plantilla canónica (docs/portal/pm-manual-pipelines.md).
+  // Devuelve { tasks: Task[], warnings: string[] }.
+  function proposeTasks(c) {
+    const tasks = [];
+    const warnings = [];
+    const cc = c.code;
+    let seq = 0;
+    const mk = (suffix, codeBase, titulo, rol, fase, depende_de = [], origen = null, meta = {}) => ({
+      id: 'tk-' + (++seq).toString(36) + '-' + Math.random().toString(36).slice(2, 7),
+      code: codeBase + suffix,
+      titulo,
+      rol_sugerido: rol,
+      fase,
+      depende_de,
+      origen: origen || { tipo: 'campania', id: c.id },
+      parent_id: null,
+      excluida: false,
+      ...meta,
+    });
+    const visibleNotArch = item => !(item.estado || '').startsWith('archiv');
+    const triggersActivos = (c.triggers || []).filter(visibleNotArch);
+    const emailsActivos   = (c.emails   || []).filter(visibleNotArch);
+    const waActivos       = (c.whatsapps    || []).filter(visibleNotArch);
+    const crActivos       = (c.creatividades || []).filter(visibleNotArch);
+
+    // Fase 1 · Estrategia
+    tasks.push(mk('_briefing', cc, `Briefing maestro ${cc}`, 'estratega', 'estrategia'));
+    tasks.push(mk('_angulos',  cc, `Ángulos creativos ${cc}`, 'estratega', 'estrategia'));
+    const segmenta = triggersActivos.some(t => ['FM','FW','BD'].includes(t.tipo));
+    const tieneMensajes = (emailsActivos.length + waActivos.length) > 0;
+    if (segmenta && tieneMensajes) {
+      tasks.push(mk('_cluster', cc, `Clusters / segmentos ${cc}`, 'estratega', 'estrategia'));
+    }
+
+    // Fase 2 · Producción mensajes
+    emailsActivos.forEach(e => {
+      const ec = emailCode(c, e);
+      const baseLabel = e.nombre || e.name || e.titulo || '';
+      tasks.push(mk('_copy',    ec, `Copy email ${ec}${baseLabel ? ' — ' + baseLabel : ''}`, 'copy',        'produccion', [`${cc}_briefing`, `${cc}_angulos`], { tipo: 'email', id: e.id }));
+      tasks.push(mk('_diseno',  ec, `Diseño email ${ec}`,                                    'diseno',      'produccion', [`${cc}_briefing`, `${cc}_angulos`], { tipo: 'email', id: e.id }));
+      tasks.push(mk('_montaje', ec, `Montaje email ${ec} en GHL`,                            'crm_manager', 'produccion', [`${ec}_copy`, `${ec}_diseno`],     { tipo: 'email', id: e.id }));
+    });
+    waActivos.forEach(w => {
+      const wc = whatsappCode(c, w);
+      const baseLabel = w.nombre || w.name || w.titulo || '';
+      tasks.push(mk('_copy',    wc, `Copy WhatsApp ${wc}${baseLabel ? ' — ' + baseLabel : ''}`, 'copy',        'produccion', [`${cc}_briefing`, `${cc}_angulos`], { tipo: 'whatsapp', id: w.id }));
+      tasks.push(mk('_montaje', wc, `Montaje WhatsApp ${wc}`,                                   'crm_manager', 'produccion', [`${wc}_copy`],                     { tipo: 'whatsapp', id: w.id }));
+    });
+
+    // Fase 3 · Triggers
+    triggersActivos.forEach(t => {
+      const tc = t.code;
+      const baseLabel = t.name || t.nombre || '';
+      if (t.tipo === 'FM') {
+        tasks.push(mk('_form', tc, `Formulario Meta ${tc}${baseLabel ? ' — ' + baseLabel : ''}`, 'media_buyer', 'triggers', [`${cc}_briefing`], { tipo: 'trigger', id: t.id, subtipo: 'FM' }));
+      } else if (t.tipo === 'FW') {
+        tasks.push(mk('_form', tc, `Formulario web ${tc}${baseLabel ? ' — ' + baseLabel : ''}`,  'crm_manager', 'triggers', [`${cc}_briefing`], { tipo: 'trigger', id: t.id, subtipo: 'FW' }));
+      } else if (t.tipo === 'BD') {
+        const bd = mk('_segmento', tc, `Segmento BD ${tc}${baseLabel ? ' — ' + baseLabel : ''}`, 'crm_manager', 'triggers', [`${cc}_briefing`], { tipo: 'trigger', id: t.id, subtipo: 'BD' });
+        if (!t.fechaLanzamiento) {
+          bd.warning = 'Falta fecha de lanzamiento (regla .docx)';
+          warnings.push(`${tc}: sin fecha de lanzamiento`);
+        }
+        tasks.push(bd);
+      } else if (t.tipo === 'DM') {
+        const keyword = t.activador ? ` keyword "${t.activador}"` : '';
+        tasks.push(mk('_automation', tc, `Auto-DM RRSS ${tc}${keyword}`, 'community', 'triggers', [`${cc}_briefing`], { tipo: 'trigger', id: t.id, subtipo: 'DM' }));
+      }
+      // SD: declarativo → 0 tareas (broadcast, eventos, cartelería)
+    });
+
+    // Fase 4 · Creatividades
+    crActivos.forEach(cr => {
+      const crc = cr.codigo || cr.code;
+      let suffix = '_diseno';
+      let titulo = `Diseño ${crc}`;
+      if (cr.subtipo === 'reel') {
+        suffix = '_reel';
+        titulo = `Reel ${crc}${cr.duracionSegundos ? ' · ' + cr.duracionSegundos + 's' : ''}`;
+      } else if (cr.subtipo === 'estatico') {
+        suffix = '_estatico';
+        titulo = `Estático ${crc}`;
+      } else if (cr.categoria === 'otros') {
+        suffix = '_brief';
+        titulo = `${crc} — ${cr.notas || 'otros'}`;
+      } else if (cr.subtipo === 'carrusel') {
+        suffix = '_diseno';
+        titulo = `Carrusel ${crc}${cr.numSlides ? ' · ' + cr.numSlides + ' slides' : ''}`;
+      }
+      tasks.push(mk(suffix, crc, titulo, 'diseno', 'creativos', [`${cc}_angulos`], { tipo: 'creatividad', id: cr.id, subtipo: cr.subtipo, categoria: cr.categoria }));
+    });
+
+    // Fase 5 · Lanzamiento (depende de TODAS las anteriores no excluidas)
+    const allCodes = tasks.map(t => t.code);
+    tasks.push(mk('_lanzar', cc, `Lanzar campaña ${cc}`, 'media_buyer', 'lanzamiento', allCodes));
+
+    if (triggersActivos.length === 0) warnings.push('Campaña sin triggers — propuesta generada igual, pero NO ejecutable hasta declarar al menos uno.');
+
+    return { tasks, warnings };
+  }
+
+  // Recalcula depende_de del task _lanzar al excluir/incluir tareas.
+  function recalcLaunchDeps(board) {
+    const lanzar = board.tasks.find(t => t.fase === 'lanzamiento' && t.code.endsWith('_lanzar'));
+    if (!lanzar) return;
+    lanzar.depende_de = board.tasks
+      .filter(t => t !== lanzar && !t.excluida && t.fase !== 'excluidas')
+      .map(t => t.code);
+  }
+
+  // Construye payload listo para el webhook n8n eHyXBETcaGSNXqLk.
+  function buildTasksPayload(p, c, board) {
+    const codeToTempId = new Map(board.tasks.map(t => [t.code, t.id]));
+    const tasksOrdered = board.tasks
+      .filter(t => !t.excluida && t.fase !== 'excluidas')
+      .map(t => ({
+        client_temp_id: t.id,
+        parent_client_temp_id: t.parent_id || null,
+        code: t.code,
+        titulo: t.titulo,
+        rol: t.rol_sugerido,
+        fase: t.fase,
+        depende_de_codes: (t.depende_de || []).filter(code => codeToTempId.has(code)),
+        origen: t.origen,
+        metadata: t.warning ? { warning: t.warning } : {},
+      }));
+    return {
+      version: '1.0',
+      source: 'ficha-cliente-pm-board',
+      cliente_bubble_id: S.bubbleId,
+      pipeline: { id: p.id, code: p.code },
+      campania: {
+        id: c.id,
+        code: c.code,
+        nombre: c.name || c.nombre || '',
+        kpi: c.kpi || '',
+        fecha_desde: c.desde || null,
+        fecha_hasta: c.hasta || null,
+        plantilla_slug: c.plantillaSlug || null,
+      },
+      tasks: tasksOrdered,
+      idempotency_key: `${c.code}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    };
+  }
+
+  // Fase 0: dry-run. Solo log + toast. Fase 1 hará POST al webhook.
+  function submitTasks(payload, btn) {
+    const dryRun = true; // Fase 0
+    const n = payload.tasks.length;
+    if (dryRun) {
+      console.group('[PM Board] dry-run submitTasks');
+      console.log('payload:', payload);
+      console.log(`tasks (${n}):`, payload.tasks.map(t => `${t.code}  ←  ${t.rol}${t.parent_client_temp_id ? ' (subtarea)' : ''}`).join('\n'));
+      console.groupEnd();
+      showToast(`Simulación: ${n} ${n===1?'tarea':'tareas'} listas (payload en consola)`);
+      // En Fase 0 NO vaciamos el board — el usuario puede seguir trasteando.
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = btn.dataset.originalText || 'Empujar a Notion';
+      }
+      return;
+    }
+    // Fase 1 (placeholder, no se ejecuta en F0):
+    // fetch(WEBHOOK_URL, { method:'POST', body: JSON.stringify(payload), signal: AbortSignal.timeout(30000) })
+    //   .then(r => r.json())
+    //   .then(res => { ... showToast / reset board ... })
+    //   .catch(err => { ... });
+  }
+
+  // Abre el board (o vuelve a él si ya estaba abierto para esta campaña).
+  function openTasksBoard(pId, cId) {
+    const p = S.data.find(x => x.id === pId);
+    const c = p && p.camps.find(x => x.id === cId);
+    if (!c) return;
+    if (S.tasksBoard && S.tasksBoard.cId === cId) {
+      setTimeout(() => document.getElementById('pm-board')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
+      return;
+    }
+    const { tasks, warnings } = proposeTasks(c);
+    S.tasksBoard = { cId, tasks, warnings, dirty: false, lastPushAt: null };
+    render();
+    setTimeout(() => document.getElementById('pm-board')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
+  }
+
+  function regenerateTasksBoard(c) {
+    if (!confirm('¿Regenerar la propuesta? Perderás los cambios manuales (orden, responsables, exclusiones, subtareas).')) return;
+    const { tasks, warnings } = proposeTasks(c);
+    S.tasksBoard = { cId: c.id, tasks, warnings, dirty: false, lastPushAt: null };
+    render();
+  }
+
+  function humanAge(ms) {
+    const s = Math.floor(ms / 1000);
+    if (s < 60) return s + 's';
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + ' min';
+    const h = Math.floor(m / 60);
+    return h + ' h';
+  }
+
+  function renderTasksBoard(p, c) {
+    const board = S.tasksBoard;
+    if (!board || board.cId !== c.id) return '';
+    const tasksByPhase = {};
+    TASK_PHASES.forEach(ph => tasksByPhase[ph.id] = []);
+    board.tasks.forEach(t => {
+      const phaseKey = t.excluida ? 'excluidas' : t.fase;
+      if (!tasksByPhase[phaseKey]) tasksByPhase[phaseKey] = [];
+      tasksByPhase[phaseKey].push(t);
+    });
+
+    const renderTask = (t) => {
+      const isSubtask = !!t.parent_id;
+      const padresPosibles = board.tasks.filter(x => x.id !== t.id && !x.excluida && !x.parent_id);
+      const depsLabel = (t.depende_de || []).length === 0 ? '' :
+        (t.code.endsWith('_lanzar')
+          ? `<div class="pm-task-deps">Depende de ${t.depende_de.length} tarea(s)</div>`
+          : `<div class="pm-task-deps">Depende: ${t.depende_de.slice(0, 3).map(d => escapeHtml(d)).join(', ')}${t.depende_de.length > 3 ? '…' : ''}</div>`);
+      return `
+        <div class="pm-task-card ${t.excluida ? 'excluida' : ''} ${isSubtask ? 'subtask' : ''}" data-task-id="${t.id}">
+          <div class="pm-task-row1">
+            <span class="pm-task-code">${escapeHtml(t.code)}</span>
+            <div class="pm-task-title" contenteditable="true" data-title-for="${t.id}" spellcheck="false">${escapeHtml(t.titulo)}</div>
+          </div>
+          <div class="pm-task-row2">
+            <select class="pm-task-role-select" data-role-for="${t.id}" title="Responsable">
+              ${TASK_ROLES.map(r => `<option value="${r.id}" ${t.rol_sugerido===r.id?'selected':''}>${r.label}</option>`).join('')}
+            </select>
+            <select class="pm-task-role-select" data-parent-for="${t.id}" title="Anidar como subtarea de…">
+              <option value="">— sin padre —</option>
+              ${padresPosibles.map(x => `<option value="${x.id}" ${t.parent_id===x.id?'selected':''}>↳ ${escapeHtml(x.code)}</option>`).join('')}
+            </select>
+            ${t.warning ? `<span class="pm-task-warning">⚠ ${escapeHtml(t.warning)}</span>` : ''}
+          </div>
+          ${depsLabel}
+        </div>
+      `;
+    };
+
+    const proveedorLabel = (S.proveedorTareas || 'notion').toLowerCase() === 'clickup' ? 'ClickUp' : 'Notion';
+    const totalActivos = board.tasks.filter(t => !t.excluida).length;
+    const totalExcluidas = board.tasks.length - totalActivos;
+    const lastPushHint = board.lastPushAt ? `<span class="pm-board-sub">Última creación: hace ${humanAge(Date.now() - board.lastPushAt)}</span>` : '';
+    return `
+      <div class="pm-board" id="pm-board">
+        <div class="pm-board-head">
+          <span class="pm-board-title">🎯 Board PM · ${escapeHtml(c.code)}</span>
+          <span class="pm-board-sub">${totalActivos} ${totalActivos===1?'tarea activa':'tareas activas'}${totalExcluidas?` (${totalExcluidas} excluidas)`:''}</span>
+          ${lastPushHint}
+          <div class="pm-board-actions">
+            <button data-pm-action="regenerate" type="button" title="Regenerar desde la declaración actual">↺ Regenerar</button>
+            <button data-pm-action="close" type="button" title="Cerrar board (sin guardar)">Cerrar</button>
+            <button class="pm-btn-primary" data-pm-action="push" type="button" ${totalActivos===0?'disabled':''}>🚀 Empujar a ${proveedorLabel}</button>
+          </div>
+        </div>
+        ${board.warnings && board.warnings.length > 0 ? `<div class="pm-board-warnings">⚠ ${board.warnings.map(w => escapeHtml(w)).join(' · ')}</div>` : ''}
+        <div class="pm-cols">
+          ${TASK_PHASES.map(ph => {
+            const list = tasksByPhase[ph.id] || [];
+            const cls = ph.id === 'excluidas' ? 'pm-col-excluidas' : '';
+            return `
+              <div class="pm-col ${cls}">
+                <div class="pm-col-head">
+                  <span>${ph.emoji} ${ph.label}</span>
+                  <span class="pm-col-count">${list.length}</span>
+                </div>
+                <div class="pm-col-list" data-phase="${ph.id}">
+                  ${list.length === 0
+                    ? `<div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 4px;border:1px dashed var(--line);border-radius:8px;">arrastra aquí</div>`
+                    : list.map(renderTask).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div class="pm-board-status">
+          Board efímero — al cambiar de campaña o cliente perderás los cambios. Pulsa "Empujar" para materializar en ${proveedorLabel}.
+        </div>
+      </div>
+    `;
+  }
+
+  function attachTasksBoardHandlers(p, c) {
+    const boardEl = document.getElementById('pm-board');
+    if (!boardEl) return;
+    const board = S.tasksBoard;
+    if (!board) return;
+
+    // SortableJS por columna (todas en el mismo group → drag entre columnas).
+    if (typeof Sortable === 'undefined') {
+      setTimeout(() => attachTasksBoardHandlers(p, c), 250);
+      return;
+    }
+    boardEl.querySelectorAll('.pm-col-list').forEach(listEl => {
+      Sortable.create(listEl, {
+        group: 'pm-board',
+        animation: 140,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        forceFallback: true,
+        fallbackOnBody: true,
+        delay: 80,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 6,
+        onEnd: (evt) => {
+          const taskId = evt.item.dataset.taskId;
+          const newPhase = evt.to.dataset.phase;
+          const task = board.tasks.find(t => t.id === taskId);
+          if (!task) return;
+          if (newPhase === 'excluidas') {
+            task.excluida = true;
+          } else {
+            task.excluida = false;
+            task.fase = newPhase;
+          }
+          board.dirty = true;
+          recalcLaunchDeps(board);
+          render();
+        },
+      });
+    });
+
+    // Title contenteditable
+    boardEl.querySelectorAll('[data-title-for]').forEach(el => {
+      el.addEventListener('blur', () => {
+        const taskId = el.dataset.titleFor;
+        const t = board.tasks.find(x => x.id === taskId);
+        if (!t) return;
+        const newTitle = el.textContent.trim();
+        if (newTitle && newTitle !== t.titulo) {
+          t.titulo = newTitle;
+          board.dirty = true;
+        } else if (!newTitle) {
+          el.textContent = t.titulo;
+        }
+      });
+      el.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); }
+      });
+    });
+
+    // Responsable
+    boardEl.querySelectorAll('[data-role-for]').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const t = board.tasks.find(x => x.id === sel.dataset.roleFor);
+        if (!t) return;
+        t.rol_sugerido = sel.value;
+        board.dirty = true;
+      });
+    });
+
+    // Parent (subtarea) con detección de ciclos
+    boardEl.querySelectorAll('[data-parent-for]').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const taskId = sel.dataset.parentFor;
+        const t = board.tasks.find(x => x.id === taskId);
+        if (!t) return;
+        const newParent = sel.value || null;
+        if (newParent) {
+          let cur = newParent;
+          let depth = 0;
+          while (cur && depth < 100) {
+            if (cur === taskId) {
+              showToast('No puedes anidar una tarea bajo su propia descendiente.');
+              sel.value = t.parent_id || '';
+              return;
+            }
+            const parentTask = board.tasks.find(x => x.id === cur);
+            cur = parentTask ? parentTask.parent_id : null;
+            depth++;
+          }
+        }
+        t.parent_id = newParent;
+        board.dirty = true;
+        render();
+      });
+    });
+
+    // Botones cabecera
+    boardEl.querySelectorAll('[data-pm-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.pmAction;
+        if (action === 'regenerate') regenerateTasksBoard(c);
+        else if (action === 'close') {
+          if (board.dirty && !confirm('Tienes cambios sin empujar. ¿Cerrar igual?')) return;
+          S.tasksBoard = null; render();
+        }
+        else if (action === 'push') {
+          const payload = buildTasksPayload(p, c, board);
+          btn.dataset.originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Creando ' + payload.tasks.length + ' tareas…';
+          submitTasks(payload, btn);
+        }
+      });
+    });
+  }
 
   // Cubre ambos géneros — pipelines/triggers/emails 'archivado' (masc),
   // campañas 'archivada' (fem). Antes solo filtraba 'archivada' → bug:
@@ -2538,10 +3106,11 @@ const PIPELINES_MODULE = (() => {
         <div class="pip-pm-card">
           <div class="pip-pm-card-text">
             <div class="pip-pm-card-title">Crear tareas en Notion</div>
-            <div class="pip-pm-card-sub">Genera todas las tareas del equipo para esta campaña con código forzado.</div>
+            <div class="pip-pm-card-sub">Propone todas las tareas del equipo en un board reordenable, con responsables y subtareas. Pulsa Crear para abrir el board.</div>
           </div>
-          <button class="pip-pm-card-btn" data-action="create-tasks" data-pid="${p.id}" data-cid="${c.id}">Crear</button>
+          <button class="pip-pm-card-btn" data-action="create-tasks" data-pid="${p.id}" data-cid="${c.id}">${S.tasksBoard?.cId === c.id ? 'Ver board' : 'Crear'}</button>
         </div>
+        ${renderTasksBoard(p, c)}
       ` : ''}
 
       <div class="pip-section-head"><span>Datos básicos</span></div>
@@ -2936,6 +3505,13 @@ const PIPELINES_MODULE = (() => {
     const chk = r.querySelector('[data-toggle="archived"]');
     if (chk) chk.addEventListener('change', () => { S.showArchived = chk.checked; render(); });
 
+    // F3 — Board PM: si estamos en vista campaña con board activo, enganchar SortableJS + handlers
+    if (S.role === 'pm' && S.view.kind === 'campaign' && S.tasksBoard && S.tasksBoard.cId === S.view.cId) {
+      const pp = S.data.find(x => x.id === S.view.pId);
+      const cc = pp && pp.camps.find(x => x.id === S.view.cId);
+      if (pp && cc) attachTasksBoardHandlers(pp, cc);
+    }
+
     // actions
     r.querySelectorAll('[data-action]').forEach(el => {
       const a = el.dataset.action;
@@ -2989,7 +3565,7 @@ const PIPELINES_MODULE = (() => {
           const cr = cc && (cc.creatividades || []).find(x => x.id === el.dataset.crid);
           if (cr) openNewCreatividadSheet(el.dataset.pid, el.dataset.cid, cr);
         }
-        else if (a === 'create-tasks') openTasksSheet(el.dataset.pid, el.dataset.cid);
+        else if (a === 'create-tasks') openTasksBoard(el.dataset.pid, el.dataset.cid);
         else if (a === 'archive') {
           const code = el.dataset.code;
           const kind = el.dataset.kind;
