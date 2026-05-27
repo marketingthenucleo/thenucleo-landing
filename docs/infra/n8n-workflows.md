@@ -996,17 +996,32 @@ Workflow one-shot creado 2026-05-08 para repoblar `cliente_nombre` en tareas exi
 **Trigger:** Error en cualquier workflow (configurado como error workflow en n8n)
 
 ```
-1. Error Trigger captura el fallo (workflow.id, workflow.name, execution.id, error.message, error.stack, lastNodeExecuted, ...)
-2. Extraer Datos Error (Code) → normaliza payload
+1. Error Trigger captura el fallo. Shape del payload depende del origen:
+     A) execution-mode: { workflow, execution: { id, url, error: {node, message, ...}, lastNodeExecuted } }
+        → fallo en un nodo posterior al Trigger, payload completo
+     B) trigger-mode:   { workflow, trigger: { mode: 'trigger'|'internal', error: {message, description, httpCode} } }
+        → fallo en el propio Trigger node del workflow (ej. Notion Trigger pollea y recibe 429),
+        sin execution.* porque n8n no llegó a ejecutar nada
+2. Extraer Datos Error (Code) → normaliza ambos shapes
+     - exec-mode:    failed_node = execution.error.node.name (preferred) o execution.lastNodeExecuted
+     - trigger-mode: failed_node = '[Trigger del workflow]' (Claude le quita los corchetes al pasarlo a 'nodo')
+     - error_message = err.message + (err.description ? ' | <desc>' : '') + (err.httpCode ? ' [HTTP <code>]' : '')
+     - output incluye trigger_mode ∈ {'trigger', 'internal', null} para queries SQL
 3. Limpiar workflow_executions (Code) → reset oportunista de runs colgados en cbi
    (status running/cancelando → completed) y reset newsletter si el workflow caído es de newsletter
 4. Claude Analizar Error (HTTP Anthropic) → enriquece con título, resumen, descripción, función del nodo
+   credencial: Header Auth (id LLL40Z5TPEIiWZkM)
 5. Parsear Respuesta Claude (Code) → JSON con 10 campos
 6. Insert Supabase Incidencia (HTTP PostgREST → cbi.n8n_incidencias)
    credencial: Espejo Supabase (id 13dKSjEd2XZCYpJa)
+   onError: continueRegularOutput
 ```
 
 Tabla destino: `public.n8n_incidencias` (RLS activo, solo `service_role`). Visor: panel cerrado `work.thenucleo.com/incidencias` (Edge Function `incidencias_api` con auth HMAC propia, hardcoded user/pass). Sustituye al antiguo `bub_incidencias` (eliminado 2026-04-27 para descargar Bubble).
+
+**Patch 2026-05-27 (trigger-mode):** antes de este patch el normalizador sólo entendía el shape A → todas las incidencias del Notion Trigger de `SYNC CLIENTES — Notion → Bubble` (57/59 históricas) entraban con `node_name = "Desconocido"`. Tras el patch entran con `node_name = "Trigger del workflow"` y `error_message` lleva concatenado `description + httpCode`. Validado end-to-end con smoke test ejec 139842 (fila id `6f2aad4e-...` insertada y marcada resolved). **No se modifica el comportamiento exec-mode** — ese flujo se mantiene idéntico para no afectar a las 162 incidencias resueltas previas que entraron por esa rama.
+
+⚠️ **Lección aprendida (MCP n8n-native):** `update_workflow` del SDK del MCP **siempre desbindea credenciales existentes**, da igual el nombre que se pase a `newCredential('X')`. `newCredential` está pensado para CREAR creds, no para REFERENCIAR las ya creadas. El response devuelve `note: "credentials must be configured manually"` y deja `autoAssignedCredentials: []`. Workaround para edits quirúrgicos (cambiar 1 nodo Code, ajustar 1 expression): editar directamente en UI (10-30s). Si se va por MCP: tener los IDs/nombres de las creds preparados antes, hacer rebind manual inmediato post-update, y publish sólo después de verificar bindings en `get_workflow_details`. La draft con creds vacías queda inactiva hasta publish, no afecta producción.
 
 ---
 

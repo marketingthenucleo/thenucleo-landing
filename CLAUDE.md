@@ -63,6 +63,7 @@ thenucleo-landing/
 | Nomenclatura PxCx, Pipelines, Campañas | `docs/portal/ficha-cliente.md` + manuales |
 | IDs, credenciales, tokens | `docs/infra/ids-referencias.md` |
 | Skills Claude (n8n / supabase / ui-ux-pro-max) | `.claude/skills/<nombre>/SKILL.md` |
+| **Crear pieza visual nueva** (CSS work admin o Conditional Bubble) con coherencia dark/light | `docs/design-tokens.md` — sección "Recetas reutilizables" (3 patrones canónicos, regla del salto de jerarquía, anti-patrones, checklist) |
 
 ## Skills Claude en el repo (`.claude/skills/`)
 
