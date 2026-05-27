@@ -121,7 +121,7 @@
   .ps-brand-logo { height: 25px; width: auto; flex-shrink: 0; }
 
   .ps-nav, .ps-footer {
-    display: flex; flex-direction: column; gap: 0;
+    display: flex; flex-direction: column; gap: 15px;
   }
   .ps-nav { padding-top: 6px; }
   .ps-footer {
@@ -1718,6 +1718,11 @@
   }
   .pm-task-warning { color: var(--warn); font-size: 11px; }
   .pm-task-deps { font-size: 10px; color: var(--text-3); }
+  .pm-task-camp {
+    font-size: 10px; color: var(--text-2);
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
   .pm-task-card.excluida { opacity: .55; }
   .pm-task-card.excluida .pm-task-title { text-decoration: line-through; }
   .pm-board-empty {
@@ -3021,8 +3026,9 @@ const PIPELINES_MODULE = (() => {
       fase,
       depende_de,
       origen: origen || { tipo: 'campania', id: c.id },
-      parent_id: null,
-      excluida: false,
+      campania_code: c.code,
+      campania_id: c.id,
+      parent_master_id: null,
       ...meta,
     });
     const visibleNotArch = item => !(item.estado || '').startsWith('archiv');
@@ -3107,12 +3113,31 @@ const PIPELINES_MODULE = (() => {
     return { tasks, warnings };
   }
 
+  // Genera tareas para TODAS las campañas activas de un Pipeline.
+  // El board PM vive a nivel Pipeline — el PM ve todas las tareas en un solo
+  // pool y las empaqueta como quiera en tareas madre (independientemente de
+  // a qué campaña pertenezcan).
+  function proposeTasksForPipeline(p) {
+    const allTasks = [];
+    const allWarnings = [];
+    const campsActivas = (p.camps || []).filter(c => !(c.estado || '').startsWith('archiv'));
+    if (campsActivas.length === 0) {
+      return { tasks: [], warnings: ['Pipeline sin campañas activas.'] };
+    }
+    campsActivas.forEach(c => {
+      const { tasks, warnings } = proposeTasks(c);
+      allTasks.push(...tasks);
+      warnings.forEach(w => allWarnings.push(`${c.code}: ${w}`));
+    });
+    return { tasks: allTasks, warnings: allWarnings };
+  }
+
   // Construye payload listo para el webhook n8n eHyXBETcaGSNXqLk.
   // Incluye masters[] (los contenedores creados por el PM) + cada task con
   // parent_master_id (apunta al master.id si está dentro de uno, null si está
   // suelta en el pool). El workflow materializa masters como páginas padre y
   // tasks con parent_master_id como hijas.
-  function buildTasksPayload(p, c, board) {
+  function buildTasksPayload(p, board) {
     const codeToTempId = new Map(board.tasks.map(t => [t.code, t.id]));
     const tasksOrdered = board.tasks.map(t => ({
       client_temp_id: t.id,
@@ -3121,6 +3146,8 @@ const PIPELINES_MODULE = (() => {
       titulo: t.titulo,
       rol: t.rol_sugerido,
       fase: t.fase,
+      campania_code: t.campania_code,
+      campania_id: t.campania_id,
       depende_de_codes: (t.depende_de || []).filter(code => codeToTempId.has(code)),
       origen: t.origen,
       metadata: t.warning ? { warning: t.warning } : {},
@@ -3129,23 +3156,30 @@ const PIPELINES_MODULE = (() => {
       client_temp_id: m.id,
       titulo: m.titulo,
     }));
+    const campsActivas = (p.camps || []).filter(c => !(c.estado || '').startsWith('archiv'));
     return {
-      version: '1.0',
+      version: '1.1',
       source: 'ficha-cliente-pm-board',
       cliente_bubble_id: S.bubbleId,
-      pipeline: { id: p.id, code: p.code },
-      campania: {
-        id: c.id,
-        code: c.code,
-        nombre: c.name || c.nombre || '',
-        kpi: c.kpi || '',
-        fecha_desde: c.desde || null,
-        fecha_hasta: c.hasta || null,
-        plantilla_slug: c.plantillaSlug || null,
+      pipeline: {
+        id: p.id,
+        code: p.code,
+        nombre: p.name || '',
+        objetivo: p.obj || '',
+        account: p.account || '',
+        campanias: campsActivas.map(c => ({
+          id: c.id,
+          code: c.code,
+          nombre: c.name || c.nombre || '',
+          kpi: c.kpi || '',
+          fecha_desde: c.desde || null,
+          fecha_hasta: c.hasta || null,
+          plantilla_slug: c.plantillaSlug || null,
+        })),
       },
       masters,
       tasks: tasksOrdered,
-      idempotency_key: `${c.code}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+      idempotency_key: `${p.code}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
     };
   }
 
@@ -3173,25 +3207,24 @@ const PIPELINES_MODULE = (() => {
     //   .catch(err => { ... });
   }
 
-  // Abre el board (o vuelve a él si ya estaba abierto para esta campaña).
-  function openTasksBoard(pId, cId) {
+  // Abre el board PM a nivel Pipeline (todas las tareas de todas sus campañas).
+  function openTasksBoardForPipeline(pId) {
     const p = S.data.find(x => x.id === pId);
-    const c = p && p.camps.find(x => x.id === cId);
-    if (!c) return;
-    if (S.tasksBoard && S.tasksBoard.cId === cId) {
+    if (!p) return;
+    if (S.tasksBoard && S.tasksBoard.pId === pId) {
       setTimeout(() => document.getElementById('pm-board')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
       return;
     }
-    const { tasks, warnings } = proposeTasks(c);
-    S.tasksBoard = { cId, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
+    const { tasks, warnings } = proposeTasksForPipeline(p);
+    S.tasksBoard = { pId, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
     render();
     setTimeout(() => document.getElementById('pm-board')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
   }
 
-  function regenerateTasksBoard(c) {
+  function regenerateTasksBoard(p) {
     if (!confirm('¿Regenerar la propuesta? Perderás los cambios manuales (responsables, tareas madre, agrupaciones).')) return;
-    const { tasks, warnings } = proposeTasks(c);
-    S.tasksBoard = { cId: c.id, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
+    const { tasks, warnings } = proposeTasksForPipeline(p);
+    S.tasksBoard = { pId: p.id, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
     render();
   }
 
@@ -3239,6 +3272,7 @@ const PIPELINES_MODULE = (() => {
           <span class="pm-task-code">${escapeHtml(t.code)}</span>
           <div class="pm-task-title" contenteditable="true" data-title-for="${t.id}" spellcheck="false">${escapeHtml(t.titulo)}</div>
         </div>
+        ${t.campania_code ? `<div class="pm-task-camp">📂 Campaña ${escapeHtml(t.campania_code)}</div>` : ''}
         <div class="pm-task-row2">
           <select class="pm-task-role-select" data-role-for="${t.id}" title="Responsable">
             ${TASK_ROLES.map(r => `<option value="${r.id}" ${t.rol_sugerido===r.id?'selected':''}>${r.label}</option>`).join('')}
@@ -3250,9 +3284,9 @@ const PIPELINES_MODULE = (() => {
     `;
   }
 
-  function renderTasksBoard(p, c) {
+  function renderTasksBoard(p) {
     const board = S.tasksBoard;
-    if (!board || board.cId !== c.id) return '';
+    if (!board || board.pId !== p.id) return '';
 
     // Particionar tasks: pool (sueltas) vs por master.
     const pool = [];
@@ -3290,11 +3324,12 @@ const PIPELINES_MODULE = (() => {
       `;
     };
 
+    const campsCount = (p.camps || []).filter(c => !(c.estado || '').startsWith('archiv')).length;
     return `
       <div class="pm-board" id="pm-board">
         <div class="pm-board-head">
-          <span class="pm-board-title">🎯 Board PM · ${escapeHtml(c.code)}</span>
-          <span class="pm-board-sub">${total} ${total===1?'tarea propuesta':'tareas propuestas'}${totalEmpaquetadas?` · ${totalEmpaquetadas} empaquetadas`:''}</span>
+          <span class="pm-board-title">🎯 Board PM · ${escapeHtml(p.code)}</span>
+          <span class="pm-board-sub">${total} ${total===1?'tarea propuesta':'tareas propuestas'} de ${campsCount} ${campsCount===1?'campaña':'campañas'}${totalEmpaquetadas?` · ${totalEmpaquetadas} empaquetadas`:''}</span>
           ${lastPushHint}
           <div class="pm-board-actions">
             <button data-pm-action="add-master" type="button" title="Crear nueva tarea madre vacía">+ Tarea madre</button>
@@ -3318,13 +3353,13 @@ const PIPELINES_MODULE = (() => {
             : (board.masters || []).map(renderMaster).join('')}
         </div>
         <div class="pm-board-status">
-          Board efímero — al cambiar de campaña o cliente perderás los cambios. Pulsa "Empujar" para materializar en ${proveedorLabel}.
+          Board efímero — al cambiar de pipeline o cliente perderás los cambios. Pulsa "Empujar" para materializar en ${proveedorLabel}.
         </div>
       </div>
     `;
   }
 
-  function attachTasksBoardHandlers(p, c) {
+  function attachTasksBoardHandlers(p) {
     const boardEl = document.getElementById('pm-board');
     if (!boardEl) return;
     const board = S.tasksBoard;
@@ -3332,10 +3367,14 @@ const PIPELINES_MODULE = (() => {
 
     // SortableJS — pool + cada master son listas conectadas vía group 'pm-board'.
     if (typeof Sortable === 'undefined') {
-      setTimeout(() => attachTasksBoardHandlers(p, c), 250);
+      setTimeout(() => attachTasksBoardHandlers(p), 250);
       return;
     }
     // Lista del pool + listas de cada master. data-master-id="" es el pool.
+    // filter: SortableJS no inicia drag sobre estos elementos interactivos (fix
+    // dropdown que se abría y cerraba al instante por captura del mousedown).
+    // preventOnFilter:false deja que el evento siga su curso normal (que el
+    // <select> reciba el click y se abra) en lugar de cancelarlo.
     boardEl.querySelectorAll('.pm-pool, .pm-master-list').forEach(listEl => {
       Sortable.create(listEl, {
         group: 'pm-board',
@@ -3347,6 +3386,8 @@ const PIPELINES_MODULE = (() => {
         delay: 80,
         delayOnTouchOnly: true,
         touchStartThreshold: 6,
+        filter: 'select, option, button, [contenteditable="true"]',
+        preventOnFilter: false,
         onEnd: (evt) => {
           const taskId = evt.item.dataset.taskId;
           const newMasterId = evt.to.dataset.masterId || null;
@@ -3407,13 +3448,13 @@ const PIPELINES_MODULE = (() => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.pmAction;
         if (action === 'add-master') addMaster();
-        else if (action === 'regenerate') regenerateTasksBoard(c);
+        else if (action === 'regenerate') regenerateTasksBoard(p);
         else if (action === 'close') {
           if (board.dirty && !confirm('Tienes cambios sin empujar. ¿Cerrar igual?')) return;
           S.tasksBoard = null; render();
         }
         else if (action === 'push') {
-          const payload = buildTasksPayload(p, c, board);
+          const payload = buildTasksPayload(p, board);
           btn.dataset.originalText = btn.textContent;
           btn.disabled = true;
           btn.textContent = 'Creando ' + payload.tasks.length + ' tareas…';
@@ -3574,6 +3615,17 @@ const PIPELINES_MODULE = (() => {
       <h2 class="pip-detail-title">${escapeHtml(p.name)}</h2>
       <p class="pip-detail-sub ${!p.obj?'empty':''}">${escapeHtml(p.obj || 'Sin objetivo estratégico definido.')}</p>
 
+      ${S.role==='pm' ? `
+        <div class="pip-pm-card">
+          <div class="pip-pm-card-text">
+            <div class="pip-pm-card-title">Crear tareas en Notion</div>
+            <div class="pip-pm-card-sub">Propone todas las tareas del equipo para las ${p.camps.filter(c => !(c.estado || '').startsWith('archiv')).length} campañas activas de este pipeline. Tú las empaquetas en tareas madre con drag-and-drop antes de empujarlas.</div>
+          </div>
+          <button class="pip-pm-card-btn" data-action="create-tasks" data-pid="${p.id}">${S.tasksBoard?.pId === p.id ? 'Ver board' : 'Crear'}</button>
+        </div>
+        ${renderTasksBoard(p)}
+      ` : ''}
+
       <div class="field-list">
         ${fieldStatic('Responsable account', p.account)}
         ${fieldStatic('Campañas', String(p.camps.length))}
@@ -3647,16 +3699,8 @@ const PIPELINES_MODULE = (() => {
       <h2 class="pip-detail-title">${escapeHtml(c.name)}</h2>
       <p class="pip-detail-sub ${!c.notas?'empty':''}">${escapeHtml(c.notas || 'Notas de Account (opcional)')}</p>
 
-      ${S.role==='pm' ? `
-        <div class="pip-pm-card">
-          <div class="pip-pm-card-text">
-            <div class="pip-pm-card-title">Crear tareas en Notion</div>
-            <div class="pip-pm-card-sub">Propone todas las tareas del equipo en un board reordenable, con responsables y subtareas. Pulsa Crear para abrir el board.</div>
-          </div>
-          <button class="pip-pm-card-btn" data-action="create-tasks" data-pid="${p.id}" data-cid="${c.id}">${S.tasksBoard?.cId === c.id ? 'Ver board' : 'Crear'}</button>
-        </div>
-        ${renderTasksBoard(p, c)}
-      ` : ''}
+      ${'' /* Card PM movida al nivel Pipeline (renderPipelineView) — el board F3
+              vive a nivel Pipeline, no por Campaña. Decisión 2026-05-27. */}
 
       <div class="pip-section-head"><span>Datos básicos</span></div>
       <div class="field-list">
@@ -4051,11 +4095,11 @@ const PIPELINES_MODULE = (() => {
     const chk = r.querySelector('[data-toggle="archived"]');
     if (chk) chk.addEventListener('change', () => { S.showArchived = chk.checked; render(); });
 
-    // F3 — Board PM: si estamos en vista campaña con board activo, enganchar SortableJS + handlers
-    if (S.role === 'pm' && S.view.kind === 'campaign' && S.tasksBoard && S.tasksBoard.cId === S.view.cId) {
+    // F3 — Board PM: vive a nivel Pipeline. Se engancha cuando estamos en vista
+    // pipeline con board activo del mismo pId.
+    if (S.role === 'pm' && S.view.kind === 'pipeline' && S.tasksBoard && S.tasksBoard.pId === S.view.pId) {
       const pp = S.data.find(x => x.id === S.view.pId);
-      const cc = pp && pp.camps.find(x => x.id === S.view.cId);
-      if (pp && cc) attachTasksBoardHandlers(pp, cc);
+      if (pp) attachTasksBoardHandlers(pp);
     }
 
     // actions
@@ -4111,7 +4155,7 @@ const PIPELINES_MODULE = (() => {
           const cr = cc && (cc.creatividades || []).find(x => x.id === el.dataset.crid);
           if (cr) openNewCreatividadSheet(el.dataset.pid, el.dataset.cid, cr);
         }
-        else if (a === 'create-tasks') openTasksBoard(el.dataset.pid, el.dataset.cid);
+        else if (a === 'create-tasks') openTasksBoardForPipeline(el.dataset.pid);
         else if (a === 'archive') {
           const code = el.dataset.code;
           const kind = el.dataset.kind;
