@@ -1491,59 +1491,165 @@
     color: var(--text-3); font-size: 11px; padding: 18px;
     font-style: italic;
   }
-  /* ── Tarjeta de tarea (preview Notion: header drag + properties + comentario) ── */
+  /* ── Card compacta: code + título + descripción + fecha. Click abre modal. ── */
   .pm-task-card {
     background: var(--bg-2);
     border: 1px solid var(--line-2);
-    border-radius: 12px;
-    padding: 0;
-    display: flex; flex-direction: column;
-    transition: border-color .15s, background .15s, box-shadow .15s;
-    width: 320px;
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex; flex-direction: column; gap: 4px;
+    transition: border-color .12s, background .12s, transform .12s, box-shadow .15s;
+    width: 220px;
     max-width: 100%;
     position: relative;
-    cursor: default;
-  }
-  .pm-master-list .pm-task-card { background: var(--bg-2); }
-  .pm-task-card:hover { border-color: var(--accent); }
-  .pm-task-card.sortable-chosen { box-shadow: 0 6px 18px rgba(0,0,0,0.55); }
-  .pm-task-header {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 12px 6px;
     cursor: grab;
-    border-bottom: 1px solid var(--line);
-    user-select: none;
-    -webkit-user-select: none;
   }
-  .pm-task-header:active { cursor: grabbing; }
-  .pm-task-header::after {
-    content: '⋮⋮';
+  .pm-task-card:hover {
+    border-color: var(--accent);
+    background: var(--bg-3);
+    transform: translateY(-1px);
+  }
+  .pm-task-card:active { cursor: grabbing; }
+  .pm-task-card.sortable-chosen { box-shadow: 0 6px 18px rgba(0,0,0,0.55); cursor: grabbing; }
+  .pm-task-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .pm-card-row1 {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pm-task-code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; font-weight: 700;
+    background: var(--accent-muted); color: var(--accent);
+    padding: 2px 6px; border-radius: 5px;
+    white-space: nowrap;
+  }
+  .pm-card-warn { font-size: 12px; }
+  .pm-card-incid { font-size: 12px; }
+  .pm-card-estado-dot {
+    width: 8px; height: 8px; border-radius: 50%;
     margin-left: auto;
-    color: var(--text-3);
-    font-size: 13px;
-    letter-spacing: -2px;
     flex-shrink: 0;
   }
+  .pm-card-title {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    line-height: 1.3;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pm-card-desc {
+    font-size: 11px;
+    color: var(--text-2);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pm-card-meta {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--text-3);
+  }
+  .pm-card-date, .pm-card-camp, .pm-card-resp {
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+  .pm-card-meta-empty { color: var(--text-3); font-style: italic; padding: 1px 5px; }
+
+  /* ── Modal de detalle (estilo Notion page open) ── */
+  .pm-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 5vh 16px;
+    overflow-y: auto;
+    animation: pm-fade-in .15s ease-out;
+  }
+  @keyframes pm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .pm-modal {
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column;
+    cursor: default;
+    animation: pm-slide-up .2s ease-out;
+  }
+  @keyframes pm-slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .pm-modal-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
   .pm-task-camp-inline {
-    font-size: 10px; color: var(--text-2);
+    font-size: 11px; color: var(--text-2);
     font-weight: 600;
     background: rgba(255,255,255,0.04);
     border-radius: 5px;
-    padding: 2px 6px;
+    padding: 2px 8px;
     white-space: nowrap;
   }
-  .pm-task-title {
-    padding: 8px 12px 6px;
-    font-size: 14px; font-weight: 700; color: var(--text);
+  .pm-modal-close {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    font-size: 24px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    min-height: 28px;
+  }
+  .pm-modal-close:hover { background: var(--bg-3); color: var(--text); }
+  .pm-modal-title {
+    padding: 14px 16px 10px;
+    font-size: 22px; font-weight: 700; color: var(--text);
     outline: none;
     word-break: break-word;
-    line-height: 1.3;
+    line-height: 1.25;
   }
-  .pm-task-title:focus { background: var(--bg-3); }
-  .pm-task-title:empty::before {
+  .pm-modal-title:focus { background: var(--bg-3); border-radius: 4px; }
+  .pm-modal-title:empty::before {
     content: attr(placeholder);
     color: var(--text-3);
     font-weight: 500;
+  }
+  .pm-modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: flex-end;
+    background: var(--bg-3);
+    border-radius: 0 0 14px 14px;
+  }
+  .pm-modal-done {
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 36px;
+  }
+  .pm-modal-done:hover { background: var(--accent-dim); border-color: var(--accent-dim); }
+  @media (max-width: 720px) {
+    .pm-modal-backdrop { padding: 0; align-items: stretch; }
+    .pm-modal { border-radius: 0; max-width: 100%; min-height: 100vh; }
+    .pm-modal-footer { border-radius: 0; }
   }
   .pm-props {
     padding: 4px 12px 8px;
@@ -3013,7 +3119,7 @@ const PIPELINES_MODULE = (() => {
       return;
     }
     const { tasks, warnings } = proposeTasksForPipeline(p);
-    S.tasksBoard = { pId, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
+    S.tasksBoard = { pId, tasks, masters: [], expandedTaskId: null, warnings, dirty: false, lastPushAt: null };
     render();
     setTimeout(() => document.getElementById('pm-board')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
   }
@@ -3021,7 +3127,19 @@ const PIPELINES_MODULE = (() => {
   function regenerateTasksBoard(p) {
     if (!confirm('¿Regenerar la propuesta? Perderás los cambios manuales (responsables, tareas madre, agrupaciones).')) return;
     const { tasks, warnings } = proposeTasksForPipeline(p);
-    S.tasksBoard = { pId: p.id, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
+    S.tasksBoard = { pId: p.id, tasks, masters: [], expandedTaskId: null, warnings, dirty: false, lastPushAt: null };
+    render();
+  }
+
+  // Abre / cierra el modal de detalle de una tarea (estilo Notion page open).
+  function openTaskDetail(taskId) {
+    if (!S.tasksBoard) return;
+    S.tasksBoard.expandedTaskId = taskId;
+    render();
+  }
+  function closeTaskDetail() {
+    if (!S.tasksBoard) return;
+    S.tasksBoard.expandedTaskId = null;
     render();
   }
 
@@ -3061,9 +3179,39 @@ const PIPELINES_MODULE = (() => {
   // Render de una tarjeta de tarea como preview Notion: title + 11 properties
   // editables + comentario (body). Cada property es una row "label: control"
   // similar al panel de Properties de una Notion page.
+  // Card compacta — solo lo esencial para escanear visualmente. El detalle
+  // completo (24 propiedades Notion) se abre al click en un modal.
   function renderTaskCard(t) {
+    const fechaTxt = t.fecha_entrega
+      ? `<span class="pm-card-date" title="Fecha de entrega">📅 ${escapeHtml(formatDateShort(t.fecha_entrega))}</span>`
+      : '';
+    const estadoSpec = TASK_ESTADOS.find(s => s.id === t.estado) || TASK_ESTADOS[0];
+    const respCount = (t.responsables || []).length;
+    const descPreview = (t.descripcion || '').trim();
+    return `
+      <div class="pm-task-card" data-task-id="${t.id}" data-action="open-detail" role="button" tabindex="0" title="Click para abrir detalle">
+        <div class="pm-card-row1">
+          <span class="pm-task-code">${escapeHtml(t.code)}</span>
+          ${t.warning ? `<span class="pm-card-warn" title="${escapeHtml(t.warning)}">⚠</span>` : ''}
+          ${t.incidencia ? `<span class="pm-card-incid" title="Marcada como incidencia">🚨</span>` : ''}
+          <span class="pm-card-estado-dot" style="background:${estadoSpec.color}" title="${estadoSpec.label}"></span>
+        </div>
+        <div class="pm-card-title">${escapeHtml(t.titulo)}</div>
+        ${descPreview ? `<div class="pm-card-desc">${escapeHtml(descPreview.slice(0, 80))}${descPreview.length > 80 ? '…' : ''}</div>` : ''}
+        <div class="pm-card-meta">
+          ${fechaTxt || '<span class="pm-card-meta-empty">📅 sin fecha</span>'}
+          ${t.campania_code ? `<span class="pm-card-camp" title="Campaña">📂 ${escapeHtml(t.campania_code)}</span>` : ''}
+          ${respCount > 0 ? `<span class="pm-card-resp" title="Responsables">👤 ${respCount}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // Modal completo de detalle — TODAS las 24 propiedades Notion editables.
+  function renderTaskDetailModal(t) {
+    if (!t) return '';
     const chip = (name, kind, idx) => `
-      <span class="pm-chip" data-chip-kind="${kind}" data-chip-idx="${idx}" data-task-id="${t.id}">
+      <span class="pm-chip">
         ${escapeHtml(name)}<button class="pm-chip-x" type="button" data-chip-remove="${kind}" data-chip-task="${t.id}" data-chip-idx-rm="${idx}" title="Quitar">×</button>
       </span>`;
     const respChips = (t.responsables || []).map((n, i) => chip(n, 'resp', i)).join('');
@@ -3084,94 +3232,110 @@ const PIPELINES_MODULE = (() => {
       </div>`;
 
     return `
-      <div class="pm-task-card" data-task-id="${t.id}">
-        <div class="pm-task-header">
-          <span class="pm-task-code">${escapeHtml(t.code)}</span>
-          ${t.campania_code ? `<span class="pm-task-camp-inline">📂 ${escapeHtml(t.campania_code)}</span>` : ''}
-        </div>
-        <div class="pm-task-title" contenteditable="true" data-title-for="${t.id}" spellcheck="false" placeholder="Título de la tarea…">${escapeHtml(t.titulo)}</div>
+      <div class="pm-modal-backdrop" data-modal-close>
+        <div class="pm-modal" role="dialog" aria-modal="true" aria-labelledby="pm-modal-title-${t.id}">
+          <div class="pm-modal-header">
+            <span class="pm-task-code">${escapeHtml(t.code)}</span>
+            ${t.campania_code ? `<span class="pm-task-camp-inline">📂 ${escapeHtml(t.campania_code)}</span>` : ''}
+            <button class="pm-modal-close" type="button" data-modal-close title="Cerrar (Esc)">×</button>
+          </div>
+          <div class="pm-modal-title" id="pm-modal-title-${t.id}" contenteditable="true" data-title-for="${t.id}" spellcheck="false" placeholder="Título de la tarea…">${escapeHtml(t.titulo)}</div>
 
-        <div class="pm-props">
-          <div class="pm-prop">
-            <span class="pm-prop-label">🟢 Estado</span>
-            <select class="pm-prop-ctrl" data-prop="estado" data-task-id="${t.id}">
-              ${TASK_ESTADOS.map(s => `<option value="${s.id}" ${t.estado===s.id?'selected':''}>${s.label}</option>`).join('')}
-            </select>
-          </div>
-          <div class="pm-prop">
-            <span class="pm-prop-label">📅 Fecha entrega</span>
-            <input class="pm-prop-ctrl" type="date" data-prop="fecha_entrega" data-task-id="${t.id}" value="${escapeHtml(t.fecha_entrega || '')}"/>
-          </div>
-          <div class="pm-prop">
-            <span class="pm-prop-label">⚡ Prioridad</span>
-            <select class="pm-prop-ctrl" data-prop="prioridad" data-task-id="${t.id}">
-              ${TASK_PRIORIDADES.map(p => `<option value="${p.id}" ${t.prioridad===p.id?'selected':''}>${p.label}</option>`).join('')}
-            </select>
-          </div>
-          <div class="pm-prop">
-            <span class="pm-prop-label">🏷️ Área</span>
-            <select class="pm-prop-ctrl" data-prop="area_tarea" data-task-id="${t.id}">
-              ${TASK_AREAS.map(a => `<option value="${a.id}" ${t.area_tarea===a.id?'selected':''}>${a.label}</option>`).join('')}
-            </select>
-          </div>
-          <div class="pm-prop">
-            <span class="pm-prop-label">🎭 Rol sugerido</span>
-            <select class="pm-prop-ctrl" data-prop="rol_sugerido" data-task-id="${t.id}">
-              ${TASK_ROLES.map(r => `<option value="${r.id}" ${t.rol_sugerido===r.id?'selected':''}>${r.label}</option>`).join('')}
-            </select>
-          </div>
-          <div class="pm-prop pm-prop-wide">
-            <span class="pm-prop-label">👤 Responsables</span>
-            <div class="pm-prop-multi">
-              <div class="pm-chips">${respChips || '<span class="pm-chips-empty">— ninguno —</span>'}</div>
-              <select class="pm-chip-add" data-chip-add="resp" data-task-id="${t.id}">
-                <option value="">+ Añadir responsable…</option>
-                ${memberOptions(t.responsables || [])}
+          <div class="pm-props">
+            <div class="pm-prop">
+              <span class="pm-prop-label">🟢 Estado</span>
+              <select class="pm-prop-ctrl" data-prop="estado" data-task-id="${t.id}">
+                ${TASK_ESTADOS.map(s => `<option value="${s.id}" ${t.estado===s.id?'selected':''}>${s.label}</option>`).join('')}
               </select>
             </div>
-          </div>
-          <div class="pm-prop pm-prop-wide">
-            <span class="pm-prop-label">✅ Aprobador</span>
-            <select class="pm-prop-ctrl" data-prop="aprobador" data-task-id="${t.id}">
-              <option value="">— sin aprobador —</option>
-              ${TASK_MEMBERS.map(m => `<option value="${escapeHtml(m)}" ${t.aprobador===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="pm-prop pm-prop-wide">
-            <span class="pm-prop-label">👀 Observadores</span>
-            <div class="pm-prop-multi">
-              <div class="pm-chips">${obsChips || '<span class="pm-chips-empty">— ninguno —</span>'}</div>
-              <select class="pm-chip-add" data-chip-add="obs" data-task-id="${t.id}">
-                <option value="">+ Añadir observador…</option>
-                ${memberOptions(t.observadores || [])}
+            <div class="pm-prop">
+              <span class="pm-prop-label">📅 Fecha entrega</span>
+              <input class="pm-prop-ctrl" type="date" data-prop="fecha_entrega" data-task-id="${t.id}" value="${escapeHtml(t.fecha_entrega || '')}"/>
+            </div>
+            <div class="pm-prop">
+              <span class="pm-prop-label">⚡ Prioridad</span>
+              <select class="pm-prop-ctrl" data-prop="prioridad" data-task-id="${t.id}">
+                ${TASK_PRIORIDADES.map(p => `<option value="${p.id}" ${t.prioridad===p.id?'selected':''}>${p.label}</option>`).join('')}
               </select>
             </div>
-          </div>
-          <div class="pm-prop">
-            <span class="pm-prop-label">⏱️ Estimación</span>
-            <div class="pm-prop-inline-num">
-              <input class="pm-prop-ctrl pm-prop-num" type="number" min="0" step="0.5" data-prop="estimacion_horas" data-task-id="${t.id}" value="${t.estimacion_horas != null ? t.estimacion_horas : ''}" placeholder="0"/>
-              <span class="pm-prop-unit">h</span>
+            <div class="pm-prop">
+              <span class="pm-prop-label">🏷️ Área</span>
+              <select class="pm-prop-ctrl" data-prop="area_tarea" data-task-id="${t.id}">
+                ${TASK_AREAS.map(a => `<option value="${a.id}" ${t.area_tarea===a.id?'selected':''}>${a.label}</option>`).join('')}
+              </select>
             </div>
+            <div class="pm-prop">
+              <span class="pm-prop-label">🎭 Rol sugerido</span>
+              <select class="pm-prop-ctrl" data-prop="rol_sugerido" data-task-id="${t.id}">
+                ${TASK_ROLES.map(r => `<option value="${r.id}" ${t.rol_sugerido===r.id?'selected':''}>${r.label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="pm-prop pm-prop-wide">
+              <span class="pm-prop-label">👤 Responsables</span>
+              <div class="pm-prop-multi">
+                <div class="pm-chips">${respChips || '<span class="pm-chips-empty">— ninguno —</span>'}</div>
+                <select class="pm-chip-add" data-chip-add="resp" data-task-id="${t.id}">
+                  <option value="">+ Añadir responsable…</option>
+                  ${memberOptions(t.responsables || [])}
+                </select>
+              </div>
+            </div>
+            <div class="pm-prop pm-prop-wide">
+              <span class="pm-prop-label">✅ Aprobador</span>
+              <select class="pm-prop-ctrl" data-prop="aprobador" data-task-id="${t.id}">
+                <option value="">— sin aprobador —</option>
+                ${TASK_MEMBERS.map(m => `<option value="${escapeHtml(m)}" ${t.aprobador===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="pm-prop pm-prop-wide">
+              <span class="pm-prop-label">👀 Observadores</span>
+              <div class="pm-prop-multi">
+                <div class="pm-chips">${obsChips || '<span class="pm-chips-empty">— ninguno —</span>'}</div>
+                <select class="pm-chip-add" data-chip-add="obs" data-task-id="${t.id}">
+                  <option value="">+ Añadir observador…</option>
+                  ${memberOptions(t.observadores || [])}
+                </select>
+              </div>
+            </div>
+            <div class="pm-prop">
+              <span class="pm-prop-label">⏱️ Estimación</span>
+              <div class="pm-prop-inline-num">
+                <input class="pm-prop-ctrl pm-prop-num" type="number" min="0" step="0.5" data-prop="estimacion_horas" data-task-id="${t.id}" value="${t.estimacion_horas != null ? t.estimacion_horas : ''}" placeholder="0"/>
+                <span class="pm-prop-unit">h</span>
+              </div>
+            </div>
+            <div class="pm-prop">
+              <span class="pm-prop-label">🚨 Incidencia</span>
+              <label class="pm-prop-check">
+                <input type="checkbox" data-prop="incidencia" data-task-id="${t.id}" ${t.incidencia?'checked':''}/>
+                <span>${t.incidencia ? 'Marcada' : 'No'}</span>
+              </label>
+            </div>
+            ${depsBlock}
           </div>
-          <div class="pm-prop">
-            <span class="pm-prop-label">🚨 Incidencia</span>
-            <label class="pm-prop-check">
-              <input type="checkbox" data-prop="incidencia" data-task-id="${t.id}" ${t.incidencia?'checked':''}/>
-              <span>${t.incidencia ? 'Marcada' : 'No'}</span>
-            </label>
+
+          <div class="pm-task-comment-wrap">
+            <span class="pm-prop-label">💬 Comentario / Descripción <small>(va al body de la página Notion como bloques paragraph)</small></span>
+            <textarea class="pm-task-comment" data-prop="descripcion" data-task-id="${t.id}" rows="5" placeholder="Detalle, contexto, links a Drive, instrucciones específicas…">${escapeHtml(t.descripcion || '')}</textarea>
           </div>
-          ${depsBlock}
-        </div>
 
-        <div class="pm-task-comment-wrap">
-          <span class="pm-prop-label">💬 Comentario / Descripción <small>(va al body de la página Notion como bloques paragraph)</small></span>
-          <textarea class="pm-task-comment" data-prop="descripcion" data-task-id="${t.id}" rows="2" placeholder="Detalle, contexto, links a Drive, instrucciones específicas…">${escapeHtml(t.descripcion || '')}</textarea>
-        </div>
+          ${t.warning ? `<div class="pm-task-warning-banner">⚠ ${escapeHtml(t.warning)}</div>` : ''}
 
-        ${t.warning ? `<div class="pm-task-warning-banner">⚠ ${escapeHtml(t.warning)}</div>` : ''}
+          <div class="pm-modal-footer">
+            <button class="pm-modal-done" type="button" data-modal-close>Listo</button>
+          </div>
+        </div>
       </div>
     `;
+  }
+
+  function formatDateShort(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    } catch { return iso; }
   }
 
   function renderTasksBoard(p) {
@@ -3246,6 +3410,7 @@ const PIPELINES_MODULE = (() => {
           Board efímero — al cambiar de pipeline o cliente perderás los cambios. Pulsa "Empujar" para materializar en ${proveedorLabel}.
         </div>
       </div>
+      ${board.expandedTaskId ? renderTaskDetailModal(board.tasks.find(t => t.id === board.expandedTaskId)) : ''}
     `;
   }
 
@@ -3260,9 +3425,8 @@ const PIPELINES_MODULE = (() => {
       setTimeout(() => attachTasksBoardHandlers(p), 250);
       return;
     }
-    // handle: drag SOLO desde .pm-task-header. filter: nada de inputs/selects/
-    // textareas/buttons/contenteditable inicia drag. Combinación handle+filter
-    // = drag claro y limpio sin colisión con los controles editables.
+    // Cards compactas: drag desde toda la card. delay:120 + threshold:8
+    // distingue tap (= abre modal) de drag (= mueve).
     boardEl.querySelectorAll('.pm-pool, .pm-master-list').forEach(listEl => {
       Sortable.create(listEl, {
         group: 'pm-board',
@@ -3271,10 +3435,9 @@ const PIPELINES_MODULE = (() => {
         chosenClass: 'sortable-chosen',
         forceFallback: true,
         fallbackOnBody: true,
-        delay: 80,
-        delayOnTouchOnly: true,
-        touchStartThreshold: 6,
-        handle: '.pm-task-header',
+        delay: 120,
+        delayOnTouchOnly: false,
+        touchStartThreshold: 8,
         filter: 'select, option, input, textarea, button, label, [contenteditable="true"]',
         preventOnFilter: false,
         onEnd: (evt) => {
@@ -3390,6 +3553,41 @@ const PIPELINES_MODULE = (() => {
           submitTasks(payload, btn);
         }
       });
+    });
+
+    // Click en card compacta → abre modal de detalle.
+    boardEl.querySelectorAll('[data-action="open-detail"]').forEach(card => {
+      const open = () => openTaskDetail(card.dataset.taskId);
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); }
+      });
+    });
+
+    // Cerrar modal: click en backdrop, X o botón Listo.
+    boardEl.querySelectorAll('[data-modal-close]').forEach(el => {
+      el.addEventListener('click', (ev) => {
+        if (el.classList.contains('pm-modal-backdrop')) {
+          if (ev.target !== el) return;
+        }
+        ev.stopPropagation();
+        closeTaskDetail();
+      });
+    });
+    // Esc cierra el modal.
+    if (board.expandedTaskId) {
+      const escHandler = (ev) => {
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          closeTaskDetail();
+          document.removeEventListener('keydown', escHandler);
+        }
+      };
+      document.addEventListener('keydown', escHandler);
+    }
+    // Bloquear propagación del click dentro del modal.
+    boardEl.querySelectorAll('.pm-modal').forEach(modal => {
+      modal.addEventListener('click', (ev) => ev.stopPropagation());
     });
   }
 
