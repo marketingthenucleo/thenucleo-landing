@@ -1420,61 +1420,99 @@
     color: var(--warn);
     font-size: 12px;
   }
-  .pm-cols {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(220px, 1fr)) minmax(180px, 0.7fr);
-    gap: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .pm-col {
-    border-right: 1px solid var(--line);
-    min-height: 200px;
-    display: flex; flex-direction: column;
-  }
-  .pm-col:last-child { border-right: none; }
-  .pm-col-head {
-    padding: 10px 12px;
-    background: var(--bg-3);
-    border-bottom: 1px solid var(--line);
+  /* Canvas: pool de tareas sueltas + N tarjetas madre arrastrables */
+  .pm-pool-wrap { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .pm-pool-label {
     font-size: 11px; font-weight: 700; color: var(--text-2);
     text-transform: uppercase; letter-spacing: .07em;
-    display: flex; align-items: center; gap: 6px;
-    position: sticky; top: 0; z-index: 1;
+    margin-bottom: 8px;
   }
-  .pm-col-count {
-    margin-left: auto;
-    background: var(--bg-2); border-radius: 999px; padding: 2px 8px;
-    font-size: 10px; color: var(--text-2);
-  }
-  .pm-col-excluidas .pm-col-head { color: var(--text-3); }
-  .pm-col-list {
-    padding: 10px;
-    display: flex; flex-direction: column; gap: 8px;
-    min-height: 120px;
-    flex: 1;
-  }
-  .pm-col-list.sortable-ghost { background: var(--accent-muted); }
-  .pm-task-card {
+  .pm-pool {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    min-height: 60px;
+    padding: 8px;
     background: var(--bg-3);
+    border: 1px dashed var(--line-2);
+    border-radius: 10px;
+  }
+  .pm-pool.sortable-ghost { background: var(--accent-muted); }
+  .pm-pool-empty {
+    width: 100%; text-align: center;
+    color: var(--text-3); font-size: 12px; padding: 14px;
+  }
+  .pm-masters {
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .pm-masters-empty {
+    text-align: center; color: var(--text-2); font-size: 13px;
+    padding: 32px 16px;
+    border: 1px dashed var(--line-2); border-radius: 10px;
+    background: var(--bg-3);
+  }
+  .pm-master {
+    background: var(--bg-2);
+    border: 2px solid var(--line-2);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .pm-master-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .pm-master-icon {
+    font-size: 16px; color: var(--accent);
+  }
+  .pm-master-title {
+    flex: 1;
+    font-size: 15px; font-weight: 700; color: var(--text);
+    outline: none;
+    word-break: break-word;
+    padding: 2px 4px; border-radius: 4px;
+  }
+  .pm-master-title:focus { background: var(--bg-3); }
+  .pm-master-count {
+    background: var(--bg-3); border-radius: 999px; padding: 3px 10px;
+    font-size: 11px; color: var(--text-2);
+    white-space: nowrap;
+  }
+  .pm-master-delete {
+    background: transparent; border: 1px solid var(--line-2);
+    color: var(--text-2);
+    border-radius: 8px; padding: 4px 10px;
+    cursor: pointer; font-size: 13px; min-height: 28px;
+  }
+  .pm-master-delete:hover { color: var(--bad); border-color: var(--bad); }
+  .pm-master-list {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    min-height: 80px;
+    padding: 10px;
+    background: var(--bg-3);
+    border: 1px dashed var(--line-2);
+    border-radius: 8px;
+  }
+  .pm-master-list.sortable-ghost { background: var(--accent-muted); }
+  .pm-master-list-empty {
+    width: 100%; text-align: center;
+    color: var(--text-3); font-size: 11px; padding: 18px;
+    font-style: italic;
+  }
+  .pm-task-card {
+    background: var(--bg-2);
     border: 1px solid var(--line-2);
     border-radius: 10px;
     padding: 10px 12px;
     cursor: grab;
     display: flex; flex-direction: column; gap: 6px;
     transition: border-color .15s, background .15s;
+    width: 220px;
+    max-width: 100%;
+    position: relative;
   }
+  .pm-master-list .pm-task-card { background: var(--bg-2); }
   .pm-task-card:hover { border-color: var(--accent); }
   .pm-task-card:active { cursor: grabbing; }
   .pm-task-card.sortable-chosen { box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
-  .pm-task-card.subtask { margin-left: 18px; border-left: 3px solid var(--accent); }
-  .pm-task-card.subtask::before { content: "↳ "; color: var(--accent); font-weight: 700; }
-  .pm-task-card.fase-mismatch { border-color: var(--warn); }
-  .pm-task-card.fase-mismatch::after {
-    content: "●"; color: var(--warn);
-    position: absolute; top: 6px; right: 8px; font-size: 14px;
-  }
-  .pm-task-card { position: relative; }
   .pm-task-row1 { display: flex; align-items: center; gap: 8px; }
   .pm-task-code {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -1517,12 +1555,11 @@
   }
 
   @media (max-width: 720px) {
-    .pm-cols { grid-template-columns: 1fr; }
-    .pm-col { border-right: none; border-bottom: 1px solid var(--line); }
-    .pm-col-head { position: static; }
     .pm-board-head { flex-direction: column; align-items: stretch; }
     .pm-board-actions { width: 100%; }
-    .pm-board-actions button { flex: 1; }
+    .pm-board-actions button { flex: 1; min-width: 0; }
+    .pm-task-card { width: 100%; }
+    .pm-master-head { flex-wrap: wrap; }
   }
 </style>
 <script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
@@ -2488,16 +2525,13 @@ const PIPELINES_MODULE = (() => {
   }
   function findPlantilla(slug) { return S.plantillas.find(p => p.slug === slug); }
 
-  // ── F3 — PM Board dinámico ──────────────────────────────────────
-  // Constantes para el board drag-drop de tareas propuestas.
-  const TASK_PHASES = [
-    { id: 'estrategia',   label: 'Estrategia',          emoji: '🧠' },
-    { id: 'produccion',   label: 'Producción mensajes', emoji: '✍️' },
-    { id: 'triggers',     label: 'Triggers',            emoji: '🎯' },
-    { id: 'creativos',    label: 'Creatividades',       emoji: '🎨' },
-    { id: 'lanzamiento',  label: 'Lanzamiento',         emoji: '🚀' },
-    { id: 'excluidas',    label: 'Excluidas',           emoji: '✗' },
-  ];
+  // ── F3 — PM Board dinámico (canvas + tareas madre, NO kanban) ──────
+  // Modelo: las tareas propuestas viven en S.tasksBoard.tasks (todas planas).
+  // Cada task lleva parent_master_id null (en el pool) o un master.id (dentro de
+  // una tarea madre). Los masters los crea el PM a mano con "+ Tarea madre" y
+  // viven en S.tasksBoard.masters como contenedores reordenables. El campo
+  // task.fase queda en el payload por compatibilidad con Notion (categorización)
+  // pero NO afecta a la UI: todo el board es un canvas + N tarjetas madre.
   const TASK_ROLES = [
     { id: 'estratega',    label: 'Estratega creativo' },
     { id: 'copy',         label: 'Copy' },
@@ -2613,31 +2647,28 @@ const PIPELINES_MODULE = (() => {
     return { tasks, warnings };
   }
 
-  // Recalcula depende_de del task _lanzar al excluir/incluir tareas.
-  function recalcLaunchDeps(board) {
-    const lanzar = board.tasks.find(t => t.fase === 'lanzamiento' && t.code.endsWith('_lanzar'));
-    if (!lanzar) return;
-    lanzar.depende_de = board.tasks
-      .filter(t => t !== lanzar && !t.excluida && t.fase !== 'excluidas')
-      .map(t => t.code);
-  }
-
   // Construye payload listo para el webhook n8n eHyXBETcaGSNXqLk.
+  // Incluye masters[] (los contenedores creados por el PM) + cada task con
+  // parent_master_id (apunta al master.id si está dentro de uno, null si está
+  // suelta en el pool). El workflow materializa masters como páginas padre y
+  // tasks con parent_master_id como hijas.
   function buildTasksPayload(p, c, board) {
     const codeToTempId = new Map(board.tasks.map(t => [t.code, t.id]));
-    const tasksOrdered = board.tasks
-      .filter(t => !t.excluida && t.fase !== 'excluidas')
-      .map(t => ({
-        client_temp_id: t.id,
-        parent_client_temp_id: t.parent_id || null,
-        code: t.code,
-        titulo: t.titulo,
-        rol: t.rol_sugerido,
-        fase: t.fase,
-        depende_de_codes: (t.depende_de || []).filter(code => codeToTempId.has(code)),
-        origen: t.origen,
-        metadata: t.warning ? { warning: t.warning } : {},
-      }));
+    const tasksOrdered = board.tasks.map(t => ({
+      client_temp_id: t.id,
+      parent_master_id: t.parent_master_id || null,
+      code: t.code,
+      titulo: t.titulo,
+      rol: t.rol_sugerido,
+      fase: t.fase,
+      depende_de_codes: (t.depende_de || []).filter(code => codeToTempId.has(code)),
+      origen: t.origen,
+      metadata: t.warning ? { warning: t.warning } : {},
+    }));
+    const masters = (board.masters || []).map(m => ({
+      client_temp_id: m.id,
+      titulo: m.titulo,
+    }));
     return {
       version: '1.0',
       source: 'ficha-cliente-pm-board',
@@ -2652,6 +2683,7 @@ const PIPELINES_MODULE = (() => {
         fecha_hasta: c.hasta || null,
         plantilla_slug: c.plantillaSlug || null,
       },
+      masters,
       tasks: tasksOrdered,
       idempotency_key: `${c.code}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
     };
@@ -2691,15 +2723,39 @@ const PIPELINES_MODULE = (() => {
       return;
     }
     const { tasks, warnings } = proposeTasks(c);
-    S.tasksBoard = { cId, tasks, warnings, dirty: false, lastPushAt: null };
+    S.tasksBoard = { cId, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
     render();
     setTimeout(() => document.getElementById('pm-board')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
   }
 
   function regenerateTasksBoard(c) {
-    if (!confirm('¿Regenerar la propuesta? Perderás los cambios manuales (orden, responsables, exclusiones, subtareas).')) return;
+    if (!confirm('¿Regenerar la propuesta? Perderás los cambios manuales (responsables, tareas madre, agrupaciones).')) return;
     const { tasks, warnings } = proposeTasks(c);
-    S.tasksBoard = { cId: c.id, tasks, warnings, dirty: false, lastPushAt: null };
+    S.tasksBoard = { cId: c.id, tasks, masters: [], warnings, dirty: false, lastPushAt: null };
+    render();
+  }
+
+  function addMaster() {
+    if (!S.tasksBoard) return;
+    const n = S.tasksBoard.masters.length + 1;
+    S.tasksBoard.masters.push({
+      id: 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7),
+      titulo: `Tarea madre ${n}`,
+    });
+    S.tasksBoard.dirty = true;
+    render();
+  }
+
+  function removeMaster(masterId) {
+    if (!S.tasksBoard) return;
+    const m = S.tasksBoard.masters.find(x => x.id === masterId);
+    if (!m) return;
+    const hijas = S.tasksBoard.tasks.filter(t => t.parent_master_id === masterId);
+    if (hijas.length > 0 && !confirm(`"${m.titulo}" contiene ${hijas.length} tarea(s). ¿Eliminar la madre y devolverlas al pool?`)) return;
+    // Devolver hijas al pool
+    S.tasksBoard.tasks.forEach(t => { if (t.parent_master_id === masterId) t.parent_master_id = null; });
+    S.tasksBoard.masters = S.tasksBoard.masters.filter(x => x.id !== masterId);
+    S.tasksBoard.dirty = true;
     render();
   }
 
@@ -2712,80 +2768,94 @@ const PIPELINES_MODULE = (() => {
     return h + ' h';
   }
 
+  function renderTaskCard(t) {
+    const depsLabel = (t.depende_de || []).length === 0 ? '' :
+      (t.code.endsWith('_lanzar')
+        ? `<div class="pm-task-deps">Depende de ${t.depende_de.length} tarea(s)</div>`
+        : `<div class="pm-task-deps">Depende: ${t.depende_de.slice(0, 3).map(d => escapeHtml(d)).join(', ')}${t.depende_de.length > 3 ? '…' : ''}</div>`);
+    return `
+      <div class="pm-task-card" data-task-id="${t.id}">
+        <div class="pm-task-row1">
+          <span class="pm-task-code">${escapeHtml(t.code)}</span>
+          <div class="pm-task-title" contenteditable="true" data-title-for="${t.id}" spellcheck="false">${escapeHtml(t.titulo)}</div>
+        </div>
+        <div class="pm-task-row2">
+          <select class="pm-task-role-select" data-role-for="${t.id}" title="Responsable">
+            ${TASK_ROLES.map(r => `<option value="${r.id}" ${t.rol_sugerido===r.id?'selected':''}>${r.label}</option>`).join('')}
+          </select>
+          ${t.warning ? `<span class="pm-task-warning">⚠ ${escapeHtml(t.warning)}</span>` : ''}
+        </div>
+        ${depsLabel}
+      </div>
+    `;
+  }
+
   function renderTasksBoard(p, c) {
     const board = S.tasksBoard;
     if (!board || board.cId !== c.id) return '';
-    const tasksByPhase = {};
-    TASK_PHASES.forEach(ph => tasksByPhase[ph.id] = []);
+
+    // Particionar tasks: pool (sueltas) vs por master.
+    const pool = [];
+    const byMaster = {};
+    (board.masters || []).forEach(m => { byMaster[m.id] = []; });
     board.tasks.forEach(t => {
-      const phaseKey = t.excluida ? 'excluidas' : t.fase;
-      if (!tasksByPhase[phaseKey]) tasksByPhase[phaseKey] = [];
-      tasksByPhase[phaseKey].push(t);
+      if (t.parent_master_id && byMaster[t.parent_master_id]) {
+        byMaster[t.parent_master_id].push(t);
+      } else {
+        pool.push(t);
+      }
     });
 
-    const renderTask = (t) => {
-      const isSubtask = !!t.parent_id;
-      const padresPosibles = board.tasks.filter(x => x.id !== t.id && !x.excluida && !x.parent_id);
-      const depsLabel = (t.depende_de || []).length === 0 ? '' :
-        (t.code.endsWith('_lanzar')
-          ? `<div class="pm-task-deps">Depende de ${t.depende_de.length} tarea(s)</div>`
-          : `<div class="pm-task-deps">Depende: ${t.depende_de.slice(0, 3).map(d => escapeHtml(d)).join(', ')}${t.depende_de.length > 3 ? '…' : ''}</div>`);
+    const proveedorLabel = (S.proveedorTareas || 'notion').toLowerCase() === 'clickup' ? 'ClickUp' : 'Notion';
+    const total = board.tasks.length;
+    const totalEmpaquetadas = total - pool.length;
+    const lastPushHint = board.lastPushAt ? `<span class="pm-board-sub">Última creación: hace ${humanAge(Date.now() - board.lastPushAt)}</span>` : '';
+
+    const renderMaster = (m) => {
+      const hijas = byMaster[m.id] || [];
       return `
-        <div class="pm-task-card ${t.excluida ? 'excluida' : ''} ${isSubtask ? 'subtask' : ''}" data-task-id="${t.id}">
-          <div class="pm-task-row1">
-            <span class="pm-task-code">${escapeHtml(t.code)}</span>
-            <div class="pm-task-title" contenteditable="true" data-title-for="${t.id}" spellcheck="false">${escapeHtml(t.titulo)}</div>
+        <div class="pm-master" data-master-id="${m.id}">
+          <div class="pm-master-head">
+            <span class="pm-master-icon">⊞</span>
+            <div class="pm-master-title" contenteditable="true" data-master-title-for="${m.id}" spellcheck="false">${escapeHtml(m.titulo)}</div>
+            <span class="pm-master-count">${hijas.length} ${hijas.length===1?'tarea':'tareas'}</span>
+            <button class="pm-master-delete" data-master-delete="${m.id}" type="button" title="Eliminar tarea madre">🗑</button>
           </div>
-          <div class="pm-task-row2">
-            <select class="pm-task-role-select" data-role-for="${t.id}" title="Responsable">
-              ${TASK_ROLES.map(r => `<option value="${r.id}" ${t.rol_sugerido===r.id?'selected':''}>${r.label}</option>`).join('')}
-            </select>
-            <select class="pm-task-role-select" data-parent-for="${t.id}" title="Anidar como subtarea de…">
-              <option value="">— sin padre —</option>
-              ${padresPosibles.map(x => `<option value="${x.id}" ${t.parent_id===x.id?'selected':''}>↳ ${escapeHtml(x.code)}</option>`).join('')}
-            </select>
-            ${t.warning ? `<span class="pm-task-warning">⚠ ${escapeHtml(t.warning)}</span>` : ''}
+          <div class="pm-master-list" data-master-id="${m.id}">
+            ${hijas.length === 0
+              ? `<div class="pm-master-list-empty">Arrastra aquí las tareas que quieras empaquetar bajo esta madre</div>`
+              : hijas.map(renderTaskCard).join('')}
           </div>
-          ${depsLabel}
         </div>
       `;
     };
 
-    const proveedorLabel = (S.proveedorTareas || 'notion').toLowerCase() === 'clickup' ? 'ClickUp' : 'Notion';
-    const totalActivos = board.tasks.filter(t => !t.excluida).length;
-    const totalExcluidas = board.tasks.length - totalActivos;
-    const lastPushHint = board.lastPushAt ? `<span class="pm-board-sub">Última creación: hace ${humanAge(Date.now() - board.lastPushAt)}</span>` : '';
     return `
       <div class="pm-board" id="pm-board">
         <div class="pm-board-head">
           <span class="pm-board-title">🎯 Board PM · ${escapeHtml(c.code)}</span>
-          <span class="pm-board-sub">${totalActivos} ${totalActivos===1?'tarea activa':'tareas activas'}${totalExcluidas?` (${totalExcluidas} excluidas)`:''}</span>
+          <span class="pm-board-sub">${total} ${total===1?'tarea propuesta':'tareas propuestas'}${totalEmpaquetadas?` · ${totalEmpaquetadas} empaquetadas`:''}</span>
           ${lastPushHint}
           <div class="pm-board-actions">
+            <button data-pm-action="add-master" type="button" title="Crear nueva tarea madre vacía">+ Tarea madre</button>
             <button data-pm-action="regenerate" type="button" title="Regenerar desde la declaración actual">↺ Regenerar</button>
             <button data-pm-action="close" type="button" title="Cerrar board (sin guardar)">Cerrar</button>
-            <button class="pm-btn-primary" data-pm-action="push" type="button" ${totalActivos===0?'disabled':''}>🚀 Empujar a ${proveedorLabel}</button>
+            <button class="pm-btn-primary" data-pm-action="push" type="button" ${total===0?'disabled':''}>🚀 Empujar a ${proveedorLabel}</button>
           </div>
         </div>
         ${board.warnings && board.warnings.length > 0 ? `<div class="pm-board-warnings">⚠ ${board.warnings.map(w => escapeHtml(w)).join(' · ')}</div>` : ''}
-        <div class="pm-cols">
-          ${TASK_PHASES.map(ph => {
-            const list = tasksByPhase[ph.id] || [];
-            const cls = ph.id === 'excluidas' ? 'pm-col-excluidas' : '';
-            return `
-              <div class="pm-col ${cls}">
-                <div class="pm-col-head">
-                  <span>${ph.emoji} ${ph.label}</span>
-                  <span class="pm-col-count">${list.length}</span>
-                </div>
-                <div class="pm-col-list" data-phase="${ph.id}">
-                  ${list.length === 0
-                    ? `<div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 4px;border:1px dashed var(--line);border-radius:8px;">arrastra aquí</div>`
-                    : list.map(renderTask).join('')}
-                </div>
-              </div>
-            `;
-          }).join('')}
+        <div class="pm-pool-wrap">
+          <div class="pm-pool-label">Tareas propuestas (sueltas)</div>
+          <div class="pm-pool" data-master-id="">
+            ${pool.length === 0
+              ? `<div class="pm-pool-empty">Todas las tareas están empaquetadas. Arrastra una fuera de una madre para devolverla aquí.</div>`
+              : pool.map(renderTaskCard).join('')}
+          </div>
+        </div>
+        <div class="pm-masters">
+          ${(board.masters || []).length === 0
+            ? `<div class="pm-masters-empty">No hay tareas madre todavía. Pulsa <strong>+ Tarea madre</strong> para crear un contenedor y arrastrar dentro las tareas que quieras agrupar.</div>`
+            : (board.masters || []).map(renderMaster).join('')}
         </div>
         <div class="pm-board-status">
           Board efímero — al cambiar de campaña o cliente perderás los cambios. Pulsa "Empujar" para materializar en ${proveedorLabel}.
@@ -2800,12 +2870,13 @@ const PIPELINES_MODULE = (() => {
     const board = S.tasksBoard;
     if (!board) return;
 
-    // SortableJS por columna (todas en el mismo group → drag entre columnas).
+    // SortableJS — pool + cada master son listas conectadas vía group 'pm-board'.
     if (typeof Sortable === 'undefined') {
       setTimeout(() => attachTasksBoardHandlers(p, c), 250);
       return;
     }
-    boardEl.querySelectorAll('.pm-col-list').forEach(listEl => {
+    // Lista del pool + listas de cada master. data-master-id="" es el pool.
+    boardEl.querySelectorAll('.pm-pool, .pm-master-list').forEach(listEl => {
       Sortable.create(listEl, {
         group: 'pm-board',
         animation: 140,
@@ -2818,39 +2889,47 @@ const PIPELINES_MODULE = (() => {
         touchStartThreshold: 6,
         onEnd: (evt) => {
           const taskId = evt.item.dataset.taskId;
-          const newPhase = evt.to.dataset.phase;
+          const newMasterId = evt.to.dataset.masterId || null;
           const task = board.tasks.find(t => t.id === taskId);
           if (!task) return;
-          if (newPhase === 'excluidas') {
-            task.excluida = true;
-          } else {
-            task.excluida = false;
-            task.fase = newPhase;
-          }
+          task.parent_master_id = newMasterId;
           board.dirty = true;
-          recalcLaunchDeps(board);
           render();
         },
       });
     });
 
-    // Title contenteditable
+    // Task title contenteditable
     boardEl.querySelectorAll('[data-title-for]').forEach(el => {
       el.addEventListener('blur', () => {
-        const taskId = el.dataset.titleFor;
-        const t = board.tasks.find(x => x.id === taskId);
+        const t = board.tasks.find(x => x.id === el.dataset.titleFor);
         if (!t) return;
         const newTitle = el.textContent.trim();
-        if (newTitle && newTitle !== t.titulo) {
-          t.titulo = newTitle;
-          board.dirty = true;
-        } else if (!newTitle) {
-          el.textContent = t.titulo;
-        }
+        if (newTitle && newTitle !== t.titulo) { t.titulo = newTitle; board.dirty = true; }
+        else if (!newTitle) { el.textContent = t.titulo; }
       });
       el.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); }
       });
+    });
+
+    // Master title contenteditable
+    boardEl.querySelectorAll('[data-master-title-for]').forEach(el => {
+      el.addEventListener('blur', () => {
+        const m = (board.masters || []).find(x => x.id === el.dataset.masterTitleFor);
+        if (!m) return;
+        const newTitle = el.textContent.trim();
+        if (newTitle && newTitle !== m.titulo) { m.titulo = newTitle; board.dirty = true; }
+        else if (!newTitle) { el.textContent = m.titulo; }
+      });
+      el.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); }
+      });
+    });
+
+    // Master delete
+    boardEl.querySelectorAll('[data-master-delete]').forEach(btn => {
+      btn.addEventListener('click', () => removeMaster(btn.dataset.masterDelete));
     });
 
     // Responsable
@@ -2863,38 +2942,12 @@ const PIPELINES_MODULE = (() => {
       });
     });
 
-    // Parent (subtarea) con detección de ciclos
-    boardEl.querySelectorAll('[data-parent-for]').forEach(sel => {
-      sel.addEventListener('change', () => {
-        const taskId = sel.dataset.parentFor;
-        const t = board.tasks.find(x => x.id === taskId);
-        if (!t) return;
-        const newParent = sel.value || null;
-        if (newParent) {
-          let cur = newParent;
-          let depth = 0;
-          while (cur && depth < 100) {
-            if (cur === taskId) {
-              showToast('No puedes anidar una tarea bajo su propia descendiente.');
-              sel.value = t.parent_id || '';
-              return;
-            }
-            const parentTask = board.tasks.find(x => x.id === cur);
-            cur = parentTask ? parentTask.parent_id : null;
-            depth++;
-          }
-        }
-        t.parent_id = newParent;
-        board.dirty = true;
-        render();
-      });
-    });
-
     // Botones cabecera
     boardEl.querySelectorAll('[data-pm-action]').forEach(btn => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.pmAction;
-        if (action === 'regenerate') regenerateTasksBoard(c);
+        if (action === 'add-master') addMaster();
+        else if (action === 'regenerate') regenerateTasksBoard(c);
         else if (action === 'close') {
           if (board.dirty && !confirm('Tienes cambios sin empujar. ¿Cerrar igual?')) return;
           S.tasksBoard = null; render();
