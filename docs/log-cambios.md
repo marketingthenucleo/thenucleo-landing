@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-27 (Fase N+1 light theme portal: Text cerrada + Link saltada + sección "Recetas reutilizables" añadida a design-tokens.md como base para IA generando piezas nuevas. Pendientes: 8 built-in Bubble + sync portal↔work)
+actualizado: 2026-05-27 (Fase final light theme: sync portal↔work cerrada — RPC `work_set_my_theme` + EF `sync_theme_to_bubble`. Pendiente solo: 8 built-in Bubble + `BUBBLE_API_TOKEN` en Supabase Dashboard para rollout)
 tags:
   - log
   - historial
@@ -66,6 +66,38 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-27 [PORTAL][WORK][INFRA][FEATURE] — Fase final light theme: sync portal Bubble ↔ work admin (RPC `work_set_my_theme` + EF `sync_theme_to_bubble`)
+
+- **Área:** Supabase (RPC nueva + Edge Function nueva), `ficha-cliente/index.html`, `estrategia/index.html`, `timeline/index.html`, docs.
+- **Qué:** cerrada la última pieza del rollout light theme. Antes los dos sitios eran islas (portal escribía `bub_user.theme` por su sync espejo Bubble→Supabase, work persistía solo en `localStorage` con clave per-page `thenucleo-ficha-cliente-theme`). Ahora:
+  - **Migration `work_set_my_theme_rpc`** (`supabase/migrations/20260527_work_set_my_theme_rpc.sql`): RPC SECURITY DEFINER con allowlist hardcoded 5 emails TheNucleo. UPDATE `bub_user.theme` del row cuyo `LOWER(email) = LOWER(auth.email())`, devuelve `{ ok, theme, bubble_id }`. RAISE `42501 forbidden` fuera de allowlist, `P0002 user_not_found` si no hay row.
+  - **Edge Function `sync_theme_to_bubble`** (`supabase/functions/sync_theme_to_bubble/index.ts`, version 1, verify_jwt:true): PATCH a `https://${BUBBLE_APP_DOMAIN}/api/1.1/obj/user/<bubble_id>` con `{ theme }` usando `BUBBLE_API_TOKEN`. Defensa en profundidad replicando allowlist en TS contra `getUser().email`. CORS habilitado para work.thenucleo.com.
+  - **Cableado JS en los 3 HTML** (`ficha-cliente/`, `estrategia/`, `timeline/`):
+    - Clave localStorage unificada a `thenucleo-theme` (cross-page); migración one-shot del viejo `thenucleo-ficha-cliente-theme` la primera vez que el user entra.
+    - Helper `applyTheme(t)` que escribe `dataset.theme` + `localStorage` + `<meta name="theme-color">`.
+    - `initTheme()` IIFE sigue pintando síncrono desde localStorage (FOUC prevention).
+    - El bloque que ya llamaba a `rpc('work_current_user_profile')` para el avatar ahora también aplica `row.theme` (bool → `'dark'|'light'`) si difiere del local — DB gana como source of truth cross-device.
+    - Toggle handler: `applyTheme(next)` inmediato + `setTimeout 500ms` debounce → `rpc('work_set_my_theme')` (UPDATE Supabase) → `fetch ${SUPABASE_URL}/functions/v1/sync_theme_to_bubble` (PATCH Bubble). Degradación graceful: errores se logean a console.warn sin revertir el theme local.
+- **Por qué:** cerraba el rollout — el user cambia theme donde quiera (portal Bubble o cualquier subsección work) y se propaga al otro lado y al resto de dispositivos. Bidireccional B1 elegido sobre n8n workflow (B2) por ser una sola pieza atómica sin schedule extra, y sobre unidireccional (A) por no perder el toggle propio del work.
+- **Impacto:**
+  - Allowlist sube de 9 a **10 sitios** (la pareja RPC + EF cuenta como 1 sitio funcional; comparten el mismo set de 5 emails hardcoded). Threshold 10+ ya alcanzado — pendiente migrar a tabla `admin_emails` + RPC `is_work_admin(email)` (deuda técnica registrada).
+  - Side effect benigno: PATCH a Bubble dispara el sync `FGxG67I24POOUeHW` (Bubble→Supabase) que reescribe el mismo valor. Loop idempotente, no genera ruido en `n8n_incidencias`.
+- **Pendiente para rollout completo:**
+  - **Setear `BUBBLE_API_TOKEN` en Supabase Dashboard → Project Settings → Edge Functions → Secrets** (mismo admin token que usa la cred `bubble_data_api` de n8n). Sin esto la EF responde `500 config_missing` — la RPC sigue funcionando y persiste en Supabase, pero no se propaga a Bubble.
+  - Confirmar `BUBBLE_APP_DOMAIN` (default `app-the-nucleo-agency.bubbleapps.io`). Sobreescribir solo si el deploy LIVE vive en `portal.thenucleo.com/version-live` u otro custom domain.
+- **Smoke test:**
+  1. Cambiar theme en portal Bubble (toggle header) → verificar `SELECT theme FROM bub_user WHERE email='benjamin.sanchis@thenucleo.com';` espejea el cambio.
+  2. Abrir `work.thenucleo.com/ficha-cliente/?id=<x>` en otra tab fresca → arrancar en el theme que dejaste, sin tocar el toggle.
+  3. Click toggle work → localStorage `thenucleo-theme`, `bub_user.theme` y `User.theme` Bubble deben coincidir. Refresh portal → mismo theme.
+  4. Test con `mvplowcost@gmail.com` (Demo Quasar fuera de allowlist work): RPC responde `42501 forbidden`, theme queda solo en localStorage. ✅ separación correcta.
+- **Refs:**
+  - `supabase/migrations/20260527_work_set_my_theme_rpc.sql` (aplicada via MCP).
+  - `supabase/functions/sync_theme_to_bubble/index.ts` (deploy v1 via MCP).
+  - `ficha-cliente/index.html` (theme block + initUserAvatar), `estrategia/index.html`, `timeline/index.html`.
+  - `docs/infra/supabase-schema.md` (RPC + EF documentadas; allowlist 9→10 en 3 sitios).
+  - `docs/design-tokens.md` (tabla rollout: fila "Sincronización portal ↔ work" ✓).
+  - Handoff: `~/.claude/plans/light-theme-portal-work-sync-handoff.md`.
 
 ## 2026-05-27 [PORTAL][WORK][DOCS] — Recetas reutilizables en design-tokens.md (base para IA generando piezas nuevas)
 

@@ -474,7 +474,7 @@ Misma allowlist. Devuelve `to_jsonb(c.*)` del cliente con TODAS las columnas de 
 
 > El campo `bb_servicios_contratados` fue **eliminado de `bub_clientes` el 2026-05-22** (legacy huérfano, 78 clientes con array vacío). La RPC nunca lo devolvió porque la columna ya no existía cuando el frontend intentaba leerla — síntoma: el panel "Servicios contratados" mostraba "Sin servicios" aunque el cliente tuviera 32 en `playbook_cliente_servicios`. Fix: ampliar la RPC con el `jsonb_agg` arriba descrito.
 
-⚠️ **Allowlist en 9 sitios ahora** (frontend `playbook`/`fichas-de-producto`/`ficha-cliente` + RLS `playbook_progreso`/`playbook_task_feedback`/`playbook_cliente_servicios` + RPCs `playbook_cliente_detalle`/`ficha_cliente_listar`/`ficha_cliente_get`/`catalogos_cliente_get` + Edge Function `bridge_from_portal` + policy `admins_read_audit` de `bridge_audit_log`). Si añades editor: actualizar todos. Casuísticas + disponibilidades tienen sus propios sets independientes.
+⚠️ **Allowlist en 10 sitios ahora** (frontend `playbook`/`fichas-de-producto`/`ficha-cliente` + RLS `playbook_progreso`/`playbook_task_feedback`/`playbook_cliente_servicios` + RPCs `playbook_cliente_detalle`/`ficha_cliente_listar`/`ficha_cliente_get`/`catalogos_cliente_get` + Edge Function `bridge_from_portal` + policy `admins_read_audit` de `bridge_audit_log` + pareja `work_set_my_theme` + Edge Function `sync_theme_to_bubble` desde 2026-05-27). Si añades editor: actualizar todos. Casuísticas + disponibilidades tienen sus propios sets independientes.
 
 #### `work_current_user_profile()` — perfil del user logueado (avatar shell)
 
@@ -493,9 +493,40 @@ LANGUAGE sql STABLE SECURITY DEFINER
 
 No comprueba allowlist por diseño: cualquier `authenticated` puede leer **su propio** row (la RPC ya filtra por `auth.email()`, así que no hay enumeración). Consumida por el shell unificado portal del header de `work.thenucleo.com/ficha-cliente/` (avatar) y `/estrategia/` + `/timeline/` (avatar + condicional del tab Tareas vía `window.WORK_USER_PROFILE` con promesa `WORK_USER_PROFILE_READY`). Fallback `#6b7280` para `color` si la columna es NULL/vacía. SECURITY DEFINER necesario porque `bub_user` tiene RLS y los admins work no tienen policy de lectura ahí (mismo patrón que `disponibilidad_miembros()` y `ficha_cliente_*`).
 
-⚠️ El campo `theme` aún **no se consume** en el frontend de work (Fase 0 del rollout light theme portal Bubble — 2026-05-27): la columna queda lista en el response pero los 3 HTML siguen leyendo theme desde `localStorage`. Cuando se cablee (sesión futura), `NULL` se interpretará como "usa fallback dark + respeta localStorage" para no forzar cambio visual a los users existentes. Sync Bubble→Supabase del nuevo campo va por el workflow estándar `FGxG67I24POOUeHW` (SYNC ESPEJO) — `bub_user` ya está allowlisted, no requiere cambios.
+✅ **Theme cableado (2026-05-27, Fase final del rollout light theme):** los 3 HTML de work leen `theme` del response y aplican el theme de la DB si difiere del `localStorage`. `NULL` se interpreta como "usa fallback dark + respeta localStorage". El sync Bubble→Supabase del campo va por el workflow estándar `FGxG67I24POOUeHW` (SYNC ESPEJO). El sync inverso (work toggle → Supabase → Bubble) usa la pareja `work_set_my_theme()` (UPDATE Supabase) + Edge Function `sync_theme_to_bubble` (PATCH Bubble Data API) — ver más abajo.
 
 🪤 **Aviso para futuras ediciones de esta RPC:** lee la signature real con `SELECT pg_get_function_result(...)` antes de redefinir, no te fíes solo de este markdown — el incidente del 2026-05-27 nació de ahí. Cada `DROP + CREATE` debe preservar las columnas históricas (al menos hasta confirmar que ningún consumer las usa).
+
+#### `work_set_my_theme(p_theme boolean)` — escritura inversa work → bub_user.theme
+
+`SECURITY DEFINER` + `GRANT EXECUTE TO authenticated`. Allowlist hardcoded 5 emails TheNucleo (mismo set que `ficha_cliente_*`). UPDATE `bub_user.theme` del row cuyo `LOWER(email) = LOWER(auth.email())` y devuelve `{ ok, theme, bubble_id }`. RAISE `42501 forbidden` si el email no está en allowlist; `P0002 user_not_found` si no hay row.
+
+Migration: `work_set_my_theme_rpc` (2026-05-27).
+
+```sql
+CREATE OR REPLACE FUNCTION public.work_set_my_theme(p_theme boolean)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER ...
+```
+
+El sync con Bubble lo hace la Edge Function `sync_theme_to_bubble` invocada por el cliente JS justo después de esta RPC (`fetch ${SUPABASE_URL}/functions/v1/sync_theme_to_bubble`). 2 awaits secuenciales en el toggle: si la RPC falla → toast error + revert; si la EF falla → degradación graceful (el theme queda persistido en Supabase y se propaga a Bubble en el siguiente intento o por el sync estándar del workflow FGxG67I24POOUeHW si Bubble cambia el campo desde su lado primero).
+
+Side effect benigno: PATCH a Bubble dispara el sync `FGxG67I24POOUeHW` (Bubble→Supabase) que escribe el mismo valor de vuelta a `bub_user.theme`. Loop idempotente (mismo valor), no genera ruido en `n8n_incidencias`.
+
+⚠️ **Allowlist asciende a 10 sitios** con esta RPC + EF (8 previos + bridge_from_portal/audit_log = 9 → +1 para la pareja `work_set_my_theme` + `sync_theme_to_bubble` que comparten el mismo set de 5 emails). Cuando lleguemos a 11+ migrar a tabla `admin_emails` + RPC `is_work_admin(email)`. **Casuísticas + disponibilidades tienen sus propios sets independientes.**
+
+### Edge Function `sync_theme_to_bubble` (verify_jwt=true)
+
+PATCHea `User.theme` en Bubble Data API tras el UPDATE en Supabase. Llamada desde el cliente JS de work (toggle theme) inmediatamente después de `work_set_my_theme()`. Body: `{ bubble_id: string, theme: boolean }`. Responde `200 { ok:true, bubble_id, theme }` o `4xx/5xx { ok:false, error, detail }`.
+
+Defensa en profundidad:
+- `verify_jwt:true` (Supabase rechaza requests sin JWT válido).
+- Allowlist 5 emails replicada dentro del código (validada contra `getUser().email`). Mismo set que la RPC.
+
+Env vars (Supabase Dashboard → Edge Functions → Secrets):
+- `BUBBLE_API_TOKEN` — admin token Bubble Data API (mismo que usa la cred `bubble_data_api` de n8n). **Requerido** o la EF responde `500 config_missing`.
+- `BUBBLE_APP_DOMAIN` — opcional, default `app-the-nucleo-agency.bubbleapps.io`. Sobreescribir si el deploy live vive en un dominio distinto (p.ej. `portal.thenucleo.com/version-live`).
+
+Código: `supabase/functions/sync_theme_to_bubble/index.ts` (deploy via MCP el 2026-05-27, version 1).
 
 ### Pipelines y Campañas — 5 tablas nativas (F2, desde 2026-05-24)
 
@@ -784,7 +815,7 @@ Prefer: resolution=merge-duplicates,return=representation
 
 SECURITY DEFINER + `SET search_path = public, pg_temp` + allowlist hardcoded 5 emails (`benjamin.sanchis`, `camilo.carvajal`, `damian.gomez`, `joaquin.almeida`, `valentina.ramirez` @thenucleo.com) que RAISE `forbidden` ERRCODE `42501` si email no autorizado. GRANT EXECUTE TO authenticated. Devuelve jsonb con **18 keys**: 17 catálogos (`carpetas_drive`, `documentos`, `comunidades_wsp`, `emails_remitentes`, `etiquetas`, `cuentas_publicitarias`, `pixels`, `paginas_sociales`, `publicos_personalizados`, `plantillas_form_meta`, `presupuestos`, `lead_magnets`, `webinars`, `sistemas_reserva`, `productos_servicios`, `reglas`, `webs_cliente`) con `jsonb_agg(to_jsonb(t.*))` ordenado por `archivada` (activas primero) + un campo natural del tipo + **`visibilidad`** con `jsonb_agg({scope_type, scope_key, oculto})` desde `cliente_catalogo_visibilidad`. Frontend hace **1 fetch en lugar de 18**.
 
-⚠️ **Allowlist ahora en 9 sitios** (frontend playbook/fichas-de-producto/ficha-cliente + RLS policies playbook_progreso/playbook_task_feedback/playbook_cliente_servicios + RPCs `playbook_cliente_detalle` + `ficha_cliente_listar` + `ficha_cliente_get` + esta `catalogos_cliente_get` + Edge Function `bridge_from_portal` con su policy `admins_read_audit` desde 2026-05-25). Al añadir/retirar admin, sincronizar todos. Casuísticas mantiene su allowlist propia (3 policies).
+⚠️ **Allowlist ahora en 10 sitios** (frontend playbook/fichas-de-producto/ficha-cliente + RLS policies playbook_progreso/playbook_task_feedback/playbook_cliente_servicios + RPCs `playbook_cliente_detalle` + `ficha_cliente_listar` + `ficha_cliente_get` + esta `catalogos_cliente_get` + Edge Function `bridge_from_portal` con su policy `admins_read_audit` + pareja `work_set_my_theme` + Edge Function `sync_theme_to_bubble` desde 2026-05-27). Al añadir/retirar admin, sincronizar todos. Casuísticas mantiene su allowlist propia (3 policies).
 
 **Modelo snapshot vs vivo (cuando llegue Fase C):** las referencias Campaña→Catálogo guardarán `recurso_id uuid` + `nombre_snapshot text`. Renderizado: si la entrada del catálogo está archivada → frontend usa `nombre_snapshot` + etiqueta `🗄`; si activa → lee vivo del catálogo (URLs cambian = la realidad cambió, queremos propagación; nombres pueden renombrarse por motivos cosméticos, el snapshot da estabilidad visual). Patrón validado contra Stripe payment_link archived + GitHub deleted-user "ghost".
 
@@ -1060,7 +1091,7 @@ A partir del **30 octubre 2026** Supabase aplica en todos los proyectos existent
 | Bubble (API Connector) | `/rest/v1/...` (cbi) | `anon` (con `apikey` Bubble) |
 | n8n (HTTP Request) | `/rest/v1/...` | `service_role` |
 | `work.thenucleo.com` (supabase-js cliente) | `/rest/v1/...` + `/auth/v1/...` | `anon` / `authenticated` |
-| Edge Functions (incidencias_api, comunidad_admin_action) | `/rest/v1/...` interno | `service_role` |
+| Edge Functions (incidencias_api, comunidad_admin_action, bridge_from_portal, sync_theme_to_bubble) | `/rest/v1/...` interno + Bubble Data API (sync_theme_to_bubble) | `service_role` (auth tokens en `verify_jwt:true`) |
 
 **No afectado:** conexiones directas por connection string (no se usan en producción TheNucleo). RPCs (`GRANT EXECUTE`) tampoco — modelo propio sin cambios.
 
@@ -1223,7 +1254,7 @@ POST `{ email, bubble_id, timestamp: unix_seconds, signature: hex_hmac_sha256, n
 - `BRIDGE_SHARED_SECRET` — `openssl rand -hex 32`. Mismo valor en Supabase Dashboard → Edge Functions → Secrets y en Bubble App Constant privada. Rotable simultáneamente en ambos lados.
 - `SUPABASE_SERVICE_ROLE_KEY` — ya provisto por Supabase.
 
-**Allowlist asciende a 9 sitios** con esta Edge Function (8 previos: 3 frontend + 4 RLS/RPCs ficha_cliente + 1 `catalogos_cliente_get`; el 9º es `ALLOWLIST` en la Edge Function + policy `admins_read_audit` que comparten). Deuda técnica: extraer a tabla `admin_emails` + RPC `is_work_admin(email)`.
+**Allowlist asciende a 10 sitios** con esta Edge Function (8 previos: 3 frontend + 4 RLS/RPCs ficha_cliente + 1 `catalogos_cliente_get`; el 9º es `ALLOWLIST` en `bridge_from_portal` + policy `admins_read_audit` que comparten; el 10º es la pareja `work_set_my_theme` + EF `sync_theme_to_bubble` añadida 2026-05-27). Deuda técnica: extraer a tabla `admin_emails` + RPC `is_work_admin(email)`.
 
 **Setup en Supabase Auth:** añadir `https://work.thenucleo.com/comunidad/entrar/**` a Redirect URLs (sin esto el magic link redirige al Site URL por defecto y se pierde el deep-link).
 

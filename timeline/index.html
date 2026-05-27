@@ -106,13 +106,13 @@
     width: var(--ps-w); background: var(--ps-sidebar-bg);
     border-right: 1px solid var(--ps-divider);
     display: flex; flex-direction: column;
-    padding: 18px 12px 16px;
+    padding: 18px 0 16px;
     transform: translateX(0);
     transition: transform 220ms ease;
   }
   .ps-brand {
     display: flex; align-items: center; gap: 12px;
-    padding: 4px 4px 18px;
+    padding: 4px 14px 18px;
     min-height: 45px;
   }
   .ps-brand-iso { width: 45px; height: 45px; flex-shrink: 0; }
@@ -127,7 +127,7 @@
     position: relative;
     display: flex; align-items: center; gap: 12px;
     padding: 6px 14px; min-height: 40px;
-    border-radius: 10px;
+    border-radius: 0;
     color: var(--text-2);
     font-size: 16px; font-weight: 400;
     cursor: pointer; user-select: none;
@@ -135,14 +135,8 @@
     border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
   }
   .ps-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 1.25; }
-  .ps-item:hover { background: var(--ps-item-hover-bg); color: var(--text); }
-  .ps-item.active { background: var(--ps-active-pill); color: var(--text); }
-  .ps-item.active::before {
-    content: ''; position: absolute;
-    left: -12px; top: 0; bottom: 0;
-    width: 5px;
-    background: #85db02;
-  }
+  .ps-item:hover { background: #1A1434; color: var(--text); }
+  .ps-item.active { background: #1A1434; color: var(--text); }
   .ps-logout { color: var(--text-3); font-size: 12px; margin-top: 6px; }
   .ps-logout:hover { color: var(--bad); background: rgba(239,68,68,0.06); }
 
@@ -2041,6 +2035,13 @@ window.WORK_USER_PROFILE_READY = (async function initUserProfile() {
           el.setAttribute('title', row.nombre + (row.email ? ` · ${row.email}` : ''));
         }
       }
+      // Theme desde bub_user: DB gana si difiere del local (cross-device source of truth)
+      if (typeof row.theme === 'boolean') {
+        const themeFromDB = row.theme ? 'dark' : 'light';
+        if (document.documentElement.dataset.theme !== themeFromDB) {
+          applyTheme(themeFromDB);
+        }
+      }
     }
     return row || null;
   } catch (e) {
@@ -2069,16 +2070,58 @@ window.syncClientesLink = function(bubbleId) {
 })();
 
 // ─── Theme ─────────────────────────────────────────
-const THEME_KEY = 'thenucleo-ficha-cliente-theme';
-(function initTheme() {
-  try { document.documentElement.dataset.theme = localStorage.getItem(THEME_KEY) || 'dark'; }
-  catch { document.documentElement.dataset.theme = 'dark'; }
-})();
-document.getElementById('theme-toggle').addEventListener('click', () => {
-  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+// Sync portal Bubble ↔ work admin: bub_user.theme es la fuente de verdad.
+// initTheme() pinta sync desde localStorage (FOUC prevention). El avatar IIFE
+// llama a work_current_user_profile() y, si difiere, aplica el theme de DB +
+// reescribe localStorage. El toggle escribe a Supabase (RPC) y dispara la EF
+// sync_theme_to_bubble que PATCHea el Data API de Bubble.
+const THEME_KEY = 'thenucleo-theme';
+const THEME_KEY_LEGACY = 'thenucleo-ficha-cliente-theme';
+function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   try { localStorage.setItem(THEME_KEY, t); } catch {}
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#0A0A0A' : '#f5f6f8');
+}
+(function initTheme() {
+  try {
+    const legacy = localStorage.getItem(THEME_KEY_LEGACY);
+    if (legacy && !localStorage.getItem(THEME_KEY)) {
+      localStorage.setItem(THEME_KEY, legacy);
+      localStorage.removeItem(THEME_KEY_LEGACY);
+    }
+    document.documentElement.dataset.theme = localStorage.getItem(THEME_KEY) || 'dark';
+  } catch { document.documentElement.dataset.theme = 'dark'; }
+})();
+let _themeSyncTimer = null;
+async function pushThemeSync(themeBool) {
+  try {
+    const data = await rpc('work_set_my_theme', { p_theme: themeBool });
+    const bubbleId = data?.bubble_id;
+    if (!bubbleId) return;
+    const token = accessToken();
+    if (!token) return;
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/sync_theme_to_bubble`, {
+      method: 'POST',
+      headers: {
+        apikey: ANON,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ bubble_id: bubbleId, theme: themeBool })
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      console.warn('[theme] Bubble sync failed', res.status, t);
+    }
+  } catch (e) {
+    console.warn('[theme] persist failed (kept local)', e);
+  }
+}
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(t);
+  clearTimeout(_themeSyncTimer);
+  _themeSyncTimer = setTimeout(() => pushThemeSync(t === 'dark'), 500);
 });
 
 // ─── Volver atrás → portal cliente concreto en sección General ─

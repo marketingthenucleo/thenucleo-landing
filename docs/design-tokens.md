@@ -113,12 +113,12 @@ Algunas convivirán por buenas razones; otras son deuda para alinear. Listado al
 
 | Fase | Qué | Estado |
 |---|---|---|
-| **Work — CSS vars dark + light** | 17 tokens implementados en `ficha-cliente/index.html`, `estrategia/index.html`, `timeline/index.html`. Toggle persiste en `localStorage` (`thenucleo-ficha-cliente-theme`). | ✅ Vivo desde 2026-05-26 |
+| **Work — CSS vars dark + light** | 17 tokens implementados en `ficha-cliente/index.html`, `estrategia/index.html`, `timeline/index.html`. Toggle persiste en `localStorage` (clave unificada `thenucleo-theme` desde 2026-05-27; migración one-shot desde el viejo `thenucleo-ficha-cliente-theme`). | ✅ Vivo desde 2026-05-26 |
 | **Portal — Backend Fase 0** | Campo `User.theme` (yes/no) en Bubble + `bub_user.theme boolean` espejo + RPC `work_current_user_profile()` v3 con `theme`. | ✅ Cerrada 2026-05-27 |
 | **Portal — Color variables ES** | 23 dark renombradas + 23 claras creadas (suffix `-claro`) + 8 built-in Bubble pendientes reasignar. Toggle Bubble cableado (`Make changes to Current User → theme = Current User's theme is "no"`). | ✅ Cerrada 2026-05-27 |
 | **Portal — Conditionals por categoría** | 18 categorías cerradas: Button (5) · Date/Time Picker (3) · Dropdown · File Uploader · Floating Group · Group (10) · Group Focus (saltada) · Icon · Input · Multi dropdown · Multi-File · Multiline · Page · Picture Uploader · Popup · Progress Bar · Rich Text Input · Search Box · Shape (saltada) · Slider Input (saltada) · Radio Buttons (saltada) · Repeating Group (saltada) · Link (saltada — sin uso) · **Text** (cerrada 2026-05-27 sesión tarde). **Único pendiente: Built-in Bubble.** | 🔄 En curso |
 | **Portal — Built-in Bubble reasignar** | Primary/Surface/Background/Destructive/Success/Alert/Text/Primary contrast con valores incoherentes (Surface=#FFFFFF en dark, etc.). Reasignar a custom equivalentes en pasada final. | ⏸ Pendiente |
-| **Sincronización portal ↔ work** | RPC `work_set_my_theme()` + frontends work leen de la RPC al boot, persisten en Supabase además de localStorage. | ⏸ Pendiente sesión futura |
+| **Sincronización portal ↔ work** | RPC `work_set_my_theme(p_theme boolean)` (UPDATE Supabase con allowlist x5) + Edge Function `sync_theme_to_bubble` (PATCH Bubble Data API). Los 3 HTML work leen `theme` del response de `work_current_user_profile()` al boot, aplican el DB-value si difiere del localStorage, y persisten ambos lados al toggle (debounce 500ms, degradación graceful si Bubble falla). | ✅ Cerrada 2026-05-27 — pendiente `BUBBLE_API_TOKEN` en Supabase Dashboard para el rollout |
 
 ## Implementación en work (referencia rápida)
 
@@ -593,5 +593,6 @@ Antes de generar HTML/CSS o Conditionals Bubble:
 
 - **CSS en work:** [`ficha-cliente/index.html:19-82`](../ficha-cliente/index.html), [`estrategia/index.html`](../estrategia/index.html), [`timeline/index.html`](../timeline/index.html).
 - **Backend Fase 0:** [`docs/infra/supabase-schema.md` — RPC `work_current_user_profile`](infra/supabase-schema.md#work_current_user_profile---perfil-del-user-logueado-avatar-shell).
+- **Sync inverso (Fase final):** [`docs/infra/supabase-schema.md` — RPC `work_set_my_theme` + Edge Function `sync_theme_to_bubble`](infra/supabase-schema.md#work_set_my_themep_theme-boolean--escritura-inversa-work--bub_usertheme).
 - **Plan completo:** `~/.claude/plans/si-vamos-a-planificarlo-peppy-karp.md`.
 - **Log de la Fase 0:** [[log-cambios]] entrada 2026-05-27.
