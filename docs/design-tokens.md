@@ -2,7 +2,7 @@
 title: Design Tokens — Espejo Bubble ↔ Work
 dominio: cross
 estado: vivo
-actualizado: 2026-05-27 (Fase N+1 light theme portal — Text cerrada + Link saltada. Añadida sección "Recetas reutilizables" con 3 patrones canónicos (zebra+hover / nav-item / botón) + regla del salto de jerarquía + anti-patrones + checklist para IA. Único pendiente Bubble: 8 built-in)
+actualizado: 2026-05-27 (Fase N+1 light theme portal — Text cerrada + Link saltada. Añadida sección "Recetas reutilizables" con 4 patrones canónicos (zebra+hover / nav-item / botón / plugin terceros Quill RTE) + regla del salto de jerarquía + anti-patrones + checklist para IA. Único pendiente Bubble: 8 built-in)
 tags: [design, tokens, theme, light, dark, bubble, work]
 ---
 
@@ -535,6 +535,116 @@ Lo que en dark es `texto-terciario` (#5C6078 gris claro discreto sobre fondo osc
 
 **Bug histórico:** tabs inactivos "Tareas / Editar" se veían blanquitos sobre fondo claro porque el Style `Text_Nav_Item` mapeaba dark `texto-terciario` → light `texto-terciario-claro` (#9CA3AF) — corregido a `texto-secundario-claro` (#4B5563).
 
+### Patrón D — Plugin de terceros sin Conditionals (Quill Rich Text Editor)
+
+Patrón para componentes que **no exponen styling via Bubble** (plugins que renderizan widgets propios con CSS/SVG hardcoded). Caso canónico: el plugin RichTextEditor (Quill Snow theme) usado en el popup "Crear notificación" y otros formularios con campos `<textarea>` enriquecidos.
+
+**Diferencia clave con los 3 patrones anteriores:** aquí Bubble no controla nada. La solución es **inyectar CSS global** que reaccione a una clase en `<html>` y sincronizar esa clase manualmente con `Current User's theme`.
+
+#### Arquitectura
+
+```
+[Toggle Bubble] → Make changes to User.theme → Run JS (Toolbox):
+                                                  localStorage.setItem('thenucleo-theme', X);
+                                                  window.dispatchEvent(new Event('thenucleo:theme-change'))
+                                                                ↓
+                                          Script global (SEO/metatags) escucha el evento
+                                                                ↓
+                                          document.documentElement.classList.toggle('theme-light' | 'theme-dark')
+                                                                ↓
+                                          CSS global (SEO/metatags) `html.theme-light .ql-*` aplica
+```
+
+#### Setup (3 pasos)
+
+**1. Settings → SEO/metatags → "Script/meta tags in header"** (carga 1 vez, sin re-render):
+
+```html
+<script>
+  (function () {
+    function apply() {
+      var t = localStorage.getItem('thenucleo-theme') || 'dark';
+      var root = document.documentElement;
+      root.classList.toggle('theme-light', t === 'light');
+      root.classList.toggle('theme-dark',  t === 'dark');
+    }
+    apply();
+    window.addEventListener('storage', apply);
+    window.addEventListener('thenucleo:theme-change', apply);
+  })();
+</script>
+
+<style>
+  /* Quill RTE — theme-aware con !important para vencer estilos inline del plugin */
+  html.theme-dark .ql-toolbar.ql-snow,
+  html.theme-dark .ql-container.ql-snow {
+    background: #12141b !important;          /* = fondo-tarjeta */
+    border-color: rgba(255,255,255,.12) !important;
+  }
+  html.theme-dark .ql-editor              { color: #edeef3 !important; background: transparent !important; }
+  html.theme-dark .ql-editor.ql-blank::before { color: rgba(255,255,255,.45) !important; font-style: normal !important; }
+  html.theme-dark .ql-toolbar .ql-stroke,
+  html.theme-dark .ql-toolbar .ql-stroke-miter { stroke: #edeef3 !important; }
+  html.theme-dark .ql-toolbar .ql-fill    { fill: #edeef3 !important; }
+  html.theme-dark .ql-toolbar .ql-picker  { color: #edeef3 !important; }
+  html.theme-dark .ql-toolbar .ql-picker-options {
+    background: #12141b !important; color: #edeef3 !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+  }
+
+  html.theme-light .ql-toolbar.ql-snow,
+  html.theme-light .ql-container.ql-snow {
+    background: #ffffff !important;           /* = fondo-tarjeta-claro */
+    border-color: #e5e7eb !important;
+  }
+  html.theme-light .ql-editor             { color: #1a1a1a !important; background: transparent !important; }
+  html.theme-light .ql-editor.ql-blank::before { color: #9ca3af !important; font-style: normal !important; }
+  html.theme-light .ql-toolbar .ql-stroke,
+  html.theme-light .ql-toolbar .ql-stroke-miter { stroke: #1a1a1a !important; }
+  html.theme-light .ql-toolbar .ql-fill   { fill: #1a1a1a !important; }
+  html.theme-light .ql-toolbar .ql-picker { color: #1a1a1a !important; }
+  html.theme-light .ql-toolbar .ql-picker-options {
+    background: #ffffff !important; color: #1a1a1a !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Hover + activo: acento verde brand en ambos temas */
+  .ql-toolbar button:hover .ql-stroke,
+  .ql-toolbar button.ql-active .ql-stroke,
+  .ql-toolbar .ql-picker-label:hover .ql-stroke,
+  .ql-toolbar .ql-picker-label.ql-active .ql-stroke { stroke: #85DB02 !important; }
+  .ql-toolbar button:hover .ql-fill,
+  .ql-toolbar button.ql-active .ql-fill { fill: #85DB02 !important; }
+</style>
+```
+
+**2. Workflow "activar light tema"** (acción Run javascript del plugin Toolbox, al final):
+```js
+localStorage.setItem('thenucleo-theme', 'light');
+window.dispatchEvent(new Event('thenucleo:theme-change'));
+```
+
+**3. Workflow "activar dark tema"** (idéntico con `'dark'`):
+```js
+localStorage.setItem('thenucleo-theme', 'dark');
+window.dispatchEvent(new Event('thenucleo:theme-change'));
+```
+
+#### Por qué no funciona el patrón A/B/C aquí
+
+- **El plugin envuelve un Quill** que renderiza SVG inline con `stroke="currentColor"` heredando el color del contenedor. En dark hereda blanco, en light también → invisible sobre fondo blanco.
+- **Las Conditionals de Bubble no llegan** al interior del shadow del widget. Bubble solo controla wrapper, no contenido del plugin.
+- **El `Current User's theme` no se propaga al DOM como clase** automáticamente. El portal aplica colores via Conditionals por elemento, no via clase global en `<html>` o `<body>`. Por eso necesitamos crear esa señal manualmente con localStorage + classList.
+
+#### Reglas adicionales para este patrón
+
+- **`!important` obligatorio** en propiedades visuales. El plugin inyecta inline styles que de otra forma ganan.
+- **Selector con doble clase** (`.ql-toolbar.ql-snow`) para mayor especificidad sobre los defaults del tema Snow de Quill.
+- **No mezcles con el viejo scope** `#editor-blanco` que apuntaba a un editor concreto: el nuevo enfoque es global. Si tienes leftovers de ese ID en CSS local del popup, bórralos para evitar conflictos de especificidad.
+- **Único trade-off conocido:** en device nuevo con localStorage vacío, el primer paint cae al fallback `'dark'`. Si la DB dice light, hay flash de 1 frame antes de que el siguiente toggle (o un hidratador opcional en "Page is loaded") corrija. Aceptable para casos borde.
+
+**Aplicado en:** popup "Crear notificación" (Quill RTE) y cualquier otro RTE del portal, desde 2026-05-27.
+
 ### Anti-patrones a evitar (cazados durante el rollout)
 
 1. **Asociar `theme is "no"` con tokens DARK** (sin `-claro`). Inversión lógica clásica. La regla es siempre: `is no` ↔ `-claro`.
@@ -543,6 +653,8 @@ Lo que en dark es `texto-terciario` (#5C6078 gris claro discreto sobre fondo osc
 4. **Asumir simetría dark↔light** en niveles de jerarquía de texto. Ver regla del salto.
 5. **Hex literal en propiedades** que se quieren temar. Bubble considera literal "no temable" y el Conditional no surte efecto. Reasignar a variable antes (click selector color → elegir variable de la lista).
 6. **Fusionar Styles duplicados a lo bruto** cuando arrastran cientos de elementos. Renombrar es seguro (atado por ID interno) pero fusionar requiere reasignación manual elemento a elemento. Documentar deuda y dejar.
+7. **Scopear CSS de plugin de terceros a un ID concreto** (`#editor-blanco .ql-...`). Solo arregla un editor — el resto siguen rotos al añadir nuevos popups. Patrón D va por inyección global `html.theme-*` para que cualquier instancia futura herede sin tocar nada.
+8. **Asumir que Bubble propaga `Current User's theme` al DOM** como clase. No lo hace. Las Conditionals pintan elementos uno a uno pero no marcan `<html>` ni `<body>`. Para plugins/widgets externos hay que sincronizar manualmente (Patrón D).
 
 ### Para trabajar en work HTML admin (ficha-cliente, estrategia, timeline)
 
@@ -576,7 +688,7 @@ Antes de generar HTML/CSS o Conditionals Bubble:
 
 - [ ] ¿He leído la sección "Recetas reutilizables" + tabla maestra de tokens?
 - [ ] ¿Estoy usando variables (Bubble) / `var(--token)` (CSS), nunca hex literal?
-- [ ] ¿He identificado qué Patrón (A / B / C) aplica al componente?
+- [ ] ¿He identificado qué Patrón (A / B / C / D) aplica al componente?
 - [ ] ¿He aplicado la regla del salto de jerarquía a los textos que van sobre fondo claro?
 - [ ] ¿He ordenado los Conditionals top-down de menos específico a más específico (combinadas AND al final)?
 - [ ] ¿He verificado que los WHEN con `theme is "no"` van con tokens `-claro` (sin invertir)?

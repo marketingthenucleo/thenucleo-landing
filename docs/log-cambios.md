@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-27 (F3 PM Board iteración final: board sube al nivel Pipeline + cards compactas con preview + modal Notion al click con las 24 propiedades editables. Fase final light theme también cerrada el mismo día — RPC `work_set_my_theme` + EF `sync_theme_to_bubble`. Pendientes light theme: 8 built-in Bubble + `BUBBLE_API_TOKEN` Supabase Dashboard)
+actualizado: 2026-05-27 (Quill RTE theme-aware en popups del portal vía SEO/metatags global + 2 Run JS en workflows toggle tema — Patrón D nuevo en design-tokens. F3 PM Board iteración final: board sube al nivel Pipeline + cards compactas con preview + modal Notion al click con las 24 propiedades editables. Fase final light theme también cerrada el mismo día — RPC `work_set_my_theme` + EF `sync_theme_to_bubble`. Pendientes light theme: 8 built-in Bubble + `BUBBLE_API_TOKEN` Supabase Dashboard)
 tags:
   - log
   - historial
@@ -66,6 +66,21 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-27 [PORTAL][BUGFIX] — Quill Rich Text Editor — theme-aware en popups del portal
+
+- **Área:** Bubble portal (Settings → SEO/metatags + 2 workflows del toggle de tema). Caso disparador: popup "Crear notificación" con el campo `Mensaje de notificación`.
+- **Qué:** los iconos del toolbar Quill (B / I / U / S / listas / indents / link) salían invisibles en light theme y la caja del widget quedaba blanca también en dark (caja blanca sobre popup dark). Solución: inyectar CSS global `html.theme-light` / `html.theme-dark` en SEO/metatags + script que toggle la clase de `<html>` leyendo `localStorage.thenucleo-theme` + 2 Run javascript (plugin Toolbox) en los workflows "activar light tema" / "activar dark tema" que persisten el valor y disparan el evento `thenucleo:theme-change`.
+- **Por qué:** el plugin RichTextEditor (Quill Snow) renderiza SVG con `stroke="currentColor"` y las Conditionals de Bubble no llegan al interior del widget. Patrón A/B/C de [[design-tokens]] (Conditionals por elemento) no aplica a plugins de terceros que styling propio. Hace falta un canal paralelo: clase en `<html>` + CSS global.
+- **Impacto:** todos los RTE del portal (no solo el caso disparador) heredan ahora el theme correcto sin tocar nada. Plugin Toolbox queda como dependencia explícita del toggle del tema (ya estaba instalado).
+- **Notas operativas:**
+  - El bloque añadido en SEO/metatags incluye también `!important` para vencer estilos inline del plugin (`.ql-toolbar.ql-snow`, `.ql-container.ql-snow`).
+  - Trade-off conocido: en device nuevo con `localStorage` vacío, el primer paint cae al fallback `'dark'`. Flash de 1 frame si la DB dice light. Hidratador opcional en "Page is loaded" no implementado (aceptable).
+  - Eliminado el viejo `<style>` con scope `#editor-blanco` que vivía dentro del popup — ahora todo está en SEO/metatags global.
+- **Refs:**
+  - [[design-tokens]] — sección "Patrón D — Plugin de terceros sin Conditionals (Quill Rich Text Editor)" con CSS + scripts + arquitectura.
+  - Anti-patrones 7 y 8 añadidos en el mismo doc.
+  - Checklist al final del doc actualizado a (A / B / C / D).
 
 ## 2026-05-27 [WORK][REFACTOR] — F3 PM Board — diseño final del día (board a nivel Pipeline + cards compactas + modal Notion)
 
