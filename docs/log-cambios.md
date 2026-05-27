@@ -67,6 +67,17 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
+## 2026-05-27 [WORK] — `.claude/skills/` + 3 skills oficiales de `anthropics/skills` (frontend-design, webapp-testing, canvas-design)
+
+- **Área:** `.claude/skills/` del repo `thenucleo-landing`.
+- **Qué:** copiadas 3 skills del repo oficial [`anthropics/skills`](https://github.com/anthropics/skills) (142k stars) bajo `.claude/skills/`:
+  - `frontend-design` (24 KB) — generación de UI/HTML/CSS/React con calidad de diseño.
+  - `webapp-testing` (44 KB, incluye `examples/` + `scripts/`) — testing de apps web con Playwright (screenshots + logs).
+  - `canvas-design` (5.6 MB, incluye 30+ fuentes `.ttf` en `canvas-fonts/`) — diseño en canvas (PNG/PDF posters).
+- **Por qué:** ampliar el toolkit de skills para tareas de frontend (landing Three.js + páginas admin `/ficha-cliente/`, `/playbook/`, etc.) y validación visual en navegador. Pidió Ben.
+- **Impacto:** sesiones de Claude Code on the web tienen las 3 skills disponibles automáticamente al clonar (verificado por system-reminder: el harness ya las lista). `.eleventyignore` ya excluye `.claude/` → no se procesan ni emiten páginas en `_site/`. `npm run build` sano (60 archivos, sin regresión). Total tamaño `.claude/skills/`: ~2.7 MB → ~8.4 MB (incremento por las fuentes TTF de canvas-design).
+- **Refs:** `.claude/skills/frontend-design/`, `.claude/skills/webapp-testing/`, `.claude/skills/canvas-design/`, `CLAUDE.md` sección "Skills Claude en el repo".
+
 ## 2026-05-27 [PORTAL][FEATURE] — Fase N+1 light theme portal: variables ES + 6 categorías de Styles cerradas
 
 - **Área:** Bubble Color variables del portal (`Design → Styles → Color variables`) + Styles de Button/Date-Time Picker/Dropdown/File Uploader/Floating Group/Group + `docs/design-tokens.md` (espejo canónico cross-domain).
