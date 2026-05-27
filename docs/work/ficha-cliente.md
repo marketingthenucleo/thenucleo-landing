@@ -233,6 +233,29 @@ Pinta entre 1 y 5 chips según los datos del cliente:
 
 ## Fixes y cambios recientes
 
+### 2026-05-27 — F3 PM Board en Pipelines: propuesta dinámica + drag-and-drop (Fase 0 dry-run)
+Sustituye el sheet bottom mockup `openTasksSheet` (lista plana de tareas con checkboxes + botón "Crear" que solo emitía toast) por un **board inline drag-and-drop** insertado debajo de la card "Crear tareas en Notion" cuando estás en rol PM dentro de una Campaña.
+
+- **Generación dinámica**: nueva función pura `proposeTasks(c)` dentro de `PIPELINES_MODULE` que dado el `c` (campaña) con sus arrays `triggers/emails/whatsapps/creatividades` devuelve `{ tasks, warnings }`. Algoritmo determinista de 5 pases (Estrategia → Producción mensajes → Triggers → Creatividades → Lanzamiento) siguiendo la plantilla canónica del [manual PM](../portal/pm-manual-pipelines.md). Ejemplos:
+  - Campaña con 1 trigger FM + 0 mensajes → 4 tareas (`_briefing`, `_angulos`, `FM1_form`, `_lanzar`).
+  - Campaña con 3 emails compartidos + 1 trigger BD sin fecha → 14 tareas + warning amarillo en `_segmento` ("Falta fecha de lanzamiento").
+  - SD (sin trigger definido) → 0 tareas (declarativo, fuera del sistema).
+- **UI**: 6 columnas — Estrategia / Producción mensajes / Triggers / Creatividades / Lanzamiento / ✗ Excluidas. Cada tarjeta lleva:
+  - Code-tag (`PxCxFM1_form`, inmutable).
+  - Título editable inline (`contenteditable` con blur-save, Enter → blur, sin Enter en línea nueva).
+  - Dropdown responsable (8 roles: Estratega/Copy/Diseño/Media Buyer/CRM Manager/Community Manager/Dev/PM).
+  - Dropdown "↳ Padre" para anidar como subtarea (con detección de ciclos: si el padre tiene a esta tarea como descendiente, rechaza). Decisión: dropdown en lugar de drag-drop nested — más predecible para Fase 0, menos código.
+  - Línea "Depende: …" (gris pequeño) con primeras 3 dependencias.
+  - Warning ámbar si proceede (BD sin fecha lanzamiento).
+- **Drag-and-drop**: SortableJS 1.15.2 via jsDelivr CDN. 6 listas conectadas (group `pm-board`). `onEnd` actualiza `task.fase` según columna destino; arrastrar a "Excluidas" marca `task.excluida=true` y dispara `recalcLaunchDeps(board)` que recalcula `task.depende_de` de `_lanzar` excluyendo las marcadas.
+- **Persistencia EFÍMERA**: estado en `S.tasksBoard = {cId, tasks, warnings, dirty, lastPushAt}` puro JS in-memory. Cero tablas Supabase nuevas. Cero localStorage. Persiste a través del toggle Account↔PM mientras el `cId` no cambie. Al cambiar de campaña/cliente se pierde (regenera al volver con propuesta limpia).
+- **Push (Fase 0 dry-run)**: botón "🚀 Empujar a Notion" (texto dinámico según `bub_agencia.proveedor_tareas`, hoy hardcoded a Notion) construye `payload = buildTasksPayload(p, c, board)` con shape `version/source/cliente_bubble_id/pipeline/campania/tasks[]/idempotency_key`. Hace `console.log(payload)` + toast "Simulación: N tareas listas (payload en consola)". El POST real al webhook n8n `eHyXBETcaGSNXqLk` queda placeholder commented out en `submitTasks()`.
+- **Dependencia para Fase 1 (cableado real)**: requiere F2 backend Pipelines (tablas `cliente_pipelines/campanias/triggers/emails/whatsapps/creatividades` + RPC `ficha_pipelines_get`) — sin eso, el payload incluye códigos PxCx pero no FKs reales y el workflow no puede enlazar a `bub_clientes` / `cliente_campanias`. También necesita modificar workflow n8n para aceptar `source: 'ficha-cliente-pm-board'`, branch por `proveedor_tareas` (Notion 2-pass / ClickUp nativo), y persistir `idempotency_key` en `bub_tareas_notion.metadata.batch_idempotency`.
+- **Sheet anterior `openTasksSheet`**: queda como código muerto en el archivo (no se invoca). Será removido cuando Fase 1 se valide en producción.
+- **CSS nuevo** (~140 líneas inline en `<style>` pre-`</head>`): `.pm-board`, `.pm-board-head`, `.pm-cols` (grid 5 fases + 1 excluidas), `.pm-col`, `.pm-task-card` (con `subtask`/`excluida`/`fase-mismatch` modifiers), responsive `<720px` stack vertical. CDN SortableJS pre-`</head>`.
+- **Allowlist**: NO crece. Fase 0/1/2 no añaden tablas Supabase nuevas; el escrito a `bub_tareas_notion` lo hace el workflow n8n con `service_role`, no la UI directamente.
+- **Refs**: [`ficha-cliente/index.html`](../../ficha-cliente/index.html). Plan completo (contexto + diseño + iteraciones + verificación): `~/.claude/plans/me-gustaria-que-recogieras-peppy-lemur.md`. Manual PM actualizado: [`pm-manual-pipelines.md`](../portal/pm-manual-pipelines.md).
+
 ### 2026-05-25 — F2.7 Fase B Sprint 3: visibilidad de macros/catálogos por cliente
 Commits `7eef03f` (lectura+UPSERT inicial) + `d8fd260` (fix checkbox "Error" por body vacío con return=minimal) + **iteración misma sesión** (cambio a semántica opt-in: default oculto + cascada al activar macro). Migration Supabase `f2_7_sprint3_catalogos_visibilidad`. Tabla nueva `cliente_catalogo_visibilidad` + RLS con `is_comunidad_admin()` + RPC `catalogos_cliente_get` ampliada para devolver array `visibilidad`. Frontend: botón "⚙️ Gestionar catálogos" abre sheet bottom con switches por macro (7) + catálogo (17 agrupados). UPSERT vía PostgREST `on_conflict=cliente_bubble_id,scope_type,scope_key` + `Prefer: resolution=merge-duplicates,return=representation`. Cascada al activar macro: envía array UPSERT con macro + todos sus catálogos. Auto-hide de macros con todos sus catálogos ocultos. Datos preservados al ocultar.
 

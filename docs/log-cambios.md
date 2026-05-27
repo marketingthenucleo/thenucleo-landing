@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-26 (shell unificado portal en las 3 páginas bridge + RPC work_current_user_profile v2)
+actualizado: 2026-05-27 (F3 PM Board en /ficha-cliente/ — propuesta dinámica de tareas + drag-and-drop, Fase 0 mockup interactivo dry-run)
 tags:
   - log
   - historial
@@ -66,6 +66,58 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-27 [WORK][FEATURE] — F3 PM Board en `/ficha-cliente/` — propuesta dinámica de tareas + drag-and-drop (Fase 0 dry-run)
+
+- **Área:** `ficha-cliente/index.html` (módulo Pipelines, rol PM) + `docs/work/ficha-cliente.md` + `docs/portal/pm-manual-pipelines.md`.
+- **Qué:** el botón "Crear tareas en Notion" en rol PM dejaba caer un sheet bottom con lista plana de tareas (mockup desde F1) y al pulsar Crear hacía `showToast(... mockup)`. Ahora abre un **board inline** debajo de la card con 6 columnas: Estrategia / Producción mensajes / Triggers / Creatividades / Lanzamiento / ✗ Excluidas. Las tareas se generan dinámicamente desde la declaración del Account (función pura `proposeTasks(c)` con 5 fases siguiendo la plantilla canónica del manual PM) y el PM puede:
+  - **Drag-and-drop entre columnas** (SortableJS connected lists, group `pm-board`) → cambia `task.fase` o excluye al arrastrar a la última columna.
+  - **Reordenar dentro de columna** → orden visual.
+  - **Editar título inline** (`contenteditable`, Enter blur) — código `PxCx*` es inmutable.
+  - **Reasignar responsable** via dropdown inline (Estratega/Copy/Diseño/Media Buyer/CRM Manager/Community Manager/Dev/PM).
+  - **Anidar como subtarea** via dropdown "↳ Padre" (con detección de ciclos). Decisión: dropdown en lugar de drag-drop nested para Fase 0 — más predecible, menos código.
+  - **Regenerar** desde la declaración actual (confirm dialog, descarta cambios manuales).
+  - **Empujar a Notion** (texto dinámico según `bub_agencia.proveedor_tareas`, hoy hardcoded a Notion porque RPC no devuelve aún `proveedor_tareas` desde `ficha_cliente_get` — pendiente F2 backend).
+- **Algoritmo `proposeTasks(c)`** (función pura, determinista, 5 pases):
+  1. **Estrategia**: `_briefing` + `_angulos` siempre; `_cluster` si segmenta audiencia (≥1 trigger FM/FW/BD ∧ ≥1 mensaje email/WA).
+  2. **Producción mensajes**: por email → `_copy` + `_diseno` + `_montaje` (depende de copy+diseño); por WhatsApp → `_copy` + `_montaje`.
+  3. **Triggers**: FM/FW → `_form`; BD → `_segmento` (warning si `fechaLanzamiento` vacío); DM → `_automation`. SD → 0 tareas (declarativo).
+  4. **Creatividades**: por pieza visible → `_diseno`/`_reel`/`_estatico`/`_brief` según `subtipo`/`categoria`. Dependen de `_angulos`.
+  5. **Lanzamiento**: `_lanzar` depende de TODAS las anteriores no excluidas (se recalcula via `recalcLaunchDeps()` al excluir/incluir).
+- **Persistencia: EFÍMERA** (decisión Ben). Estado en `S.tasksBoard = {cId, tasks, warnings, dirty, lastPushAt}` puro JS in-memory. Cero tablas Supabase nuevas. Cero localStorage. Al cambiar de campaña/cliente se pierde. Persiste a través del toggle Account↔PM mientras el `cId` no cambie.
+- **Webhook target Fase 1 (PENDIENTE F2 backend):** `eHyXBETcaGSNXqLk` "OPS TAREAS — Crear desde Formulario Bubble" con nuevo shape `source: 'ficha-cliente-pm-board'` (payload diseñado en `~/.claude/plans/me-gustaria-que-recogieras-peppy-lemur.md`). Hoy Fase 0 hace dry-run: `console.log(payload)` + toast "Simulación: N tareas listas". El cableado real depende de que las tablas `cliente_pipelines/campanias/triggers/emails/whatsapps/creatividades` + RPC `ficha_pipelines_get` estén creadas — sin eso, el payload incluye códigos PxCx pero no FKs reales.
+- **Librería**: SortableJS 1.15.2 via jsDelivr CDN (`https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js`, ~45KB minified). CSP ya permite `cdn.jsdelivr.net`. Touch nativo iOS/Android cubierto.
+- **Por qué:** el botón "Crear tareas" en bloque era too coarse-grained para la realidad operativa del PM — no podía decidir qué se agrupa, en qué orden, ni quién hace qué antes de empujar. Esta vista hace al PM **componer** la estructura antes de materializarla en Notion. Petición explícita de Ben en sesión de hoy: *"algo dinámico de tareas propuestas en base a la baja del Account y un drag-and-drop que pueda agruparlas en subtareas, tareas etc."*. Plan completo (contexto recogido + diseño + iteraciones + verificación) en `~/.claude/plans/me-gustaria-que-recogieras-peppy-lemur.md`.
+- **Decisiones cerradas:**
+  - **"Baja del Account" = declaración de estrategia** (Pipelines/Campañas/Triggers/Emails/Carruseles), NO handoff temporal por baja médica.
+  - **Ubicación**: tab Pipelines de `/ficha-cliente/?id=X`, dentro del toggle PM/Account existente (sin gate — ambos roles abiertos indistintamente).
+  - **Drag-drop nested**: postponed Fase 1+. En Fase 0 se anida via dropdown "↳ Padre" — más simple, más predecible que SortableJS `nested`+`fallbackOnBody`.
+  - **Orden firme NO bloqueado**: el PM puede mover `_lanzar` antes que `_briefing` visualmente. No paternalismo. Si se quiere validation, añadir soft warning en "Empujar".
+  - **Idempotencia (Fase 1)**: payload incluye `idempotency_key` per push para que el workflow n8n detecte re-pushes y devuelva `already_created` en lugar de duplicar.
+- **Impacto:** ningún cambio funcional en rol Account (el toggle PM/Account funciona igual). El sheet bottom anterior (`openTasksSheet`) queda en el código pero ya no se invoca — handler `create-tasks` ahora llama `openTasksBoard`. `npm run build` OK (59 archivos). Smoke test con `curl localhost:8080/ficha-cliente/` confirma SortableJS CDN cargado + funciones `proposeTasks`/`openTasksBoard` presentes en el HTML servido.
+- **Verificación pendiente**: smoke test manual UI sobre el cliente Dra. Neuss (`1773847038522x983519237604638700`) que tiene 4 pipelines con seed real — abrir `/ficha-cliente/?id=...` → tab Pipelines → toggle PM → abrir Campaña → pulsar "Crear" → verificar 6 columnas + drag entre ellas + dropdown padre + push dry-run que loguea payload en consola. Casos de test (10) listados en el plan.
+- **Out of scope Fase 0 → Fase 1**: depende de F2 backend Pipelines (tablas + RPCs). Antes de cablear el webhook real, modificar workflow `eHyXBETcaGSNXqLk` para aceptar el nuevo shape `source: 'ficha-cliente-pm-board'`, branch por `proveedor_tareas`, 2-pass para Notion (parent_task lookup), nativo subtask para ClickUp, persistir `idempotency_key` en `bub_tareas_notion.metadata.batch_idempotency`.
+- **Refs:** [`ficha-cliente/index.html`](../../ficha-cliente/index.html) — CSS `.pm-board/.pm-col/.pm-task-card` insertado pre-`</style>` línea ~1564; SortableJS CDN pre-`</head>` línea ~1565+CSS; estado `tasksBoard:null` en `S` (~línea 2825); constantes `TASK_PHASES`/`TASK_ROLES` + `proposeTasks()`+`recalcLaunchDeps()`+`buildTasksPayload()`+`submitTasks()`+`openTasksBoard()`+`renderTasksBoard()`+`attachTasksBoardHandlers()` insertadas post-`findPlantilla` (~línea 2960); inclusión `${renderTasksBoard(p, c)}` post-card PM (~línea 3611); cambio handler `create-tasks` → `openTasksBoard` (~línea 4060); call `attachTasksBoardHandlers` en `attachAllHandlers` (~línea 4012). Plan completo: `~/.claude/plans/me-gustaria-que-recogieras-peppy-lemur.md`.
+
+## 2026-05-27 [PORTAL][INFRA][FEATURE][BUGFIX] — Fase 0 light theme portal Bubble: columna `bub_user.theme` + RPC `work_current_user_profile` v3 (con incidente intermedio)
+
+- **Área:** Supabase schema (`bub_user`) + RPC `work_current_user_profile()` + Bubble data type `User` (lo crea Ben en el editor) + `docs/infra/supabase-schema.md`.
+- **Qué:** fundación del light theme para el portal Bubble (`portal.thenucleo.com`). Añadida columna `theme boolean` nullable a `bub_user` (espejo de `User.theme` que Ben crea en Bubble como Yes/No). Semántica: **`false=light`, `true=dark`, `NULL=no decidido`**. RPC `work_current_user_profile()` pasa de v2 (`bubble_id, nombre, email, color, agencia_id, agencia_proveedor_tareas`) a **v3** añadiendo `theme` al final → 7 columnas totales.
+- **Incidente intermedio (resuelto en la misma sesión):** la primera migration de hoy (`bub_user_add_theme_and_extend_profile_rpc`, 10:02 UTC) se redactó leyendo la doc de `docs/infra/supabase-schema.md` líneas 479-486 que mostraba todavía v1 (4 cols `bubble_id|nombre|email|color`); la doc no se había actualizado tras la migration v2 del 2026-05-26. Al hacer DROP+CREATE con la signature de la doc, la RPC quedó en 5 cols (v1 + `theme`) y **se eliminaron `agencia_id` + `agencia_proveedor_tareas`** que el frontend de `/estrategia/` y `/timeline/` consume para ocultar el tab Tareas. Detectado antes de hacer commit revisando el log del 2026-05-26. Hotfix aplicado vía 2ª migration (`work_current_user_profile_v3_restore_agencia_add_theme`) que rehace la RPC con las 7 cols correctas (LEFT JOIN `bub_agencia` por `agencia_id` para resolver `proveedor_tareas` + añade `theme` al final). El frontend nunca llegó a observar la versión rota (la ventana entre ambas migrations fue <2min y los 3 HTML de work acceden a las propiedades por **nombre**, no por posición — `agencia_proveedor_tareas` simplemente venía como `undefined` durante esa ventana, lo que hubiera dejado el tab Tareas visible por el graceful fallback; no rotura silenciosa más allá del condicional).
+- **Lección aprendida (anotada en el doc de la RPC):** antes de redefinir una RPC con DROP+CREATE, leer la signature real con `SELECT pg_get_function_result(oid) FROM pg_proc WHERE proname = '...';`, no fiarse solo del markdown — éste va por detrás. Aviso explícito añadido a `docs/infra/supabase-schema.md` en la sección de la RPC.
+- **Por qué:** sesión exploratoria con Ben — quiere dar al portal el mismo light theme que ya existe en `work.thenucleo.com/ficha-cliente/`+`/estrategia/`+`/timeline/`. Decisión de estrategia: la forma realista en Bubble es pintar Conditionals sobre Styles (no replicar el patrón CSS variables de work, porque Bubble pinta colores inline en cada elemento y un `[data-theme="light"]` global pelearía contra eso). Antes de pintar Styles hace falta persistir la preferencia por user → este es el paso Fase 0.
+- **Decisiones cerradas (plan en `~/.claude/plans/si-vamos-a-planificarlo-peppy-karp.md`):**
+  - Bool en vez de string `"light"|"dark"` — más eficiente, encaja con el campo Yes/No nativo de Bubble.
+  - Semántica `no=light, yes=dark`: elegida por Ben pese a la advertencia de que `no` (false) es el default Bubble y eso fuerza light a todo User nuevo si no se setea Default = `yes` en el editor.
+  - Default y backfill: la columna en Supabase queda **nullable sin default**. La decisión "qué pasa con los users existentes" se posterga al frontend (cuando se cablee, `NULL` se interpretará como "fallback dark + respeta localStorage" para no forzar cambio visual a nadie). Ben decidirá en Bubble si Default del field = `yes` (Opción B del plan, recomendada, dark default), vacío (Opción A, light default) o backfill `UPDATE` posterior (Opción C, light a todos).
+  - RPC extendida ahora (no en sesión posterior): así cuando se cablee work ↔ portal no hay que tocar SQL otra vez.
+- **Sync Bubble→Supabase:** sin cambios. El workflow `FGxG67I24POOUeHW` (SYNC ESPEJO) ya tiene `bub_user` en `ALLOWED_TABLES` (rename 2026-05-08). El DB Trigger Bubble sobre `User` (que ya espeja `email`/`nombre`/`color`) enviará la fila completa con `theme` incluido en cuanto algún User modifique el campo.
+- **Out of scope hoy (próximas sesiones):**
+  - Sesión N+1: cablear toggle Bubble (action `Make changes to Current User → theme = (theme is no)`) + pintar Conditionals en los ~15 Styles del Design tab según mapping dark↔light extraído de `ficha-cliente/index.html` líneas 19-82 (`--bg`/`--bg-2`/`--bg-3`/`--bg-hover`/`--line`/`--line-2`/`--text`/`--text-2`/`--text-3`/`--accent`/`--accent-dim`/`--warn`/`--bad`/`--info`/`--violet`/`--header-bg-rgba`).
+  - Sesión N+2: cablear los 3 HTML de work para leer `theme` de la RPC al boot y persistir cambios en Supabase además de `localStorage`. Requiere RPC `work_set_my_theme(p_theme boolean)` (no hay policy de UPDATE para `authenticated` en `bub_user`).
+- **Impacto:** **cero breaking changes**. Frontend de work sigue funcionando (los 3 shells leen `bubble_id|nombre|email|color` de la RPC por nombre de columna — la 5ª `theme` viene en el response pero el JS actual no la consume). RPC v3 backward compatible con v2 a nivel cliente (solo añade columna al final).
+- **Verificación:** smoke test post-migration: columna `theme boolean` nullable + COMMENT registrado ✓, signature RPC `TABLE(bubble_id text, nombre text, email text, color text, theme boolean)` ✓, `SECURITY DEFINER` ✓, `GRANT EXECUTE TO authenticated` ✓ (+`PUBLIC` heredado, +`anon` filtrado por `auth.email()`).
+- **Refs:** Migration `bub_user_add_theme_and_extend_profile_rpc` aplicada en `cbixhqjsnpuhcrcjppah`. Plan completo en `~/.claude/plans/si-vamos-a-planificarlo-peppy-karp.md`. Doc canónico schema: [`docs/infra/supabase-schema.md`](../infra/supabase-schema.md#work_current_user_profile---perfil-del-user-logueado-avatar-shell).
 
 ## 2026-05-26 [WORK][PORTAL][FEATURE] — Shell unificado portal en `/ficha-cliente/` + `/estrategia/` + `/timeline/` + RPC `work_current_user_profile` v2
 

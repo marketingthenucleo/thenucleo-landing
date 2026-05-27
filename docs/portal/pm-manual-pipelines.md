@@ -48,15 +48,29 @@ Gaps que tú reportas a Account:
 
 1. **Entra al detalle de la Campaña** en el panel derecho.
 2. **Pulsa el botón "Crear tareas Notion"** (CTA destacado en verde arriba del detalle, solo visible en modo PM).
-3. Se abre un drawer con **todas las tareas pre-generadas a partir de la plantilla** que Account eligió: copy, diseño, formulario, montaje GHL, lanzamiento, etc.
-4. **Cada tarea ya viene con**:
-   - Código en el título (`P2C1E1 — Copy Dra. Neuss`).
-   - Área canónica (`Meta Ads`, `Newsletter`, `CRM`, `Diseño` — sin duplicados).
-   - Responsable sugerido por la plantilla (copy → Valentin, diseño → Joaquin, formulario → Damian, GHL → Camilo).
-5. **Desmarca las que no quieras crear** (ej: si ese cliente no necesita estáticos porque ya los tiene).
-6. **Pulsa "Crear N tareas"**.
+3. Se despliega un **board inline debajo de la card** (no un drawer — se queda visible junto al contexto de la Campaña) con **todas las tareas propuestas** repartidas en 6 columnas según fase:
+   - 🧠 **Estrategia** — `_briefing`, `_angulos`, `_cluster` (este último solo si la campaña segmenta audiencia).
+   - ✍️ **Producción mensajes** — `_copy`, `_diseno`, `_montaje` por cada email; `_copy`+`_montaje` por cada WhatsApp.
+   - 🎯 **Triggers** — `_form` (FM/FW), `_segmento` (BD), `_automation` (DM). SD no genera tareas (declarativo).
+   - 🎨 **Creatividades** — `_diseno`/`_reel`/`_estatico`/`_brief` según subtipo de cada pieza.
+   - 🚀 **Lanzamiento** — `_lanzar` (depende de TODAS las anteriores no excluidas).
+   - ✗ **Excluidas** — vacía al abrir. Aquí arrastras lo que no quieres crear.
+4. **Cada tarjeta** viene con:
+   - **Código** en el título (`P2C1E1_copy`), inmutable.
+   - **Título editable** (clic dentro y escribe, Enter para confirmar).
+   - **Dropdown de responsable** (Estratega / Copy / Diseño / Media Buyer / CRM Manager / Community Manager / Dev / PM).
+   - **Dropdown "↳ Padre"** para anidar como subtarea de otra (ej. `_diseno` bajo `_copy` o todas las creatividades bajo `_lanzar`).
+   - **Aviso ámbar** si falta dato necesario (ej. BD sin fecha de lanzamiento).
+5. **Reagrupa lo que quieras**:
+   - **Arrastra** una tarjeta a otra columna para cambiar su fase.
+   - **Arrastra a "Excluidas"** para quitarla de la creación (los `_lanzar` recalculan automáticamente sus dependencias).
+   - **Dropdown "↳ Padre"** para crear estructura padre→subtarea antes de empujar.
+   - **Edita títulos** si quieres añadir contexto al equipo más allá del código.
+6. Cuando esté como tú quieres, **pulsa "🚀 Empujar a Notion"** (o "ClickUp" si esa agencia usa ClickUp). El board se vacía y aparece "✓ N tareas creadas en Notion". Si pulsas 2× la misma campaña sin haber cambiado nada, el sistema detecta los códigos ya existentes y no duplica.
 
-Eso es todo. No abres Notion para crearlas — se generan desde la ficha.
+⚠️ **El board es efímero**: si cambias de campaña, cliente, o cierras el board sin empujar, **pierdes los cambios manuales** (orden, responsables, exclusiones, subtareas). La propuesta se regenera limpia desde la declaración cuando vuelves. Si pulsas "↺ Regenerar" mientras compones, pide confirmación. Esto es deliberado: el board no es un kanban con estado propio, es un compositor para una sola creación masiva.
+
+Eso es todo. No abres Notion para crearlas — el board las propone, tú las afinas, y se materializan al pulsar Empujar.
 
 ### Cuando el cliente pide algo nuevo y Account aún no lo ha declarado
 
@@ -187,12 +201,12 @@ Cada viernes a última hora:
 - **No inventes códigos.** Si el equipo te pide trabajar en algo sin código declarado, ping a Account.
 - **No edites Pipelines / Campañas / Triggers / Emails.** Eso es de Account. Tú solo cambias el estado cuando algo se monta (de "Declarado" → "En producción").
 - **No crees Plantillas nuevas.** El catálogo es de Account.
-- **No abras Notion para crear tareas individuales con código.** Usa el drawer "Crear tareas Notion" desde la ficha — te las crea con todo cableado.
+- **No abras Notion para crear tareas individuales con código.** Usa el board "Crear tareas Notion" desde la ficha (rol PM) — te las propone, las reagrupas con drag-and-drop y se materializan con un clic.
 
 ## 6. Si algo se rompe
 
 - **No aparece el módulo Pipelines en la ficha**: avisa a Ben, posible bug de despliegue.
-- **El drawer "Crear tareas Notion" no genera nada**: la Campaña está "Sin plantilla / Custom" → tienes que crear las tareas manualmente con el código del catálogo (futuro: dropdown forzado en el formulario Bubble).
+- **El board "Crear tareas Notion" sale vacío o con muy pocas tareas**: la Campaña no tiene triggers/emails/whatsapps/creatividades declaradas. Pinga a Account para que complete la declaración antes de generar.
 - **Una tarea generada tiene un código que no encaja con lo que recuerdas**: probablemente Account cambió la estructura. Antes de protestar, abre la ficha y mira el árbol actualizado.
 
 ## 7. Tu nueva métrica de éxito
