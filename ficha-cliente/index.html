@@ -12,6 +12,7 @@
 </script>
 
 <style>
+  @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
   @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
   @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
   @font-face { font-family:'NewBlack'; src:url('/fonts/NewBlackTypeface-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
@@ -134,7 +135,7 @@
     padding: 6px 14px; min-height: 40px;
     border-radius: 10px;
     color: var(--text-2);
-    font-size: 16px; font-weight: 500;
+    font-size: 16px; font-weight: 400;
     cursor: pointer; user-select: none;
     transition: background 120ms ease, color 120ms ease;
     border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
@@ -1560,7 +1561,148 @@
     .pip-card, .pip-row, .pip-plantilla-card, .pip-archive-btn,
     .pip-back-btn, .pip-new-btn, .pip-pm-card-btn { transition: none !important; }
   }
+
+  /* F3 — PM Board dinámico (drag-drop tareas propuestas) */
+  .pm-board {
+    margin: 18px 0 24px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .pm-board-head {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-3);
+  }
+  .pm-board-title { font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .06em; }
+  .pm-board-sub   { font-size: 12px; color: var(--text-2); margin-left: 4px; }
+  .pm-board-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .pm-board-actions button {
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    padding: 8px 14px; border-radius: 10px; cursor: pointer; min-height: 36px;
+    border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text);
+  }
+  .pm-board-actions button:hover { border-color: var(--accent); color: var(--accent); }
+  .pm-board-actions .pm-btn-primary {
+    background: var(--accent); color: var(--bg); border-color: var(--accent);
+  }
+  .pm-board-actions .pm-btn-primary:hover { background: var(--accent-dim); color: var(--bg); border-color: var(--accent-dim); }
+  .pm-board-actions .pm-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .pm-board-warnings {
+    padding: 8px 16px;
+    background: var(--warn-bg);
+    border-bottom: 1px solid var(--line);
+    color: var(--warn);
+    font-size: 12px;
+  }
+  .pm-cols {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(220px, 1fr)) minmax(180px, 0.7fr);
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pm-col {
+    border-right: 1px solid var(--line);
+    min-height: 200px;
+    display: flex; flex-direction: column;
+  }
+  .pm-col:last-child { border-right: none; }
+  .pm-col-head {
+    padding: 10px 12px;
+    background: var(--bg-3);
+    border-bottom: 1px solid var(--line);
+    font-size: 11px; font-weight: 700; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: .07em;
+    display: flex; align-items: center; gap: 6px;
+    position: sticky; top: 0; z-index: 1;
+  }
+  .pm-col-count {
+    margin-left: auto;
+    background: var(--bg-2); border-radius: 999px; padding: 2px 8px;
+    font-size: 10px; color: var(--text-2);
+  }
+  .pm-col-excluidas .pm-col-head { color: var(--text-3); }
+  .pm-col-list {
+    padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 120px;
+    flex: 1;
+  }
+  .pm-col-list.sortable-ghost { background: var(--accent-muted); }
+  .pm-task-card {
+    background: var(--bg-3);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: grab;
+    display: flex; flex-direction: column; gap: 6px;
+    transition: border-color .15s, background .15s;
+  }
+  .pm-task-card:hover { border-color: var(--accent); }
+  .pm-task-card:active { cursor: grabbing; }
+  .pm-task-card.sortable-chosen { box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+  .pm-task-card.subtask { margin-left: 18px; border-left: 3px solid var(--accent); }
+  .pm-task-card.subtask::before { content: "↳ "; color: var(--accent); font-weight: 700; }
+  .pm-task-card.fase-mismatch { border-color: var(--warn); }
+  .pm-task-card.fase-mismatch::after {
+    content: "●"; color: var(--warn);
+    position: absolute; top: 6px; right: 8px; font-size: 14px;
+  }
+  .pm-task-card { position: relative; }
+  .pm-task-row1 { display: flex; align-items: center; gap: 8px; }
+  .pm-task-code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; font-weight: 700;
+    background: var(--accent-muted); color: var(--accent);
+    padding: 3px 7px; border-radius: 6px;
+    white-space: nowrap;
+  }
+  .pm-task-title {
+    flex: 1;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    outline: none;
+    word-break: break-word;
+  }
+  .pm-task-title:focus { background: var(--bg-2); border-radius: 4px; padding: 2px 4px; }
+  .pm-task-row2 {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 11px; color: var(--text-2);
+  }
+  .pm-task-role-select {
+    font-family: inherit; font-size: 11px;
+    background: var(--bg-2); color: var(--text);
+    border: 1px solid var(--line-2); border-radius: 6px;
+    padding: 3px 6px; cursor: pointer;
+    min-height: 26px;
+  }
+  .pm-task-warning { color: var(--warn); font-size: 11px; }
+  .pm-task-deps { font-size: 10px; color: var(--text-3); }
+  .pm-task-card.excluida { opacity: .55; }
+  .pm-task-card.excluida .pm-task-title { text-decoration: line-through; }
+  .pm-board-empty {
+    padding: 40px 20px; text-align: center;
+    color: var(--text-2); font-size: 13px;
+  }
+  .pm-board-status {
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    background: var(--bg-3);
+    font-size: 11px; color: var(--text-2);
+  }
+
+  @media (max-width: 720px) {
+    .pm-cols { grid-template-columns: 1fr; }
+    .pm-col { border-right: none; border-bottom: 1px solid var(--line); }
+    .pm-col-head { position: static; }
+    .pm-board-head { flex-direction: column; align-items: stretch; }
+    .pm-board-actions { width: 100%; }
+    .pm-board-actions button { flex: 1; }
+  }
 </style>
+<script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </head>
 <body>
 
