@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-27 (Fase final light theme: sync portal↔work cerrada — RPC `work_set_my_theme` + EF `sync_theme_to_bubble`. Pendiente solo: 8 built-in Bubble + `BUBBLE_API_TOKEN` en Supabase Dashboard para rollout)
+actualizado: 2026-05-27 (F3 PM Board iteración final: board sube al nivel Pipeline + cards compactas con preview + modal Notion al click con las 24 propiedades editables. Fase final light theme también cerrada el mismo día — RPC `work_set_my_theme` + EF `sync_theme_to_bubble`. Pendientes light theme: 8 built-in Bubble + `BUBBLE_API_TOKEN` Supabase Dashboard)
 tags:
   - log
   - historial
@@ -66,6 +66,107 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-27 [WORK][REFACTOR] — F3 PM Board — diseño final del día (board a nivel Pipeline + cards compactas + modal Notion)
+
+- **Área:** `ficha-cliente/index.html` + `estrategia/index.html` (clon bit-a-bit).
+- **Qué:** dos iteraciones más sobre el F3 PM Board (commits `6b04beb` + `baa75c8`) que dejan el módulo en **estado final** tras el desvío inicial del kanban por fases. El estado final es lo que Ben quería desde el principio.
+
+### Iteración 3 — Board sube al nivel Pipeline + fix dropdown (commit `6b04beb`)
+- Antes: el botón "Crear tareas Notion" vivía dentro de cada Campaña. Tenías que entrar 1 por 1 a P1C1, P1C2, P2C1… y crear board por campaña — fragmenta el trabajo del PM, sin sentido.
+- Ahora: el botón vive en la vista del Pipeline (P1, P2…). Al pulsar **Crear** agrega tareas de **todas** las campañas activas del pipeline en un solo pool. Cada card lleva una etiqueta `📂 Campaña PxCy` para saber de cuál viene.
+- Implementación:
+  - Nueva función pura `proposeTasksForPipeline(p)` que itera `p.camps` activas y concatena `tasks` + `warnings` de cada `proposeTasks(c)`.
+  - Renombrado `openTasksBoard(pId, cId)` → `openTasksBoardForPipeline(pId)`.
+  - `S.tasksBoard.cId` → `pId`. `renderTasksBoard(p, c)` → `renderTasksBoard(p)`.
+  - Card PM movida de `renderCampaignView` a `renderPipelineView` (data-action sigue siendo `create-tasks` pero ahora solo `data-pid`, sin `data-cid`).
+  - `attachAllHandlers` engancha el board cuando `S.view.kind === 'pipeline'` (antes era `'campaign'`).
+  - `buildTasksPayload` incluye `pipeline.campanias[]` con todas las activas (id/code/nombre/kpi/fechas/plantilla_slug).
+  - Cada task lleva `campania_code` + `campania_id` para el render y el payload.
+- **Fix dropdown que se cerraba al instante:** SortableJS estaba capturando el `mousedown` sobre los `<select>` y arrancando un drag fantasma. Fix: `filter: 'select, option, input, textarea, button, label, [contenteditable="true"]'` + `preventOnFilter: false` en la config de Sortable. Inicialmente añadí también `handle: '.pm-task-header'` para restringir drag a una zona específica, pero en la iteración 4 lo retiré (ver abajo).
+
+### Iteración 4 — Cards compactas + modal Notion al click (commit `baa75c8`)
+- Antes (iteración intermedia que NO documenté): la card mostraba INLINE todas las propiedades Notion (estado/fecha/prioridad/área/responsables/aprobador/observadores/estimación/incidencia/comentario). 320px ancho, ~600px alto. Demasiado ruido visual cuando hay 30+ tareas en el pool.
+- Ahora: card compacta (220px) que solo muestra lo escaneable de un vistazo, y **click abre modal** centrado con todas las 24 propiedades editables (estilo "Notion page open").
+- **Card compacta** — 4 secciones verticales:
+  1. Row 1: code-tag · ⚠ warning (si hay) · 🚨 incidencia (si está marcada) · dot circular del estado (color según TASK_ESTADOS — por hacer/en curso/revisión/bloqueada/hecho)
+  2. Título (truncado 2 líneas)
+  3. Descripción preview (80 chars, truncado 2 líneas, oculto si vacía)
+  4. Meta: `📅 23 ene` (fecha corta) · `📂 P1C1` (campaña) · `👤 2` (count responsables)
+- **Modal de detalle** (`renderTaskDetailModal`):
+  - Overlay backdrop oscuro con blur, modal centrado max-width 600px, animaciones `pm-fade-in` + `pm-slide-up`.
+  - Header: code-tag + chip campaña + botón X (cerrar).
+  - Título grande contenteditable (h-style 22px).
+  - 24 propiedades Notion editables en grid `label : control`:
+    - Estado / Fecha entrega / Prioridad / Área / Rol sugerido (selects + date)
+    - Responsables (chips multi-valor con dropdown "+ Añadir")
+    - Aprobador (single-select)
+    - Observadores (chips multi-valor con dropdown "+ Añadir")
+    - Estimación (number input + "h" unit, se convierte a min al empujar payload)
+    - Incidencia (checkbox con label dinámico "Marcada" / "No")
+    - Bloqueado por (read-only, lista códigos PxCy de `depende_de`)
+  - Comentario / Descripción (textarea grande, va al body Notion como bloques paragraph)
+  - Footer: botón "Listo".
+  - Cierre: click backdrop, X arriba derecha, botón Listo, o tecla Esc.
+- **Modelo nuevo:** `S.tasksBoard.expandedTaskId: null | taskId` para saber qué tarea tiene su modal abierto. Reset al regenerar/cambiar de pipeline.
+- **Drag-vs-tap distinción:** `delay: 120` + `touchStartThreshold: 8` en SortableJS. Click rápido sin mover = abre modal. Mantener pulsado + arrastrar = mueve la card. SortableJS cancela el click si llegó a iniciar drag — el handler `data-action="open-detail"` solo dispara cuando NO hubo drag.
+- **Handle dropped:** la iteración 3 usaba `handle: '.pm-task-header'` para drag solo desde una zona. La iteración 4 elimina el handle porque las cards son ahora compactas — drag desde toda la card es más natural cuando hay menos contenido editable inline.
+
+### Constantes Notion canónicas (sin cambios desde iteración inline anterior)
+- `TASK_ESTADOS` (5): por hacer / en curso / revisión / bloqueada / hecho. Cada uno con color hex para el dot del card.
+- `TASK_PRIORIDADES` (4): baja / media / alta / urgente.
+- `TASK_AREAS` (11): estrategia / copy / diseño / meta_ads / crm / newsletter / community / dev / comercial / rrhh / otros — autopoblada desde `rol_sugerido` con `areaForRol(rol)`.
+- `TASK_MEMBERS` (8 hardcoded): Ben Sanchis · Alejandro López · Mel Dalmazo · Valentina Ramírez · Camilo Pérez · Damian Ortiz · Joaquín Tagle · Valeria Díez. Fase 0 sin RPC `bub_user`.
+- Defaults aplicados por `proposeTasks mk()`: `estado:'todo'`, `fecha_entrega:null`, `prioridad:'media'`, `area_tarea:areaForRol(rol)`, `responsables:[]`, `aprobador:''`, `observadores:[]`, `estimacion_horas:null`, `descripcion:''`, `incidencia:false`.
+
+### Payload final al webhook n8n `eHyXBETcaGSNXqLk` (Fase 1, sigue dry-run)
+```json
+{
+  "version": "1.1",
+  "source": "ficha-cliente-pm-board",
+  "cliente_bubble_id": "...",
+  "pipeline": { "id, code, nombre, objetivo, account", "campanias": [...] },
+  "masters": [{ "client_temp_id, titulo" }],
+  "tasks": [{
+    "client_temp_id, parent_master_id, code, titulo, rol, fase,
+     campania_code, campania_id,
+     estado, fecha_entrega, prioridad, area_tarea,
+     responsables[], aprobador, observadores[],
+     estimacion_horas, estimacion_min, descripcion, incidencia,
+     depende_de_codes[], origen, metadata"
+  }],
+  "idempotency_key": "P1-<ts>-<rand>"
+}
+```
+
+### Estado final del módulo F3 PM Board (commits del día: `d8273af`, `74e4145`, `0b6ecd0`, `6b04beb`, `baa75c8`)
+1. ✅ Botón **Crear tareas Notion** en card PM (rol PM, vista Pipeline).
+2. ✅ Genera tareas para TODAS las campañas activas del pipeline siguiendo la plantilla canónica del manual PM (5 fases: estrategia → producción mensajes → triggers → creatividades → lanzamiento).
+3. ✅ Pool flex-wrap arriba + tareas madre debajo (creadas por el PM con "+ Tarea madre").
+4. ✅ Cards compactas con preview esencial. Click → modal Notion con todas las propiedades editables.
+5. ✅ Drag-and-drop entre pool y tareas madre (SortableJS connected lists). Distinguido de tap por delay+threshold.
+6. ✅ Esc / X / backdrop / botón Listo cierran modal.
+7. ✅ Estado efímero in-memory (`S.tasksBoard`). Sin Supabase ni localStorage. Persiste a través del toggle Account↔PM mismo pipeline.
+8. ✅ Push dry-run: console.log(payload) + toast. Webhook real pendiente F2 backend Pipelines.
+
+### Pendientes (Fase 1)
+- Backend F2 Pipelines en Supabase (tablas `cliente_pipelines/campanias/triggers/emails/whatsapps/creatividades` + RPC `ficha_pipelines_get`). Hasta entonces el board lee del seed hardcoded de Dra. Neuss.
+- Workflow n8n `eHyXBETcaGSNXqLk` modificado para aceptar `source: 'ficha-cliente-pm-board'`, branch por `proveedor_tareas` (Notion 2-pass / ClickUp nativo), persistencia `idempotency_key` en `bub_tareas_notion.metadata.batch_idempotency`.
+- RPC `bub_user` para poblar TASK_MEMBERS dinámicamente (hoy hardcoded 8 nombres).
+- `S.proveedorTareas` actualmente fallback a 'notion'. Cuando esté disponible en `ficha_cliente_get` (vía LEFT JOIN bub_agencia), el texto del botón "🚀 Empujar a Notion/ClickUp" se vuelve dinámico.
+
+### Refs commits del día
+- `d8273af` — F3 v1: kanban 6 columnas (descartado por feedback Ben).
+- `74e4145` — F3 v2: canvas + tareas madre (correcto, sustituye kanban).
+- `0b6ecd0` — F3 v2 propagado a `/estrategia/`.
+- `6b04beb` — F3 v3: board sube a nivel Pipeline + fix dropdown.
+- `7267974` — Ben commit (sync theme) arrastró tarjetas Notion inline (intermedio sin documentar, sustituido por baa75c8).
+- `baa75c8` — F3 v4: cards compactas + modal Notion (estado final).
+
+### Vercel deploys
+Todos en `READY` excepto el último `baa75c8` que estaba construyendo al cierre de la sesión. Verificable con MCP Vercel o panel.
+
+---
 
 ## 2026-05-27 [PORTAL][WORK][INFRA][FEATURE] — Fase final light theme: sync portal Bubble ↔ work admin (RPC `work_set_my_theme` + EF `sync_theme_to_bubble`)
 

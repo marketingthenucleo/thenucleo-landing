@@ -44,33 +44,76 @@ Gaps que tú reportas a Account:
 - Un Trigger tipo BD sin **fecha de lanzamiento** (aviso ámbar). Mismo ping.
 - Una Campaña sin **objetivo o KPI** claro. Mismo ping.
 
-### Cuando una Campaña está lista para montar
+### Cuando un Pipeline está listo para montar tareas
 
-1. **Entra al detalle de la Campaña** en el panel derecho.
-2. **Pulsa el botón "Crear tareas Notion"** (CTA destacado en verde arriba del detalle, solo visible en modo PM).
-3. Se despliega un **board inline debajo de la card** (no un drawer — se queda visible junto al contexto de la Campaña) con **todas las tareas propuestas** repartidas en 6 columnas según fase:
-   - 🧠 **Estrategia** — `_briefing`, `_angulos`, `_cluster` (este último solo si la campaña segmenta audiencia).
-   - ✍️ **Producción mensajes** — `_copy`, `_diseno`, `_montaje` por cada email; `_copy`+`_montaje` por cada WhatsApp.
-   - 🎯 **Triggers** — `_form` (FM/FW), `_segmento` (BD), `_automation` (DM). SD no genera tareas (declarativo).
-   - 🎨 **Creatividades** — `_diseno`/`_reel`/`_estatico`/`_brief` según subtipo de cada pieza.
-   - 🚀 **Lanzamiento** — `_lanzar` (depende de TODAS las anteriores no excluidas).
-   - ✗ **Excluidas** — vacía al abrir. Aquí arrastras lo que no quieres crear.
-4. **Cada tarjeta** viene con:
-   - **Código** en el título (`P2C1E1_copy`), inmutable.
-   - **Título editable** (clic dentro y escribe, Enter para confirmar).
-   - **Dropdown de responsable** (Estratega / Copy / Diseño / Media Buyer / CRM Manager / Community Manager / Dev / PM).
-   - **Dropdown "↳ Padre"** para anidar como subtarea de otra (ej. `_diseno` bajo `_copy` o todas las creatividades bajo `_lanzar`).
-   - **Aviso ámbar** si falta dato necesario (ej. BD sin fecha de lanzamiento).
-5. **Reagrupa lo que quieras**:
-   - **Arrastra** una tarjeta a otra columna para cambiar su fase.
-   - **Arrastra a "Excluidas"** para quitarla de la creación (los `_lanzar` recalculan automáticamente sus dependencias).
-   - **Dropdown "↳ Padre"** para crear estructura padre→subtarea antes de empujar.
-   - **Edita títulos** si quieres añadir contexto al equipo más allá del código.
-6. Cuando esté como tú quieres, **pulsa "🚀 Empujar a Notion"** (o "ClickUp" si esa agencia usa ClickUp). El board se vacía y aparece "✓ N tareas creadas en Notion". Si pulsas 2× la misma campaña sin haber cambiado nada, el sistema detecta los códigos ya existentes y no duplica.
+1. **Entra al detalle del Pipeline** (P1, P2…) — NO de una Campaña, del **Pipeline entero**. El botón vive a nivel pipeline para que veas las tareas de todas las campañas en un solo lugar.
+2. **Pulsa el botón "Crear tareas Notion"** (CTA destacado en verde justo bajo el título del Pipeline, solo visible en modo PM).
+3. Se despliega un **board inline debajo de la card**. El board se compone de:
+   - **Pool** (zona superior) — todas las tareas propuestas para todas las campañas activas del Pipeline, como cards compactas sueltas, etiquetadas con `📂 PxCy` para saber de qué campaña vienen.
+   - **Tareas madre** (zona inferior) — vacía al principio. Tú vas creando contenedores con el botón **+ Tarea madre** y arrastrando cards adentro para empaquetarlas.
 
-⚠️ **El board es efímero**: si cambias de campaña, cliente, o cierras el board sin empujar, **pierdes los cambios manuales** (orden, responsables, exclusiones, subtareas). La propuesta se regenera limpia desde la declaración cuando vuelves. Si pulsas "↺ Regenerar" mientras compones, pide confirmación. Esto es deliberado: el board no es un kanban con estado propio, es un compositor para una sola creación masiva.
+#### Card compacta (lo que ves de un vistazo)
 
-Eso es todo. No abres Notion para crearlas — el board las propone, tú las afinas, y se materializan al pulsar Empujar.
+Cada card mide ~220px y muestra solo lo esencial:
+- Code (`P1C1_briefing`, `P1C1FM1_form`, etc) — inmutable.
+- Dot de color = estado actual (gris=por hacer, azul=en curso, ámbar=revisión, rojo=bloqueada, verde=hecho).
+- ⚠ aparece si la card tiene un warning (ej. trigger BD sin fecha).
+- 🚨 aparece si la marcaste como incidencia.
+- Título (truncado 2 líneas).
+- Descripción preview (truncada 2 líneas, oculta si vacía).
+- Meta chips: `📅 23 ene` (fecha entrega) · `📂 P1C1` (campaña) · `👤 N` (count responsables).
+
+#### Modal de detalle (click en card → todas las 24 propiedades Notion)
+
+Click en cualquier zona de la card y se abre un **modal centrado tipo "Notion page open"** con todos los campos editables, exactamente como queda en Notion al empujar:
+- **Título** — editable inline.
+- **🟢 Estado** — Por hacer / En curso / Revisión / Bloqueada / Hecho.
+- **📅 Fecha entrega** — date picker.
+- **⚡ Prioridad** — Baja / Media / Alta / Urgente.
+- **🏷️ Área** — 11 áreas Notion (Estrategia / Copy / Diseño / Meta Ads / CRM / Newsletter / Community / Dev / Comercial / RRHH / Otros). Autopoblada desde el rol sugerido.
+- **🎭 Rol sugerido** — 8 roles internos (Estratega / Copy / Diseño / Media Buyer / CRM Manager / Community Manager / Dev / PM). Es el mapping del rol → área.
+- **👤 Responsables** — chips multi-valor con dropdown "+ Añadir". Selecciona uno o varios miembros del equipo.
+- **✅ Aprobador** — single-select de miembros.
+- **👀 Observadores** — chips multi-valor (igual que responsables).
+- **⏱️ Estimación** — number input en horas (se convierte a minutos al empujar a Notion).
+- **🚨 Incidencia** — checkbox.
+- **🔒 Bloqueado por** — read-only, lista los códigos PxCy de los que depende esta tarea (calculado del algoritmo de generación).
+- **💬 Comentario / Descripción** — textarea grande al final. Va al **body** de la página Notion como bloques `paragraph` (no es una property, es el contenido de la página).
+
+Para cerrar el modal: click fuera (en el backdrop oscuro), botón **×** arriba derecha, botón **Listo** abajo, o tecla **Esc**.
+
+#### Empaquetar en tareas madre
+
+Notion soporta nativamente tareas con subtareas. La idea del board es que tú componas esa estructura ANTES de empujar:
+
+1. Pulsa **+ Tarea madre** (botón en la cabecera del board). Aparece una caja grande vacía con título "Tarea madre 1" editable.
+2. **Arrastra** cards del pool al interior de la caja. Pasan a ser sub-tareas de esa madre.
+3. Edita el título de la madre con un click (ej. "Email bienvenida P1C1 — sprint copy+diseño+montaje").
+4. Si quieres sacar una card otra vez al pool, arrástrala fuera.
+5. Si quieres deshacer una madre completa, pulsa el botón **🗑** del header de esa madre — te pide confirm si tiene hijas y las devuelve al pool.
+
+Pueden coexistir N tareas madre + cards sueltas en el pool. Las que queden en el pool al empujar se crearán en Notion como tareas raíz (sin padre).
+
+#### Botones de la cabecera del board
+
+- **+ Tarea madre** — crea un contenedor vacío.
+- **↺ Regenerar** — vuelve a generar la propuesta desde la declaración actual. Pide confirm porque pierdes todos los cambios manuales.
+- **Cerrar** — cierra el board (pide confirm si hay cambios sin empujar).
+- **🚀 Empujar a Notion** (o ClickUp si esa agencia usa ClickUp) — materializa todas las cards + tareas madre en el gestor de tareas de la agencia. Hoy es **dry-run**: solo muestra el payload en consola del browser + toast "Simulación: N tareas listas". El cableado real al webhook n8n llegará en Fase 1 (depende de F2 backend Pipelines).
+
+#### Estado efímero — lo que pierdes y lo que conservas
+
+⚠️ El board es **efímero**. Si cambias de pipeline, cliente, o cierras el board sin empujar, **pierdes**: orden, responsables, exclusiones, tareas madre, todas las propiedades Notion que rellenaste. La propuesta se regenera limpia desde la declaración cuando vuelves.
+
+**Conservas** mientras te quedes en el mismo Pipeline: aunque saltes al toggle Account ↔ PM y vuelvas, el board sigue ahí con tus cambios. También si scrolleas a otra Campaña dentro del mismo Pipeline — el board vive a nivel Pipeline, no Campaña.
+
+Esto es deliberado: el board no es un kanban persistente, es un **compositor** para una sola creación masiva.
+
+#### Distinguir drag de click
+
+Si haces **click rápido** en una card sin mover el mouse, se abre el modal. Si **mantienes pulsado** y mueves la card (>8px), se inicia el drag. SortableJS lo distingue por delay+threshold. En móvil, mantén el dedo en la card un poco antes de mover.
+
+Eso es todo. No abres Notion para crear las tareas — el board las propone, tú afinas las propiedades + empaquetas en madres, y se materializan en Notion al pulsar Empujar.
 
 ### Cuando el cliente pide algo nuevo y Account aún no lo ha declarado
 
