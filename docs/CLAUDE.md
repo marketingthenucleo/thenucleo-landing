@@ -193,6 +193,7 @@ Ambas SECURITY DEFINER + allowlist hardcoded en body (5 emails TheNucleo desde 2
 - **Helpers pre-formateados** para plugins de charts (split by separador)
 - Paleta colores: Fondo `#0c0d12`, Card `#13151c`, Borde `#1e2130`, Texto `#edeef3`, Acento verde `#22c55e`
 - Font: New Black
+- **Light theme (Fase 0 desde 2026-05-27):** data type `User` tiene campo `theme` (yes/no, `no=light`, `yes=dark`) espejado a `bub_user.theme boolean` y devuelto por la RPC `work_current_user_profile()` (v3). Aún no cableado en Styles del portal — el rollout pinta Conditionals sobre los ~15 Styles globales (`bg-main`, `bg-card`, `text-primary`, etc.) leyendo `Current User's theme`. Mapping dual de tokens listo en `ficha-cliente/index.html:19-82` (los `[data-theme="light"]` overrides). Plan completo: `~/.claude/plans/si-vamos-a-planificarlo-peppy-karp.md`.
 
 ## n8n — Workflows
 

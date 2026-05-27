@@ -478,14 +478,24 @@ Misma allowlist. Devuelve `to_jsonb(c.*)` del cliente con TODAS las columnas de 
 
 #### `work_current_user_profile()` — perfil del user logueado (avatar shell)
 
-Devuelve `(bubble_id, nombre, email, color)` del row de `bub_user` cuyo `LOWER(email) = LOWER(auth.email())`. `STABLE SECURITY DEFINER` + `GRANT EXECUTE TO authenticated`. Creada 2026-05-26 (migration `work_current_user_profile`).
+Devuelve `(bubble_id, nombre, email, color, agencia_id, agencia_proveedor_tareas, theme)` del row de `bub_user` cuyo `LOWER(email) = LOWER(auth.email())`, con `LEFT JOIN bub_agencia` por `agencia_id` para resolver `proveedor_tareas`. `STABLE SECURITY DEFINER` + `GRANT EXECUTE TO authenticated`.
+
+Historia de versiones:
+- **v1 (2026-05-26, migration `work_current_user_profile`)** — 4 cols: `bubble_id, nombre, email, color`. Pintar avatar 40×40 en el shell unificado.
+- **v2 (2026-05-26, migration `work_current_user_profile_v2_proveedor_tareas`)** — añade `agencia_id` + `agencia_proveedor_tareas` (LEFT JOIN bub_agencia). El frontend de `/estrategia/` y `/timeline/` lo usa para ocultar el tab "Tareas" cuando la agencia no usa Notion (replica del workflow Bubble "Only when proveedor_tareas is notion").
+- **v3 (2026-05-27, migration `work_current_user_profile_v3_restore_agencia_add_theme`)** — añade `theme boolean` al final (espejo de `User.theme` Bubble; `false=light`, `true=dark`, `NULL=no decidido`). ⚠️ Una migration intermedia del mismo día (`bub_user_add_theme_and_extend_profile_rpc`) se basó en la doc desactualizada de v1 y al hacer DROP+CREATE eliminó las 2 cols de v2; el hotfix v3 restauró la signature completa. Cada cambio de `RETURNS TABLE` exige DROP+CREATE — `CREATE OR REPLACE` no acepta cambios de tipo de retorno.
 
 ```sql
-RETURNS TABLE(bubble_id text, nombre text, email text, color text)
+RETURNS TABLE(bubble_id text, nombre text, email text, color text,
+              agencia_id text, agencia_proveedor_tareas text, theme boolean)
 LANGUAGE sql STABLE SECURITY DEFINER
 ```
 
-No comprueba allowlist por diseño: cualquier `authenticated` puede leer **su propio** row (la RPC ya filtra por `auth.email()`, así que no hay enumeración). Consumida por el shell unificado portal del header de `work.thenucleo.com/ficha-cliente/` (y luego `/estrategia/`, `/timeline/`) para pintar el avatar 40×40 radius 100% con la columna `bub_user.color` que Bubble asigna a cada usuario — mismo color que se ve en el avatar del portal. Fallback `#6b7280` si la columna es NULL/vacía. SECURITY DEFINER necesario porque `bub_user` tiene RLS y los admins work no tienen policy de lectura ahí (mismo patrón que `disponibilidad_miembros()` y `ficha_cliente_*`).
+No comprueba allowlist por diseño: cualquier `authenticated` puede leer **su propio** row (la RPC ya filtra por `auth.email()`, así que no hay enumeración). Consumida por el shell unificado portal del header de `work.thenucleo.com/ficha-cliente/` (avatar) y `/estrategia/` + `/timeline/` (avatar + condicional del tab Tareas vía `window.WORK_USER_PROFILE` con promesa `WORK_USER_PROFILE_READY`). Fallback `#6b7280` para `color` si la columna es NULL/vacía. SECURITY DEFINER necesario porque `bub_user` tiene RLS y los admins work no tienen policy de lectura ahí (mismo patrón que `disponibilidad_miembros()` y `ficha_cliente_*`).
+
+⚠️ El campo `theme` aún **no se consume** en el frontend de work (Fase 0 del rollout light theme portal Bubble — 2026-05-27): la columna queda lista en el response pero los 3 HTML siguen leyendo theme desde `localStorage`. Cuando se cablee (sesión futura), `NULL` se interpretará como "usa fallback dark + respeta localStorage" para no forzar cambio visual a los users existentes. Sync Bubble→Supabase del nuevo campo va por el workflow estándar `FGxG67I24POOUeHW` (SYNC ESPEJO) — `bub_user` ya está allowlisted, no requiere cambios.
+
+🪤 **Aviso para futuras ediciones de esta RPC:** lee la signature real con `SELECT pg_get_function_result(...)` antes de redefinir, no te fíes solo de este markdown — el incidente del 2026-05-27 nació de ahí. Cada `DROP + CREATE` debe preservar las columnas históricas (al menos hasta confirmar que ningún consumer las usa).
 
 ### Pipelines y Campañas — 5 tablas nativas (F2, desde 2026-05-24)
 

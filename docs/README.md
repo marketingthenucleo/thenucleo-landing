@@ -39,6 +39,7 @@ docs/
 | **Portal** (interno Bubble) | [[portal/README\|portal/README]] | 9 secciones app + flujo registro SaaS + chat co-creativo blueprint + sectores auditoría + integraciones del Portal |
 | **Infra** (transversal técnico) | [[infra/README\|infra/README]] | Supabase schema, n8n workflows, Bubble API, IDs/credenciales |
 | **Addons** (cross-domain) | [[addons/README\|addons/README]] | Sistema de pago addons (Stripe Coupons + Bubble catalog + deploy F3) |
+| **Design Tokens** (cross-domain) | [[design-tokens]] | Paleta dual dark/light + mapping Bubble Styles ↔ CSS vars work. **Consultar siempre antes de hardcodear un hex.** |
 
 ---
 
