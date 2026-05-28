@@ -67,6 +67,16 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
+## 2026-05-28 [WORK][BUGFIX] — Sidebar portal (espejo Bubble) — hover con inset + activo theme-aware
+
+- **Área:** `ficha-cliente/index.html` + `estrategia/index.html` + `timeline/index.html` (shell unificado, mismo CSS `.ps-item` en las 3).
+- **Qué:** dos fixes en el menú lateral del work:
+  1. **Hover sin paddings:** `.ps-item` tenía `border-radius: 0` + `width: 100%` sin margen horizontal → el fondo del hover/activo iba de borde a borde, sin separación entre items. Ahora `margin: 0 8px` + `border-radius: 10px` + `width: auto` → píldora inset. `gap` del `.ps-nav`/`.ps-footer` bajado de 15px a 3px (las píldoras ya dan su propia respiración).
+  2. **Light mode feo:** `.ps-item:hover` y `.ps-item.active` usaban `background: #1A1434` (violeta oscuro) **hardcodeado**, ignorando las variables theme-aware ya definidas. Ahora hover = `var(--ps-item-hover-bg)` (sutil), activo = `var(--ps-active-pill)` (violeta en dark, violeta sutil en light) + franja de acento `var(--accent)` vía `::before` para distinguir el activo en ambos temas.
+- **Por qué:** bug reportado por Ben — el hover ocupaba todo el recuadro sin paddings y en light theme el violeta oscuro quedaba ilegible sobre el sidebar blanco.
+- **Impacto:** solo CSS del sidebar. Sin cambios JS ni en el HTML de los items. Las variables `--ps-item-hover-bg` / `--ps-active-pill` ya existían (def. dark + override `[data-theme="light"]`) pero no se consumían.
+- **Refs:** `ficha-cliente/index.html` `.ps-item` (~L123-156), `estrategia/index.html` + `timeline/index.html` (~L120-139). Doc canónico `docs/work/ficha-cliente.md`.
+
 ## 2026-05-27 [PORTAL][BUGFIX] — Quill Rich Text Editor — theme-aware en popups del portal
 
 - **Área:** Bubble portal (Settings → SEO/metatags + 2 workflows del toggle de tema). Caso disparador: popup "Crear notificación" con el campo `Mensaje de notificación`.

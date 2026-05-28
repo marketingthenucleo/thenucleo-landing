@@ -117,7 +117,7 @@
   }
   .ps-brand-iso { width: 45px; height: 45px; flex-shrink: 0; }
   .ps-brand-logo { height: 25px; width: auto; flex-shrink: 0; }
-  .ps-nav, .ps-footer { display: flex; flex-direction: column; gap: 15px; }
+  .ps-nav, .ps-footer { display: flex; flex-direction: column; gap: 3px; }
   .ps-nav { padding-top: 6px; }
   .ps-footer {
     margin-top: auto; padding-top: 12px;
@@ -126,17 +126,22 @@
   .ps-item {
     position: relative;
     display: flex; align-items: center; gap: 12px;
-    padding: 6px 14px; min-height: 40px;
-    border-radius: 0;
+    margin: 0 8px;
+    padding: 8px 12px; min-height: 40px;
+    border-radius: 10px;
     color: var(--text-2);
     font-size: 16px; font-weight: 400;
     cursor: pointer; user-select: none;
     transition: background 120ms ease, color 120ms ease;
-    border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
+    border: none; background: transparent; width: auto; text-align: left; font-family: inherit;
   }
   .ps-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 1.25; }
-  .ps-item:hover { background: #1A1434; color: var(--text); }
-  .ps-item.active { background: #1A1434; color: var(--text); }
+  .ps-item:hover { background: var(--ps-item-hover-bg); color: var(--text); }
+  .ps-item.active { background: var(--ps-active-pill); color: var(--text); font-weight: 500; }
+  .ps-item.active::before {
+    content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 22px; border-radius: 0 3px 3px 0; background: var(--accent);
+  }
   .ps-logout { color: var(--text-3); font-size: 12px; margin-top: 6px; }
   .ps-logout:hover { color: var(--bad); background: rgba(239,68,68,0.06); }
 
