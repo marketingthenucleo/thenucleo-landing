@@ -2,7 +2,7 @@
 title: Log de Cambios
 dominio: hub
 estado: vivo
-actualizado: 2026-05-27 (Quill RTE theme-aware en popups del portal vía SEO/metatags global + 2 Run JS en workflows toggle tema — Patrón D nuevo en design-tokens. F3 PM Board iteración final: board sube al nivel Pipeline + cards compactas con preview + modal Notion al click con las 24 propiedades editables. Fase final light theme también cerrada el mismo día — RPC `work_set_my_theme` + EF `sync_theme_to_bubble`. Pendientes light theme: 8 built-in Bubble + `BUBBLE_API_TOKEN` Supabase Dashboard)
+actualizado: 2026-05-28 (Fix definitivo de duplicados en SYNC TAREAS Notion→Bubble `GjijIDEUyiH05Mg0`: desconectado el trigger `pageAddedToDatabase`, queda solo `pagedUpdatedInDatabase` que también captura altas. Auditoría: 115 notion_id duplicados/230 filas por la doble ejecución de triggers que el dedupe intra-ejecución no podía cubrir. Creado workflow one-shot `P4Wpkqo2npPH6Ad5` CLEANUP — Dedupe tareas_notion. Backstop UNIQUE(notion_id) pendiente)
 tags:
   - log
   - historial
@@ -66,6 +66,15 @@ Ejemplo completo:
 ```
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
+
+## 2026-05-28 [INFRA][BUGFIX] — SYNC TAREAS Notion→Bubble: fix definitivo de duplicados (1 solo trigger)
+
+- **Área:** n8n (`GjijIDEUyiH05Mg0`) + Supabase `bub_tareas_notion` + Docs.
+- **Qué:** desconectado el trigger `Notion: Tarea Creada` (`pageAddedToDatabase`); queda solo `Notion: Tarea Actualizada` (`pagedUpdatedInDatabase`), que también captura las altas (Notion pone `last_edited_time = created_time` al nacer). Creado workflow one-shot manual `P4Wpkqo2npPH6Ad5` (**CLEANUP — Dedupe tareas_notion**) para limpiar los 115 duplicados existentes.
+- **Por qué:** los dos Notion Triggers disparaban **ejecuciones independientes** de n8n para la misma página recién creada (≈3.4 s de diferencia). El dedupe por `notion_id` de `Decidir Acción` (fix 2026-05-18) solo agrupa items dentro de una misma ejecución, así que no veía la copia de la otra ejecución → ambas decidían `create` → duplicado. Los fixes previos (lookup Supabase 2026-05-13 + dedupe 2026-05-18) estrecharon la ventana pero no la cerraron.
+- **Impacto:** auditoría reveló 115 `notion_id` duplicados / 230 filas (112 con ≤10 s de gap, máx 2 copias). La copia con `last_edited_time` más antiguo queda congelada (el `limit:1` del lookup resuelve siempre la misma) → kanban muestra estado obsoleto + tarea duplicada. Verificado con tarea de prueba `36ee4743-b0ae-8123-…` (1 sola fila, responsable correcto). No es upsert atómico — backstop `UNIQUE(notion_id)` + `ON CONFLICT` queda pendiente (requiere limpiar duplicados antes).
+- **Pendiente:** ejecutar `P4Wpkqo2npPH6Ad5` (verificar antes credencial Supabase → proyecto `cbi` + Bubble del portal + añadir tag `portal`); valorar borrar el nodo `Tarea Creada` del todo; backstop UNIQUE tras la limpieza; borrar la tarea de prueba en Notion.
+- **Refs:** `GjijIDEUyiH05Mg0`, `P4Wpkqo2npPH6Ad5`, `bub_tareas_notion`, `docs/infra/n8n-workflows.md` (sección "Sync Tareas Notion → Bubble (v2)" → "Fix definitivo duplicados 2026-05-28"). Relacionado: anti-patrón #17 (latencia indexado Bubble) e incidencia 2026-05-13.
 
 ## 2026-05-27 [PORTAL][BUGFIX] — Quill Rich Text Editor — theme-aware en popups del portal
 
