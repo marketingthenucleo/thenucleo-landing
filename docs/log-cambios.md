@@ -67,6 +67,14 @@ Ejemplo completo:
 ## 2026-05-13 [INTEG][BUGFIX] — SYNC TAREAS ClickUp: retry 502 Cloudflare
 ```
 
+## 2026-05-31 [WORK][DOCS] — BRANDING.md raíz: guía de branding y paleta (landing cálida vs comunidad/admin fría)
+
+- **Área:** Docs (landing).
+- **Qué:** nuevo `BRANDING.md` en la raíz del repo. Extrae y explica las **dos paletas distintas** que conviven: (1) landing pública `index.html` — cálida, fondo `#171717` + amarillo lima `#F3F959` + beige `#C7B299`, solo dark; (2) comunidad/admin/portal — fría, fondo `#090a0f` + verde marca `#22C55E` + azul `#3B82F6`, dual dark/light. Por cada paleta documenta colores (con uso de cada token), tipografía NewBlack, border-radius, sombras, animaciones/easing, spacing y tipologías de elementos (botones, cards, modales, badges, nav burger, coll-group, shell portal). Incluye regla de oro dark/light, regla del salto de jerarquía y tabla resumen comparativa.
+- **Por qué:** petición de tener el branding consolidado en un solo doc explicativo.
+- **Impacto:** documentación. Remite a `docs/design-tokens.md` para las recetas/patrones canónicos (sigue siendo el doc canónico de generación de piezas).
+- **Refs:** `BRANDING.md` (nuevo), fuentes `index.html` + `assets/css/comunidad.css` + `docs/design-tokens.md`.
+
 ## 2026-05-27 [PORTAL][BUGFIX] — Quill Rich Text Editor — theme-aware en popups del portal
 
 - **Área:** Bubble portal (Settings → SEO/metatags + 2 workflows del toggle de tema). Caso disparador: popup "Crear notificación" con el campo `Mensaje de notificación`.
