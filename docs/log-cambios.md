@@ -74,6 +74,7 @@ Ejemplo completo:
 - **Por qué:** petición de tener el branding consolidado en un solo doc explicativo.
 - **Impacto:** documentación. Remite a `docs/design-tokens.md` para las recetas/patrones canónicos (sigue siendo el doc canónico de generación de piezas).
 - **Refs:** `BRANDING.md` (nuevo), fuentes `index.html` + `assets/css/comunidad.css` + `docs/design-tokens.md`.
+- **Ampliación misma sesión:** añadida **Parte 3 — Configuración de elementos en Bubble** al `BRANDING.md`: 23 color variables custom dark/claras + 8 built-in Bubble (con valores a reasignar), patrón canónico de Style + Conditionals, regla de oro del theme, bug hex-literal vs variable y resumen del inventario de Styles. Para el detalle Style por Style remite a `docs/design-tokens.md`.
 
 ## 2026-05-27 [PORTAL][BUGFIX] — Quill Rich Text Editor — theme-aware en popups del portal
 

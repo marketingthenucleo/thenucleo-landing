@@ -260,6 +260,96 @@ Para **crear piezas nuevas** con coherencia dark/light (Portal Bubble Conditiona
 
 ---
 
+# PARTE 3 — Configuración de elementos en Bubble (Portal)
+
+El Portal interno (`portal.thenucleo.com`) está hecho en **Bubble (no-code)**. Allí los colores no son CSS sino **Color variables** del editor + **Styles** globales con **Conditionals** por tema. Esta es la fuente de verdad para el portal; el detalle exhaustivo Style por Style está en [`docs/design-tokens.md`](./docs/design-tokens.md) → "Inventario de Styles del portal".
+
+## 3.1 Color variables custom (23 dark + 23 claras)
+
+Nombres ES finales (snapshot 2026-05-27). Cada token tiene su par con sufijo `-claro` para el tema light. Última columna: equivalente en el sistema Work.
+
+| Token portal | Dark | Claro | Rol semántico | Equiv. Work |
+|---|---|---|---|---|
+| `fondo-base` | `#090A0F` | `#F5F6F8` | Fondo principal de página | `--bg` |
+| `fondo-tarjeta` | `#12141B` | `#FFFFFF` | Fondo de tarjetas/contenedores | `--bg-2` |
+| `fondo-elevado` | `#1A1D27` | `#FFFFFF` | Modales, popovers, dropdowns | (usa `--bg-2`) |
+| `fondo-hover` | `#1E2130` | `#EEF0F4` | Hover sobre filas/items | `--bg-hover` |
+| `fondo-activo` | `#252836` | `#E4E7EB` | Item seleccionado/pressed | (sin equiv) |
+| `borde-sutil` | `#1E2130` | `#E4E6EC` | Separadores discretos | `--line` |
+| `borde-medio` | `#2A2D3E` | `#D0D3DC` | Borde estándar inputs/cards | `--line-2` |
+| `borde-fuerte` | `#363A4E` | `#9CA3AF` | Focus, énfasis visual | (sin equiv) |
+| `texto-primario` | `#EDEEF3` | `#111827` | Body, headings | `--text` |
+| `texto-secundario` | `#8B8FA8` | `#4B5563` | Labels, subtítulos | `--text-2` |
+| `texto-terciario` | `#5C6078` | `#9CA3AF` | Placeholders | `--text-3` |
+| `texto-inverso` | `#090A0F` | `#FFFFFF` | Texto sobre fondos coloreados | (sin equiv) |
+| `acento-primario` | `#22C55E` | `#16A34A` | CTA principal, brand verde | `--accent` |
+| `acento-primario-hover` | `#16A34A` | `#15803D` | Hover del primario | `--accent-dim` |
+| `acento-secundario` | `#3B82F6` | `#2563EB` | CTA azul, identidad sutil | `--info` |
+| `acento-secundario-hover` | `#2563EB` | `#1D4ED8` | Hover del azul | (sin equiv) |
+| `exito` | `#22C55E` | `#16A34A` | Confirmaciones | `--ok` |
+| `aviso` | `#F59E0B` | `#D97706` | Ámbar, pendientes | `--warn` |
+| `error` | `#EF4444` | `#DC2626` | Destructivo | `--bad` |
+| `info` | `#3B82F6` | `#2563EB` | Informativo | `--info` |
+| `neutro` | `#6B7280` | `#9CA3AF` | Disabled, decorativos | (sin equiv) |
+| `violeta` | `#8B5CF6` | `#7C3AED` | Plantillas, badges especiales | `--violet` |
+| `rosa` | `#EC4899` | `#DB2777` | Highlights ocasionales | (sin equiv) |
+
+## 3.2 Color variables built-in de Bubble (8)
+
+Bubble trae 8 tokens semánticos propios que usa para sus widgets default. **No se pueden borrar.** Hoy varios tienen valores incoherentes con el portal dark (ej. `Surface = #FFFFFF`) — herencia de los defaults. Sub-fase final del rollout: reasignarlos a los custom equivalentes.
+
+| Built-in | Valor hoy | Reasignar dark | Reasignar light | Por qué |
+|---|---|---|---|---|
+| `Primary` | `#EDEEF3` | `#22C55E` (`acento-primario`) | `#16A34A` | Botón primario = verde brand |
+| `Primary contrast` | `#FFFFFF` | `#FFFFFF` / `#090A0F` | `#FFFFFF` | Texto sobre el verde |
+| `Text` | `#EDEEF3` | `#EDEEF3` (`texto-primario`) | `#111827` | Texto default |
+| `Surface` | `#FFFFFF` | `#12141B` (`fondo-tarjeta`) | `#FFFFFF` | Fondo containers (en dark debe ser dark) |
+| `Background` | `#FFFFFF` | `#090A0F` (`fondo-base`) | `#F5F6F8` | Fondo de página |
+| `Destructive` | `#B0200C` | `#EF4444` (`error`) | `#DC2626` | Unificar con `error` |
+| `Success` | `#1E6C30` | `#22C55E` (`exito`) | `#16A34A` | Unificar con `exito` |
+| `Alert` | `#DCA114` | `#F59E0B` (`aviso`) | `#D97706` | Unificar con `aviso` |
+
+## 3.3 Cómo se configura un Style (patrón canónico)
+
+Los colores se aplican vía **Styles globales** (no por elemento), y el tema se resuelve con **Conditionals** que leen `Current User's theme`:
+
+1. Design tab → expande la categoría → click sobre el Style.
+2. Pestaña **Conditional** del Style (global, propaga a todos los elementos que lo usan).
+3. Base = valores **dark** (estado actual, no se toca).
+4. **Define another condition:**
+   - **When:** `Current User's theme is "no"`
+   - **Property to change:** → valor **claro** de la tabla 3.1.
+5. Si hay hover, añade una Conditional combinada **al final**:
+   - **When:** `This <Element> is hovered and Current User's theme is "no"` → valor hover claro.
+
+**Regla de oro del theme:**
+```
+Current User's theme is "yes"  →  tokens base       →  DARK
+Current User's theme is "no"   →  tokens "-claro"   →  LIGHT
+theme NULL (legacy, ~9 users)  →  evalúa false      →  DARK (seguro, sin cambio visual)
+```
+
+## 3.4 Bug crítico a vigilar — hex literal vs variable
+
+Si un Style tiene una propiedad con **hex pintado a mano** (`#2A2D3E`) en lugar de **referencia a variable** (`borde-medio`), el theme switch **no funciona** sobre esa propiedad por mucho Conditional que añadas — Bubble considera el hex literal "no temable".
+
+**Cómo cazarlo:** abre cada Style y mira si el selector de color muestra un **nombre de variable** o un **hex con `#`**. Si es hex y coincide con una variable, reasígnalo. (Detectado primero en el Style `Secciones Principales`.)
+
+## 3.5 Inventario de Styles (resumen)
+
+`design-tokens.md` lista la config exacta `property: <token-dark> → <token-claro>` de cada Style. Estado del rollout de Conditionals (18 categorías cerradas, solo built-in pendiente):
+
+- **Button (5):** Boton Peligro, Boton Fantasma, Boton Primario, Boton Secundario, Boton Texto.
+- **Inputs:** Input, Multiline, Dropdown, Multi dropdown, Search Box, Date/Time Picker, File/Multi-File/Picture Uploader, Rich Text Input, Slider, Radio.
+- **Contenedores:** Group (10 Styles), Floating Group, Popup, Group Focus.
+- **Otros:** Text, Icon, Link, Progress Bar, Page.
+- **Saltadas** (sin uso visual): Alert, CSS Tools, HTML, Image, Map, Material Icon, Video, Shape, Repeating Group.
+- **⏸ Pendiente:** los 8 tokens built-in de Bubble (§3.2).
+
+> Inventario completo Style por Style + los 4 patrones (A/B/C/D), 8 anti-patrones y checklist → [`docs/design-tokens.md`](./docs/design-tokens.md).
+
+---
+
 ## Resumen rápido
 
 | | Landing pública | Comunidad / Admin / Portal |
